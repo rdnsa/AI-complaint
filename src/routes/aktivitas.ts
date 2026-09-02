@@ -4,7 +4,7 @@ import type { AppEnv } from '../types';
 
 const app = new Hono<AppEnv>();
 
-const AKSI = ['lapor', 'analisis', 'analisis_gagal', 'status', 'hapus', 'masuk', 'ringkasan'];
+const AKSI = ['lapor', 'analisis', 'analisis_gagal', 'status', 'hapus', 'masuk', 'ringkasan', 'pengguna'];
 
 /**
  * Catatan aktivitas untuk manajemen.

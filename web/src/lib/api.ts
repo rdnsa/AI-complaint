@@ -1,3 +1,27 @@
+export type Peran = 'admin' | 'petugas' | 'pelapor';
+
+export interface Sesi {
+  id: string;
+  nama: string;
+  peran: Peran;
+}
+
+export interface AkunPengelola {
+  id: string;
+  username: string;
+  nama: string;
+  peran: Peran;
+  aktif: number;
+  created_at: string;
+}
+
+export interface BarisPeringkat {
+  id: string;
+  nama: string;
+  laporan: number;
+  selesai: number | null;
+}
+
 export type Prioritas = 'rendah' | 'sedang' | 'tinggi';
 export type StatusLaporan = 'baru' | 'diproses' | 'selesai';
 
@@ -161,11 +185,28 @@ export const api = {
     });
   },
 
-  // --- petugas ---
-  login: (nama: string, password: string) =>
-    req<{ nama: string }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ nama, password }) }),
-  logout: () => req<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
-  saya: () => req<{ nama: string }>('/api/auth/me'),
+  // --- akun ---
+  masuk: (username: string, password: string) =>
+    req<Sesi>('/api/auth/masuk', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  daftar: (username: string, nama: string, password: string) =>
+    req<Sesi>('/api/auth/daftar', {
+      method: 'POST',
+      body: JSON.stringify({ username, nama, password }),
+    }),
+  keluar: () => req<{ ok: boolean }>('/api/auth/keluar', { method: 'POST' }),
+  saya: () => req<Sesi>('/api/auth/saya'),
+
+  // --- khusus admin ---
+  daftarPengguna: () => req<{ data: AkunPengelola[] }>('/api/pengguna'),
+  buatPengguna: (body: { username: string; nama: string; password: string }) =>
+    req<AkunPengelola>('/api/pengguna', { method: 'POST', body: JSON.stringify(body) }),
+  ubahPengguna: (id: string, body: { nama?: string; password?: string; aktif?: boolean }) =>
+    req<{ ok: boolean }>(`/api/pengguna/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+
+  peringkat: () =>
+    req<{ data: BarisPeringkat[]; saya: { peringkat: number; laporan: number } | null }>(
+      '/api/peringkat',
+    ),
 
   daftarLaporan: (filter: Record<string, string>) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));

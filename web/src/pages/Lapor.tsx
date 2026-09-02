@@ -4,6 +4,7 @@ import Kop from '../components/Kop';
 import { api, type Jenis, type Lokasi } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
 import { simpanRiwayat } from '../lib/riwayat';
+import { useSesi } from '../lib/sesi';
 
 const IKON: Record<Jenis, string> = { pria: '♂', wanita: '♀', disabilitas: '♿' };
 
@@ -11,6 +12,7 @@ export default function Lapor() {
   const { lokasiId = '' } = useParams();
   const navigate = useNavigate();
   const { t } = useBahasa();
+  const { sesi } = useSesi();
 
   const [lokasi, setLokasi] = useState<Lokasi | null>(null);
   const [memuat, setMemuat] = useState(true);
@@ -123,7 +125,22 @@ export default function Lapor() {
           </div>
         </div>
 
-        <p className="mt-5 leading-relaxed text-maroon-700">{t('lapor.ajakan')}</p>
+        {/* Melapor tanpa akun tetap boleh; keterangan ini hanya menjelaskan
+            konsekuensinya terhadap papan peringkat. */}
+        <p className="mt-5 rounded-xl bg-krem-50 px-3.5 py-2.5 text-sm text-maroon-700 ring-1 ring-krem-200">
+          {sesi?.peran === 'pelapor' ? (
+            t('sesi.sebagai', { nama: sesi.nama })
+          ) : (
+            <>
+              {t('sesi.anonim_info')}{' '}
+              <Link to="/masuk" className="font-semibold text-bata-600 underline underline-offset-2">
+                {t('sesi.masuk')}
+              </Link>
+            </>
+          )}
+        </p>
+
+        <p className="mt-4 leading-relaxed text-maroon-700">{t('lapor.ajakan')}</p>
 
         <form onSubmit={kirim} className="mt-5 space-y-5">
           <div>

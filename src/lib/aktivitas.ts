@@ -7,7 +7,8 @@ export type Aksi =
   | 'status'
   | 'hapus'
   | 'masuk'
-  | 'ringkasan';
+  | 'ringkasan'
+  | 'pengguna';
 
 /** Pelaku selain petugas bernama: laporan datang dari pelapor, cron dari sistem. */
 export const PELAPOR = 'pelapor';

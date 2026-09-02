@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { catat, PELAPOR } from '../lib/aktivitas';
+import { sesiSaatIni } from '../lib/auth';
 import { jalankanAnalisis } from '../lib/analisis';
 import { wajibPetugas } from '../lib/auth';
 import { rentangHariWIB } from '../lib/waktu';
@@ -45,17 +46,22 @@ app.post('/', async (c) => {
     .first<{ id: string }>();
   if (kembar) return c.json({ id: kembar.id, duplikat: true }, 200);
 
+  // Laporan tetap boleh anonim; bila pelapornya sedang masuk, laporan itu
+  // menempel ke akunnya dan ikut dihitung di papan peringkat.
+  const sesi = await sesiSaatIni(c);
+  const pelapor_id = sesi?.peran === 'pelapor' ? sesi.id : null;
+
   const id = crypto.randomUUID();
   await c.env.DB.prepare(
-    `INSERT INTO reports (id, toilet_id, teks, foto_key) VALUES (?, ?, ?, ?)`,
+    `INSERT INTO reports (id, toilet_id, teks, foto_key, pelapor_id) VALUES (?, ?, ?, ?, ?)`,
   )
-    .bind(id, toilet_id, teks, foto_key)
+    .bind(id, toilet_id, teks, foto_key, pelapor_id)
     .run();
 
   await catat(c.env, {
     aksi: 'lapor',
     report_id: id,
-    pelaku: PELAPOR,
+    pelaku: sesi?.peran === 'pelapor' ? sesi.nama : PELAPOR,
     ringkas: `Laporan baru di ${toilet.nama}`,
     rincian: { toilet_id, teks },
   });
@@ -240,13 +246,13 @@ app.patch('/:id', wajibPetugas, async (c) => {
             updated_at = datetime('now')
       WHERE id = ?`,
   )
-    .bind(status, c.get('petugas'), bukti ?? null, status, id)
+    .bind(status, c.get('sesi').nama, bukti ?? null, status, id)
     .run();
 
   await catat(c.env, {
     aksi: 'status',
     report_id: id,
-    pelaku: c.get('petugas'),
+    pelaku: c.get('sesi').nama,
     ringkas: `Status ${sebelum.status} → ${status} di ${sebelum.nama}`,
     rincian: { dari: sebelum.status, ke: status, foto_bukti: bukti ?? null },
   });
@@ -291,7 +297,7 @@ app.delete('/:id', wajibPetugas, async (c) => {
   await catat(c.env, {
     aksi: 'hapus',
     report_id: id,
-    pelaku: c.get('petugas'),
+    pelaku: c.get('sesi').nama,
     ringkas: `Menghapus laporan di ${row.toilet_nama}`,
     rincian: {
       toilet_nama: row.toilet_nama,

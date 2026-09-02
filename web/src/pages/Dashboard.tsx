@@ -2,24 +2,33 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Kop from '../components/Kop';
 import PanelAktivitas from '../components/PanelAktivitas';
 import PanelGrafik from '../components/PanelGrafik';
+import PanelPengguna from '../components/PanelPengguna';
 import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
-import { api, type Laporan, type Ringkasan, type Statistik, type StatusLaporan } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+import {
+  api,
+  type Laporan,
+  type Ringkasan,
+  type Sesi,
+  type Statistik,
+  type StatusLaporan,
+} from '../lib/api';
 import { useBahasa, useWaktuRelatif } from '../lib/i18n';
+import { useSesi } from '../lib/sesi';
 
 export default function Dashboard() {
   const { t } = useBahasa();
-  const [petugas, setPetugas] = useState<string | null>(null);
-  const [memeriksaSesi, setMemeriksaSesi] = useState(true);
+  const { sesi, memuat } = useSesi();
+  const navigate = useNavigate();
+
+  const bolehMasuk = sesi && sesi.peran !== 'pelapor';
 
   useEffect(() => {
-    api
-      .saya()
-      .then((r) => setPetugas(r.nama))
-      .catch(() => setPetugas(null))
-      .finally(() => setMemeriksaSesi(false));
-  }, []);
+    // Pelapor tidak punya urusan di sini; halaman masuk yang menentukan tujuannya.
+    if (!memuat && !bolehMasuk) navigate('/masuk', { replace: true });
+  }, [memuat, bolehMasuk, navigate]);
 
-  if (memeriksaSesi) {
+  if (!bolehMasuk) {
     return (
       <div className="min-h-screen">
         <Kop judul={t('dash.judul')} ramping />
@@ -27,72 +36,28 @@ export default function Dashboard() {
       </div>
     );
   }
-  if (!petugas) return <FormLogin onSukses={setPetugas} />;
-  return <Papan petugas={petugas} onLogout={() => setPetugas(null)} />;
+
+  return <Papan sesi={sesi} />;
 }
 
-function FormLogin({ onSukses }: { onSukses: (nama: string) => void }) {
+function Papan({ sesi }: { sesi: Sesi }) {
   const { t } = useBahasa();
-  const [nama, setNama] = useState('');
-  const [password, setPassword] = useState('');
-  const [galat, setGalat] = useState<string | null>(null);
-  const [proses, setProses] = useState(false);
-
-  async function masuk(e: React.FormEvent) {
-    e.preventDefault();
-    setProses(true);
-    setGalat(null);
-    try {
-      onSukses((await api.login(nama, password)).nama);
-    } catch (err) {
-      setGalat(err instanceof Error ? err.message : t('login.galat'));
-      setProses(false);
-    }
-  }
-
-  return (
-    <div className="min-h-screen">
-      <Kop judul={t('login.judul')} keterangan={t('login.keterangan')} ramping />
-      <main className="mx-auto max-w-sm px-4">
-        <form onSubmit={masuk} className="kartu mt-8 space-y-4 p-5">
-          <div>
-            <label htmlFor="nama" className="label">
-              {t('login.nama')}
-            </label>
-            <input id="nama" className="input" value={nama} onChange={(e) => setNama(e.target.value)} required />
-          </div>
-          <div>
-            <label htmlFor="pw" className="label">
-              {t('login.password')}
-            </label>
-            <input
-              id="pw"
-              type="password"
-              className="input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          {galat && <p className="text-sm font-medium text-red-700">{galat}</p>}
-          <button type="submit" disabled={proses} className="tombol-utama w-full py-3">
-            {proses ? t('login.memeriksa') : t('login.masuk')}
-          </button>
-        </form>
-      </main>
-    </div>
-  );
-}
-
-function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void }) {
-  const { t } = useBahasa();
+  const { keluar } = useSesi();
+  const navigate = useNavigate();
+  const petugas = sesi.nama;
   const [laporan, setLaporan] = useState<Laporan[]>([]);
   const [statistik, setStatistik] = useState<Statistik | null>(null);
   const [ringkasan, setRingkasan] = useState<Ringkasan | null>(null);
   const [filter, setFilter] = useState({ status: '', prioritas: '' });
   const [memuat, setMemuat] = useState(true);
   const [menyusun, setMenyusun] = useState(false);
-  const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas'>('laporan');
+  const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas' | 'pengguna'>('laporan');
+  // Pengelolaan akun hanya muncul bagi admin — petugas biasa tidak melihat tabnya
+  // sama sekali, dan server tetap menolak walau tabnya dipaksa muncul.
+  const tabs =
+    sesi.peran === 'admin'
+      ? (['laporan', 'grafik', 'aktivitas', 'pengguna'] as const)
+      : (['laporan', 'grafik', 'aktivitas'] as const);
 
   const muat = useCallback(async () => {
     const [l, s, r] = await Promise.all([
@@ -130,13 +95,13 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
     <div className="min-h-screen pb-16">
       <Kop
         judul={t('dash.judul')}
-        keterangan={t('dash.sebagai', { nama: petugas })}
+        keterangan={t('dash.sebagai', { nama: `${petugas} · ${sesi.peran}` })}
         ramping
         kanan={
           <button
             onClick={async () => {
-              await api.logout().catch(() => {});
-              onLogout();
+              await keluar();
+              navigate('/masuk', { replace: true });
             }}
             className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25"
           >
@@ -147,7 +112,7 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
 
       <main className="mx-auto max-w-5xl px-4">
         <nav className="mt-5 flex gap-1 rounded-xl bg-white p-1 ring-1 ring-krem-200">
-          {(['laporan', 'grafik', 'aktivitas'] as const).map((k) => (
+          {tabs.map((k) => (
             <button
               key={k}
               onClick={() => setTab(k)}
@@ -163,6 +128,7 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
 
         {tab === 'grafik' && <PanelGrafik />}
         {tab === 'aktivitas' && <PanelAktivitas />}
+        {tab === 'pengguna' && sesi.peran === 'admin' && <PanelPengguna />}
 
         {tab === 'laporan' && (
           <>

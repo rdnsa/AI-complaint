@@ -14,11 +14,25 @@ Satu QR mewakili satu **lantai** pada satu gedung, bukan satu WC. Jenis toilet
 (pria/wanita/disabilitas) dipilih pelapor di formulir, sehingga jumlah stiker
 yang perlu dicetak dan dirawat jauh lebih sedikit.
 
+## Peran pengguna
+
+| Peran | Cara mendapat akun | Bisa apa |
+|---|---|---|
+| **Admin** | sudah ada sejak awal (`admin` / `Admin123!`) | semua yang bisa petugas, ditambah membuat akun petugas serta mengubah nama, password, dan status aktifnya |
+| **Petugas** | dibuatkan oleh admin | mengubah status laporan, mengunggah bukti, menganalisis ulang, menghapus laporan |
+| **Pelapor** | mendaftar sendiri di `/daftar` | melapor atas namanya dan masuk hitungan papan peringkat |
+| Tanpa akun | — | tetap boleh melapor dan membaca papan laporan terbuka |
+
+**Ganti password admin bawaan setelah masuk pertama kali.** Password disimpan
+sebagai PBKDF2-SHA256 100.000 iterasi dengan salt per pengguna; sandi aslinya
+tidak pernah tersimpan di mana pun.
+
 ## Fitur
 
 1. **Klasifikasi otomatis** — `kebersihan`, `perlengkapan`, `kerusakan`, `bau`, `genangan`, `lainnya` (boleh lebih dari satu).
 2. **Penentuan prioritas** — `rendah` / `sedang` / `tinggi`, dengan aturan berbasis risiko keselamatan.
 3. **Ringkasan harian** — merangkum seluruh laporan sehari, menyebut lokasi paling bermasalah dan tindakan mendesak.
+4. **Papan peringkat pelapor** — gamifikasi berdasarkan jumlah laporan, dengan jumlah laporan yang benar-benar selesai ikut ditampilkan.
 
 Pelengkapnya: papan laporan terbuka untuk siapa saja, foto keadaan wajib dari
 pelapor dan foto bukti wajib dari petugas (R2), catatan aktivitas untuk
@@ -145,6 +159,12 @@ prioritas tak dikenal jatuh ke `sedang`.
 
 **Latensi tiap panggilan dicatat** di kolom `ai_ms`, berguna sebagai data
 kuantitatif pada bab hasil dan pembahasan.
+
+**Melapor tidak menuntut akun, tetapi akun memberi imbalan.** Alur inti — pindai
+QR lalu tulis keluhan — tetap bisa ditempuh tanpa mendaftar, karena memaksa
+pendaftaran di depan pintu akan mematikan tingkat pemakaian. Laporan dari
+pelapor yang sedang masuk menempel pada akunnya dan dihitung di papan peringkat;
+laporan anonim tetap diterima dan tetap ditangani, hanya tidak ikut peringkat.
 
 **Penyelesaian menuntut bukti, bukan klaim.** Pelapor wajib melampirkan foto
 keadaan, dan petugas wajib mengunggah foto bukti sebelum status berubah menjadi

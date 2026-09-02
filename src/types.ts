@@ -1,3 +1,6 @@
+export const PERAN = ['admin', 'petugas', 'pelapor'] as const;
+export type Peran = (typeof PERAN)[number];
+
 export interface Env {
   DB: D1Database;
   BUCKET: R2Bucket;
@@ -10,13 +13,12 @@ export interface Env {
   // secrets (wrangler secret put)
   LLM_API_KEY: string;
   AUTH_SECRET: string;
-  PETUGAS_PASSWORD: string;
 }
 
 /** Tipe Hono bersama: binding + variabel yang diisi middleware auth. */
 export type AppEnv = {
   Bindings: Env;
-  Variables: { petugas: string };
+  Variables: { sesi: { id: string; nama: string; peran: Peran } };
 };
 
 export const KATEGORI = [
@@ -53,6 +55,7 @@ export interface ReportRow {
   ai_error: string | null;
   ai_model: string | null;
   ai_ms: number | null;
+  pelapor_id: string | null;
   created_at: string;
   updated_at: string;
   // hasil JOIN view toilet_info
