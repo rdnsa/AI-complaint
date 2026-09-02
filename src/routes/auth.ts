@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { catat } from '../lib/aktivitas';
 import { buatSesi, hapusSesi, samaAman, sesiSaatIni } from '../lib/auth';
 import type { AppEnv } from '../types';
 
@@ -24,6 +25,11 @@ app.post('/login', async (c) => {
   }
 
   await buatSesi(c, parsed.data.nama);
+  await catat(c.env, {
+    aksi: 'masuk',
+    pelaku: parsed.data.nama,
+    ringkas: `${parsed.data.nama} masuk ke dashboard petugas`,
+  });
   return c.json({ ok: true, nama: parsed.data.nama });
 });
 

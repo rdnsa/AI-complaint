@@ -20,7 +20,9 @@ yang perlu dicetak dan dirawat jauh lebih sedikit.
 2. **Penentuan prioritas** — `rendah` / `sedang` / `tinggi`, dengan aturan berbasis risiko keselamatan.
 3. **Ringkasan harian** — merangkum seluruh laporan sehari, menyebut lokasi paling bermasalah dan tindakan mendesak.
 
-Pelengkapnya: papan laporan terbuka untuk siapa saja, foto lampiran (R2),
+Pelengkapnya: papan laporan terbuka untuk siapa saja, foto keadaan wajib dari
+pelapor dan foto bukti wajib dari petugas (R2), catatan aktivitas untuk
+manajemen, grafik di dashboard,
 pelacakan status oleh pelapor tanpa login,
 alur status `baru → diproses → selesai`,
 statistik harian untuk dashboard, peta lokasi gedung di halaman depan, serta
@@ -143,6 +145,25 @@ prioritas tak dikenal jatuh ke `sedang`.
 
 **Latensi tiap panggilan dicatat** di kolom `ai_ms`, berguna sebagai data
 kuantitatif pada bab hasil dan pembahasan.
+
+**Penyelesaian menuntut bukti, bukan klaim.** Pelapor wajib melampirkan foto
+keadaan, dan petugas wajib mengunggah foto bukti sebelum status berubah menjadi
+selesai — ditolak di server, bukan sekadar disembunyikan di antarmuka. Foto
+bukti itu ikut tampil di papan terbuka supaya klaim "sudah ditangani" bisa
+diperiksa siapa saja.
+
+**Catatan aktivitas tidak bisa dihapus dari aplikasi.** Setiap laporan masuk,
+hasil analisis, perubahan status, penghapusan, dan sesi petugas tercatat di
+tabel `aktivitas`. Tabel itu sengaja tanpa foreign key ke `reports`: justru
+laporan yang dihapuslah yang paling perlu terlacak, sehingga seluruh isinya
+disalin ke catatan sebelum baris aslinya hilang. Manajemen tetap bisa melihat
+apa yang dihapus, oleh siapa, dan kapan.
+
+**Warna grafik dihitung, bukan dikira-kira.** Palet deret dan palet prioritas
+sudah lolos pemeriksaan rentang terang, ambang chroma, keterpisahan bagi buta
+warna (deutan/protan/tritan), dan kontras terhadap latar. Nilainya ada di
+`web/src/components/grafik/warna.ts` — jangan diganti tanpa menjalankan ulang
+validatornya.
 
 **Laporan terbuka dibaca siapa saja, tetapi hanya petugas yang mengubahnya.**
 Halaman `/laporan` menampilkan seluruh laporan beserta status penanganannya

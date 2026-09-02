@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { catat, PELAPOR } from '../lib/aktivitas';
 import { jalankanAnalisis } from '../lib/analisis';
 import { wajibPetugas } from '../lib/auth';
 import { rentangHariWIB } from '../lib/waktu';
@@ -10,7 +11,12 @@ const KOLOM = `r.*, t.nama AS toilet_nama, t.gedung_kode, t.gedung_nama, t.lanta
 const BuatLaporanSchema = z.object({
   toilet_id: z.string().min(1).max(50),
   teks: z.string().trim().min(5, 'Keluhan terlalu pendek').max(1000),
-  foto_key: z.string().max(200).nullish(),
+  // Foto wajib: keluhan tanpa gambar sulit diverifikasi petugas, dan
+  // keberadaannya membuat papan laporan terbuka jauh lebih dapat dipercaya.
+  foto_key: z
+    .string({ required_error: 'Foto keadaan wajib dilampirkan' })
+    .min(1, 'Foto keadaan wajib dilampirkan')
+    .max(200),
 });
 
 const app = new Hono<AppEnv>();
@@ -43,8 +49,16 @@ app.post('/', async (c) => {
   await c.env.DB.prepare(
     `INSERT INTO reports (id, toilet_id, teks, foto_key) VALUES (?, ?, ?, ?)`,
   )
-    .bind(id, toilet_id, teks, foto_key ?? null)
+    .bind(id, toilet_id, teks, foto_key)
     .run();
+
+  await catat(c.env, {
+    aksi: 'lapor',
+    report_id: id,
+    pelaku: PELAPOR,
+    ringkas: `Laporan baru di ${toilet.nama}`,
+    rincian: { toilet_id, teks },
+  });
 
   // Analisis LLM berjalan setelah respons terkirim: mahasiswa dapat konfirmasi instan.
   c.executionCtx.waitUntil(jalankanAnalisis(c.env, id));
@@ -78,7 +92,8 @@ app.get('/publik', async (c) => {
   const [daftar, jumlah] = await c.env.DB.batch<Record<string, unknown>>([
     c.env.DB.prepare(
       `SELECT r.id, r.status, r.prioritas, r.kategori, r.ringkasan, r.ai_status,
-              r.created_at, r.selesai_at, t.nama AS toilet_nama, t.gedung_kode, t.lantai
+              r.created_at, r.selesai_at, r.foto_selesai_key,
+              t.nama AS toilet_nama, t.gedung_kode, t.lantai
          FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
          ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
         ORDER BY
@@ -92,9 +107,13 @@ app.get('/publik', async (c) => {
   ]);
 
   return c.json({
-    data: daftar.results.map((row) => ({
+    data: daftar.results.map(({ foto_selesai_key, ...row }) => ({
       ...row,
       kategori: row.kategori ? JSON.parse(row.kategori as string) : [],
+      // Foto bukti penyelesaian ikut terbuka: justru inilah yang membuat klaim
+      // "sudah ditangani" bisa diperiksa siapa saja. Foto dari pelapor tetap
+      // tidak ditampilkan karena berpeluang memuat orang lain.
+      foto_selesai_url: foto_selesai_key ? `/api/uploads/${foto_selesai_key}` : null,
     })),
     jumlah: jumlah.results[0] ?? { total: 0, selesai: 0 },
   });
@@ -185,26 +204,53 @@ app.get('/', wajibPetugas, async (c) => {
   return c.json({ data: rows.results.map(toDTO) });
 });
 
-const UbahStatusSchema = z.object({ status: z.enum(STATUS) });
+const UbahStatusSchema = z.object({
+  status: z.enum(STATUS),
+  foto_selesai_key: z.string().max(200).nullish(),
+});
 
 /** Petugas: menandai laporan sedang dikerjakan / selesai. */
 app.patch('/:id', wajibPetugas, async (c) => {
   const parsed = UbahStatusSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'Status tidak valid' }, 400);
 
-  const { status } = parsed.data;
-  const hasil = await c.env.DB.prepare(
+  const id = c.req.param('id');
+  const { status, foto_selesai_key } = parsed.data;
+
+  const sebelum = await c.env.DB.prepare(
+    `SELECT r.status, r.foto_selesai_key, t.nama FROM reports r
+       JOIN toilet_info t ON t.id = r.toilet_id WHERE r.id = ?`,
+  )
+    .bind(id)
+    .first<{ status: string; foto_selesai_key: string | null; nama: string }>();
+  if (!sebelum) return c.json({ error: 'Laporan tidak ditemukan' }, 404);
+
+  // Penyelesaian menuntut bukti: tanpa foto, status 'selesai' hanya klaim.
+  const bukti = foto_selesai_key ?? sebelum.foto_selesai_key;
+  if (status === 'selesai' && !bukti) {
+    return c.json({ error: 'Foto bukti penyelesaian wajib diunggah lebih dulu.' }, 400);
+  }
+
+  await c.env.DB.prepare(
     `UPDATE reports
         SET status = ?,
             petugas = ?,
+            foto_selesai_key = ?,
             selesai_at = CASE WHEN ? = 'selesai' THEN datetime('now') ELSE NULL END,
             updated_at = datetime('now')
       WHERE id = ?`,
   )
-    .bind(status, c.get('petugas'), status, c.req.param('id'))
+    .bind(status, c.get('petugas'), bukti ?? null, status, id)
     .run();
 
-  if (!hasil.meta.changes) return c.json({ error: 'Laporan tidak ditemukan' }, 404);
+  await catat(c.env, {
+    aksi: 'status',
+    report_id: id,
+    pelaku: c.get('petugas'),
+    ringkas: `Status ${sebelum.status} → ${status} di ${sebelum.nama}`,
+    rincian: { dari: sebelum.status, ke: status, foto_bukti: bukti ?? null },
+  });
+
   return c.json({ ok: true, status });
 });
 
@@ -232,13 +278,38 @@ app.post('/:id/analisa-ulang', wajibPetugas, async (c) => {
  */
 app.delete('/:id', wajibPetugas, async (c) => {
   const id = c.req.param('id');
-  const row = await c.env.DB.prepare(`SELECT foto_key FROM reports WHERE id = ?`)
+  const row = await c.env.DB.prepare(
+    `SELECT r.*, t.nama AS toilet_nama FROM reports r
+       JOIN toilet_info t ON t.id = r.toilet_id WHERE r.id = ?`,
+  )
     .bind(id)
-    .first<{ foto_key: string | null }>();
+    .first<ReportRow & { toilet_nama: string }>();
   if (!row) return c.json({ error: 'Laporan tidak ditemukan' }, 404);
 
+  // Salinan utuh disimpan lebih dulu. Inilah yang memungkinkan manajemen
+  // memeriksa laporan yang hilang beserta siapa yang menghapusnya.
+  await catat(c.env, {
+    aksi: 'hapus',
+    report_id: id,
+    pelaku: c.get('petugas'),
+    ringkas: `Menghapus laporan di ${row.toilet_nama}`,
+    rincian: {
+      toilet_nama: row.toilet_nama,
+      teks: row.teks,
+      status: row.status,
+      prioritas: row.prioritas,
+      kategori: row.kategori,
+      ringkasan: row.ringkasan,
+      dibuat: row.created_at,
+      ada_foto: Boolean(row.foto_key),
+    },
+  });
+
   await c.env.DB.prepare(`DELETE FROM reports WHERE id = ?`).bind(id).run();
-  if (row.foto_key) await c.env.BUCKET.delete(row.foto_key).catch(() => {});
+  // Foto ikut dihapus agar tidak meninggalkan berkas yatim di R2.
+  for (const key of [row.foto_key, row.foto_selesai_key]) {
+    if (key) await c.env.BUCKET.delete(key).catch(() => {});
+  }
 
   return c.json({ ok: true });
 });

@@ -1,3 +1,4 @@
+import { catat, SISTEM } from './aktivitas';
 import { analisaKeluhan } from './llm';
 import type { Env } from '../types';
 
@@ -40,6 +41,14 @@ export async function jalankanAnalisis(env: Env, reportId: string): Promise<void
         reportId,
       )
       .run();
+
+    await catat(env, {
+      aksi: 'analisis',
+      report_id: reportId,
+      pelaku: SISTEM,
+      ringkas: `Analisis selesai: prioritas ${hasil.prioritas} (${Date.now() - mulai} ms)`,
+      rincian: { kategori: hasil.kategori, prioritas: hasil.prioritas, model: env.LLM_MODEL },
+    });
   } catch (err) {
     const pesan = err instanceof Error ? err.message : String(err);
     console.error(`Analisis gagal untuk laporan ${reportId}: ${pesan}`);
@@ -50,5 +59,13 @@ export async function jalankanAnalisis(env: Env, reportId: string): Promise<void
     )
       .bind(pesan.slice(0, 500), Date.now() - mulai, reportId)
       .run();
+
+    await catat(env, {
+      aksi: 'analisis_gagal',
+      report_id: reportId,
+      pelaku: SISTEM,
+      ringkas: 'Analisis otomatis gagal',
+      rincian: { error: pesan.slice(0, 300) },
+    });
   }
 }

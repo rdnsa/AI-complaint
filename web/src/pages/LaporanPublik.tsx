@@ -102,6 +102,18 @@ export default function LaporanPublik() {
                   )}
                 </p>
 
+                {/* Foto bukti dari petugas ditampilkan terbuka: inilah yang
+                    membuat klaim "sudah ditangani" bisa diperiksa siapa saja. */}
+                {l.foto_selesai_url && (
+                  <a href={l.foto_selesai_url} target="_blank" rel="noreferrer" className="mt-3 block w-fit">
+                    <img
+                      src={l.foto_selesai_url}
+                      alt={t('dash.bukti')}
+                      className="max-h-48 rounded-xl ring-2 ring-emerald-400"
+                    />
+                  </a>
+                )}
+
                 {l.selesai_at && (
                   <p className="mt-2 text-xs font-semibold text-emerald-700">
                     ✓ {t('lacak.selesai')} · {waktuRelatif(l.selesai_at)}

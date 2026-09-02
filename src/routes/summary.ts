@@ -40,6 +40,70 @@ app.get('/stats', wajibPetugas, async (c) => {
   });
 });
 
+/**
+ * Angka-angka untuk grafik di dashboard.
+ *
+ * Semuanya dihitung di database dalam satu batch; frontend hanya menggambar.
+ */
+app.get('/grafik', wajibPetugas, async (c) => {
+  const hari = Math.min(Number(c.req.query('hari') ?? 14) || 14, 90);
+
+  const [harian, kategori, prioritas, gedung, penyelesaian] = await c.env.DB.batch<
+    Record<string, unknown>
+  >([
+    c.env.DB.prepare(
+      // '+7 hours' mengelompokkan menurut hari WIB, bukan UTC.
+      `SELECT date(created_at, '+7 hours') AS tanggal,
+              COUNT(*) AS total,
+              SUM(status = 'selesai') AS selesai
+         FROM reports
+        WHERE created_at >= datetime('now', ?)
+        GROUP BY tanggal ORDER BY tanggal`,
+    ).bind(`-${hari} days`),
+    c.env.DB.prepare(
+      `SELECT je.value AS kategori, COUNT(*) AS jumlah
+         FROM reports r, json_each(r.kategori) je
+        WHERE r.kategori IS NOT NULL
+        GROUP BY je.value ORDER BY jumlah DESC`,
+    ),
+    c.env.DB.prepare(
+      `SELECT prioritas, COUNT(*) AS jumlah FROM reports
+        WHERE prioritas IS NOT NULL GROUP BY prioritas`,
+    ),
+    c.env.DB.prepare(
+      `SELECT t.gedung_kode, t.gedung_nama, COUNT(*) AS jumlah
+         FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
+        GROUP BY t.gedung_kode ORDER BY jumlah DESC LIMIT 10`,
+    ),
+    c.env.DB.prepare(
+      `SELECT COUNT(*) AS jumlah,
+              AVG((julianday(selesai_at) - julianday(created_at)) * 1440) AS menit
+         FROM reports WHERE selesai_at IS NOT NULL`,
+    ),
+  ]);
+
+  // Hari tanpa laporan tetap dikirim sebagai nol supaya garis grafiknya utuh.
+  const peta = new Map(harian.results.map((r) => [r.tanggal as string, r]));
+  const deret: Array<{ tanggal: string; total: number; selesai: number }> = [];
+  for (let i = hari - 1; i >= 0; i--) {
+    const t = new Date(Date.now() + 7 * 3600_000 - i * 86_400_000).toISOString().slice(0, 10);
+    const ada = peta.get(t);
+    deret.push({
+      tanggal: t,
+      total: Number(ada?.total ?? 0),
+      selesai: Number(ada?.selesai ?? 0),
+    });
+  }
+
+  return c.json({
+    harian: deret,
+    kategori: kategori.results,
+    prioritas: prioritas.results,
+    gedung: gedung.results,
+    penyelesaian: penyelesaian.results[0] ?? { jumlah: 0, menit: null },
+  });
+});
+
 /** Ringkasan tersimpan untuk satu tanggal (default: hari ini). */
 app.get('/', wajibPetugas, async (c) => {
   const tanggal = c.req.query('tanggal') ?? tanggalWIB();

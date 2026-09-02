@@ -45,12 +45,13 @@ export default function Lapor() {
   async function kirim(e: React.FormEvent) {
     e.preventDefault();
     if (teks.trim().length < 5) return setGalat(t('lapor.galat_pendek'));
+    if (!foto) return setGalat(t('lapor.foto_alasan'));
 
     setMengirim(true);
     setGalat(null);
     try {
       // Foto diunggah lebih dulu supaya laporan tersimpan dengan referensi yang sudah pasti ada.
-      const foto_key = foto ? (await api.unggahFoto(foto)).key : null;
+      const foto_key = (await api.unggahFoto(foto)).key;
       const hasil = await api.kirimLaporan({ toilet_id: toiletId, teks: teks.trim(), foto_key });
       // Tanpa login, jejak inilah yang membuat pelapor bisa kembali melihat statusnya.
       simpanRiwayat({ id: hasil.id, lokasi: hasil.toilet, waktu: new Date().toISOString() });
@@ -153,6 +154,9 @@ export default function Lapor() {
 
           <div>
             <span className="label">{t('lapor.foto')}</span>
+            <p className="-mt-1 mb-2 text-xs leading-relaxed text-maroon-600">
+              {t('lapor.foto_alasan')}
+            </p>
             <input
               ref={inputFoto}
               type="file"
@@ -201,7 +205,7 @@ export default function Lapor() {
             <div className="mx-auto max-w-lg">
               <button
                 type="submit"
-                disabled={mengirim || !toiletId}
+                disabled={mengirim || !toiletId || !foto}
                 className="tombol-utama w-full py-3.5 text-base"
               >
                 {mengirim ? t('lapor.mengirim') : t('lapor.kirim')}

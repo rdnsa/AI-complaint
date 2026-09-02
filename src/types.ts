@@ -41,6 +41,7 @@ export interface ReportRow {
   toilet_id: string;
   teks: string;
   foto_key: string | null;
+  foto_selesai_key: string | null;
   status: Status;
   petugas: string | null;
   selesai_at: string | null;
@@ -63,17 +64,20 @@ export interface ReportRow {
 }
 
 /** Bentuk yang dikirim ke frontend: kategori sudah jadi array, foto sudah jadi URL. */
-export interface ReportDTO extends Omit<ReportRow, 'kategori' | 'foto_key'> {
+export interface ReportDTO
+  extends Omit<ReportRow, 'kategori' | 'foto_key' | 'foto_selesai_key'> {
   kategori: Kategori[];
   foto_url: string | null;
+  foto_selesai_url: string | null;
 }
 
 export function toDTO(row: ReportRow): ReportDTO {
-  const { kategori, foto_key, ...rest } = row;
+  const { kategori, foto_key, foto_selesai_key, ...rest } = row;
   return {
     ...rest,
     kategori: kategori ? (JSON.parse(kategori) as Kategori[]) : [],
     // Path relatif: foto dilayani Worker ini sendiri, satu domain dengan aplikasi.
     foto_url: foto_key ? `/api/uploads/${foto_key}` : null,
+    foto_selesai_url: foto_selesai_key ? `/api/uploads/${foto_selesai_key}` : null,
   };
 }

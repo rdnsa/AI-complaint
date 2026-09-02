@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Kop from '../components/Kop';
+import PanelAktivitas from '../components/PanelAktivitas';
+import PanelGrafik from '../components/PanelGrafik';
 import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
 import { api, type Laporan, type Ringkasan, type Statistik, type StatusLaporan } from '../lib/api';
 import { useBahasa, useWaktuRelatif } from '../lib/i18n';
@@ -90,6 +92,7 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
   const [filter, setFilter] = useState({ status: '', prioritas: '' });
   const [memuat, setMemuat] = useState(true);
   const [menyusun, setMenyusun] = useState(false);
+  const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas'>('laporan');
 
   const muat = useCallback(async () => {
     const [l, s, r] = await Promise.all([
@@ -116,10 +119,10 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
     muat();
   }
 
-  async function ubahStatus(id: string, status: StatusLaporan) {
+  async function ubahStatus(id: string, status: StatusLaporan, fotoBukti?: string) {
     // Perbarui tampilan lebih dulu supaya tombol terasa responsif, lalu sinkronkan.
     setLaporan((prev) => prev.map((l) => (l.id === id ? { ...l, status, petugas } : l)));
-    await api.ubahStatus(id, status).catch(() => {});
+    await api.ubahStatus(id, status, fotoBukti).catch(() => {});
     muat();
   }
 
@@ -143,6 +146,26 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
       />
 
       <main className="mx-auto max-w-5xl px-4">
+        <nav className="mt-5 flex gap-1 rounded-xl bg-white p-1 ring-1 ring-krem-200">
+          {(['laporan', 'grafik', 'aktivitas'] as const).map((k) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              aria-pressed={tab === k}
+              className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold transition ${
+                tab === k ? 'bg-maroon-800 text-white' : 'text-maroon-700 hover:bg-krem-50'
+              }`}
+            >
+              {t(`tab.${k}`)}
+            </button>
+          ))}
+        </nav>
+
+        {tab === 'grafik' && <PanelGrafik />}
+        {tab === 'aktivitas' && <PanelAktivitas />}
+
+        {tab === 'laporan' && (
+          <>
         {statistik && (
           <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Kartu label={t('dash.stat_total')} nilai={statistik.hari_ini.total ?? 0} />
@@ -246,6 +269,8 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
             />
           ))}
         </div>
+          </>
+        )}
       </main>
     </div>
   );
@@ -273,12 +298,31 @@ function BarisLaporan({
   onHapus,
 }: {
   laporan: Laporan;
-  onUbahStatus: (id: string, status: StatusLaporan) => void;
+  onUbahStatus: (id: string, status: StatusLaporan, fotoBukti?: string) => void;
   onSegarkan: () => void;
   onHapus: (id: string) => void;
 }) {
   const { t } = useBahasa();
   const waktuRelatif = useWaktuRelatif();
+  const inputBukti = useRef<HTMLInputElement>(null);
+  const [mengunggah, setMengunggah] = useState(false);
+
+  /**
+   * Menyelesaikan laporan selalu lewat jalur ini: pilih foto, unggah, baru
+   * status berubah. Server juga menolak 'selesai' tanpa bukti, jadi klaim
+   * penyelesaian tidak bisa dibuat hanya dengan menekan tombol.
+   */
+  async function selesaikan(berkas: File) {
+    setMengunggah(true);
+    try {
+      const { key } = await api.unggahFoto(berkas, 'bukti');
+      onUbahStatus(l.id, 'selesai', key);
+    } catch {
+      /* biarkan status apa adanya bila unggahan gagal */
+    } finally {
+      setMengunggah(false);
+    }
+  }
 
   // Garis tepi kiri memberi tanda prioritas yang terbaca dari kejauhan.
   const tepi =
@@ -315,11 +359,27 @@ function BarisLaporan({
         </p>
       )}
 
-      {l.foto_url && (
-        <a href={l.foto_url} target="_blank" rel="noreferrer">
-          <img src={l.foto_url} alt="" className="mt-3 max-h-64 rounded-xl" />
-        </a>
-      )}
+      <div className="mt-3 flex flex-wrap gap-3">
+        {l.foto_url && (
+          <a href={l.foto_url} target="_blank" rel="noreferrer">
+            <img src={l.foto_url} alt="" className="max-h-44 rounded-xl" />
+          </a>
+        )}
+        {l.foto_selesai_url && (
+          <figure className="m-0">
+            <a href={l.foto_selesai_url} target="_blank" rel="noreferrer">
+              <img
+                src={l.foto_selesai_url}
+                alt=""
+                className="max-h-44 rounded-xl ring-2 ring-emerald-400"
+              />
+            </a>
+            <figcaption className="mt-1 text-xs font-bold text-emerald-700">
+              ✓ {t('dash.bukti')}
+            </figcaption>
+          </figure>
+        )}
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {l.status === 'baru' && (
@@ -328,9 +388,28 @@ function BarisLaporan({
           </button>
         )}
         {l.status !== 'selesai' && (
-          <button onClick={() => onUbahStatus(l.id, 'selesai')} className="tombol-utama !py-1.5 text-xs">
-            {t('dash.selesaikan')}
-          </button>
+          <>
+            <input
+              ref={inputBukti}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) selesaikan(f);
+                e.target.value = '';
+              }}
+            />
+            <button
+              onClick={() => inputBukti.current?.click()}
+              disabled={mengunggah}
+              title={t('dash.bukti_wajib')}
+              className="tombol-utama !py-1.5 text-xs"
+            >
+              {mengunggah ? t('dash.mengunggah') : `📷 ${t('dash.selesaikan')}`}
+            </button>
+          </>
         )}
         {l.ai_status === 'gagal' && (
           <button

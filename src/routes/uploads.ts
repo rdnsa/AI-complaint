@@ -1,7 +1,14 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../types';
 
-const FOLDER = 'laporan';
+/**
+ * Dua jenis foto disimpan di bucket yang sama, dipisah lewat prefix:
+ * 'laporan' untuk foto keadaan dari pelapor, 'bukti' untuk foto penyelesaian
+ * dari petugas. Hanya kedua prefix inilah yang boleh dibaca kembali.
+ */
+const FOLDER = { laporan: 'laporan', bukti: 'bukti' } as const;
+type JenisFoto = keyof typeof FOLDER;
+
 /** Foto disajikan kembali oleh Worker ini; lihat handler GET di bawah. */
 const PREFIX_URL = '/api/uploads';
 
@@ -29,9 +36,12 @@ app.post('/', async (c) => {
     return c.json({ error: 'Ukuran foto maksimal 5 MB' }, 413);
   }
 
+  const diminta = c.req.query('jenis');
+  const jenis: JenisFoto = diminta === 'bukti' ? 'bukti' : 'laporan';
+
   const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
   // Prefix tanggal membuat isi bucket mudah ditelusuri dan dihapus per periode.
-  const key = `${FOLDER}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
+  const key = `${FOLDER[jenis]}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
 
   await c.env.BUCKET.put(key, file.stream(), {
     httpMetadata: { contentType: file.type, cacheControl: 'public, max-age=31536000' },
@@ -50,8 +60,9 @@ app.post('/', async (c) => {
  */
 app.get('/:key{.+}', async (c) => {
   const key = c.req.param('key');
-  // Hanya berkas lampiran laporan yang boleh dibaca, bukan sembarang objek di bucket.
-  if (!key.startsWith(`${FOLDER}/`)) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
+  // Hanya kedua prefix foto yang boleh dibaca, bukan sembarang objek di bucket.
+  const boleh = Object.values(FOLDER).some((f) => key.startsWith(`${f}/`));
+  if (!boleh) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
 
   const obj = await c.env.BUCKET.get(key, { onlyIf: c.req.raw.headers });
   if (!obj) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
