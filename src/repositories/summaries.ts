@@ -105,6 +105,79 @@ export async function angkaGrafik(env: Env, hari: number) {
   };
 }
 
+/**
+ * The deeper cuts behind the dashboard charts.
+ *
+ * Kept in a second batch so the first one stays cheap: these answer questions
+ * about pattern and effectiveness rather than about volume.
+ */
+export async function angkaLanjutan(env: Env, hari: number) {
+  const [jamHari, matriks, waktuPrioritas, harianPrioritas, tren] = await env.DB.batch<
+    Record<string, unknown>
+  >([
+    env.DB.prepare(
+      // Day of week (0 = Sunday) and hour, both shifted into WIB.
+      `SELECT CAST(strftime('%w', created_at, '+7 hours') AS INTEGER) AS hari,
+              CAST(strftime('%H', created_at, '+7 hours') AS INTEGER) AS jam,
+              COUNT(*) AS jumlah
+         FROM reports GROUP BY hari, jam`,
+    ),
+    env.DB.prepare(
+      `SELECT t.gedung_kode, je.value AS kategori, COUNT(*) AS jumlah
+         FROM reports r
+         JOIN toilet_info t ON t.id = r.toilet_id, json_each(r.kategori) je
+        WHERE r.kategori IS NOT NULL
+        GROUP BY t.gedung_kode, je.value`,
+    ),
+    env.DB.prepare(
+      `SELECT prioritas,
+              COUNT(*) AS jumlah,
+              AVG((julianday(selesai_at) - julianday(created_at)) * 1440) AS menit
+         FROM reports
+        WHERE selesai_at IS NOT NULL AND prioritas IS NOT NULL
+        GROUP BY prioritas`,
+    ),
+    env.DB.prepare(
+      `SELECT date(created_at, '+7 hours') AS tanggal, prioritas, COUNT(*) AS jumlah
+         FROM reports
+        WHERE created_at >= datetime('now', ?) AND prioritas IS NOT NULL
+        GROUP BY tanggal, prioritas`,
+    ).bind(`-${hari} days`),
+    env.DB.prepare(
+      // Two equal windows side by side, so the dashboard can show a direction
+      // of travel instead of a bare number.
+      `SELECT
+         SUM(created_at >= datetime('now', ?))                                      AS periode_ini,
+         SUM(created_at >= datetime('now', ?) AND created_at < datetime('now', ?))  AS periode_lalu,
+         SUM(created_at >= datetime('now', ?) AND status = 'selesai')               AS selesai_ini,
+         SUM(created_at >= datetime('now', ?) AND prioritas = 'tinggi')             AS tinggi_ini
+       FROM reports`,
+    ).bind(
+      `-${hari} days`,
+      `-${hari * 2} days`,
+      `-${hari} days`,
+      `-${hari} days`,
+      `-${hari} days`,
+    ),
+  ]);
+
+  return {
+    jamHari: jamHari.results as Array<{ hari: number; jam: number; jumlah: number }>,
+    matriks: matriks.results as Array<{ gedung_kode: string; kategori: string; jumlah: number }>,
+    waktuPrioritas: waktuPrioritas.results as Array<{
+      prioritas: string;
+      jumlah: number;
+      menit: number | null;
+    }>,
+    harianPrioritas: harianPrioritas.results as Array<{
+      tanggal: string;
+      prioritas: string;
+      jumlah: number;
+    }>,
+    tren: (tren.results[0] ?? {}) as Record<string, number | null>,
+  };
+}
+
 /** Reporter leaderboard, ranked by report count. */
 export async function peringkatPelapor(env: Env) {
   const rows = await env.DB.prepare(

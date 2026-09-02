@@ -3,6 +3,8 @@ import { TINTA, TUNGGAL } from './warna';
 export interface ItemBatang {
   label: string;
   nilai: number;
+  /** Overrides the printed value when the raw number is not the readable form. */
+  tampil?: string;
   warna?: string;
 }
 
@@ -26,7 +28,7 @@ export default function Batang({ data }: { data: ItemBatang[] }) {
               {d.label}
             </span>
             <span className="shrink-0 font-bold" style={{ color: TINTA.utama }}>
-              {d.nilai}
+              {d.tampil ?? d.nilai}
             </span>
           </div>
           <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-krem-100">

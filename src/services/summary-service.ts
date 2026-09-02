@@ -50,19 +50,71 @@ export async function statistikHarian(env: Env, tanggal: string) {
   return { tanggal, ...(await ringkasan.angkaHarian(env, tanggal)) };
 }
 
-/** Chart data, with empty days filled in so the line stays unbroken. */
+/** The run of dates the charts cover, oldest first. */
+function deretTanggal(hari: number): string[] {
+  return Array.from({ length: hari }, (_, i) =>
+    tanggalWIB(new Date(Date.now() - (hari - 1 - i) * 86_400_000)),
+  );
+}
+
+/**
+ * Chart data.
+ *
+ * Empty days are filled with zeros rather than skipped: a gap in the series
+ * would read as missing data, while a zero reads as "nothing was reported",
+ * which is the truth.
+ */
 export async function dataGrafik(env: Env, hari: number) {
-  const angka = await ringkasan.angkaGrafik(env, hari);
+  const [angka, lanjutan] = await Promise.all([
+    ringkasan.angkaGrafik(env, hari),
+    ringkasan.angkaLanjutan(env, hari),
+  ]);
 
-  const peta = new Map(angka.harian.map((r) => [r.tanggal, r]));
-  const deret: Array<{ tanggal: string; total: number; selesai: number }> = [];
-  for (let i = hari - 1; i >= 0; i--) {
-    const t = tanggalWIB(new Date(Date.now() - i * 86_400_000));
-    const ada = peta.get(t);
-    deret.push({ tanggal: t, total: Number(ada?.total ?? 0), selesai: Number(ada?.selesai ?? 0) });
+  const tanggalDeret = deretTanggal(hari);
+
+  const petaHarian = new Map(angka.harian.map((r) => [r.tanggal, r]));
+  const harian = tanggalDeret.map((tanggal) => {
+    const ada = petaHarian.get(tanggal);
+    return { tanggal, total: Number(ada?.total ?? 0), selesai: Number(ada?.selesai ?? 0) };
+  });
+
+  const petaPrioritas = new Map<string, Record<string, number>>();
+  for (const r of lanjutan.harianPrioritas) {
+    const hari = petaPrioritas.get(r.tanggal) ?? {};
+    hari[r.prioritas] = Number(r.jumlah);
+    petaPrioritas.set(r.tanggal, hari);
   }
+  const harianPrioritas = tanggalDeret.map((tanggal) => {
+    const h = petaPrioritas.get(tanggal) ?? {};
+    return {
+      tanggal,
+      tinggi: h.tinggi ?? 0,
+      sedang: h.sedang ?? 0,
+      rendah: h.rendah ?? 0,
+    };
+  });
 
-  return { ...angka, harian: deret };
+  const tren = lanjutan.tren;
+  const ini = Number(tren.periode_ini ?? 0);
+  const lalu = Number(tren.periode_lalu ?? 0);
+
+  return {
+    ...angka,
+    harian,
+    harianPrioritas,
+    jamHari: lanjutan.jamHari,
+    matriks: lanjutan.matriks,
+    waktuPrioritas: lanjutan.waktuPrioritas,
+    tren: {
+      hari,
+      laporan: ini,
+      laporan_lalu: lalu,
+      // A previous window of zero has no meaningful percentage change.
+      perubahan: lalu > 0 ? Math.round(((ini - lalu) / lalu) * 100) : null,
+      selesai: Number(tren.selesai_ini ?? 0),
+      tinggi: Number(tren.tinggi_ini ?? 0),
+    },
+  };
 }
 
 export async function papanPeringkat(env: Env, pelaporId: string | null) {

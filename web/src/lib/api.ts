@@ -83,10 +83,22 @@ export interface LaporanPublik {
 /** The numbers behind the dashboard charts. */
 export interface DataGrafik {
   harian: Array<{ tanggal: string; total: number; selesai: number }>;
+  harianPrioritas: Array<{ tanggal: string; tinggi: number; sedang: number; rendah: number }>;
   kategori: Array<{ kategori: string; jumlah: number }>;
   prioritas: Array<{ prioritas: string; jumlah: number }>;
   gedung: Array<{ gedung_kode: string; gedung_nama: string; jumlah: number }>;
   penyelesaian: { jumlah: number; menit: number | null };
+  jamHari: Array<{ hari: number; jam: number; jumlah: number }>;
+  matriks: Array<{ gedung_kode: string; kategori: string; jumlah: number }>;
+  waktuPrioritas: Array<{ prioritas: string; jumlah: number; menit: number | null }>;
+  tren: {
+    hari: number;
+    laporan: number;
+    laporan_lalu: number;
+    perubahan: number | null;
+    selesai: number;
+    tinggi: number;
+  };
 }
 
 export interface Aktivitas {
