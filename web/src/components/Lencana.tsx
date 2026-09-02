@@ -29,7 +29,7 @@ export function LencanaStatus({ nilai }: { nilai: StatusLaporan }) {
 
 export function LencanaKategori({ nilai }: { nilai: string }) {
   const { t } = useBahasa();
-  // Kategori di luar daftar baku tetap ditampilkan apa adanya.
+  // A category outside the standard list is still shown, verbatim.
   const label = t(`kategori.${nilai}` as 'kategori.lainnya');
   return (
     <span className={`${dasar} bg-krem-100 text-maroon-700 ring-krem-300`}>

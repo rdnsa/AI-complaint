@@ -15,7 +15,7 @@ export interface Env {
   AUTH_SECRET: string;
 }
 
-/** Tipe Hono bersama: binding + variabel yang diisi middleware auth. */
+/** Shared Hono types: bindings plus the variables the auth middleware fills in. */
 export type AppEnv = {
   Bindings: Env;
   Variables: { sesi: { id: string; nama: string; peran: Peran } };
@@ -37,7 +37,7 @@ export type Prioritas = (typeof PRIORITAS)[number];
 export const STATUS = ['baru', 'diproses', 'selesai'] as const;
 export type Status = (typeof STATUS)[number];
 
-/** Baris mentah tabel `reports` seperti yang dikembalikan D1. */
+/** A raw `reports` row exactly as D1 returns it. */
 export interface ReportRow {
   id: string;
   toilet_id: string;
@@ -58,7 +58,7 @@ export interface ReportRow {
   pelapor_id: string | null;
   created_at: string;
   updated_at: string;
-  // hasil JOIN view toilet_info
+  // produced by the JOIN against the toilet_info view
   toilet_nama?: string;
   gedung_kode?: string;
   gedung_nama?: string;
@@ -66,7 +66,7 @@ export interface ReportRow {
   jenis?: string;
 }
 
-/** Bentuk yang dikirim ke frontend: kategori sudah jadi array, foto sudah jadi URL. */
+/** What the frontend receives: categories parsed, photo keys turned into URLs. */
 export interface ReportDTO
   extends Omit<ReportRow, 'kategori' | 'foto_key' | 'foto_selesai_key'> {
   kategori: Kategori[];
@@ -79,7 +79,7 @@ export function toDTO(row: ReportRow): ReportDTO {
   return {
     ...rest,
     kategori: kategori ? (JSON.parse(kategori) as Kategori[]) : [],
-    // Path relatif: foto dilayani Worker ini sendiri, satu domain dengan aplikasi.
+    // Relative path: photos are served by this same Worker, on the same origin.
     foto_url: foto_key ? `/api/uploads/${foto_key}` : null,
     foto_selesai_url: foto_selesai_key ? `/api/uploads/${foto_selesai_key}` : null,
   };

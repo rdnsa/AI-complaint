@@ -7,10 +7,10 @@ import type { AppEnv } from '../types';
 
 const app = new Hono<AppEnv>();
 
-/** Seluruh berkas ini hanya untuk admin. */
+/** Everything in this file is admin-only. */
 app.use('*', wajibAdmin);
 
-/** Daftar akun pengelola. Akun pelapor tidak ikut: jumlahnya bisa ribuan. */
+/** Management accounts. Reporter accounts are excluded: there may be thousands. */
 app.get('/', async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT id, username, nama, peran, aktif, created_at
@@ -79,7 +79,7 @@ app.patch('/:id', async (c) => {
     .first<{ id: string; nama: string; username: string }>();
   if (!target) return c.json({ error: 'Akun tidak ditemukan' }, 404);
 
-  // Menonaktifkan akun sendiri akan mengunci admin di luar sistemnya sendiri.
+  // Deactivating your own account would lock the admin out of their own system.
   if (parsed.data.aktif === false && id === c.get('sesi').id) {
     return c.json({ error: 'Akun yang sedang dipakai tidak bisa dinonaktifkan.' }, 400);
   }
@@ -94,7 +94,7 @@ app.patch('/:id', async (c) => {
     diubah.push('nama');
   }
   if (parsed.data.password !== undefined) {
-    // Salt ikut diganti agar sandi lama dan baru tidak berbagi turunan yang sama.
+    // The salt is replaced too, so the old and new passwords share no derivation.
     const salt = buatSalt();
     set.push('sandi_hash = ?', 'sandi_salt = ?');
     params.push(await hitungHash(parsed.data.password, salt), salt);

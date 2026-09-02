@@ -1,12 +1,12 @@
 /**
- * Membuat berkas QR untuk setiap lantai, plus satu halaman HTML siap cetak.
+ * Generates a QR image per floor, plus one printable HTML sheet.
  *
- *   node scripts/generate-qr.mjs                          # ambil dari Worker lokal
+ *   node scripts/generate-qr.mjs                          # read from the local Worker
  *   BASE_URL=https://ai-complaint.workers.dev npm run qr
  *
- * Satu QR mewakili satu lantai pada satu gedung dan mengarah ke
- * <BASE_URL>/lapor/<kode gedung>-<lantai>. Jenis WC (pria/wanita/disabilitas)
- * dipilih pelapor di formulir, sehingga satu stiker cukup untuk satu lantai.
+ * One QR code stands for one floor of one building and points at
+ * <BASE_URL>/lapor/<building>-<floor>. The toilet type (men/women/accessible)
+ * is chosen by the reporter on the form, so one sticker covers a whole floor.
  */
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import QRCode from 'qrcode';
@@ -22,9 +22,9 @@ if (!res.ok) {
 }
 const { data: gedung } = await res.json();
 
-// Folder dikosongkan lebih dulu: QR dari daftar lokasi versi lama harus ikut
-// terhapus, karena kode yang sudah tidak terdaftar akan ditolak sistem bila
-// terlanjur tercetak dan ditempel.
+// The folder is emptied first: codes from an older location list must go with
+// it, because a code that is no longer registered will be rejected by the system
+// if it has already been printed and stuck on a door.
 await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });
 

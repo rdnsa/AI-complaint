@@ -10,16 +10,16 @@ export type Aksi =
   | 'ringkasan'
   | 'pengguna';
 
-/** Pelaku selain petugas bernama: laporan datang dari pelapor, cron dari sistem. */
+/** Actors that are not a named staff member: reports come from a reporter, cron from the system. */
 export const PELAPOR = 'pelapor';
 export const SISTEM = 'sistem';
 
 /**
- * Menulis satu baris catatan aktivitas.
+ * Writes a single activity-log row.
  *
- * Kegagalan mencatat tidak boleh menggagalkan tindakan yang sedang berjalan —
- * laporan yang masuk lebih penting daripada jejaknya. Karena itu semua galat
- * ditelan di sini dan hanya dicetak ke log Worker.
+ * A failure to log must never fail the action being logged — accepting the
+ * report matters more than recording it. Every error is therefore swallowed
+ * here and only printed to the Worker log.
  */
 export async function catat(
   env: Env,

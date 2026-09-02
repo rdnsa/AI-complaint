@@ -1,9 +1,9 @@
--- Migration 0002: nama gedung UPI Kampus Tasikmalaya, dan QR yang berlaku per lantai.
+-- Migration 0002: UPI Tasikmalaya building names, and QR codes that cover a floor.
 --
--- Sebelumnya satu QR mewakili satu WC (mis. 'A-1-PRIA'), sehingga tiap lantai perlu
--- beberapa QR. Sekarang satu QR mewakili satu lantai ('A-1') dan pelapor memilih
--- pria/wanita/disabilitas di formulir. Nama gedung dipindah ke tabelnya sendiri
--- agar tidak diulang-ulang di setiap baris toilet.
+-- Previously one QR code stood for one toilet (e.g. 'A-1-PRIA'), so every floor
+-- needed several codes. Now one code stands for a floor ('A-1') and the reporter
+-- picks men/women/accessible on the form. Building names move into their own
+-- table so they are not repeated on every toilet row.
 
 CREATE TABLE gedung (
   kode   TEXT PRIMARY KEY,
@@ -11,7 +11,7 @@ CREATE TABLE gedung (
   urutan INTEGER NOT NULL DEFAULT 0
 );
 
--- Sumber: "Peta Lokasi Gedung" UPI Kampus Tasikmalaya, Jln. Dadaha No. 18.
+-- Source: the "Peta Lokasi Gedung" poster, UPI Tasikmalaya, Jln. Dadaha No. 18.
 INSERT INTO gedung (kode, nama, urutan) VALUES
   ('A', 'Ki Hajar Dewantara',      1),
   ('B', 'Masjid At-Tarbiyah',      2),
@@ -25,7 +25,7 @@ INSERT INTO gedung (kode, nama, urutan) VALUES
   ('J', 'KH. Moh. Hasyim Ashari', 10);
 
 ALTER TABLE toilets ADD COLUMN gedung_kode TEXT REFERENCES gedung(kode);
--- Id lama berformat '<kode>-<lantai>-<jenis>', jadi kodenya ada di karakter pertama.
+-- Old ids are '<code>-<floor>-<type>', so the code is the first character.
 UPDATE toilets SET gedung_kode = substr(id, 1, 1);
 
 ALTER TABLE toilets DROP COLUMN gedung;
@@ -33,8 +33,8 @@ ALTER TABLE toilets DROP COLUMN nama;
 
 CREATE INDEX idx_toilets_lokasi ON toilets (gedung_kode, lantai, jenis);
 
--- Nama tampilan dirakit di satu tempat supaya dashboard, ringkasan harian, dan
--- konteks yang dikirim ke LLM selalu memakai sebutan lokasi yang sama.
+-- The display name is assembled in one place, so the dashboard, the daily
+-- summary, and the context sent to the LLM all name a location the same way.
 CREATE VIEW toilet_info AS
 SELECT
   t.id,

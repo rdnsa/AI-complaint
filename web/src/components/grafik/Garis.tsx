@@ -15,11 +15,11 @@ const W = 640;
 const H = 190;
 
 /**
- * Laporan masuk dan yang selesai ditangani sepanjang waktu.
+ * Reports received and reports resolved over time.
  *
- * Keduanya satuan yang sama (jumlah laporan) sehingga cukup satu sumbu Y.
- * Sumbu ganda sengaja dihindari: dua skala pada satu bidang membuat jarak
- * antar garis terbaca sebagai selisih yang sebenarnya tidak ada.
+ * Both are the same unit (a count of reports), so one Y axis is enough. A dual
+ * axis is deliberately avoided: two scales on one plot make the gap between the
+ * lines read as a difference that does not exist.
  */
 export default function Garis({
   data,
@@ -74,7 +74,7 @@ export default function Garis({
           ))}
 
           {data.map((d, i) =>
-            // Tanggal ditulis jarang saja supaya tidak bertabrakan di layar sempit.
+            // Dates are labelled sparsely so they do not collide on narrow screens.
             i % Math.ceil(data.length / 5) === 0 || i === data.length - 1 ? (
               <text
                 key={d.tanggal}

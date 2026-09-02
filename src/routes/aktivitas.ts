@@ -7,10 +7,10 @@ const app = new Hono<AppEnv>();
 const AKSI = ['lapor', 'analisis', 'analisis_gagal', 'status', 'hapus', 'masuk', 'ringkasan', 'pengguna'];
 
 /**
- * Catatan aktivitas untuk manajemen.
+ * The activity log, for management oversight.
  *
- * Baris di sini tidak pernah diubah atau dihapus lewat aplikasi — termasuk oleh
- * petugas yang menghapus laporan — sehingga jejaknya tetap utuh.
+ * Rows here are never edited or removed through the app — not even by the staff
+ * member who deletes a report — so the trail stays intact.
  */
 app.get('/', wajibPetugas, async (c) => {
   const { aksi, report_id } = c.req.query();

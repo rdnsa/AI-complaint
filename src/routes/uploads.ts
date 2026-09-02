@@ -2,14 +2,14 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../types';
 
 /**
- * Dua jenis foto disimpan di bucket yang sama, dipisah lewat prefix:
- * 'laporan' untuk foto keadaan dari pelapor, 'bukti' untuk foto penyelesaian
- * dari petugas. Hanya kedua prefix inilah yang boleh dibaca kembali.
+ * Two kinds of photo share one bucket, separated by prefix: 'laporan' for the
+ * condition photo from a reporter, 'bukti' for the proof-of-completion photo
+ * from staff. Only these two prefixes may ever be read back.
  */
 const FOLDER = { laporan: 'laporan', bukti: 'bukti' } as const;
 type JenisFoto = keyof typeof FOLDER;
 
-/** Foto disajikan kembali oleh Worker ini; lihat handler GET di bawah. */
+/** Photos are served back by this Worker; see the GET handler below. */
 const PREFIX_URL = '/api/uploads';
 
 const MAKS_BYTE = 5 * 1024 * 1024; // 5 MB, cukup untuk foto kamera HP setelah kompresi browser
@@ -18,11 +18,11 @@ const TIPE_DIIZINKAN = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const app = new Hono<AppEnv>();
 
 /**
- * Publik: menerima foto lampiran dan menyimpannya ke R2.
+ * Public: accepts an attached photo and stores it in R2.
  *
- * Upload memakai binding R2 langsung (bukan presigned URL) supaya kredensial
- * S3 tidak perlu ada di mana pun; Worker meneruskan body ke bucket.
- * Foto diunggah lebih dulu, lalu `foto_key` dikirim bersama laporan.
+ * The upload goes through the R2 binding rather than a presigned URL, so no S3
+ * credentials need to exist anywhere; the Worker streams the body to the bucket.
+ * The photo is uploaded first, then its `foto_key` is sent with the report.
  */
 app.post('/', async (c) => {
   const form = await c.req.formData().catch(() => null);
@@ -40,7 +40,7 @@ app.post('/', async (c) => {
   const jenis: JenisFoto = diminta === 'bukti' ? 'bukti' : 'laporan';
 
   const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
-  // Prefix tanggal membuat isi bucket mudah ditelusuri dan dihapus per periode.
+  // The date prefix keeps the bucket easy to browse and to purge by period.
   const key = `${FOLDER[jenis]}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
 
   await c.env.BUCKET.put(key, file.stream(), {
@@ -51,16 +51,16 @@ app.post('/', async (c) => {
 });
 
 /**
- * Publik: menyajikan foto dari R2 lewat Worker, bukan lewat domain publik r2.dev.
+ * Public: serves a photo from R2 through the Worker rather than the public
+ * r2.dev domain.
  *
- * Domain `r2.dev` dibajak DNS oleh sebagian ISP di Indonesia sehingga fotonya
- * gagal dimuat di jaringan kampus. Menyajikannya dari domain aplikasi sendiri
- * menghilangkan ketergantungan itu, sekaligus membuat bucket tidak perlu
- * dibuka untuk akses publik.
+ * Several Indonesian ISPs hijack DNS for `r2.dev`, so images silently fail to
+ * load on campus networks. Serving them from the app's own origin removes that
+ * dependency and means the bucket never needs public access.
  */
 app.get('/:key{.+}', async (c) => {
   const key = c.req.param('key');
-  // Hanya kedua prefix foto yang boleh dibaca, bukan sembarang objek di bucket.
+  // Only the two photo prefixes are readable, not arbitrary objects in the bucket.
   const boleh = Object.values(FOLDER).some((f) => key.startsWith(`${f}/`));
   if (!boleh) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
 
@@ -70,10 +70,10 @@ app.get('/:key{.+}', async (c) => {
   const headers = new Headers();
   obj.writeHttpMetadata(headers);
   headers.set('etag', obj.httpEtag);
-  // Nama berkas memakai UUID dan tidak pernah ditimpa, jadi aman di-cache selamanya.
+  // Filenames are UUIDs and are never overwritten, so caching forever is safe.
   headers.set('cache-control', 'public, max-age=31536000, immutable');
 
-  // Tanpa `body` berarti syarat If-None-Match terpenuhi: browser sudah punya salinannya.
+  // No `body` means the If-None-Match precondition held: the browser has it already.
   if (!('body' in obj)) return new Response(null, { status: 304, headers });
   return new Response(obj.body, { headers });
 });

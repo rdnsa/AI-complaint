@@ -1,215 +1,303 @@
-# AI Complaint — Sistem Klasifikasi & Prioritas Keluhan Toilet Kampus
+# AI Complaint
 
-Dibuat untuk **UPI Kampus Tasikmalaya**, Jln. Dadaha No. 18. Mahasiswa memindai
-QR di pintu toilet, menulis keluhan dengan bahasa sehari-hari, lalu LLM
-mengubahnya menjadi tiket kerja terstruktur untuk petugas kebersihan.
+**LLM-based classification and prioritisation of campus toilet complaints.**
+Built for Universitas Pendidikan Indonesia, Tasikmalaya Campus (Jln. Dadaha No. 18).
+
+A student scans the QR code on a toilet door and writes the problem in their own
+words. A pretrained LLM turns that free text into a structured work ticket —
+category, priority, a neutral summary, and a recommended course of action — and
+pushes it to the cleaning staff's dashboard.
 
 ```
-QR di lantai WC  →  pilih toilet  →  tulis keluhan  →  LLM (kategori + prioritas + rekomendasi)
-                                                             ↓
-                                          dashboard petugas + cron 17.00 WIB → ringkasan harian
+QR on the floor  →  pick the toilet  →  describe the problem  →  LLM analysis
+                                                                      ↓
+                                     staff dashboard  +  17:00 WIB cron → daily summary
 ```
 
-Satu QR mewakili satu **lantai** pada satu gedung, bukan satu WC. Jenis toilet
-(pria/wanita/disabilitas) dipilih pelapor di formulir, sehingga jumlah stiker
-yang perlu dicetak dan dirawat jauh lebih sedikit.
+Live: <https://ai-complaint.yvrtz.workers.dev>
 
-## Peran pengguna
+One QR code represents one **floor** of one building, not one toilet. The
+reporter picks men's/women's/accessible on the form, which cuts the number of
+stickers to print and maintain by two thirds.
 
-| Peran | Cara mendapat akun | Bisa apa |
+---
+
+## What it does
+
+**Core (the research contribution)**
+
+1. **Automatic classification** — `kebersihan`, `perlengkapan`, `kerusakan`,
+   `bau`, `genangan`, `lainnya`; more than one may apply.
+2. **Priority assignment** — `rendah` / `sedang` / `tinggi`, governed by
+   safety-risk rules rather than keyword counts.
+3. **Daily summary** — one paragraph over the day's reports naming the worst
+   locations and the most urgent actions.
+4. **Reporter leaderboard** — gamification ranked by report volume, shown
+   alongside how many of those reports were actually resolved.
+
+**Supporting features**
+
+- Public report board readable by anyone, editable only by staff
+- Mandatory condition photo from reporters, mandatory proof photo from staff
+- Immutable activity log for management oversight
+- Charts in the dashboard: daily series, priority spread, categories, buildings,
+  mean time to resolution
+- Status tracking for reporters without an account
+- Building map on the landing page
+- Bilingual interface (Indonesian / English), switchable from the header
+
+---
+
+## Roles
+
+| Role | How the account is created | Can do |
 |---|---|---|
-| **Admin** | sudah ada sejak awal (`admin` / `Admin123!`) | semua yang bisa petugas, ditambah membuat akun petugas serta mengubah nama, password, dan status aktifnya |
-| **Petugas** | dibuatkan oleh admin | mengubah status laporan, mengunggah bukti, menganalisis ulang, menghapus laporan |
-| **Pelapor** | mendaftar sendiri di `/daftar` | melapor atas namanya dan masuk hitungan papan peringkat |
-| Tanpa akun | — | tetap boleh melapor dan membaca papan laporan terbuka |
+| **Admin** | ships with the database (`admin` / `Admin123!`) | everything staff can, plus create staff accounts and change their name, password, and active status |
+| **Staff** | created by an admin | change report status, upload proof, re-run analysis, delete reports |
+| **Reporter** | self-registers at `/daftar` | file reports under their name and appear on the leaderboard |
+| No account | — | still file reports and read the public board |
 
-**Ganti password admin bawaan setelah masuk pertama kali.** Password disimpan
-sebagai PBKDF2-SHA256 100.000 iterasi dengan salt per pengguna; sandi aslinya
-tidak pernah tersimpan di mana pun.
+> **Change the default admin password after the first sign-in.** It is committed
+> in `migrations/0004_pengguna.sql` and therefore public.
 
-## Fitur
+Passwords are stored as PBKDF2-SHA256 with 100,000 iterations and a per-user
+salt via WebCrypto. The plaintext is never stored anywhere.
 
-1. **Klasifikasi otomatis** — `kebersihan`, `perlengkapan`, `kerusakan`, `bau`, `genangan`, `lainnya` (boleh lebih dari satu).
-2. **Penentuan prioritas** — `rendah` / `sedang` / `tinggi`, dengan aturan berbasis risiko keselamatan.
-3. **Ringkasan harian** — merangkum seluruh laporan sehari, menyebut lokasi paling bermasalah dan tindakan mendesak.
-4. **Papan peringkat pelapor** — gamifikasi berdasarkan jumlah laporan, dengan jumlah laporan yang benar-benar selesai ikut ditampilkan.
+---
 
-Pelengkapnya: papan laporan terbuka untuk siapa saja, foto keadaan wajib dari
-pelapor dan foto bukti wajib dari petugas (R2), catatan aktivitas untuk
-manajemen, grafik di dashboard,
-pelacakan status oleh pelapor tanpa login,
-alur status `baru → diproses → selesai`,
-statistik harian untuk dashboard, peta lokasi gedung di halaman depan, serta
-antarmuka **dwibahasa Indonesia–Inggris** yang bisa diganti dari header.
+## Tech stack
 
-## Teknologi
-
-| Bagian | Teknologi |
+| Layer | Choice |
 |---|---|
-| Bahasa | TypeScript |
+| Language | TypeScript |
 | Runtime | Cloudflare Workers |
-| Framework API | Hono |
+| API framework | Hono |
 | Database | Cloudflare D1 (SQLite) |
-| Penyimpanan foto | Cloudflare R2 (disajikan lewat Worker) |
+| File storage | Cloudflare R2, served through the Worker |
 | Frontend | React 18 + Vite + Tailwind CSS |
-| Dwibahasa | kamus sendiri di `web/src/lib/i18n.tsx`, tanpa library |
-| LLM | DeepSeek `deepseek-chat` (JSON mode), tanpa training |
+| i18n | hand-rolled dictionary in `web/src/lib/i18n.tsx`, no library |
+| LLM | DeepSeek `deepseek-chat` in JSON mode — no training, no dataset |
 
-Frontend dan API berada pada satu Worker dan satu domain, sehingga tidak ada
-konfigurasi CORS dan hanya perlu satu kali deploy.
+The frontend and the API live in the same Worker on the same origin, so there is
+no CORS configuration and only one thing to deploy.
 
-## Menjalankan secara lokal
+---
+
+## Running locally
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars     # lalu isi LLM_API_KEY, AUTH_SECRET, PETUGAS_PASSWORD
+cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY and AUTH_SECRET
 
-npm run db:local                   # jalankan migrasi ke D1 lokal
-npm run db:seed                    # isi daftar WC contoh
+npm run db:local                 # apply migrations to the local D1
+npm run db:seed                  # load the toilet list
 
-npm run build                      # frontend perlu di-build sekali sebelum wrangler dev
-npm run dev                        # Vite (5173) + Worker (8787) berjalan bersamaan
+npm run build                    # the frontend must be built once before wrangler dev
+npm run dev                      # Vite (5173) + Worker (8787) side by side
 ```
 
-Buka `http://localhost:5173/lapor/A-1` untuk halaman mahasiswa dan
-`http://localhost:5173/petugas` untuk dashboard.
+| Page | URL |
+|---|---|
+| Landing / manual location picker | `http://localhost:5173/` |
+| Report form (QR target) | `http://localhost:5173/lapor/A-1` |
+| Public report board | `http://localhost:5173/laporan` |
+| Leaderboard | `http://localhost:5173/peringkat` |
+| Staff dashboard | `http://localhost:5173/petugas` |
 
-## Deploy
+---
+
+## Deploying
 
 ```bash
 npx wrangler secret put LLM_API_KEY
-npx wrangler secret put AUTH_SECRET          # string acak panjang
-npx wrangler secret put PETUGAS_PASSWORD
+npx wrangler secret put AUTH_SECRET   # a long random string
 
-npm run db:remote                            # migrasi ke D1 produksi
+npm run db:remote                     # migrations against production D1
 npm run db:seed:remote
 npm run deploy
 ```
 
-Bucket R2 tidak perlu dibuka untuk akses publik: foto disajikan kembali oleh
-Worker lewat `GET /api/uploads/<key>`. Selain menghilangkan satu langkah
-konfigurasi, ini juga menghindari domain `pub-*.r2.dev` yang DNS-nya dibajak
-sebagian ISP di Indonesia sehingga gambar gagal dimuat di jaringan kampus.
+The R2 bucket does **not** need public access — photos are served back by the
+Worker at `GET /api/uploads/<key>`.
 
-### Deploy otomatis (Cloudflare Workers Builds)
+### Automatic deploys (Cloudflare Workers Builds)
 
-Cukup setel **deploy command** ke `npx wrangler deploy`; kolom build command
-boleh dibiarkan kosong. Frontend dibangun sendiri lewat `build.command` di
-`wrangler.jsonc`, yang juga memasang dependensi bila `node_modules` belum ada
-pada checkout yang bersih.
+Set the deploy command to `npx wrangler deploy` and leave the build command
+empty. The frontend builds itself through `build.command` in `wrangler.jsonc`,
+which also installs dependencies when `node_modules` is missing from a clean
+checkout.
 
-Secret dan migrasi database tidak ikut otomatis — jalankan `wrangler secret put`
-dan `npm run db:remote` sekali di awal.
+Secrets and database migrations are not automated — run `wrangler secret put`
+and `npm run db:remote` once, by hand.
 
-## Mencetak QR
+---
+
+## Printing QR codes
 
 ```bash
-BASE_URL=https://<worker-kamu>.workers.dev npm run qr
+BASE_URL=https://<your-worker>.workers.dev npm run qr
 ```
 
-Menghasilkan `qr-codes/<kode gedung>-<lantai>.png` dan `qr-codes/cetak.html`
-(halaman A4 siap cetak, stikernya dwibahasa). Folder dikosongkan tiap kali
-dijalankan supaya QR dari daftar lokasi versi lama tidak ikut tercetak.
+Produces `qr-codes/<building>-<floor>.png` plus `qr-codes/cetak.html`, an A4
+print sheet with bilingual stickers. The folder is emptied on every run so that
+codes from an older location list can never be printed by accident.
 
-Sebelum mencetak, sesuaikan daftar WC di `seed/toilets.sql` dengan kondisi
-kampus lalu jalankan ulang seed. Berkas seed aman dijalankan berkali-kali:
-seluruh WC dinonaktifkan lebih dulu, lalu yang ada di daftar dihidupkan lagi.
-WC yang dihapus dari daftar tidak ikut terhapus dari database — ia hanya
-berhenti muncul di aplikasi, sehingga laporan lama yang menunjuk ke sana tetap
-utuh beserta riwayatnya.
+### Changing the toilet list
 
-## Struktur
+Edit `seed/toilets.sql`, re-run the seed, then regenerate the QR codes — in that
+order, because the codes are generated from whatever is active in the database.
+
+The seed file is safe to run repeatedly, including once reports exist. It
+deactivates every toilet and then reactivates the ones listed, rather than
+deleting rows. A toilet removed from the list simply stops appearing in the app;
+old reports pointing at it keep their location and history intact.
+
+---
+
+## API surface
+
+**Public**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/auth/masuk`, `/api/auth/daftar`, `/api/auth/keluar` | sign in, register, sign out |
+| `GET` | `/api/auth/saya` | current session |
+| `GET` | `/api/lokasi`, `/api/lokasi/:id` | buildings and floors; one floor (QR target) |
+| `POST` | `/api/reports` | file a report |
+| `GET` | `/api/reports/publik` | public report board |
+| `GET` | `/api/reports/ringkas?ids=` | status of the reporter's own reports |
+| `GET` | `/api/reports/:id` | one report |
+| `POST` | `/api/uploads?jenis=laporan\|bukti` | upload a photo |
+| `GET` | `/api/uploads/:key` | serve a photo from R2 |
+| `GET` | `/api/peringkat` | leaderboard |
+
+**Staff and admin**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/reports` | dashboard list, with filters |
+| `PATCH` | `/api/reports/:id` | change status (proof photo required to close) |
+| `POST` | `/api/reports/:id/analisa-ulang` | re-run a failed analysis |
+| `DELETE` | `/api/reports/:id` | delete permanently, logged with a full copy |
+| `GET` | `/api/summary`, `/api/summary/stats`, `/api/summary/grafik` | daily summary, counters, chart data |
+| `POST` | `/api/summary/generate` | write the daily summary now |
+| `GET` | `/api/aktivitas` | activity log |
+
+**Admin only**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` `POST` | `/api/pengguna` | list and create staff accounts |
+| `PATCH` | `/api/pengguna/:id` | change name, password, or active status |
+
+---
+
+## Project structure
 
 ```
 src/
-  index.ts             entry Worker: routing API, SPA fallback, handler cron
-  types.ts             tipe bersama + konversi baris D1 → DTO
-  lib/llm.ts           prompt, few-shot, dan validasi keluaran LLM
-  lib/analisis.ts      analisis satu laporan (dijalankan setelah respons terkirim)
-  lib/ringkasan.ts     ringkasan harian (dipakai cron dan tombol manual)
-  lib/auth.ts          sesi petugas berbasis cookie JWT
-  lib/waktu.ts         konversi hari UTC ↔ WIB
-  routes/              reports, lokasi, uploads, summary, auth
+  index.ts               Worker entry: API routing, SPA fallback, cron handler
+  types.ts               shared types, D1 row → DTO conversion
+  lib/llm.ts             prompt, few-shot examples, output validation
+  lib/analisis.ts        per-report analysis, run after the response is sent
+  lib/ringkasan.ts       daily summary, shared by the cron and the manual button
+  lib/aktivitas.ts       activity-log writer
+  lib/auth.ts            JWT cookie sessions and role guards
+  lib/sandi.ts           PBKDF2 password hashing
+  lib/waktu.ts           UTC ↔ WIB day conversion
+  routes/                auth, lokasi, reports, uploads, summary, aktivitas,
+                         pengguna, peringkat
+
 web/src/
-  lib/i18n.tsx         kamus dan pengalih bahasa Indonesia/Inggris
-  components/Kop.tsx   kepala halaman + pengalih bahasa
-  pages/Beranda.tsx    peta gedung + pilih lokasi manual
-  pages/Lapor.tsx      form mahasiswa (tujuan QR)
-  pages/StatusLaporan.tsx  konfirmasi + hasil analisis
-  pages/Dashboard.tsx  dashboard petugas
-  ../public/peta-lokasi-gedung.jpg   peta gedung UPI Kampus Tasikmalaya
-migrations/            skema D1
-seed/toilets.sql       daftar WC
-scripts/generate-qr.mjs
+  lib/i18n.tsx           dictionary and language switcher
+  lib/sesi.tsx           session context
+  lib/api.ts             typed API client
+  lib/riwayat.ts         reporter's own report ids, kept in localStorage
+  components/Kop.tsx     page header, back button, floating pill bar
+  components/Lacak.tsx   three-step status timeline
+  components/grafik/     validated chart palette, line chart, bar chart
+  components/Panel*.tsx  dashboard tabs: charts, activity, staff accounts
+  pages/                 Beranda, Lapor, StatusLaporan, LaporanPublik,
+                         Masuk, Daftar, Peringkat, Dashboard
+  ../public/peta-lokasi-gedung.jpg    campus building map
+
+migrations/              D1 schema, applied in order
+seed/toilets.sql         the toilet list
+scripts/generate-qr.mjs  QR codes and the A4 print sheet
+scripts/build-frontend.mjs   builds the frontend before wrangler deploy
 ```
 
-## Catatan desain
+---
 
-**Analisis LLM berjalan setelah respons dikirim** (`ctx.waitUntil`). Mahasiswa
-mendapat konfirmasi seketika, sedangkan hasil analisis menyusul dan halaman
-konfirmasi melakukan polling sampai siap.
+## Design notes
 
-**Kegagalan LLM tidak pernah menghilangkan laporan.** Baris yang gagal ditandai
-`ai_status = 'gagal'` beserta pesan errornya, tetap tampil di dashboard tanpa
-label AI, dan bisa dianalisis ulang lewat tombol.
+Each of these is a decision that cost something elsewhere, so the reasoning is
+recorded rather than the mechanics.
 
-**Keluaran LLM tidak dipercaya mentah-mentah.** Setiap respons divalidasi Zod
-lalu dipaksa masuk enum yang dikenal database; kategori asing dibuang dan
-prioritas tak dikenal jatuh ke `sedang`.
+**Analysis runs after the response is sent** (`ctx.waitUntil`). The reporter gets
+an instant confirmation while the LLM call continues in the background; the
+confirmation page polls until the result lands. A synchronous call would have put
+a three-second wait between the student and the send button.
 
-**Latensi tiap panggilan dicatat** di kolom `ai_ms`, berguna sebagai data
-kuantitatif pada bab hasil dan pembahasan.
+**A failed LLM call never loses a report.** The row is marked
+`ai_status = 'gagal'` with the error text, still appears on the dashboard without
+AI labels, and can be re-analysed from a button. If the DeepSeek API is down, the
+system degrades into an ordinary reporting tool instead of failing.
 
-**Melapor tidak menuntut akun, tetapi akun memberi imbalan.** Alur inti — pindai
-QR lalu tulis keluhan — tetap bisa ditempuh tanpa mendaftar, karena memaksa
-pendaftaran di depan pintu akan mematikan tingkat pemakaian. Laporan dari
-pelapor yang sedang masuk menempel pada akunnya dan dihitung di papan peringkat;
-laporan anonim tetap diterima dan tetap ditangani, hanya tidak ikut peringkat.
+**LLM output is never trusted as-is.** Every response is validated with Zod and
+then forced into the enums the database knows: unknown categories are dropped and
+an unrecognised priority falls back to `sedang`.
 
-**Penyelesaian menuntut bukti, bukan klaim.** Pelapor wajib melampirkan foto
-keadaan, dan petugas wajib mengunggah foto bukti sebelum status berubah menjadi
-selesai — ditolak di server, bukan sekadar disembunyikan di antarmuka. Foto
-bukti itu ikut tampil di papan terbuka supaya klaim "sudah ditangani" bisa
-diperiksa siapa saja.
+**Per-call latency is recorded** in `ai_ms` — useful as quantitative evidence in
+the results chapter.
 
-**Catatan aktivitas tidak bisa dihapus dari aplikasi.** Setiap laporan masuk,
-hasil analisis, perubahan status, penghapusan, dan sesi petugas tercatat di
-tabel `aktivitas`. Tabel itu sengaja tanpa foreign key ke `reports`: justru
-laporan yang dihapuslah yang paling perlu terlacak, sehingga seluruh isinya
-disalin ke catatan sebelum baris aslinya hilang. Manajemen tetap bisa melihat
-apa yang dihapus, oleh siapa, dan kapan.
+**Reporting does not require an account, but an account is rewarded.** The core
+path — scan, type, send — stays open to anyone, because a registration wall at
+the door kills adoption. Reports filed while signed in attach to that account and
+count towards the leaderboard; anonymous reports are still accepted and still
+handled, they just do not rank.
 
-**Warna grafik dihitung, bukan dikira-kira.** Palet deret dan palet prioritas
-sudah lolos pemeriksaan rentang terang, ambang chroma, keterpisahan bagi buta
-warna (deutan/protan/tritan), dan kontras terhadap latar. Nilainya ada di
-`web/src/components/grafik/warna.ts` — jangan diganti tanpa menjalankan ulang
-validatornya.
+**Closing a report demands evidence, not a claim.** Reporters must attach a photo
+of the condition, and staff must upload a proof photo before a report can be
+marked resolved. Both are enforced on the server, not merely hidden in the UI.
+The proof photo is shown on the public board so that "already handled" can be checked
+by anyone.
 
-**Laporan terbuka dibaca siapa saja, tetapi hanya petugas yang mengubahnya.**
-Halaman `/laporan` menampilkan seluruh laporan beserta status penanganannya
-tanpa perlu login. Yang ditampilkan hanya ringkasan hasil analisis — teks asli,
-foto, dan nama petugas sengaja tidak ikut, sehingga papan terbuka ini tidak
-menjadi jalan keluar bagi isi laporan mentah atau wajah orang yang tidak sengaja
-terfoto. Mengubah status, menganalisis ulang, dan menghapus tetap memerlukan
-sesi petugas.
+**The activity log cannot be erased from the app.** Every report, analysis result,
+status change, deletion, staff sign-in, account change, and generated summary is
+written to the `aktivitas` table. That table deliberately has no foreign key to
+`reports`: a deleted report is exactly the one that most needs to stay traceable,
+so its full contents are copied into the log before the row disappears.
+Management can still see what was removed, by whom, and when.
 
-**Pelapor bisa melacak laporannya tanpa akun.** Id laporan disimpan di
-`localStorage` perangkat pelapor, lalu halaman depan menampilkan daftar
-"Laporan saya" beserta status terkininya. Halaman konfirmasi memuat garis waktu
-tiga langkah — diterima, dikerjakan, selesai — dan menyegarkan dirinya sendiri
-selama dibuka. Pendekatan ini menjaga sistem tetap anonim: tidak ada login,
-tidak ada nomor telepon, dan tidak ada data pelapor yang disimpan di server.
+**Chart colours are computed, not eyeballed.** The series palette and the priority
+palette both pass checks for lightness band, chroma floor, colour-vision
+separation (deutan/protan/tritan), and contrast against the surface. The values
+live in `web/src/components/grafik/warna.ts` — do not change them without
+re-running the validator.
 
-**Antarmuka dwibahasa, analisis tetap Bahasa Indonesia.** Label dan pesan
-mengikuti pilihan bahasa pembaca, tetapi ringkasan dan rekomendasi dari LLM
-selalu ditulis dalam Bahasa Indonesia karena yang mengerjakannya adalah petugas
-kebersihan. Keluhan berbahasa Inggris tetap dipahami dan tetap diringkas ke
-Bahasa Indonesia.
+**The public board is readable by anyone but writable only by staff.** `/laporan`
+shows every report and its handling status without a login. Only the analysis
+summary is exposed — raw text, reporter photos, and staff names are withheld, so
+the board cannot become an outlet for unfiltered complaint text or for a face
+caught in the background of a photo.
 
-**Warna diambil dari poster resmi kampus.** Maroon, oranye bata, dan krem pada
-antarmuka berasal dari poster "Peta Lokasi Gedung" UPI Kampus Tasikmalaya, agar
-tampilannya terbaca sebagai bagian dari kampus dan bukan aplikasi generik.
+**Reporters can track their reports without an account.** Report ids are kept in
+the device's `localStorage` and the landing page lists them with their current
+status. The confirmation page carries a three-step timeline and refreshes itself
+while open. Nothing about the reporter is stored on the server.
 
-**Foto tidak melewati domain pihak ketiga.** Endpoint `GET /api/uploads/<key>`
-membaca objek langsung dari binding R2, membatasi akses hanya ke prefix
-`laporan/`, dan mendukung ETag sehingga browser cukup mengunduh satu kali.
+**The interface is bilingual; the analysis stays Indonesian.** Labels follow the
+reader's choice, but LLM summaries and recommendations are always written in
+Indonesian because the people acting on them are the cleaning staff. English
+complaints are understood and still summarised in Indonesian.
+
+**The palette comes from official campus material.** The maroon, brick orange,
+and cream are lifted from the "Peta Lokasi Gedung" poster for UPI Tasikmalaya, so
+the app reads as part of the campus rather than as a generic tool.
+
+**Photos never leave the app's own domain.** `GET /api/uploads/<key>` reads the
+object straight from the R2 binding, restricts access to the `laporan/` and
+`bukti/` prefixes, and honours ETags so a browser downloads each photo once. This
+also sidesteps `pub-*.r2.dev`, whose DNS is hijacked by several Indonesian ISPs —
+images silently fail to load on campus networks.

@@ -5,11 +5,11 @@ import type { AppEnv } from '../types';
 const app = new Hono<AppEnv>();
 
 /**
- * Papan peringkat pelapor.
+ * Reporter leaderboard.
  *
- * Peringkat dihitung dari jumlah laporan, tetapi laporan yang sudah selesai
- * ditangani ikut ditampilkan supaya yang dihargai bukan sekadar banyaknya
- * kiriman, melainkan laporan yang benar-benar berbuah perbaikan.
+ * The ranking is by report count, but the number of reports that were actually
+ * resolved is shown alongside it, so what earns recognition is not volume alone
+ * but reports that led to a real fix.
  */
 app.get('/', async (c) => {
   const rows = await c.env.DB.prepare(
@@ -22,8 +22,8 @@ app.get('/', async (c) => {
       LIMIT 20`,
   ).all<{ id: string; nama: string; laporan: number; selesai: number }>();
 
-  // Pengguna yang sedang masuk diberi tahu posisinya sendiri, termasuk bila
-  // ia berada di luar dua puluh besar.
+  // A signed-in reporter is told their own position, including when they sit
+  // outside the top twenty.
   const sesi = await sesiSaatIni(c);
   let saya: { peringkat: number; laporan: number } | null = null;
 

@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
 import { useSesi } from '../lib/sesi';
 
-/** Pendaftaran mandiri hanya untuk pelapor; akun petugas dibuat oleh admin. */
+/** Self-registration is for reporters only; staff accounts are created by an admin. */
 export default function Daftar() {
   const { t } = useBahasa();
   const { pasang } = useSesi();

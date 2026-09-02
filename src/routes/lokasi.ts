@@ -3,7 +3,7 @@ import type { AppEnv } from '../types';
 
 const app = new Hono<AppEnv>();
 
-/** Publik: daftar gedung beserta lantai yang memiliki WC terdaftar. */
+/** Public: the buildings, and which of their floors have a registered toilet. */
 app.get('/', async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT DISTINCT gedung_kode, gedung_nama, gedung_urutan, lantai
@@ -11,7 +11,7 @@ app.get('/', async (c) => {
       ORDER BY gedung_urutan, lantai`,
   ).all<{ gedung_kode: string; gedung_nama: string; lantai: number }>();
 
-  // Dikelompokkan per gedung supaya frontend tidak perlu merangkainya sendiri.
+  // Grouped per building so the frontend does not have to assemble it itself.
   const gedung = new Map<string, { kode: string; nama: string; lantai: number[] }>();
   for (const r of rows.results) {
     const g = gedung.get(r.gedung_kode) ?? { kode: r.gedung_kode, nama: r.gedung_nama, lantai: [] };
@@ -23,10 +23,10 @@ app.get('/', async (c) => {
 });
 
 /**
- * Publik: satu lantai pada satu gedung — inilah tujuan QR.
+ * Public: one floor of one building — this is what a QR code points at.
  *
- * `id` berformat '<kode gedung>-<lantai>', misalnya 'A-1'. Jenis WC tidak ikut
- * dalam QR karena pelapor memilihnya sendiri di formulir.
+ * `id` is formatted '<building>-<floor>', for example 'A-1'. The toilet type is
+ * not part of the QR code because the reporter picks it on the form.
  */
 app.get('/:id', async (c) => {
   const cocok = /^([A-Za-z])-(\d{1,2})$/.exec(c.req.param('id'));

@@ -29,7 +29,7 @@ app.route('/api/peringkat', peringkatRoutes);
 
 app.notFound(async (c) => {
   if (c.req.path.startsWith('/api/')) return c.json({ error: 'Endpoint tidak ditemukan' }, 404);
-  // Deep link seperti /lapor/A-2-PRIA dilayani oleh index.html; router React yang menanganinya.
+  // Deep links such as /lapor/A-1 are served index.html; the React router takes it from there.
   return c.env.ASSETS.fetch(new Request(new URL('/index.html', c.req.url), c.req.raw));
 });
 
@@ -41,7 +41,7 @@ app.onError((err, c) => {
 export default {
   fetch: app.fetch,
 
-  /** Cron 10:00 UTC = 17:00 WIB: merangkum seluruh laporan hari itu (fitur #3). */
+  /** Cron 10:00 UTC = 17:00 WIB: summarise the day's reports (feature #3). */
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
     const tanggal = tanggalWIB();
     ctx.waitUntil(

@@ -12,8 +12,8 @@ const KOLOM = `r.*, t.nama AS toilet_nama, t.gedung_kode, t.gedung_nama, t.lanta
 const BuatLaporanSchema = z.object({
   toilet_id: z.string().min(1).max(50),
   teks: z.string().trim().min(5, 'Keluhan terlalu pendek').max(1000),
-  // Foto wajib: keluhan tanpa gambar sulit diverifikasi petugas, dan
-  // keberadaannya membuat papan laporan terbuka jauh lebih dapat dipercaya.
+  // A photo is required: a complaint without one is hard for staff to verify,
+  // and its presence makes the public board far more trustworthy.
   foto_key: z
     .string({ required_error: 'Foto keadaan wajib dilampirkan' })
     .min(1, 'Foto keadaan wajib dilampirkan')
@@ -22,7 +22,7 @@ const BuatLaporanSchema = z.object({
 
 const app = new Hono<AppEnv>();
 
-/** Publik: mahasiswa mengirim keluhan setelah scan QR. */
+/** Public: a student files a complaint after scanning the QR code. */
 app.post('/', async (c) => {
   const parsed = BuatLaporanSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) {
@@ -35,8 +35,8 @@ app.post('/', async (c) => {
     .first<{ nama: string }>();
   if (!toilet) return c.json({ error: 'Kode WC tidak dikenal. Periksa QR yang kamu scan.' }, 404);
 
-  // Anti-spam ringan: keluhan identik untuk WC yang sama dalam 2 menit terakhir
-  // hampir pasti tombol kirim yang tertekan dua kali, bukan dua orang berbeda.
+  // Light anti-spam: an identical complaint for the same toilet within 2 minutes
+  // is almost certainly a double-tapped send button, not two different people.
   const kembar = await c.env.DB.prepare(
     `SELECT id FROM reports
       WHERE toilet_id = ? AND teks = ? AND created_at > datetime('now', '-2 minutes')
@@ -46,8 +46,8 @@ app.post('/', async (c) => {
     .first<{ id: string }>();
   if (kembar) return c.json({ id: kembar.id, duplikat: true }, 200);
 
-  // Laporan tetap boleh anonim; bila pelapornya sedang masuk, laporan itu
-  // menempel ke akunnya dan ikut dihitung di papan peringkat.
+  // Reports may stay anonymous; when the reporter is signed in, the report
+  // attaches to their account and counts towards the leaderboard.
   const sesi = await sesiSaatIni(c);
   const pelapor_id = sesi?.peran === 'pelapor' ? sesi.id : null;
 
@@ -66,19 +66,19 @@ app.post('/', async (c) => {
     rincian: { toilet_id, teks },
   });
 
-  // Analisis LLM berjalan setelah respons terkirim: mahasiswa dapat konfirmasi instan.
+  // The LLM runs after the response is sent, so the student is confirmed instantly.
   c.executionCtx.waitUntil(jalankanAnalisis(c.env, id));
 
   return c.json({ id, toilet: toilet.nama, duplikat: false }, 201);
 });
 
 /**
- * Publik: seluruh laporan beserta status penanganannya, terbuka untuk siapa saja.
+ * Public: every report and how far it has been handled, open to anyone.
  *
- * Sengaja tidak menyertakan teks asli, foto, dan nama petugas. Yang ditampilkan
- * adalah ringkasan hasil analisis — kalimatnya sudah netral dan bebas kata kasar —
- * sehingga papan terbuka ini tidak menjadi jalan keluar bagi isi laporan mentah
- * atau wajah orang yang tidak sengaja terfoto.
+ * Raw text, photos, and staff names are deliberately left out. What is shown is
+ * the analysis summary — already neutral and free of crude language — so this
+ * board cannot become an outlet for unfiltered complaint text, or for a face
+ * caught in the background of a photo.
  */
 app.get('/publik', async (c) => {
   const { status, prioritas } = c.req.query();
@@ -116,9 +116,9 @@ app.get('/publik', async (c) => {
     data: daftar.results.map(({ foto_selesai_key, ...row }) => ({
       ...row,
       kategori: row.kategori ? JSON.parse(row.kategori as string) : [],
-      // Foto bukti penyelesaian ikut terbuka: justru inilah yang membuat klaim
-      // "sudah ditangani" bisa diperiksa siapa saja. Foto dari pelapor tetap
-      // tidak ditampilkan karena berpeluang memuat orang lain.
+      // The proof photo is public on purpose: it is what lets anyone check the
+      // claim that a report was handled. The reporter's own photo stays hidden,
+      // since it may contain other people.
       foto_selesai_url: foto_selesai_key ? `/api/uploads/${foto_selesai_key}` : null,
     })),
     jumlah: jumlah.results[0] ?? { total: 0, selesai: 0 },
@@ -126,11 +126,11 @@ app.get('/publik', async (c) => {
 });
 
 /**
- * Publik: status ringkas beberapa laporan sekaligus.
+ * Public: the status of several reports at once.
  *
- * Dipakai daftar "Laporan saya" di beranda. Id laporan berupa UUID acak yang
- * hanya dipegang pelapornya, jadi endpoint ini tidak membocorkan apa pun yang
- * tidak sudah bisa dilihat lewat halaman konfirmasi.
+ * Backs the "My reports" list on the landing page. Report ids are random UUIDs
+ * held only by their reporter, so this endpoint exposes nothing that the
+ * confirmation page did not already show.
  */
 app.get('/ringkas', async (c) => {
   const ids = (c.req.query('ids') ?? '')
@@ -153,7 +153,7 @@ app.get('/ringkas', async (c) => {
   return c.json({ data: rows.results });
 });
 
-/** Publik: mahasiswa melihat status laporannya sendiri lewat link konfirmasi. */
+/** Public: a student checks their own report through the confirmation link. */
 app.get('/:id', async (c) => {
   const row = await c.env.DB.prepare(
     `SELECT ${KOLOM} FROM reports r JOIN toilet_info t ON t.id = r.toilet_id WHERE r.id = ?`,
@@ -164,7 +164,7 @@ app.get('/:id', async (c) => {
   return c.json(toDTO(row));
 });
 
-/** Petugas: daftar laporan untuk dashboard, dengan filter. */
+/** Staff: the dashboard list, with filters. */
 app.get('/', wajibPetugas, async (c) => {
   const { status, prioritas, toilet_id, gedung, tanggal } = c.req.query();
   const limit = Math.min(Number(c.req.query('limit') ?? 100) || 100, 200);
@@ -215,7 +215,7 @@ const UbahStatusSchema = z.object({
   foto_selesai_key: z.string().max(200).nullish(),
 });
 
-/** Petugas: menandai laporan sedang dikerjakan / selesai. */
+/** Staff: mark a report as being worked on, or as resolved. */
 app.patch('/:id', wajibPetugas, async (c) => {
   const parsed = UbahStatusSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'Status tidak valid' }, 400);
@@ -231,7 +231,7 @@ app.patch('/:id', wajibPetugas, async (c) => {
     .first<{ status: string; foto_selesai_key: string | null; nama: string }>();
   if (!sebelum) return c.json({ error: 'Laporan tidak ditemukan' }, 404);
 
-  // Penyelesaian menuntut bukti: tanpa foto, status 'selesai' hanya klaim.
+  // Resolving demands evidence: without a photo, 'selesai' is only a claim.
   const bukti = foto_selesai_key ?? sebelum.foto_selesai_key;
   if (status === 'selesai' && !bukti) {
     return c.json({ error: 'Foto bukti penyelesaian wajib diunggah lebih dulu.' }, 400);
@@ -260,7 +260,7 @@ app.patch('/:id', wajibPetugas, async (c) => {
   return c.json({ ok: true, status });
 });
 
-/** Petugas: mengulang analisis untuk laporan yang gagal diproses LLM. */
+/** Staff: retry the analysis of a report the LLM failed on. */
 app.post('/:id/analisa-ulang', wajibPetugas, async (c) => {
   const id = c.req.param('id');
   const ada = await c.env.DB.prepare(`SELECT id FROM reports WHERE id = ?`).bind(id).first();
@@ -276,11 +276,11 @@ app.post('/:id/analisa-ulang', wajibPetugas, async (c) => {
 });
 
 /**
- * Petugas: menghapus laporan permanen.
+ * Staff: delete a report permanently.
  *
- * Diperlukan sejak daftar laporan dibuka untuk umum — spam dan isi yang tidak
- * pantas harus bisa disingkirkan. Fotonya ikut dihapus dari R2 supaya tidak ada
- * berkas yatim yang terus memakan penyimpanan.
+ * Needed since the report list became public — spam and unacceptable content
+ * must be removable. The photos go with it so that no orphaned files keep
+ * consuming storage.
  */
 app.delete('/:id', wajibPetugas, async (c) => {
   const id = c.req.param('id');
@@ -292,8 +292,8 @@ app.delete('/:id', wajibPetugas, async (c) => {
     .first<ReportRow & { toilet_nama: string }>();
   if (!row) return c.json({ error: 'Laporan tidak ditemukan' }, 404);
 
-  // Salinan utuh disimpan lebih dulu. Inilah yang memungkinkan manajemen
-  // memeriksa laporan yang hilang beserta siapa yang menghapusnya.
+  // The full copy is stored first. This is what lets management inspect a
+  // report that disappeared, along with who removed it.
   await catat(c.env, {
     aksi: 'hapus',
     report_id: id,
@@ -312,7 +312,7 @@ app.delete('/:id', wajibPetugas, async (c) => {
   });
 
   await c.env.DB.prepare(`DELETE FROM reports WHERE id = ?`).bind(id).run();
-  // Foto ikut dihapus agar tidak meninggalkan berkas yatim di R2.
+  // Photos are deleted too, so nothing is orphaned in R2.
   for (const key of [row.foto_key, row.foto_selesai_key]) {
     if (key) await c.env.BUCKET.delete(key).catch(() => {});
   }

@@ -30,8 +30,8 @@ app.post('/masuk', async (c) => {
     .bind(parsed.data.username)
     .first<BarisPengguna>();
 
-  // Pesan galat sengaja sama untuk akun tidak ada dan sandi salah, supaya
-  // halaman masuk tidak bisa dipakai menebak username mana yang terdaftar.
+  // The error message is identical for an unknown account and a wrong password,
+  // so the sign-in page cannot be used to discover which usernames exist.
   const salah = () => c.json({ error: 'Username atau password salah' }, 401);
   if (!pengguna || !pengguna.aktif) return salah();
   if (!(await cocok(parsed.data.password, pengguna.sandi_salt, pengguna.sandi_hash))) return salah();
@@ -61,7 +61,7 @@ const DaftarSchema = z.object({
   password: z.string().min(8, 'Password minimal 8 karakter').max(200),
 });
 
-/** Pendaftaran mandiri hanya membuat akun pelapor; petugas dibuat oleh admin. */
+/** Self-registration only ever creates a reporter; staff accounts come from an admin. */
 app.post('/daftar', async (c) => {
   const parsed = DaftarSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? 'Data tidak valid' }, 400);

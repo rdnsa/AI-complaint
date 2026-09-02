@@ -35,8 +35,8 @@ function TombolKembali({ bulat = false }: { bulat?: boolean }) {
   const navigate = useNavigate();
   const { t } = useBahasa();
 
-  // Kembali ke halaman sebelumnya bila ada riwayatnya; kalau pengguna mendarat
-  // langsung dari QR, riwayat itu kosong sehingga beranda menjadi tujuan yang aman.
+  // Go back when there is history to go back to; a visitor who landed straight
+  // from a QR code has none, so the landing page is the safe destination.
   const kembali = () => (window.history.length > 1 ? navigate(-1) : navigate('/'));
 
   if (bulat) {
@@ -63,11 +63,11 @@ function TombolKembali({ bulat = false }: { bulat?: boolean }) {
 }
 
 /**
- * Kepala halaman bergaya identitas UPI Kampus Tasikmalaya.
+ * Page header in the visual identity of UPI Tasikmalaya Campus.
  *
- * Saat halaman digulir melewati kepala ini, versi ringkasnya muncul sebagai
- * batang oval melayang, sehingga tombol kembali dan pengalih bahasa selalu
- * terjangkau tanpa perlu menggulir balik ke atas.
+ * Once the page scrolls past it, a condensed version reappears as a floating
+ * pill, so the back button and the language switch stay within reach without
+ * scrolling back to the top.
  */
 export default function Kop({
   judul,

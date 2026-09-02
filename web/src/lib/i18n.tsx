@@ -3,12 +3,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 export type Bahasa = 'id' | 'en';
 
 /**
- * Kamus antarmuka. Bahasa Indonesia menjadi acuan bentuk kamus, sehingga
- * TypeScript menolak kompilasi bila ada kunci yang lupa diterjemahkan.
+ * The interface dictionary. Indonesian defines the shape, so TypeScript refuses
+ * to compile when a key is left untranslated.
  *
- * Catatan: hasil analisis LLM (ringkasan dan rekomendasi) tetap berbahasa
- * Indonesia karena pembacanya adalah petugas kebersihan; yang diterjemahkan
- * di sini hanyalah antarmukanya.
+ * Note: LLM output (summaries and recommendations) stays in Indonesian because
+ * its readers are the cleaning staff; only the interface itself is translated
+ * here.
  */
 const ID = {
   'kop.universitas': 'Universitas Pendidikan Indonesia',
@@ -441,10 +441,10 @@ function bahasaAwal(): Bahasa {
   try {
     const tersimpan = localStorage.getItem(PENYIMPANAN);
     if (tersimpan === 'id' || tersimpan === 'en') return tersimpan;
-    // Pengunjung berbahasa Inggris langsung mendapat antarmuka Inggris.
+    // An English-speaking visitor gets the English interface straight away.
     if (navigator.language?.toLowerCase().startsWith('en')) return 'en';
   } catch {
-    /* localStorage bisa diblokir; jatuh ke bawaan */
+    /* localStorage may be blocked; fall back to the default */
   }
   return 'id';
 }
@@ -457,7 +457,7 @@ export function PenyediaBahasa({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(PENYIMPANAN, bahasa);
     } catch {
-      /* abaikan bila penyimpanan tidak tersedia */
+      /* ignore when storage is unavailable */
     }
   }, [bahasa]);
 
@@ -480,12 +480,12 @@ export function useBahasa() {
   return nilai;
 }
 
-/** Waktu relatif yang mengikuti bahasa aktif. */
+/** Relative time that follows the active language. */
 export function useWaktuRelatif() {
   const { t } = useBahasa();
   return useCallback(
     (iso: string) => {
-      // created_at dari D1 berformat 'YYYY-MM-DD HH:MM:SS' dalam UTC.
+      // created_at from D1 is 'YYYY-MM-DD HH:MM:SS' in UTC.
       const waktu = Date.parse(iso.includes('T') ? iso : `${iso.replace(' ', 'T')}Z`);
       const menit = Math.floor((Date.now() - waktu) / 60000);
       if (menit < 1) return t('waktu.baru');

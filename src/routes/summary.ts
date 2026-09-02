@@ -8,7 +8,7 @@ const app = new Hono<AppEnv>();
 
 const POLA_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Angka-angka untuk kartu ringkas di atas dashboard. */
+/** The counters for the summary cards at the top of the dashboard. */
 app.get('/stats', wajibPetugas, async (c) => {
   const tanggal = c.req.query('tanggal') ?? tanggalWIB();
   if (!POLA_TANGGAL.test(tanggal)) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
@@ -41,9 +41,9 @@ app.get('/stats', wajibPetugas, async (c) => {
 });
 
 /**
- * Angka-angka untuk grafik di dashboard.
+ * The numbers behind the dashboard charts.
  *
- * Semuanya dihitung di database dalam satu batch; frontend hanya menggambar.
+ * All of it is computed in the database in one batch; the frontend only draws.
  */
 app.get('/grafik', wajibPetugas, async (c) => {
   const hari = Math.min(Number(c.req.query('hari') ?? 14) || 14, 90);
@@ -52,7 +52,7 @@ app.get('/grafik', wajibPetugas, async (c) => {
     Record<string, unknown>
   >([
     c.env.DB.prepare(
-      // '+7 hours' mengelompokkan menurut hari WIB, bukan UTC.
+      // '+7 hours' groups by WIB day rather than UTC.
       `SELECT date(created_at, '+7 hours') AS tanggal,
               COUNT(*) AS total,
               SUM(status = 'selesai') AS selesai
@@ -82,7 +82,7 @@ app.get('/grafik', wajibPetugas, async (c) => {
     ),
   ]);
 
-  // Hari tanpa laporan tetap dikirim sebagai nol supaya garis grafiknya utuh.
+  // Days without reports are still returned as zero, so the line stays unbroken.
   const peta = new Map(harian.results.map((r) => [r.tanggal as string, r]));
   const deret: Array<{ tanggal: string; total: number; selesai: number }> = [];
   for (let i = hari - 1; i >= 0; i--) {
@@ -104,7 +104,7 @@ app.get('/grafik', wajibPetugas, async (c) => {
   });
 });
 
-/** Ringkasan tersimpan untuk satu tanggal (default: hari ini). */
+/** The stored summary for one date (default: today). */
 app.get('/', wajibPetugas, async (c) => {
   const tanggal = c.req.query('tanggal') ?? tanggalWIB();
   if (!POLA_TANGGAL.test(tanggal)) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
@@ -117,7 +117,7 @@ app.get('/', wajibPetugas, async (c) => {
   return c.json({ ...row, sorotan: row.sorotan ? JSON.parse(row.sorotan) : [], ada: true });
 });
 
-/** Membuat ringkasan sekarang juga, tanpa menunggu cron sore. */
+/** Write the summary right now, without waiting for the afternoon cron. */
 app.post('/generate', wajibPetugas, async (c) => {
   const tanggal = c.req.query('tanggal') ?? tanggalWIB();
   if (!POLA_TANGGAL.test(tanggal)) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);

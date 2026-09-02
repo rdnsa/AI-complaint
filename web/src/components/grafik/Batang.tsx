@@ -7,11 +7,11 @@ export interface ItemBatang {
 }
 
 /**
- * Peringkat magnitudo: batang mendatar karena labelnya berupa teks panjang
- * (nama kategori, nama gedung) yang akan terpotong bila ditaruh di sumbu X.
+ * A magnitude ranking. The bars run horizontally because the labels are long
+ * text (category names, building names) that would be truncated on an X axis.
  *
- * Nilainya ditulis langsung di ujung batang, jadi grafik ini tetap terbaca
- * tanpa mengandalkan warna maupun kursor.
+ * Values are printed at the end of each bar, so the chart stays readable
+ * without relying on colour or on a pointer.
  */
 export default function Batang({ data }: { data: ItemBatang[] }) {
   if (!data.length) return null;

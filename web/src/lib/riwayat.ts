@@ -1,9 +1,9 @@
 /**
- * Jejak laporan milik pelapor, disimpan di perangkatnya sendiri.
+ * The reporter's own report ids, kept on their device.
  *
- * Sistem ini sengaja tidak memakai login, jadi tidak ada akun tempat menautkan
- * laporan. Menyimpan daftar id di localStorage membuat pelapor tetap bisa
- * menengok status laporannya tanpa harus menyimpan tautannya sendiri.
+ * Reporting deliberately works without a login, so there is no account to hang
+ * reports on. Keeping the ids in localStorage lets a reporter check back on
+ * their reports without having to save the link themselves.
  */
 const KUNCI = 'laporan-saya';
 const MAKS = 20;
@@ -21,7 +21,7 @@ export function ambilRiwayat(): JejakLaporan[] {
     const data: unknown = JSON.parse(isi);
     return Array.isArray(data) ? (data as JejakLaporan[]) : [];
   } catch {
-    // localStorage bisa diblokir (mode penyamaran, setelan browser) — anggap kosong.
+    // localStorage can be blocked (private mode, browser settings) — treat as empty.
     return [];
   }
 }
@@ -31,7 +31,7 @@ export function simpanRiwayat(jejak: JejakLaporan): void {
     const lama = ambilRiwayat().filter((j) => j.id !== jejak.id);
     localStorage.setItem(KUNCI, JSON.stringify([jejak, ...lama].slice(0, MAKS)));
   } catch {
-    /* gagal menyimpan tidak boleh menggagalkan pelaporan */
+    /* a failed write must never fail the report itself */
   }
 }
 
@@ -39,6 +39,6 @@ export function hapusRiwayat(): void {
   try {
     localStorage.removeItem(KUNCI);
   } catch {
-    /* abaikan */
+    /* ignore */
   }
 }

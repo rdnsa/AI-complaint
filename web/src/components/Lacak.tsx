@@ -3,11 +3,11 @@ import { useBahasa, useWaktuRelatif } from '../lib/i18n';
 import type { Laporan } from '../lib/api';
 
 /**
- * Garis waktu tiga langkah: diterima → dikerjakan → selesai.
+ * Three-step timeline: received → in progress → resolved.
  *
- * Pelapor tidak punya akun, jadi inilah satu-satunya cara ia melihat sejauh
- * mana keluhannya ditangani. Karena itu langkah yang belum tercapai tetap
- * ditampilkan, bukan disembunyikan — supaya jelas masih ada tahap berikutnya.
+ * A reporter has no account, so this is their only view of how far the complaint
+ * has travelled. Steps not yet reached stay visible rather than hidden, to make
+ * clear that there is a further stage still to come.
  */
 export default function Lacak({ laporan }: { laporan: Laporan }) {
   const { t } = useBahasa();

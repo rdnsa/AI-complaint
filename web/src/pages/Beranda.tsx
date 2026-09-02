@@ -41,8 +41,8 @@ export default function Beranda() {
       .finally(() => setMemuat(false));
   }, []);
 
-  // Status laporan sendiri diambil ulang tiap halaman depan dibuka, sehingga
-  // pelapor melihat perkembangan terbaru tanpa perlu menyimpan tautannya.
+  // The reporter's own report statuses are refetched whenever the landing page
+  // opens, so they see the latest progress without having saved the link.
   useEffect(() => {
     const jejak = ambilRiwayat();
     if (!jejak.length) return;

@@ -3,12 +3,12 @@ import { analisaKeluhan } from './llm';
 import type { Env } from '../types';
 
 /**
- * Menganalisis satu laporan lalu menyimpan hasilnya.
+ * Analyses one report and stores the result.
  *
- * Dipanggil lewat `ctx.waitUntil()` sesudah respons dikirim, sehingga mahasiswa
- * tidak menunggu panggilan LLM. Fungsi ini sengaja tidak pernah melempar error:
- * kegagalan dicatat sebagai ai_status='gagal' agar laporannya tetap muncul di
- * dashboard (tanpa label AI) dan bisa di-retry manual oleh petugas.
+ * Invoked through `ctx.waitUntil()` after the response has been sent, so the
+ * student never waits on the LLM. This function deliberately never throws:
+ * a failure is recorded as ai_status='gagal' so the report still shows up on
+ * the dashboard (without AI labels) and staff can retry it by hand.
  */
 export async function jalankanAnalisis(env: Env, reportId: string): Promise<void> {
   const row = await env.DB.prepare(

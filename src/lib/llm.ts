@@ -2,9 +2,9 @@ import { z } from 'zod';
 import { KATEGORI, PRIORITAS, type Env, type Kategori, type Prioritas } from '../types';
 
 /**
- * Kontrak keluaran LLM. LLM sesekali mengarang kategori di luar daftar atau
- * mengembalikan string ketika kita minta array, jadi setiap field dibersihkan
- * ulang di `coerceAnalisis()` sebelum masuk database.
+ * The contract for the model's output. The LLM occasionally invents a category
+ * outside the list, or returns a string where an array was asked for, so every
+ * field is scrubbed again in `coerceAnalisis()` before it reaches the database.
  */
 const AnalisisSchema = z.object({
   kategori: z.array(z.string()).min(1),
@@ -52,7 +52,7 @@ ATURAN PENULISAN:
 Jawab HANYA dengan objek JSON valid, tanpa penjelasan tambahan, dengan bentuk persis:
 {"kategori":["kebersihan"],"prioritas":"sedang","ringkasan":"...","rekomendasi":"..."}`;
 
-/** Contoh few-shot: mengunci gaya bahasa dan penerapan aturan prioritas. */
+/** Few-shot examples: they pin down the tone and how the priority rules are applied. */
 const FEW_SHOT: Array<{ user: string; assistant: Analisis }> = [
   {
     user: 'WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.',
@@ -85,7 +85,7 @@ const FEW_SHOT: Array<{ user: string; assistant: Analisis }> = [
   },
 ];
 
-/** Memaksa keluaran model masuk ke enum yang dikenal database. */
+/** Forces the model output into the enums the database recognises. */
 function coerceAnalisis(raw: z.infer<typeof AnalisisSchema>): Analisis {
   const kategori = [
     ...new Set(
@@ -120,7 +120,7 @@ async function chatJSON(env: Env, messages: ChatMessage[], maxTokens = 500): Pro
     body: JSON.stringify({
       model: env.LLM_MODEL,
       messages,
-      // temperature rendah: hasil klasifikasi harus stabil kalau kalimatnya sama.
+      // Low temperature: identical wording must yield an identical classification.
       temperature: 0.1,
       max_tokens: maxTokens,
       response_format: { type: 'json_object' },
@@ -140,14 +140,14 @@ async function chatJSON(env: Env, messages: ChatMessage[], maxTokens = 500): Pro
   try {
     return JSON.parse(content);
   } catch {
-    // Pagar terakhir: sebagian model membungkus JSON dalam ```json ... ```
+    // Last resort: some models wrap the JSON in ```json ... ```
     const match = content.match(/\{[\s\S]*\}/);
     if (!match) throw new Error(`Respons LLM bukan JSON: ${content.slice(0, 200)}`);
     return JSON.parse(match[0]);
   }
 }
 
-/** Fitur #1 + #2: klasifikasi kategori dan penentuan prioritas satu laporan. */
+/** Features #1 and #2: classify the categories and set the priority of one report. */
 export async function analisaKeluhan(env: Env, teks: string, lokasi: string): Promise<Analisis> {
   const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }];
   for (const contoh of FEW_SHOT) {
@@ -170,7 +170,7 @@ export interface RingkasanHarian {
   sorotan: string[];
 }
 
-/** Fitur #3: merangkum seluruh laporan dalam satu hari untuk kepala bagian. */
+/** Feature #3: summarise a whole day of reports for the head of facilities. */
 export async function ringkasHarian(
   env: Env,
   tanggal: string,

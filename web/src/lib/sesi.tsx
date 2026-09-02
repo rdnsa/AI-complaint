@@ -2,11 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { api, type Sesi } from './api';
 
 /**
- * Sesi pengguna yang sedang berjalan.
+ * The currently signed-in user.
  *
- * Dimuat sekali di akar aplikasi supaya setiap halaman tidak memanggil
- * /api/auth/saya sendiri-sendiri, dan supaya keadaan masuk/keluar seragam
- * di seluruh antarmuka.
+ * Loaded once at the root of the app so that individual pages do not each call
+ * /api/auth/saya, and so signed-in state stays consistent across the interface.
  */
 const Konteks = createContext<{
   sesi: Sesi | null;

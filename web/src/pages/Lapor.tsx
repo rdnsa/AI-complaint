@@ -29,14 +29,14 @@ export default function Lapor() {
       .lokasi(lokasiId)
       .then((l) => {
         setLokasi(l);
-        // Bila lantai itu hanya punya satu toilet, tidak ada yang perlu dipilih.
+        // When a floor has only one toilet, there is nothing to choose.
         if (l.toilets.length === 1) setToiletId(l.toilets[0].id);
       })
       .catch(() => setLokasi(null))
       .finally(() => setMemuat(false));
   }, [lokasiId]);
 
-  // URL pratinjau adalah object URL; dibebaskan saat foto berganti agar tidak bocor memori.
+  // The preview is an object URL; released when the photo changes so memory is not leaked.
   useEffect(() => {
     if (!foto) return setPratinjau(null);
     const url = URL.createObjectURL(foto);
@@ -52,10 +52,10 @@ export default function Lapor() {
     setMengirim(true);
     setGalat(null);
     try {
-      // Foto diunggah lebih dulu supaya laporan tersimpan dengan referensi yang sudah pasti ada.
+  // The photo is uploaded first, so the report is stored with a reference that already exists.
       const foto_key = (await api.unggahFoto(foto)).key;
       const hasil = await api.kirimLaporan({ toilet_id: toiletId, teks: teks.trim(), foto_key });
-      // Tanpa login, jejak inilah yang membuat pelapor bisa kembali melihat statusnya.
+      // Without a login, this trace is what lets the reporter check back on the status.
       simpanRiwayat({ id: hasil.id, lokasi: hasil.toilet, waktu: new Date().toISOString() });
       navigate(`/laporan/${hasil.id}`, { replace: true });
     } catch (err) {

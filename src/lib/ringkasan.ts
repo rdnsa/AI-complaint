@@ -11,8 +11,8 @@ export interface HasilRingkasan {
 }
 
 /**
- * Membuat (atau memperbarui) ringkasan satu hari. Dipakai oleh cron sore hari
- * dan oleh tombol "buat ulang" di dashboard.
+ * Writes (or rewrites) the summary for one day. Used both by the afternoon cron
+ * and by the "rebuild" button on the dashboard.
  */
 export async function buatRingkasanHarian(env: Env, tanggal: string): Promise<HasilRingkasan> {
   const { mulai, selesai } = rentangHariWIB(tanggal);
@@ -28,7 +28,7 @@ export async function buatRingkasanHarian(env: Env, tanggal: string): Promise<Ha
 
   const laporan = rows.results;
 
-  // Hari tanpa laporan tidak perlu memanggil LLM.
+  // A day with no reports does not need an LLM call.
   const hasil = laporan.length
     ? await ringkasHarian(env, tanggal, laporan)
     : { ringkasan: 'Tidak ada keluhan yang masuk pada hari ini.', sorotan: [] };

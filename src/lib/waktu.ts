@@ -1,7 +1,7 @@
 /**
- * D1 menyimpan `created_at` sebagai UTC ('YYYY-MM-DD HH:MM:SS'), sedangkan
- * kampus berpikir dalam WIB (UTC+7). Semua konversi hari dikumpulkan di sini
- * supaya batas "hari ini" konsisten antara dashboard dan cron ringkasan.
+ * D1 stores `created_at` as UTC ('YYYY-MM-DD HH:MM:SS'), while the campus
+ * thinks in WIB (UTC+7). Every day-boundary conversion is gathered here so the
+ * meaning of "today" stays identical between the dashboard and the summary cron.
  */
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
 
@@ -9,12 +9,12 @@ function formatUTC(d: Date): string {
   return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
-/** Tanggal WIB ('YYYY-MM-DD') dari sebuah waktu absolut. */
+/** The WIB date ('YYYY-MM-DD') of a given instant. */
 export function tanggalWIB(now: Date = new Date()): string {
   return new Date(now.getTime() + WIB_OFFSET_MS).toISOString().slice(0, 10);
 }
 
-/** Batas awal & akhir sebuah tanggal WIB, dinyatakan dalam string UTC untuk query D1. */
+/** Start and end of a WIB date, expressed as UTC strings for D1 queries. */
 export function rentangHariWIB(tanggal: string): { mulai: string; selesai: string } {
   const mulaiMs = Date.parse(`${tanggal}T00:00:00Z`) - WIB_OFFSET_MS;
   return {
