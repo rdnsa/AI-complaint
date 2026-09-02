@@ -1,0 +1,41 @@
+{
+  "name": "ai-complaint",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"wrangler dev\" \"vite --config web/vite.config.ts\"",
+    "dev:api": "wrangler dev",
+    "dev:web": "vite --config web/vite.config.ts",
+    "build": "vite build --config web/vite.config.ts",
+    "deploy": "npm run build && wrangler deploy",
+    "db:local": "wrangler d1 migrations apply kato --local",
+    "db:remote": "wrangler d1 migrations apply kato --remote",
+    "db:seed": "wrangler d1 execute kato --local --file=./seed/toilets.sql",
+    "db:seed:remote": "wrangler d1 execute kato --remote --file=./seed/toilets.sql",
+    "qr": "node scripts/generate-qr.mjs",
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "hono": "^4.6.14",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260831.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "postcss": "^8.4.49",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "wrangler": "^4.85.0"
+  }
+}

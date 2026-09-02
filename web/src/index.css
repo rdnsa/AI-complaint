@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  .kartu {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+  .tombol {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+           transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .tombol-utama {
+    @apply tombol bg-merek-600 text-white hover:bg-merek-700;
+  }
+  .tombol-netral {
+    @apply tombol border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+  .input {
+    @apply w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base outline-none
+           focus:border-merek-500 focus:ring-2 focus:ring-merek-100;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+}

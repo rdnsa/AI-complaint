@@ -1,0 +1,4 @@
+# Salin jadi `.dev.vars` untuk development lokal. File .dev.vars TIDAK di-commit.
+LLM_API_KEY="sk-ganti-dengan-key-deepseek-kamu"
+AUTH_SECRET="string-acak-panjang-untuk-tanda-tangan-cookie"
+PETUGAS_PASSWORD="password-login-petugas"

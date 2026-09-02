@@ -1,0 +1,55 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-complaint",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "observability": { "enabled": true },
+
+  // Frontend React (hasil `npm run build`) di-serve dari Worker yang sama.
+  // run_worker_first: request /api/* selalu masuk ke Worker, sisanya static file.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // /api/* wajib masuk Worker lebih dulu. Path lain yang tidak cocok dengan file
+    // statis (mis. /lapor/A-2-PRIA) dikembalikan sebagai index.html agar routing
+    // React bekerja; tanpa ini asset server justru me-redirect ke "/".
+    // "/__scheduled" hanya dipakai `wrangler dev --test-scheduled` untuk memicu cron
+    // secara manual; tanpa dikecualikan di sini, ia tertelan SPA fallback di bawah.
+    "run_worker_first": ["/api/*", "/__scheduled"],
+    "not_found_handling": "single-page-application"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kato",
+      "database_id": "1b221b2c-3de3-4368-857f-0ee6515ea1d6",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "kato"
+    }
+  ],
+
+  // Ringkasan harian otomatis: 10:00 UTC == 17:00 WIB
+  "triggers": {
+    "crons": ["0 10 * * *"]
+  },
+
+  "vars": {
+    "LLM_BASE_URL": "https://api.deepseek.com",
+    "LLM_MODEL": "deepseek-chat",
+    "R2_PUBLIC_URL": "https://pub-7585fac9be0a43fba71c9949ec8e565a.r2.dev"
+  }
+
+  // Secret (JANGAN ditaruh di sini, pakai `wrangler secret put`):
+  //   LLM_API_KEY
+  //   AUTH_SECRET
+  //   PETUGAS_PASSWORD
+}
