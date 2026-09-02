@@ -22,6 +22,8 @@ const ID = {
   'umum.lantai': 'Lantai {n}',
   'nav.petugas': 'Masuk sebagai petugas',
   'nav.beranda': 'Kembali ke beranda',
+  'nav.kembali': 'Kembali',
+  'nav.semua_laporan': 'Lihat semua laporan yang masuk',
   'bahasa.label': 'Bahasa',
 
   'jenis.pria': 'Pria',
@@ -67,6 +69,13 @@ const ID = {
   'status.galat_muat': 'Gagal memuat laporan',
   'status.tersimpan': 'Laporan ini tersimpan di daftar “Laporan saya” pada halaman depan.',
 
+  'publik.judul': 'Laporan Masuk',
+  'publik.keterangan':
+    'Semua laporan beserta status penanganannya, terbuka untuk siapa saja. Hanya petugas yang dapat mengubahnya.',
+  'publik.kosong': 'Belum ada laporan yang masuk.',
+  'publik.menunggu': 'Menunggu ringkasan otomatis.',
+  'publik.jumlah': '{selesai} dari {total} laporan sudah selesai ditangani',
+
   'riwayat.judul': 'Laporan saya',
   'riwayat.keterangan': 'Tersimpan di perangkat ini saja.',
   'riwayat.lihat': 'Lihat',
@@ -111,6 +120,8 @@ const ID = {
   'dash.selesaikan': 'Tandai selesai',
   'dash.analisa_ulang': 'Analisis ulang',
   'dash.ditangani': 'Ditangani: {nama}',
+  'dash.hapus': 'Hapus',
+  'dash.hapus_konfirmasi': 'Hapus laporan ini secara permanen? Tindakan ini tidak bisa dibatalkan.',
 
   'prioritas.tinggi': 'Prioritas tinggi',
   'prioritas.sedang': 'Prioritas sedang',
@@ -149,6 +160,8 @@ const EN: Record<Kunci, string> = {
   'umum.lantai': 'Floor {n}',
   'nav.petugas': 'Staff sign in',
   'nav.beranda': 'Back to home',
+  'nav.kembali': 'Back',
+  'nav.semua_laporan': 'See all incoming reports',
   'bahasa.label': 'Language',
 
   'jenis.pria': 'Men',
@@ -194,6 +207,13 @@ const EN: Record<Kunci, string> = {
   'status.galat_muat': 'Could not load the report',
   'status.tersimpan': 'This report is saved in the “My reports” list on the home page.',
 
+  'publik.judul': 'Incoming Reports',
+  'publik.keterangan':
+    'Every report and how far it has been handled, open to anyone. Only staff can change them.',
+  'publik.kosong': 'No reports have come in yet.',
+  'publik.menunggu': 'Waiting for the automatic summary.',
+  'publik.jumlah': '{selesai} of {total} reports resolved',
+
   'riwayat.judul': 'My reports',
   'riwayat.keterangan': 'Saved on this device only.',
   'riwayat.lihat': 'View',
@@ -238,6 +258,8 @@ const EN: Record<Kunci, string> = {
   'dash.selesaikan': 'Mark done',
   'dash.analisa_ulang': 'Re-analyse',
   'dash.ditangani': 'Handled by: {nama}',
+  'dash.hapus': 'Delete',
+  'dash.hapus_konfirmasi': 'Delete this report permanently? This cannot be undone.',
 
   'prioritas.tinggi': 'High priority',
   'prioritas.sedang': 'Medium priority',

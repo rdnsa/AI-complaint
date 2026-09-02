@@ -20,7 +20,8 @@ yang perlu dicetak dan dirawat jauh lebih sedikit.
 2. **Penentuan prioritas** — `rendah` / `sedang` / `tinggi`, dengan aturan berbasis risiko keselamatan.
 3. **Ringkasan harian** — merangkum seluruh laporan sehari, menyebut lokasi paling bermasalah dan tindakan mendesak.
 
-Pelengkapnya: foto lampiran (R2), pelacakan status oleh pelapor tanpa login,
+Pelengkapnya: papan laporan terbuka untuk siapa saja, foto lampiran (R2),
+pelacakan status oleh pelapor tanpa login,
 alur status `baru → diproses → selesai`,
 statistik harian untuk dashboard, peta lokasi gedung di halaman depan, serta
 antarmuka **dwibahasa Indonesia–Inggris** yang bisa diganti dari header.
@@ -142,6 +143,14 @@ prioritas tak dikenal jatuh ke `sedang`.
 
 **Latensi tiap panggilan dicatat** di kolom `ai_ms`, berguna sebagai data
 kuantitatif pada bab hasil dan pembahasan.
+
+**Laporan terbuka dibaca siapa saja, tetapi hanya petugas yang mengubahnya.**
+Halaman `/laporan` menampilkan seluruh laporan beserta status penanganannya
+tanpa perlu login. Yang ditampilkan hanya ringkasan hasil analisis — teks asli,
+foto, dan nama petugas sengaja tidak ikut, sehingga papan terbuka ini tidak
+menjadi jalan keluar bagi isi laporan mentah atau wajah orang yang tidak sengaja
+terfoto. Mengubah status, menganalisis ulang, dan menghapus tetap memerlukan
+sesi petugas.
 
 **Pelapor bisa melacak laporannya tanpa akun.** Id laporan disimpan di
 `localStorage` perangkat pelapor, lalu halaman depan menampilkan daftar

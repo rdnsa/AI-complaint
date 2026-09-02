@@ -78,6 +78,14 @@ export default function Beranda() {
           </section>
         )}
 
+        <Link
+          to="/laporan"
+          className="kartu mt-6 flex items-center justify-between gap-3 p-4 hover:shadow-naik"
+        >
+          <span className="font-semibold text-maroon-900">{t('nav.semua_laporan')}</span>
+          <span className="shrink-0 font-bold text-bata-600">→</span>
+        </Link>
+
         <p className="mt-6 leading-relaxed text-maroon-700">{t('beranda.petunjuk')}</p>
 
         <figure className="kartu mt-5 overflow-hidden">

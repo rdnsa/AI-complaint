@@ -110,6 +110,12 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
     return () => clearInterval(timer);
   }, [muat]);
 
+  async function hapus(id: string) {
+    setLaporan((prev) => prev.filter((l) => l.id !== id));
+    await api.hapusLaporan(id).catch(() => {});
+    muat();
+  }
+
   async function ubahStatus(id: string, status: StatusLaporan) {
     // Perbarui tampilan lebih dulu supaya tombol terasa responsif, lalu sinkronkan.
     setLaporan((prev) => prev.map((l) => (l.id === id ? { ...l, status, petugas } : l)));
@@ -231,7 +237,13 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
             <p className="kartu p-10 text-center text-maroon-600">{t('dash.kosong')}</p>
           )}
           {laporan.map((l) => (
-            <BarisLaporan key={l.id} laporan={l} onUbahStatus={ubahStatus} onSegarkan={muat} />
+            <BarisLaporan
+              key={l.id}
+              laporan={l}
+              onUbahStatus={ubahStatus}
+              onSegarkan={muat}
+              onHapus={hapus}
+            />
           ))}
         </div>
       </main>
@@ -258,10 +270,12 @@ function BarisLaporan({
   laporan: l,
   onUbahStatus,
   onSegarkan,
+  onHapus,
 }: {
   laporan: Laporan;
   onUbahStatus: (id: string, status: StatusLaporan) => void;
   onSegarkan: () => void;
+  onHapus: (id: string) => void;
 }) {
   const { t } = useBahasa();
   const waktuRelatif = useWaktuRelatif();
@@ -329,6 +343,16 @@ function BarisLaporan({
             {t('dash.analisa_ulang')}
           </button>
         )}
+        {/* Daftar laporan terbuka untuk umum, jadi spam dan isi tak pantas
+            harus bisa disingkirkan — dan hanya petugas yang boleh melakukannya. */}
+        <button
+          onClick={() => {
+            if (confirm(t('dash.hapus_konfirmasi'))) onHapus(l.id);
+          }}
+          className="tombol !py-1.5 text-xs text-red-700 hover:bg-red-50"
+        >
+          {t('dash.hapus')}
+        </button>
         {l.petugas && (
           <span className="text-xs text-maroon-600">{t('dash.ditangani', { nama: l.petugas })}</span>
         )}

@@ -51,6 +51,21 @@ export interface LaporanRingkas {
   created_at: string;
 }
 
+/** Bentuk laporan pada papan terbuka: tanpa teks asli, foto, dan nama petugas. */
+export interface LaporanPublik {
+  id: string;
+  status: StatusLaporan;
+  prioritas: Prioritas | null;
+  kategori: string[];
+  ringkasan: string | null;
+  ai_status: 'pending' | 'ok' | 'gagal';
+  toilet_nama: string;
+  gedung_kode: string;
+  lantai: number;
+  created_at: string;
+  selesai_at: string | null;
+}
+
 export interface Statistik {
   tanggal: string;
   hari_ini: {
@@ -103,6 +118,14 @@ export const api = {
 
   laporan: (id: string) => req<Laporan>(`/api/reports/${id}`),
 
+  /** Papan laporan terbuka — tidak memerlukan login. */
+  laporanPublik: (filter: Record<string, string>) => {
+    const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
+    return req<{ data: LaporanPublik[]; jumlah: { total: number; selesai: number | null } }>(
+      `/api/reports/publik?${q}`,
+    );
+  },
+
   /** Status ringkas beberapa laporan sekaligus, untuk daftar "Laporan saya". */
   ringkasLaporan: (ids: string[]) =>
     req<{ data: LaporanRingkas[] }>(`/api/reports/ringkas?ids=${ids.join(',')}`),
@@ -126,6 +149,7 @@ export const api = {
   ubahStatus: (id: string, status: StatusLaporan) =>
     req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   analisaUlang: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/analisa-ulang`, { method: 'POST' }),
+  hapusLaporan: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 
   statistik: (tanggal?: string) => req<Statistik>(`/api/summary/stats${tanggal ? `?tanggal=${tanggal}` : ''}`),
   ringkasan: (tanggal?: string) => req<Ringkasan>(`/api/summary${tanggal ? `?tanggal=${tanggal}` : ''}`),
