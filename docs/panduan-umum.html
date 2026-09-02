@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<title>Panduan Sistem AI Complaint</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Plus Jakarta Sans", "Helvetica Neue", Arial, sans-serif;
+         color: #3E1712; font-size: 10.5pt; line-height: 1.55; margin: 0; }
+  h1 { font-size: 24pt; margin: 0 0 2mm; letter-spacing: -0.4pt; }
+  h2 { font-size: 14pt; margin: 9mm 0 3mm; padding-bottom: 1.5mm;
+       border-bottom: 2px solid #E2571F; page-break-after: avoid; }
+  h3 { font-size: 11pt; margin: 5mm 0 1.5mm; page-break-after: avoid; }
+  p { margin: 0 0 3mm; }
+  .sampul { background: linear-gradient(135deg,#4A1D16,#8A3A22); color: #fff;
+            padding: 14mm 12mm; border-radius: 4mm; margin-bottom: 8mm; }
+  .sampul h1 { color: #fff; }
+  .sampul .sub { font-size: 11pt; color: #F0E4D3; margin: 0; }
+  .lencana { display: inline-block; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3);
+             padding: 1mm 3mm; border-radius: 10mm; font-size: 8.5pt; font-weight: 700;
+             letter-spacing: .5pt; text-transform: uppercase; margin-bottom: 4mm; }
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 9.5pt; }
+  th, td { text-align: left; padding: 2.2mm 3mm; border-bottom: 1px solid #EFE4D6; vertical-align: top; }
+  th { background: #FDF6F1; font-weight: 700; color: #5D2A20; }
+  .kartu { border: 1px solid #EFE4D6; border-radius: 3mm; padding: 5mm; margin: 3mm 0;
+           background: #FDFAF6; page-break-inside: avoid; }
+  .langkah { display: flex; gap: 4mm; margin-bottom: 4mm; page-break-inside: avoid; }
+  .nomor { flex: 0 0 9mm; height: 9mm; border-radius: 50%; background: #E2571F; color: #fff;
+           font-weight: 800; font-size: 12pt; display: flex; align-items: center; justify-content: center; }
+  .langkah h3 { margin: 0.5mm 0 1mm; }
+  .langkah p { margin: 0; font-size: 10pt; }
+  .kutip { border-left: 3px solid #E2571F; background: #FEF6F1; padding: 3mm 4mm;
+           margin: 2mm 0; font-style: italic; }
+  .hasil { border-left: 3px solid #0E9F6E; background: #F0FBF6; padding: 3mm 4mm; margin: 2mm 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .angka { font-size: 20pt; font-weight: 800; color: #E2571F; line-height: 1; }
+  .angka-ket { font-size: 8.5pt; color: #7A3628; margin-top: 1mm; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.5mm; }
+  .catatan { background: #FDF6F1; border-radius: 2mm; padding: 4mm; font-size: 9.5pt; margin: 3mm 0; }
+  .kaki { margin-top: 10mm; padding-top: 3mm; border-top: 1px solid #EFE4D6;
+          font-size: 8.5pt; color: #7A3628; }
+  .pecah { page-break-before: always; }
+</style></head><body>
+
+<div class="sampul">
+  <span class="lencana">Panduan untuk Pengguna &amp; Pimpinan</span>
+  <h1>Sistem Pelaporan Kondisi Toilet</h1>
+  <p class="sub">UPI Kampus Tasikmalaya &middot; Jln. Dadaha No. 18<br>
+  Dokumen ini menjelaskan apa yang sudah dibuat, tanpa istilah teknis.</p>
+</div>
+
+<h2>Masalah yang diselesaikan</h2>
+<p>Selama ini keluhan tentang toilet kampus jarang sampai ke petugas kebersihan. Mahasiswa
+yang menemukan toilet bau, becek, atau kehabisan sabun umumnya tidak melapor: tidak jelas
+harus lapor ke siapa, dan kalaupun melapor, tidak ada yang tahu apakah ditindaklanjuti.
+Akibatnya masalah kecil dibiarkan sampai menjadi besar.</p>
+
+<p>Sistem ini memotong jarak itu. Mahasiswa cukup memindai QR di pintu toilet dan menulis
+keluhan dengan bahasa sehari-hari. Sisanya dikerjakan sistem.</p>
+
+<div class="grid">
+  <div class="kartu">
+    <div class="angka">13</div>
+    <div class="angka-ket">stiker QR, satu per lantai ber-toilet</div>
+  </div>
+  <div class="kartu">
+    <div class="angka">~1 detik</div>
+    <div class="angka-ket">waktu sistem memahami dan menggolongkan keluhan</div>
+  </div>
+</div>
+
+<h2>Cara mahasiswa memakainya</h2>
+
+<div class="langkah">
+  <div class="nomor">1</div>
+  <div>
+    <h3>Pindai QR di pintu toilet</h3>
+    <p>Tidak perlu memasang aplikasi apa pun. Kamera ponsel langsung membuka halaman
+    laporan, dan lokasinya sudah terisi otomatis.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">2</div>
+  <div>
+    <h3>Pilih toilet dan tulis keluhannya</h3>
+    <p>Pilih pria, wanita, atau disabilitas, lalu tulis apa adanya — tidak perlu bahasa resmi.
+    Foto keadaan wajib dilampirkan agar petugas tahu persis apa yang harus dibawa.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">3</div>
+  <div>
+    <h3>Selesai</h3>
+    <p>Laporan langsung masuk ke layar petugas. Mahasiswa bisa memantau sendiri sampai
+    sejauh mana keluhannya ditangani.</p>
+  </div>
+</div>
+
+<h2>Apa yang dikerjakan kecerdasan buatannya</h2>
+<p>Bagian inilah yang membedakan sistem ini dari kotak saran biasa. Tulisan bebas mahasiswa
+diubah menjadi perintah kerja yang rapi. Contoh nyata dari pengujian:</p>
+
+<div class="kutip">&ldquo;WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.&rdquo;</div>
+
+<div class="hasil">
+  <strong>Prioritas:</strong> tinggi<br>
+  <strong>Jenis masalah:</strong> bau, genangan air, perlengkapan habis<br>
+  <strong>Ringkasan:</strong> Toilet berbau menyengat, lantai tergenang air, dan sabun habis.<br>
+  <strong>Perintah kerja:</strong> Keringkan lantai lebih dulu karena berisiko membuat pengguna
+  terpeleset. Setelah itu bersihkan sumber bau dan isi ulang sabun.
+</div>
+
+<p>Perhatikan urutan tindakannya: pengeringan lantai didahulukan karena berisiko membuat
+orang jatuh. Sistem tidak sekadar mendaftar masalah, tetapi menimbang mana yang paling
+membahayakan.</p>
+
+<p>Bahasa gaul pun dipahami. Kalimat &ldquo;airnya nggenang parah, hampir ke luar toilet, kloset yg
+pojok mampet&rdquo; dikenali sebagai kerusakan dengan genangan air berprioritas tinggi.</p>
+
+<h2 class="pecah">Siapa saja yang memakai</h2>
+
+<table>
+  <tr><th>Peran</th><th>Cara mendapat akun</th><th>Bisa melakukan apa</th></tr>
+  <tr>
+    <td><strong>Mahasiswa</strong><br>(pelapor)</td>
+    <td>Mendaftar sendiri, atau melapor tanpa akun sama sekali</td>
+    <td>Mengirim laporan, memantau statusnya, dan masuk papan peringkat bila memakai akun</td>
+  </tr>
+  <tr>
+    <td><strong>Petugas kebersihan</strong></td>
+    <td>Dibuatkan oleh admin</td>
+    <td>Melihat daftar laporan, menandai sedang dikerjakan, dan menutup laporan dengan foto bukti</td>
+  </tr>
+  <tr>
+    <td><strong>Admin</strong></td>
+    <td>Sudah tersedia sejak awal</td>
+    <td>Semua kewenangan petugas, ditambah membuat dan mengatur akun petugas</td>
+  </tr>
+  <tr>
+    <td><strong>Umum</strong></td>
+    <td>Tidak perlu akun</td>
+    <td>Membaca seluruh laporan dan status penanganannya</td>
+  </tr>
+</table>
+
+<h2>Tiga pengaman agar laporan tidak menguap</h2>
+
+<div class="kartu">
+  <h3>1. Menutup laporan wajib disertai foto bukti</h3>
+  <p>Petugas tidak bisa menandai sebuah laporan &ldquo;selesai&rdquo; hanya dengan menekan tombol.
+  Sistem menolaknya sampai foto kondisi setelah dibereskan diunggah. Foto bukti itu
+  ditampilkan terbuka, sehingga siapa pun dapat menilai sendiri apakah benar sudah ditangani.</p>
+</div>
+
+<div class="kartu">
+  <h3>2. Daftar laporan terbuka untuk siapa saja</h3>
+  <p>Seluruh laporan beserta statusnya dapat dibaca tanpa login. Yang ditampilkan hanya
+  ringkasan yang sudah dirapikan sistem — teks asli, foto pelapor, dan nama petugas
+  sengaja tidak ikut, demi menjaga privasi. Mengubah dan menghapus tetap hanya bisa
+  dilakukan petugas.</p>
+</div>
+
+<div class="kartu">
+  <h3>3. Catatan aktivitas yang tidak bisa dihapus</h3>
+  <p>Setiap pergerakan tercatat: laporan masuk, hasil analisis, perubahan status, siapa yang
+  masuk ke sistem, dan penghapusan. <strong>Bila sebuah laporan dihapus petugas, seluruh isinya
+  tetap tersimpan di catatan</strong> lengkap dengan nama penghapus dan waktunya. Pimpinan tetap
+  bisa memeriksa apa yang hilang.</p>
+</div>
+
+<h2>Yang bisa dilihat pimpinan</h2>
+<p>Dashboard menyediakan ringkasan yang menjawab pertanyaan pengelolaan, bukan sekadar
+menampilkan angka:</p>
+
+<ul>
+  <li><strong>Ringkasan harian otomatis</strong> setiap pukul 17.00 — satu paragraf yang menyebut lokasi
+  paling bermasalah hari itu dan tindakan yang paling mendesak.</li>
+  <li><strong>Kapan keluhan biasanya masuk</strong>, dipetakan per hari dan per jam. Ini dasar untuk
+  menyusun jadwal ronda petugas.</li>
+  <li><strong>Gedung mana bermasalah dalam hal apa</strong>, sehingga terlihat masalah yang menempel
+  pada satu gedung tertentu.</li>
+  <li><strong>Berapa lama laporan diselesaikan, dipilah menurut prioritas.</strong> Ini ujian nyata:
+  laporan mendesak seharusnya selesai lebih cepat daripada yang ringan.</li>
+  <li><strong>Tren naik-turun</strong> dibanding dua pekan sebelumnya.</li>
+</ul>
+
+<h2>Mendorong mahasiswa ikut melapor</h2>
+<p>Ada papan peringkat pelapor yang diurutkan dari jumlah laporan terbanyak. Di sampingnya
+ditampilkan berapa laporan yang benar-benar sudah selesai ditangani — supaya yang dihargai
+bukan sekadar rajin mengirim, melainkan laporan yang membuahkan perbaikan.</p>
+
+<div class="catatan">
+  <strong>Melapor tetap bisa tanpa akun.</strong> Ini disengaja. Memaksa mahasiswa mendaftar sebelum
+  boleh melapor akan membuat sebagian besar batal melapor, dan justru laporan itulah yang
+  dibutuhkan. Yang memakai akun mendapat dua keuntungan: laporannya tercatat atas namanya
+  dan bisa dipantau dari perangkat mana pun.
+</div>
+
+<h2>Yang masih membutuhkan keputusan kampus</h2>
+<table>
+  <tr><th>Hal</th><th>Keadaan saat ini</th></tr>
+  <tr><td>Gedung D, E, F</td><td>Belum didaftarkan karena keberadaan toiletnya belum dipastikan</td></tr>
+  <tr><td>Jenis toilet per lantai</td><td>Saat ini diasumsikan setiap lantai punya WC pria dan wanita; perlu dicocokkan dengan kenyataan</td></tr>
+  <tr><td>Kata sandi admin</td><td>Masih memakai sandi bawaan dan wajib diganti</td></tr>
+</table>
+
+<div class="kaki">
+  Sistem sudah berjalan dan dapat diakses di <strong>ai-complaint.yvrtz.workers.dev</strong>.
+  Antarmuka tersedia dalam Bahasa Indonesia dan Bahasa Inggris.
+</div>
+
+</body></html>
