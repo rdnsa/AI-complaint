@@ -1,19 +1,16 @@
 import { Hono } from 'hono';
-import type { AppEnv } from '../types';
+import type { AppEnv } from '../env';
+import * as lokasi from '../repositories/locations';
 
 const app = new Hono<AppEnv>();
 
 /** Public: the buildings, and which of their floors have a registered toilet. */
 app.get('/', async (c) => {
-  const rows = await c.env.DB.prepare(
-    `SELECT DISTINCT gedung_kode, gedung_nama, gedung_urutan, lantai
-       FROM toilet_info WHERE aktif = 1
-      ORDER BY gedung_urutan, lantai`,
-  ).all<{ gedung_kode: string; gedung_nama: string; lantai: number }>();
+  const baris = await lokasi.semuaLokasi(c.env);
 
   // Grouped per building so the frontend does not have to assemble it itself.
   const gedung = new Map<string, { kode: string; nama: string; lantai: number[] }>();
-  for (const r of rows.results) {
+  for (const r of baris) {
     const g = gedung.get(r.gedung_kode) ?? { kode: r.gedung_kode, nama: r.gedung_nama, lantai: [] };
     g.lantai.push(r.lantai);
     gedung.set(r.gedung_kode, g);
@@ -32,17 +29,7 @@ app.get('/:id', async (c) => {
   const cocok = /^([A-Za-z])-(\d{1,2})$/.exec(c.req.param('id'));
   if (!cocok) return c.json({ error: 'Kode lokasi tidak dikenal' }, 404);
 
-  const [, kode, lantai] = cocok;
-  const rows = await c.env.DB.prepare(
-    `SELECT id, jenis, gedung_kode, gedung_nama, lantai
-       FROM toilet_info
-      WHERE gedung_kode = ? AND lantai = ? AND aktif = 1
-      ORDER BY CASE jenis WHEN 'pria' THEN 0 WHEN 'wanita' THEN 1 ELSE 2 END`,
-  )
-    .bind(kode.toUpperCase(), Number(lantai))
-    .all<{ id: string; jenis: string; gedung_kode: string; gedung_nama: string; lantai: number }>();
-
-  const daftar = rows.results;
+  const daftar = await lokasi.toiletPadaLantai(c.env, cocok[1].toUpperCase(), Number(cocok[2]));
   if (!daftar.length) return c.json({ error: 'Kode lokasi tidak dikenal' }, 404);
 
   return c.json({

@@ -1,25 +1,13 @@
+/**
+ * The domain layer: vocabulary and rules of the problem itself.
+ *
+ * Nothing here may import Hono, D1, R2, or any other framework — that is the
+ * property which lets these rules be read, tested, and reused without booting
+ * a Worker.
+ */
+
 export const PERAN = ['admin', 'petugas', 'pelapor'] as const;
 export type Peran = (typeof PERAN)[number];
-
-export interface Env {
-  DB: D1Database;
-  BUCKET: R2Bucket;
-  ASSETS: Fetcher;
-
-  // vars (wrangler.jsonc)
-  LLM_BASE_URL: string;
-  LLM_MODEL: string;
-
-  // secrets (wrangler secret put)
-  LLM_API_KEY: string;
-  AUTH_SECRET: string;
-}
-
-/** Shared Hono types: bindings plus the variables the auth middleware fills in. */
-export type AppEnv = {
-  Bindings: Env;
-  Variables: { sesi: { id: string; nama: string; peran: Peran } };
-};
 
 export const KATEGORI = [
   'kebersihan',
@@ -37,7 +25,7 @@ export type Prioritas = (typeof PRIORITAS)[number];
 export const STATUS = ['baru', 'diproses', 'selesai'] as const;
 export type Status = (typeof STATUS)[number];
 
-/** A raw `reports` row exactly as D1 returns it. */
+/** A raw `reports` row as stored, joined with its location. */
 export interface ReportRow {
   id: string;
   toilet_id: string;
@@ -74,13 +62,27 @@ export interface ReportDTO
   foto_selesai_url: string | null;
 }
 
+/** Photos are served by our own Worker, never by a third-party domain. */
+export function urlFoto(key: string | null | undefined): string | null {
+  return key ? `/api/uploads/${key}` : null;
+}
+
 export function toDTO(row: ReportRow): ReportDTO {
   const { kategori, foto_key, foto_selesai_key, ...rest } = row;
   return {
     ...rest,
     kategori: kategori ? (JSON.parse(kategori) as Kategori[]) : [],
-    // Relative path: photos are served by this same Worker, on the same origin.
-    foto_url: foto_key ? `/api/uploads/${foto_key}` : null,
-    foto_selesai_url: foto_selesai_key ? `/api/uploads/${foto_selesai_key}` : null,
+    foto_url: urlFoto(foto_key),
+    foto_selesai_url: urlFoto(foto_selesai_key),
   };
+}
+
+/**
+ * A report may only be closed once evidence exists.
+ *
+ * This is the one business rule strict enough to deserve its own function: the
+ * HTTP layer, the service layer, and any future caller all decide the same way.
+ */
+export function bolehDiselesaikan(status: Status, fotoBukti: string | null): boolean {
+  return status !== 'selesai' || Boolean(fotoBukti);
 }

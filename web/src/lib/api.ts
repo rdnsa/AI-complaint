@@ -64,18 +64,6 @@ export interface Laporan {
   created_at: string;
 }
 
-/** The compact shape used by the "My reports" list. */
-export interface LaporanRingkas {
-  id: string;
-  status: StatusLaporan;
-  prioritas: Prioritas | null;
-  ai_status: 'pending' | 'ok' | 'gagal';
-  ringkasan: string | null;
-  teks: string;
-  toilet_nama: string;
-  created_at: string;
-}
-
 /** A report on the public board: no raw text, no photo, no staff name. */
 export interface LaporanPublik {
   id: string;
@@ -171,9 +159,8 @@ export const api = {
     );
   },
 
-  /** Status of several reports at once, for the "My reports" list. */
-  ringkasLaporan: (ids: string[]) =>
-    req<{ data: LaporanRingkas[] }>(`/api/reports/ringkas?ids=${ids.join(',')}`),
+  /** The signed-in reporter's own reports. */
+  laporanSaya: () => req<{ data: Laporan[] }>('/api/reports/saya'),
 
   /** `jenis` separates the reporter's condition photo from the staff proof photo. */
   unggahFoto: (file: File, jenis: 'laporan' | 'bukti' = 'laporan') => {

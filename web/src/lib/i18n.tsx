@@ -68,7 +68,9 @@ const ID = {
     'Analisis otomatis belum berhasil, tetapi laporan kamu tetap tercatat dan akan ditinjau petugas.',
   'status.tindakan': 'Tindakan untuk petugas:',
   'status.galat_muat': 'Gagal memuat laporan',
-  'status.tersimpan': 'Laporan ini tersimpan di daftar “Laporan saya” pada halaman depan.',
+  'status.tersimpan':
+    'Simpan tautan halaman ini, atau masuk ke akunmu agar laporan ini tercatat di daftar “Laporan saya”.',
+  'status.tersimpan_akun': 'Laporan ini tercatat di daftar “Laporan saya” pada akunmu.',
 
   'publik.judul': 'Laporan Masuk',
   'publik.keterangan':
@@ -78,9 +80,7 @@ const ID = {
   'publik.jumlah': '{selesai} dari {total} laporan sudah selesai ditangani',
 
   'riwayat.judul': 'Laporan saya',
-  'riwayat.keterangan': 'Tersimpan di perangkat ini saja.',
   'riwayat.lihat': 'Lihat',
-  'riwayat.hapus': 'Hapus riwayat',
 
   'lacak.judul': 'Status penanganan',
   'lacak.diterima': 'Laporan diterima',
@@ -279,7 +279,9 @@ const EN: Record<Kunci, string> = {
     'Automatic analysis has not succeeded yet, but your report is recorded and staff will review it.',
   'status.tindakan': 'Action for staff:',
   'status.galat_muat': 'Could not load the report',
-  'status.tersimpan': 'This report is saved in the “My reports” list on the home page.',
+  'status.tersimpan':
+    'Save this page\u2019s link, or sign in so the report is listed under “My reports” on your account.',
+  'status.tersimpan_akun': 'This report is listed under “My reports” on your account.',
 
   'publik.judul': 'Incoming Reports',
   'publik.keterangan':
@@ -289,9 +291,7 @@ const EN: Record<Kunci, string> = {
   'publik.jumlah': '{selesai} of {total} reports resolved',
 
   'riwayat.judul': 'My reports',
-  'riwayat.keterangan': 'Saved on this device only.',
   'riwayat.lihat': 'View',
-  'riwayat.hapus': 'Clear history',
 
   'lacak.judul': 'Handling status',
   'lacak.diterima': 'Report received',

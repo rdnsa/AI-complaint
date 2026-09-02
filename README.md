@@ -165,7 +165,7 @@ old reports pointing at it keep their location and history intact.
 | `GET` | `/api/lokasi`, `/api/lokasi/:id` | buildings and floors; one floor (QR target) |
 | `POST` | `/api/reports` | file a report |
 | `GET` | `/api/reports/publik` | public report board |
-| `GET` | `/api/reports/ringkas?ids=` | status of the reporter's own reports |
+| `GET` | `/api/reports/saya` | the signed-in reporter's own reports |
 | `GET` | `/api/reports/:id` | one report |
 | `POST` | `/api/uploads?jenis=laporan\|bukti` | upload a photo |
 | `GET` | `/api/uploads/:key` | serve a photo from R2 |
@@ -192,27 +192,57 @@ old reports pointing at it keep their location and history intact.
 
 ---
 
+## Architecture
+
+The backend is layered, and dependencies only ever point inwards:
+
+```
+routes/  →  services/  →  repositories/  →  D1
+                ↓
+           adapters/            domain/
+```
+
+| Layer | Responsibility | Rule it obeys |
+|---|---|---|
+| `domain/` | vocabulary and rules of the problem | imports nothing — no Hono, no D1, no R2 |
+| `repositories/` | every SQL statement, one file per aggregate | knows the database, never HTTP |
+| `services/` | use cases and business rules | knows repositories and adapters, never Hono |
+| `adapters/` | LLM, R2 storage, password hashing, sessions, clock | wraps the outside world behind small interfaces |
+| `routes/` | parse, validate, delegate, format | contains no SQL and no business rules |
+| `index.ts` | composition root | the only file that sees every layer |
+
+All 38 SQL statements live under `repositories/`, so moving off D1 would mean
+rewriting that one directory. The rule that a report can only be closed with
+evidence lives in `domain/types.ts`, so it holds no matter which entry point
+asks — an HTTP request today, a cron job or an admin tool tomorrow.
+
 ## Project structure
 
 ```
 src/
-  index.ts               Worker entry: API routing, SPA fallback, cron handler
-  types.ts               shared types, D1 row → DTO conversion
-  lib/llm.ts             prompt, few-shot examples, output validation
-  lib/analisis.ts        per-report analysis, run after the response is sent
-  lib/ringkasan.ts       daily summary, shared by the cron and the manual button
-  lib/aktivitas.ts       activity-log writer
-  lib/auth.ts            JWT cookie sessions and role guards
-  lib/sandi.ts           PBKDF2 password hashing
-  lib/waktu.ts           UTC ↔ WIB day conversion
-  routes/                auth, lokasi, reports, uploads, summary, aktivitas,
-                         pengguna, peringkat
+  index.ts               composition root: routes, SPA fallback, cron handler
+  env.ts                 infrastructure bindings and configuration
+  domain/types.ts        entities, enums, DTO mapping, closing rule
+  adapters/
+    llm.ts               prompt, few-shot examples, output validation
+    storage.ts           R2 photo storage, prefixes and limits
+    session.ts           JWT cookie sessions and role guards
+    password.ts          PBKDF2 hashing
+    clock.ts             UTC ↔ WIB day conversion
+  repositories/          reports, locations, users, activity, summaries
+  services/
+    report-service.ts    filing, closing, deleting a report
+    analysis-service.ts  per-report analysis, run after the response is sent
+    summary-service.ts   daily summary, statistics, charts, leaderboard
+    user-service.ts      registration, sign-in, account management
+    activity-service.ts  writing and reading the audit trail
+  routes/                auth, locations, reports, uploads, summary, activity,
+                         users, leaderboard
 
 web/src/
   lib/i18n.tsx           dictionary and language switcher
   lib/sesi.tsx           session context
   lib/api.ts             typed API client
-  lib/riwayat.ts         reporter's own report ids, kept in localStorage
   components/Kop.tsx     page header, back button, floating pill bar
   components/Lacak.tsx   three-step status timeline
   components/grafik/     validated chart palette, line chart, bar chart
@@ -282,10 +312,12 @@ summary is exposed — raw text, reporter photos, and staff names are withheld, 
 the board cannot become an outlet for unfiltered complaint text or for a face
 caught in the background of a photo.
 
-**Reporters can track their reports without an account.** Report ids are kept in
-the device's `localStorage` and the landing page lists them with their current
-status. The confirmation page carries a three-step timeline and refreshes itself
-while open. Nothing about the reporter is stored on the server.
+**Reports belong to the account, not to the device.** A signed-in reporter sees
+"My reports" on the landing page wherever they sign in — phone, laptop, a
+borrowed browser. An earlier version kept the ids in `localStorage`, which tied
+the list to one device and lost it when site data was cleared. Anonymous reports
+are still accepted; their reporter tracks them through the confirmation link,
+which carries a three-step timeline and refreshes itself while open.
 
 **The interface is bilingual; the analysis stays Indonesian.** Labels follow the
 reader's choice, but LLM summaries and recommendations are always written in

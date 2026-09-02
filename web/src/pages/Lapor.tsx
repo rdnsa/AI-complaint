@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Kop from '../components/Kop';
 import { api, type Jenis, type Lokasi } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
-import { simpanRiwayat } from '../lib/riwayat';
 import { useSesi } from '../lib/sesi';
 
 const IKON: Record<Jenis, string> = { pria: '♂', wanita: '♀', disabilitas: '♿' };
@@ -55,8 +54,6 @@ export default function Lapor() {
   // The photo is uploaded first, so the report is stored with a reference that already exists.
       const foto_key = (await api.unggahFoto(foto)).key;
       const hasil = await api.kirimLaporan({ toilet_id: toiletId, teks: teks.trim(), foto_key });
-      // Without a login, this trace is what lets the reporter check back on the status.
-      simpanRiwayat({ id: hasil.id, lokasi: hasil.toilet, waktu: new Date().toISOString() });
       navigate(`/laporan/${hasil.id}`, { replace: true });
     } catch (err) {
       setGalat(err instanceof Error ? err.message : t('lapor.galat_kirim'));

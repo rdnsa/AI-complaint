@@ -5,6 +5,7 @@ import Lacak from '../components/Lacak';
 import { LencanaKategori, LencanaPrioritas } from '../components/Lencana';
 import { api, type Laporan } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
+import { useSesi } from '../lib/sesi';
 
 /**
  * Confirmation page for the reporter. The report is stored instantly while the
@@ -13,6 +14,7 @@ import { useBahasa } from '../lib/i18n';
 export default function StatusLaporan() {
   const { id = '' } = useParams();
   const { t } = useBahasa();
+  const { sesi } = useSesi();
   const [laporan, setLaporan] = useState<Laporan | null>(null);
   const [galat, setGalat] = useState<string | null>(null);
 
@@ -116,7 +118,7 @@ export default function StatusLaporan() {
 
         {laporan && (
           <p className="mt-4 text-center text-xs leading-relaxed text-maroon-600">
-            {t('status.tersimpan')}
+            {sesi?.peran === 'pelapor' ? t('status.tersimpan_akun') : t('status.tersimpan')}
           </p>
         )}
 

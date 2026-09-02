@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Kop from '../components/Kop';
 import { LencanaStatus } from '../components/Lencana';
-import { api, type Gedung, type LaporanRingkas } from '../lib/api';
+import { api, type Gedung, type Laporan } from '../lib/api';
 import { useBahasa, useWaktuRelatif } from '../lib/i18n';
-import { ambilRiwayat, hapusRiwayat } from '../lib/riwayat';
 import { useSesi } from '../lib/sesi';
 
-function BarisRiwayat({ laporan }: { laporan: LaporanRingkas }) {
+function BarisLaporanSaya({ laporan }: { laporan: Laporan }) {
   const { t } = useBahasa();
   const waktuRelatif = useWaktuRelatif();
 
@@ -31,7 +30,7 @@ export default function Beranda() {
   const { sesi, keluar } = useSesi();
   const [gedung, setGedung] = useState<Gedung[]>([]);
   const [memuat, setMemuat] = useState(true);
-  const [riwayat, setRiwayat] = useState<LaporanRingkas[]>([]);
+  const [laporanSaya, setLaporanSaya] = useState<Laporan[]>([]);
 
   useEffect(() => {
     api
@@ -41,42 +40,29 @@ export default function Beranda() {
       .finally(() => setMemuat(false));
   }, []);
 
-  // The reporter's own report statuses are refetched whenever the landing page
-  // opens, so they see the latest progress without having saved the link.
+  // Reports belong to the account, not to the device, so the list follows the
+  // reporter to any phone or browser they sign in from.
   useEffect(() => {
-    const jejak = ambilRiwayat();
-    if (!jejak.length) return;
+    if (sesi?.peran !== 'pelapor') return setLaporanSaya([]);
     api
-      .ringkasLaporan(jejak.map((j) => j.id))
-      .then((r) => setRiwayat(r.data))
-      .catch(() => setRiwayat([]));
-  }, []);
+      .laporanSaya()
+      .then((r) => setLaporanSaya(r.data))
+      .catch(() => setLaporanSaya([]));
+  }, [sesi]);
 
   return (
     <div className="min-h-screen pb-16">
       <Kop judul={t('app.judul')} keterangan={t('app.subjudul')} />
 
       <main className="mx-auto max-w-5xl px-4">
-        {!!riwayat.length && (
+        {!!laporanSaya.length && (
           <section className="mt-6">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="judul-bagian">{t('riwayat.judul')}</h2>
-              <button
-                onClick={() => {
-                  hapusRiwayat();
-                  setRiwayat([]);
-                }}
-                className="text-xs font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-2 hover:text-bata-600"
-              >
-                {t('riwayat.hapus')}
-              </button>
-            </div>
+            <h2 className="judul-bagian">{t('riwayat.judul')}</h2>
             <div className="mt-2 space-y-2">
-              {riwayat.map((l) => (
-                <BarisRiwayat key={l.id} laporan={l} />
+              {laporanSaya.map((l) => (
+                <BarisLaporanSaya key={l.id} laporan={l} />
               ))}
             </div>
-            <p className="mt-2 text-xs text-maroon-600/70">{t('riwayat.keterangan')}</p>
           </section>
         )}
 

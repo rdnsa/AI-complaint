@@ -1,17 +1,24 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import aktivitasRoutes from './routes/aktivitas';
+import { tanggalWIB } from './adapters/clock';
+import type { AppEnv, Env } from './env';
+import activityRoutes from './routes/activity';
 import authRoutes from './routes/auth';
+import leaderboardRoutes from './routes/leaderboard';
+import locationRoutes from './routes/locations';
 import reportRoutes from './routes/reports';
 import summaryRoutes from './routes/summary';
-import lokasiRoutes from './routes/lokasi';
-import penggunaRoutes from './routes/pengguna';
-import peringkatRoutes from './routes/peringkat';
 import uploadRoutes from './routes/uploads';
-import { buatRingkasanHarian } from './lib/ringkasan';
-import { tanggalWIB } from './lib/waktu';
-import type { AppEnv, Env } from './types';
+import userRoutes from './routes/users';
+import { buatRingkasanHarian } from './services/summary-service';
 
+/**
+ * Composition root.
+ *
+ * The only file that knows about every layer at once: it mounts the HTTP
+ * routes, serves the built frontend, and wires the cron trigger to the summary
+ * service. Everything below it depends inward only.
+ */
 const app = new Hono<AppEnv>();
 
 app.use('*', logger());
@@ -19,13 +26,13 @@ app.use('*', logger());
 app.get('/api/health', (c) => c.json({ ok: true, waktu: new Date().toISOString() }));
 
 app.route('/api/auth', authRoutes);
-app.route('/api/lokasi', lokasiRoutes);
+app.route('/api/lokasi', locationRoutes);
 app.route('/api/reports', reportRoutes);
 app.route('/api/uploads', uploadRoutes);
 app.route('/api/summary', summaryRoutes);
-app.route('/api/aktivitas', aktivitasRoutes);
-app.route('/api/pengguna', penggunaRoutes);
-app.route('/api/peringkat', peringkatRoutes);
+app.route('/api/aktivitas', activityRoutes);
+app.route('/api/pengguna', userRoutes);
+app.route('/api/peringkat', leaderboardRoutes);
 
 app.notFound(async (c) => {
   if (c.req.path.startsWith('/api/')) return c.json({ error: 'Endpoint tidak ditemukan' }, 404);

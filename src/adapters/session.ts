@@ -1,7 +1,8 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { sign, verify } from 'hono/jwt';
-import type { AppEnv, Peran } from '../types';
+import type { Peran } from '../domain/types';
+import type { AppEnv } from '../env';
 
 const COOKIE = 'sesi';
 const ALG = 'HS256';

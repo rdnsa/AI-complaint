@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { KATEGORI, PRIORITAS, type Env, type Kategori, type Prioritas } from '../types';
+import { KATEGORI, PRIORITAS, type Kategori, type Prioritas } from '../domain/types';
+import type { Env } from '../env';
 
 /**
  * The contract for the model's output. The LLM occasionally invents a category

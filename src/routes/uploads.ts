@@ -1,19 +1,14 @@
 import { Hono } from 'hono';
-import type { AppEnv } from '../types';
-
-/**
- * Two kinds of photo share one bucket, separated by prefix: 'laporan' for the
- * condition photo from a reporter, 'bukti' for the proof-of-completion photo
- * from staff. Only these two prefixes may ever be read back.
- */
-const FOLDER = { laporan: 'laporan', bukti: 'bukti' } as const;
-type JenisFoto = keyof typeof FOLDER;
-
-/** Photos are served back by this Worker; see the GET handler below. */
-const PREFIX_URL = '/api/uploads';
-
-const MAKS_BYTE = 5 * 1024 * 1024; // 5 MB, cukup untuk foto kamera HP setelah kompresi browser
-const TIPE_DIIZINKAN = new Set(['image/jpeg', 'image/png', 'image/webp']);
+import {
+  ambilFoto,
+  kunciDiizinkan,
+  MAKS_BYTE,
+  simpanFoto,
+  TIPE_DIIZINKAN,
+  type JenisFoto,
+} from '../adapters/storage';
+import { urlFoto } from '../domain/types';
+import type { AppEnv } from '../env';
 
 const app = new Hono<AppEnv>();
 
@@ -22,7 +17,7 @@ const app = new Hono<AppEnv>();
  *
  * The upload goes through the R2 binding rather than a presigned URL, so no S3
  * credentials need to exist anywhere; the Worker streams the body to the bucket.
- * The photo is uploaded first, then its `foto_key` is sent with the report.
+ * The photo is uploaded first, then its key is sent along with the report.
  */
 app.post('/', async (c) => {
   const form = await c.req.formData().catch(() => null);
@@ -32,22 +27,12 @@ app.post('/', async (c) => {
   if (!TIPE_DIIZINKAN.has(file.type)) {
     return c.json({ error: 'Format harus JPG, PNG, atau WebP' }, 415);
   }
-  if (file.size > MAKS_BYTE) {
-    return c.json({ error: 'Ukuran foto maksimal 5 MB' }, 413);
-  }
+  if (file.size > MAKS_BYTE) return c.json({ error: 'Ukuran foto maksimal 5 MB' }, 413);
 
-  const diminta = c.req.query('jenis');
-  const jenis: JenisFoto = diminta === 'bukti' ? 'bukti' : 'laporan';
+  const jenis: JenisFoto = c.req.query('jenis') === 'bukti' ? 'bukti' : 'laporan';
+  const key = await simpanFoto(c.env, file, jenis);
 
-  const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
-  // The date prefix keeps the bucket easy to browse and to purge by period.
-  const key = `${FOLDER[jenis]}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
-
-  await c.env.BUCKET.put(key, file.stream(), {
-    httpMetadata: { contentType: file.type, cacheControl: 'public, max-age=31536000' },
-  });
-
-  return c.json({ key, url: `${PREFIX_URL}/${key}` }, 201);
+  return c.json({ key, url: urlFoto(key) }, 201);
 });
 
 /**
@@ -60,11 +45,9 @@ app.post('/', async (c) => {
  */
 app.get('/:key{.+}', async (c) => {
   const key = c.req.param('key');
-  // Only the two photo prefixes are readable, not arbitrary objects in the bucket.
-  const boleh = Object.values(FOLDER).some((f) => key.startsWith(`${f}/`));
-  if (!boleh) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
+  if (!kunciDiizinkan(key)) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
 
-  const obj = await c.env.BUCKET.get(key, { onlyIf: c.req.raw.headers });
+  const obj = await ambilFoto(c.env, key, c.req.raw.headers);
   if (!obj) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
 
   const headers = new Headers();
