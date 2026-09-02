@@ -1,6 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ai-complaint",
+  // Token OAuth ini punya akses ke beberapa akun; sebutkan yang memiliki D1 & R2 "kato".
+  "account_id": "2b672ad4e8f27a584bd22e9ec749e326",
   "main": "src/index.ts",
   "compatibility_date": "2025-08-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -50,8 +52,7 @@
 
   "vars": {
     "LLM_BASE_URL": "https://api.deepseek.com",
-    "LLM_MODEL": "deepseek-chat",
-    "R2_PUBLIC_URL": "https://pub-7585fac9be0a43fba71c9949ec8e565a.r2.dev"
+    "LLM_MODEL": "deepseek-chat"
   }
 
   // Secret (JANGAN ditaruh di sini, pakai `wrangler secret put`):

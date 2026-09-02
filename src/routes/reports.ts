@@ -60,7 +60,7 @@ app.get('/:id', async (c) => {
     .bind(c.req.param('id'))
     .first<ReportRow>();
   if (!row) return c.json({ error: 'Laporan tidak ditemukan' }, 404);
-  return c.json(toDTO(row, c.env.R2_PUBLIC_URL));
+  return c.json(toDTO(row));
 });
 
 /** Petugas: daftar laporan untuk dashboard, dengan filter. */
@@ -106,7 +106,7 @@ app.get('/', wajibPetugas, async (c) => {
     .bind(...params, limit)
     .all<ReportRow>();
 
-  return c.json({ data: rows.results.map((r) => toDTO(r, c.env.R2_PUBLIC_URL)) });
+  return c.json({ data: rows.results.map(toDTO) });
 });
 
 const UbahStatusSchema = z.object({ status: z.enum(STATUS) });

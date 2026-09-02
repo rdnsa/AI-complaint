@@ -6,7 +6,6 @@ export interface Env {
   // vars (wrangler.jsonc)
   LLM_BASE_URL: string;
   LLM_MODEL: string;
-  R2_PUBLIC_URL: string;
 
   // secrets (wrangler secret put)
   LLM_API_KEY: string;
@@ -67,11 +66,12 @@ export interface ReportDTO extends Omit<ReportRow, 'kategori' | 'foto_key'> {
   foto_url: string | null;
 }
 
-export function toDTO(row: ReportRow, r2PublicUrl: string): ReportDTO {
+export function toDTO(row: ReportRow): ReportDTO {
   const { kategori, foto_key, ...rest } = row;
   return {
     ...rest,
     kategori: kategori ? (JSON.parse(kategori) as Kategori[]) : [],
-    foto_url: foto_key ? `${r2PublicUrl.replace(/\/$/, '')}/${foto_key}` : null,
+    // Path relatif: foto dilayani Worker ini sendiri, satu domain dengan aplikasi.
+    foto_url: foto_key ? `/api/uploads/${foto_key}` : null,
   };
 }

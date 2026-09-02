@@ -1,6 +1,10 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../types';
 
+const FOLDER = 'laporan';
+/** Foto disajikan kembali oleh Worker ini; lihat handler GET di bawah. */
+const PREFIX_URL = '/api/uploads';
+
 const MAKS_BYTE = 5 * 1024 * 1024; // 5 MB, cukup untuk foto kamera HP setelah kompresi browser
 const TIPE_DIIZINKAN = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
@@ -27,13 +31,40 @@ app.post('/', async (c) => {
 
   const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
   // Prefix tanggal membuat isi bucket mudah ditelusuri dan dihapus per periode.
-  const key = `laporan/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
+  const key = `${FOLDER}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${ext}`;
 
   await c.env.BUCKET.put(key, file.stream(), {
     httpMetadata: { contentType: file.type, cacheControl: 'public, max-age=31536000' },
   });
 
-  return c.json({ key, url: `${c.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${key}` }, 201);
+  return c.json({ key, url: `${PREFIX_URL}/${key}` }, 201);
+});
+
+/**
+ * Publik: menyajikan foto dari R2 lewat Worker, bukan lewat domain publik r2.dev.
+ *
+ * Domain `r2.dev` dibajak DNS oleh sebagian ISP di Indonesia sehingga fotonya
+ * gagal dimuat di jaringan kampus. Menyajikannya dari domain aplikasi sendiri
+ * menghilangkan ketergantungan itu, sekaligus membuat bucket tidak perlu
+ * dibuka untuk akses publik.
+ */
+app.get('/:key{.+}', async (c) => {
+  const key = c.req.param('key');
+  // Hanya berkas lampiran laporan yang boleh dibaca, bukan sembarang objek di bucket.
+  if (!key.startsWith(`${FOLDER}/`)) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
+
+  const obj = await c.env.BUCKET.get(key, { onlyIf: c.req.raw.headers });
+  if (!obj) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
+
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('etag', obj.httpEtag);
+  // Nama berkas memakai UUID dan tidak pernah ditimpa, jadi aman di-cache selamanya.
+  headers.set('cache-control', 'public, max-age=31536000, immutable');
+
+  // Tanpa `body` berarti syarat If-None-Match terpenuhi: browser sudah punya salinannya.
+  if (!('body' in obj)) return new Response(null, { status: 304, headers });
+  return new Response(obj.body, { headers });
 });
 
 export default app;

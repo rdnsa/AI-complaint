@@ -26,7 +26,7 @@ statistik harian untuk dashboard.
 | Runtime | Cloudflare Workers |
 | Framework API | Hono |
 | Database | Cloudflare D1 (SQLite) |
-| Penyimpanan foto | Cloudflare R2 |
+| Penyimpanan foto | Cloudflare R2 (disajikan lewat Worker) |
 | Frontend | React 18 + Vite + Tailwind CSS |
 | LLM | DeepSeek `deepseek-chat` (JSON mode), tanpa training |
 
@@ -61,8 +61,10 @@ npm run db:seed:remote
 npm run deploy
 ```
 
-Agar foto bisa dilihat di dashboard, aktifkan **Public Development URL** pada
-bucket R2 `kato`, lalu samakan nilainya dengan `R2_PUBLIC_URL` di `wrangler.jsonc`.
+Bucket R2 tidak perlu dibuka untuk akses publik: foto disajikan kembali oleh
+Worker lewat `GET /api/uploads/<key>`. Selain menghilangkan satu langkah
+konfigurasi, ini juga menghindari domain `pub-*.r2.dev` yang DNS-nya dibajak
+sebagian ISP di Indonesia sehingga gambar gagal dimuat di jaringan kampus.
 
 ### Deploy otomatis (Cloudflare Workers Builds)
 
@@ -120,3 +122,7 @@ prioritas tak dikenal jatuh ke `sedang`.
 
 **Latensi tiap panggilan dicatat** di kolom `ai_ms`, berguna sebagai data
 kuantitatif pada bab hasil dan pembahasan.
+
+**Foto tidak melewati domain pihak ketiga.** Endpoint `GET /api/uploads/<key>`
+membaca objek langsung dari binding R2, membatasi akses hanya ke prefix
+`laporan/`, dan mendukung ETag sehingga browser cukup mengunduh satu kali.
