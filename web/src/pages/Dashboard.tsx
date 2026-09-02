@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import Kop from '../components/Kop';
 import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
-import {
-  api,
-  waktuRelatif,
-  type Laporan,
-  type Ringkasan,
-  type Statistik,
-  type StatusLaporan,
-} from '../lib/api';
+import { api, type Laporan, type Ringkasan, type Statistik, type StatusLaporan } from '../lib/api';
+import { useBahasa, useWaktuRelatif } from '../lib/i18n';
 
 export default function Dashboard() {
+  const { t } = useBahasa();
   const [petugas, setPetugas] = useState<string | null>(null);
   const [memeriksaSesi, setMemeriksaSesi] = useState(true);
 
@@ -21,12 +17,20 @@ export default function Dashboard() {
       .finally(() => setMemeriksaSesi(false));
   }, []);
 
-  if (memeriksaSesi) return <p className="p-8 text-center text-slate-500">Memuat…</p>;
+  if (memeriksaSesi) {
+    return (
+      <div className="min-h-screen">
+        <Kop judul={t('dash.judul')} ramping />
+        <p className="p-10 text-center text-maroon-600">{t('umum.memuat')}</p>
+      </div>
+    );
+  }
   if (!petugas) return <FormLogin onSukses={setPetugas} />;
   return <Papan petugas={petugas} onLogout={() => setPetugas(null)} />;
 }
 
 function FormLogin({ onSukses }: { onSukses: (nama: string) => void }) {
+  const { t } = useBahasa();
   const [nama, setNama] = useState('');
   const [password, setPassword] = useState('');
   const [galat, setGalat] = useState<string | null>(null);
@@ -39,47 +43,53 @@ function FormLogin({ onSukses }: { onSukses: (nama: string) => void }) {
     try {
       onSukses((await api.login(nama, password)).nama);
     } catch (err) {
-      setGalat(err instanceof Error ? err.message : 'Gagal masuk');
+      setGalat(err instanceof Error ? err.message : t('login.galat'));
       setProses(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-16">
-      <h1 className="text-xl font-bold">Masuk Petugas</h1>
-      <p className="mt-1 text-sm text-slate-600">Nama dipakai untuk mencatat siapa yang menangani laporan.</p>
-      <form onSubmit={masuk} className="mt-6 space-y-4">
-        <div>
-          <label htmlFor="nama" className="label">Nama petugas</label>
-          <input id="nama" className="input" value={nama} onChange={(e) => setNama(e.target.value)} required />
-        </div>
-        <div>
-          <label htmlFor="pw" className="label">Password</label>
-          <input
-            id="pw"
-            type="password"
-            className="input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        {galat && <p className="text-sm text-red-700">{galat}</p>}
-        <button type="submit" disabled={proses} className="tombol-utama w-full">
-          {proses ? 'Memeriksa…' : 'Masuk'}
-        </button>
-      </form>
+    <div className="min-h-screen">
+      <Kop judul={t('login.judul')} keterangan={t('login.keterangan')} ramping />
+      <main className="mx-auto max-w-sm px-4">
+        <form onSubmit={masuk} className="kartu mt-8 space-y-4 p-5">
+          <div>
+            <label htmlFor="nama" className="label">
+              {t('login.nama')}
+            </label>
+            <input id="nama" className="input" value={nama} onChange={(e) => setNama(e.target.value)} required />
+          </div>
+          <div>
+            <label htmlFor="pw" className="label">
+              {t('login.password')}
+            </label>
+            <input
+              id="pw"
+              type="password"
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {galat && <p className="text-sm font-medium text-red-700">{galat}</p>}
+          <button type="submit" disabled={proses} className="tombol-utama w-full py-3">
+            {proses ? t('login.memeriksa') : t('login.masuk')}
+          </button>
+        </form>
+      </main>
     </div>
   );
 }
 
 function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void }) {
+  const { t } = useBahasa();
   const [laporan, setLaporan] = useState<Laporan[]>([]);
   const [statistik, setStatistik] = useState<Statistik | null>(null);
   const [ringkasan, setRingkasan] = useState<Ringkasan | null>(null);
   const [filter, setFilter] = useState({ status: '', prioritas: '' });
   const [memuat, setMemuat] = useState(true);
-  const [buatRingkasanProses, setBuatRingkasanProses] = useState(false);
+  const [menyusun, setMenyusun] = useState(false);
 
   const muat = useCallback(async () => {
     const [l, s, r] = await Promise.all([
@@ -95,9 +105,9 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
 
   useEffect(() => {
     muat();
-    // Dashboard menempel di dinding ruang OB, jadi ia menyegarkan diri sendiri.
-    const t = setInterval(muat, 30_000);
-    return () => clearInterval(t);
+    // Dashboard menempel di dinding ruang petugas, jadi ia menyegarkan diri sendiri.
+    const timer = setInterval(muat, 30_000);
+    return () => clearInterval(timer);
   }, [muat]);
 
   async function ubahStatus(id: string, status: StatusLaporan) {
@@ -108,121 +118,123 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard Petugas</h1>
-          <p className="text-sm text-slate-600">Masuk sebagai {petugas}</p>
-        </div>
-        <button
-          onClick={async () => {
-            await api.logout().catch(() => {});
-            onLogout();
-          }}
-          className="tombol-netral"
-        >
-          Keluar
-        </button>
-      </header>
-
-      {statistik && (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Kartu label="Laporan hari ini" nilai={statistik.hari_ini.total ?? 0} />
-          <Kartu label="Prioritas tinggi" nilai={statistik.hari_ini.tinggi ?? 0} nada="merah" />
-          <Kartu label="Belum selesai" nilai={statistik.belum_selesai} nada="kuning" />
-          <Kartu label="Analisis gagal" nilai={statistik.hari_ini.ai_gagal ?? 0} />
-        </div>
-      )}
-
-      <section className="kartu mt-4 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Ringkasan hari ini
-          </h2>
+    <div className="min-h-screen pb-16">
+      <Kop
+        judul={t('dash.judul')}
+        keterangan={t('dash.sebagai', { nama: petugas })}
+        ramping
+        kanan={
           <button
-            className="tombol-netral !px-3 !py-1.5 text-xs"
-            disabled={buatRingkasanProses}
             onClick={async () => {
-              setBuatRingkasanProses(true);
-              try {
-                setRingkasan(await api.buatRingkasan());
-              } catch {
-                /* biarkan ringkasan lama tampil */
-              } finally {
-                setBuatRingkasanProses(false);
-              }
+              await api.logout().catch(() => {});
+              onLogout();
             }}
+            className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25"
           >
-            {buatRingkasanProses ? 'Menyusun…' : 'Buat ulang'}
+            {t('dash.keluar')}
           </button>
-        </div>
+        }
+      />
 
-        {ringkasan?.ada ? (
-          <>
-            <p className="mt-3 text-slate-800">{ringkasan.ringkasan}</p>
-            {!!ringkasan.sorotan?.length && (
-              <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-slate-700">
-                {ringkasan.sorotan.map((s) => (
-                  <li key={s}>{s}</li>
-                ))}
-              </ul>
-            )}
-          </>
-        ) : (
-          <p className="mt-3 text-sm text-slate-500">
-            Belum ada ringkasan. Dibuat otomatis tiap pukul 17.00 WIB, atau tekan “Buat ulang”.
-          </p>
-        )}
-
-        {!!statistik?.lokasi_teratas.length && (
-          <div className="mt-4 border-t border-slate-100 pt-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Lokasi terbanyak hari ini
-            </p>
-            <ul className="mt-2 space-y-1 text-sm">
-              {statistik.lokasi_teratas.map((l) => (
-                <li key={l.lokasi} className="flex justify-between">
-                  <span className="text-slate-700">{l.lokasi}</span>
-                  <span className="font-semibold">{l.jumlah}</span>
-                </li>
-              ))}
-            </ul>
+      <main className="mx-auto max-w-5xl px-4">
+        {statistik && (
+          <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Kartu label={t('dash.stat_total')} nilai={statistik.hari_ini.total ?? 0} />
+            <Kartu label={t('dash.stat_tinggi')} nilai={statistik.hari_ini.tinggi ?? 0} nada="merah" />
+            <Kartu label={t('dash.stat_belum')} nilai={statistik.belum_selesai} nada="kuning" />
+            <Kartu label={t('dash.stat_gagal')} nilai={statistik.hari_ini.ai_gagal ?? 0} />
           </div>
         )}
-      </section>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        <select
-          className="input !w-auto"
-          value={filter.status}
-          onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))}
-        >
-          <option value="">Semua status</option>
-          <option value="baru">Baru</option>
-          <option value="diproses">Diproses</option>
-          <option value="selesai">Selesai</option>
-        </select>
-        <select
-          className="input !w-auto"
-          value={filter.prioritas}
-          onChange={(e) => setFilter((f) => ({ ...f, prioritas: e.target.value }))}
-        >
-          <option value="">Semua prioritas</option>
-          <option value="tinggi">Tinggi</option>
-          <option value="sedang">Sedang</option>
-          <option value="rendah">Rendah</option>
-        </select>
-      </div>
+        <section className="kartu mt-4 overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b border-krem-200 bg-krem-50 px-4 py-3">
+            <h2 className="judul-bagian">{t('dash.ringkasan')}</h2>
+            <button
+              className="tombol-netral !px-3 !py-1.5 text-xs"
+              disabled={menyusun}
+              onClick={async () => {
+                setMenyusun(true);
+                try {
+                  setRingkasan(await api.buatRingkasan());
+                } catch {
+                  /* biarkan ringkasan lama tetap tampil */
+                } finally {
+                  setMenyusun(false);
+                }
+              }}
+            >
+              {menyusun ? t('dash.menyusun') : t('dash.buat_ulang')}
+            </button>
+          </div>
 
-      <div className="mt-4 space-y-3">
-        {memuat && <p className="text-slate-500">Memuat laporan…</p>}
-        {!memuat && !laporan.length && (
-          <p className="kartu p-8 text-center text-slate-500">Tidak ada laporan untuk filter ini.</p>
-        )}
-        {laporan.map((l) => (
-          <BarisLaporan key={l.id} laporan={l} onUbahStatus={ubahStatus} onAnalisaUlang={muat} />
-        ))}
-      </div>
+          <div className="p-4">
+            {ringkasan?.ada ? (
+              <>
+                <p className="leading-relaxed text-maroon-900">{ringkasan.ringkasan}</p>
+                {!!ringkasan.sorotan?.length && (
+                  <ul className="mt-3 space-y-1.5">
+                    {ringkasan.sorotan.map((s) => (
+                      <li key={s} className="flex gap-2 text-sm text-maroon-700">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-bata-500" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-maroon-600">{t('dash.ringkasan_kosong')}</p>
+            )}
+
+            {!!statistik?.lokasi_teratas.length && (
+              <div className="mt-4 border-t border-krem-200 pt-3">
+                <p className="judul-bagian">{t('dash.lokasi_teratas')}</p>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {statistik.lokasi_teratas.map((l) => (
+                    <li key={l.lokasi} className="flex justify-between gap-3">
+                      <span className="truncate text-maroon-700">{l.lokasi}</span>
+                      <span className="font-bold text-maroon-900">{l.jumlah}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <select
+            className="input !w-auto !py-2"
+            value={filter.status}
+            onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))}
+          >
+            <option value="">{t('dash.semua_status')}</option>
+            <option value="baru">{t('status.baru')}</option>
+            <option value="diproses">{t('status.diproses')}</option>
+            <option value="selesai">{t('status.selesai')}</option>
+          </select>
+          <select
+            className="input !w-auto !py-2"
+            value={filter.prioritas}
+            onChange={(e) => setFilter((f) => ({ ...f, prioritas: e.target.value }))}
+          >
+            <option value="">{t('dash.semua_prioritas')}</option>
+            <option value="tinggi">{t('pilih.tinggi')}</option>
+            <option value="sedang">{t('pilih.sedang')}</option>
+            <option value="rendah">{t('pilih.rendah')}</option>
+          </select>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {memuat && <p className="text-maroon-600">{t('dash.memuat_laporan')}</p>}
+          {!memuat && !laporan.length && (
+            <p className="kartu p-10 text-center text-maroon-600">{t('dash.kosong')}</p>
+          )}
+          {laporan.map((l) => (
+            <BarisLaporan key={l.id} laporan={l} onUbahStatus={ubahStatus} onSegarkan={muat} />
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
@@ -233,11 +245,11 @@ function Kartu({ label, nilai, nada }: { label: string; nilai: number; nada?: 'm
       ? 'text-red-700'
       : nada === 'kuning' && nilai > 0
         ? 'text-amber-700'
-        : 'text-slate-900';
+        : 'text-maroon-900';
   return (
     <div className="kartu p-4">
-      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
-      <p className={`mt-1 text-2xl font-bold ${warna}`}>{nilai}</p>
+      <p className="text-[11px] font-bold uppercase tracking-wider text-maroon-600">{label}</p>
+      <p className={`mt-1 text-3xl font-extrabold tracking-tight ${warna}`}>{nilai}</p>
     </div>
   );
 }
@@ -245,66 +257,81 @@ function Kartu({ label, nilai, nada }: { label: string; nilai: number; nada?: 'm
 function BarisLaporan({
   laporan: l,
   onUbahStatus,
-  onAnalisaUlang,
+  onSegarkan,
 }: {
   laporan: Laporan;
   onUbahStatus: (id: string, status: StatusLaporan) => void;
-  onAnalisaUlang: () => void;
+  onSegarkan: () => void;
 }) {
+  const { t } = useBahasa();
+  const waktuRelatif = useWaktuRelatif();
+
+  // Garis tepi kiri memberi tanda prioritas yang terbaca dari kejauhan.
+  const tepi =
+    l.prioritas === 'tinggi'
+      ? 'border-l-4 border-l-red-500'
+      : l.prioritas === 'sedang'
+        ? 'border-l-4 border-l-amber-400'
+        : 'border-l-4 border-l-emerald-400';
+
   return (
-    <article className="kartu p-4">
+    <article className={`kartu p-4 ${tepi}`}>
       <div className="flex flex-wrap items-center gap-2">
         <LencanaPrioritas nilai={l.prioritas} />
         <LencanaStatus nilai={l.status} />
         {l.kategori.map((k) => (
           <LencanaKategori key={k} nilai={k} />
         ))}
-        <span className="ml-auto text-xs text-slate-500">{waktuRelatif(l.created_at)}</span>
+        <span className="ml-auto text-xs text-maroon-600">{waktuRelatif(l.created_at)}</span>
       </div>
 
-      <p className="mt-2 font-semibold">{l.toilet_nama}</p>
-      <p className="mt-1 text-slate-800">{l.ringkasan ?? l.teks}</p>
+      <p className="mt-2.5 font-bold text-maroon-900">{l.toilet_nama}</p>
+      <p className="mt-1 text-maroon-800">{l.ringkasan ?? l.teks}</p>
 
       {l.ringkasan && (
-        <p className="mt-1 text-sm italic text-slate-500">Laporan asli: “{l.teks}”</p>
+        <p className="mt-1 text-sm italic text-maroon-600">
+          {t('dash.laporan_asli')}: “{l.teks}”
+        </p>
       )}
 
       {l.rekomendasi && (
-        <p className="mt-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-          <span className="font-semibold">Tindakan: </span>
+        <p className="mt-2.5 rounded-xl border-l-4 border-bata-400 bg-krem-50 p-3 text-sm text-maroon-700">
+          <span className="font-bold">{t('dash.tindakan')} </span>
           {l.rekomendasi}
         </p>
       )}
 
       {l.foto_url && (
         <a href={l.foto_url} target="_blank" rel="noreferrer">
-          <img src={l.foto_url} alt="Foto laporan" className="mt-3 max-h-64 rounded-lg" />
+          <img src={l.foto_url} alt="" className="mt-3 max-h-64 rounded-xl" />
         </a>
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {l.status !== 'diproses' && l.status !== 'selesai' && (
+        {l.status === 'baru' && (
           <button onClick={() => onUbahStatus(l.id, 'diproses')} className="tombol-netral !py-1.5 text-xs">
-            Kerjakan
+            {t('dash.kerjakan')}
           </button>
         )}
         {l.status !== 'selesai' && (
           <button onClick={() => onUbahStatus(l.id, 'selesai')} className="tombol-utama !py-1.5 text-xs">
-            Tandai selesai
+            {t('dash.selesaikan')}
           </button>
         )}
         {l.ai_status === 'gagal' && (
           <button
             onClick={async () => {
               await api.analisaUlang(l.id).catch(() => {});
-              setTimeout(onAnalisaUlang, 3000);
+              setTimeout(onSegarkan, 3000);
             }}
             className="tombol-netral !py-1.5 text-xs"
           >
-            Analisis ulang
+            {t('dash.analisa_ulang')}
           </button>
         )}
-        {l.petugas && <span className="text-xs text-slate-500">Ditangani: {l.petugas}</span>}
+        {l.petugas && (
+          <span className="text-xs text-maroon-600">{t('dash.ditangani', { nama: l.petugas })}</span>
+        )}
       </div>
     </article>
   );

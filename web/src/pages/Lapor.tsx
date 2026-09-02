@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { api, type Toilet } from '../lib/api';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import Kop from '../components/Kop';
+import { api, type Jenis, type Lokasi } from '../lib/api';
+import { useBahasa } from '../lib/i18n';
 
-const CONTOH = [
-  'WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.',
-  'Kloset yang pojok mampet, airnya hampir meluap.',
-  'Tisu di dispenser habis.',
-];
+const IKON: Record<Jenis, string> = { pria: '♂', wanita: '♀', disabilitas: '♿' };
 
 export default function Lapor() {
-  const { toiletId = '' } = useParams();
+  const { lokasiId = '' } = useParams();
   const navigate = useNavigate();
+  const { t } = useBahasa();
 
-  const [toilet, setToilet] = useState<Toilet | null>(null);
+  const [lokasi, setLokasi] = useState<Lokasi | null>(null);
   const [memuat, setMemuat] = useState(true);
+  const [toiletId, setToiletId] = useState<string>('');
   const [teks, setTeks] = useState('');
   const [foto, setFoto] = useState<File | null>(null);
   const [pratinjau, setPratinjau] = useState<string | null>(null);
@@ -23,11 +23,15 @@ export default function Lapor() {
 
   useEffect(() => {
     api
-      .toilet(toiletId)
-      .then(setToilet)
-      .catch(() => setToilet(null))
+      .lokasi(lokasiId)
+      .then((l) => {
+        setLokasi(l);
+        // Bila lantai itu hanya punya satu toilet, tidak ada yang perlu dipilih.
+        if (l.toilets.length === 1) setToiletId(l.toilets[0].id);
+      })
+      .catch(() => setLokasi(null))
       .finally(() => setMemuat(false));
-  }, [toiletId]);
+  }, [lokasiId]);
 
   // URL pratinjau adalah object URL; dibebaskan saat foto berganti agar tidak bocor memori.
   useEffect(() => {
@@ -39,7 +43,7 @@ export default function Lapor() {
 
   async function kirim(e: React.FormEvent) {
     e.preventDefault();
-    if (teks.trim().length < 5) return setGalat('Tolong tulis keluhannya sedikit lebih jelas.');
+    if (teks.trim().length < 5) return setGalat(t('lapor.galat_pendek'));
 
     setMengirim(true);
     setGalat(null);
@@ -49,118 +53,160 @@ export default function Lapor() {
       const hasil = await api.kirimLaporan({ toilet_id: toiletId, teks: teks.trim(), foto_key });
       navigate(`/laporan/${hasil.id}`, { replace: true });
     } catch (err) {
-      setGalat(err instanceof Error ? err.message : 'Gagal mengirim laporan');
+      setGalat(err instanceof Error ? err.message : t('lapor.galat_kirim'));
       setMengirim(false);
     }
   }
 
-  if (memuat) return <p className="p-8 text-center text-slate-500">Memuat…</p>;
-
-  if (!toilet) {
+  if (memuat) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="text-xl font-bold">Kode WC tidak dikenal</h1>
-        <p className="mt-2 text-slate-600">
-          QR yang kamu pindai (<code className="rounded bg-slate-200 px-1">{toiletId}</code>) tidak
-          terdaftar. Coba pilih lokasi secara manual.
-        </p>
-        <a href="/" className="tombol-utama mt-6">
-          Pilih lokasi
-        </a>
+      <div className="min-h-screen">
+        <Kop judul={t('app.judul')} ramping />
+        <p className="p-10 text-center text-maroon-600">{t('umum.memuat')}</p>
+      </div>
+    );
+  }
+
+  if (!lokasi) {
+    return (
+      <div className="min-h-screen">
+        <Kop judul={t('lapor.tidak_dikenal')} ramping />
+        <div className="mx-auto max-w-lg px-4 py-14 text-center">
+          <p className="text-maroon-700">{t('lapor.tidak_dikenal_isi')}</p>
+          <p className="mt-2">
+            <code className="rounded-lg bg-krem-200 px-2 py-1 text-sm text-maroon-800">
+              {lokasiId}
+            </code>
+          </p>
+          <Link to="/" className="tombol-utama mt-6">
+            {t('lapor.pilih_manual')}
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8 pb-32">
-      <p className="text-sm font-medium text-merek-600">{toilet.gedung}</p>
-      <h1 className="text-2xl font-bold">{toilet.nama}</h1>
-      <p className="mt-2 text-slate-600">
-        Tulis apa adanya, pakai bahasa sehari-hari. Sistem yang akan merapikan dan menentukan
-        prioritasnya.
-      </p>
+    <div className="min-h-screen pb-36">
+      <Kop
+        judul={t('umum.gedung', { kode: lokasi.gedung_kode })}
+        keterangan={lokasi.gedung_nama}
+        ramping
+      />
 
-      <form onSubmit={kirim} className="mt-6 space-y-5">
-        <div>
-          <label htmlFor="teks" className="label">
-            Apa yang bermasalah?
-          </label>
-          <textarea
-            id="teks"
-            className="input min-h-[130px] resize-y"
-            placeholder="Contoh: WC lantai 2 bau banget, lantainya becek, sama sabunnya habis."
-            value={teks}
-            onChange={(e) => setTeks(e.target.value)}
-            maxLength={1000}
-            autoFocus
-          />
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {CONTOH.map((c) => (
+      <main className="mx-auto max-w-lg px-4">
+        <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-maroon-900">
+          {t('umum.lantai', { n: lokasi.lantai })}
+        </h2>
+
+        <div className="mt-4">
+          <span className="label">{t('lapor.pilih_jenis')}</span>
+          <div className="flex gap-2">
+            {lokasi.toilets.map((wc) => (
               <button
-                key={c}
+                key={wc.id}
                 type="button"
-                onClick={() => setTeks(c)}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 hover:bg-slate-200"
+                onClick={() => setToiletId(wc.id)}
+                aria-pressed={toiletId === wc.id}
+                className={toiletId === wc.id ? 'pilihan-hidup' : 'pilihan-mati'}
               >
-                {c.length > 34 ? `${c.slice(0, 34)}…` : c}
+                <span aria-hidden className="text-xl leading-none">
+                  {IKON[wc.jenis]}
+                </span>
+                {t(`jenis.${wc.jenis}`)}
               </button>
             ))}
           </div>
         </div>
 
-        <div>
-          <span className="label">Foto (opsional)</span>
-          <input
-            ref={inputFoto}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0] ?? null;
-              if (f && f.size > 5 * 1024 * 1024) {
-                setGalat('Ukuran foto maksimal 5 MB.');
-                return;
-              }
-              setGalat(null);
-              setFoto(f);
-            }}
-          />
-          {pratinjau ? (
-            <div className="relative">
-              <img src={pratinjau} alt="Pratinjau foto" className="w-full rounded-lg" />
+        <p className="mt-5 leading-relaxed text-maroon-700">{t('lapor.ajakan')}</p>
+
+        <form onSubmit={kirim} className="mt-5 space-y-5">
+          <div>
+            <label htmlFor="teks" className="label">
+              {t('lapor.label_teks')}
+            </label>
+            <textarea
+              id="teks"
+              className="input min-h-[140px] resize-y"
+              placeholder={t('lapor.placeholder')}
+              value={teks}
+              onChange={(e) => setTeks(e.target.value)}
+              maxLength={1000}
+            />
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {([t('lapor.contoh1'), t('lapor.contoh2'), t('lapor.contoh3')] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setTeks(c)}
+                  className="rounded-full border border-krem-200 bg-white px-3 py-1 text-xs text-maroon-600 transition hover:border-bata-300 hover:text-bata-700"
+                >
+                  {c.length > 36 ? `${c.slice(0, 36)}…` : c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span className="label">{t('lapor.foto')}</span>
+            <input
+              ref={inputFoto}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                if (f && f.size > 5 * 1024 * 1024) return setGalat(t('lapor.galat_foto'));
+                setGalat(null);
+                setFoto(f);
+              }}
+            />
+            {pratinjau ? (
+              <div className="relative overflow-hidden rounded-xl">
+                <img src={pratinjau} alt="" className="w-full" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFoto(null);
+                    if (inputFoto.current) inputFoto.current.value = '';
+                  }}
+                  className="absolute right-2 top-2 rounded-lg bg-maroon-900/75 px-3 py-1.5 text-sm font-semibold text-white"
+                >
+                  {t('lapor.hapus_foto')}
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => {
-                  setFoto(null);
-                  if (inputFoto.current) inputFoto.current.value = '';
-                }}
-                className="absolute right-2 top-2 rounded-full bg-black/60 px-3 py-1 text-sm text-white"
+                onClick={() => inputFoto.current?.click()}
+                className="tombol-netral w-full border-dashed py-3.5"
               >
-                Hapus
+                📷 {t('lapor.ambil_foto')}
+              </button>
+            )}
+          </div>
+
+          {galat && (
+            <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800" role="alert">
+              {galat}
+            </p>
+          )}
+
+          <div className="fixed inset-x-0 bottom-0 border-t border-krem-200 bg-white/95 p-4 backdrop-blur">
+            <div className="mx-auto max-w-lg">
+              <button
+                type="submit"
+                disabled={mengirim || !toiletId}
+                className="tombol-utama w-full py-3.5 text-base"
+              >
+                {mengirim ? t('lapor.mengirim') : t('lapor.kirim')}
               </button>
             </div>
-          ) : (
-            <button type="button" onClick={() => inputFoto.current?.click()} className="tombol-netral w-full">
-              📷 Ambil / pilih foto
-            </button>
-          )}
-        </div>
-
-        {galat && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-            {galat}
-          </p>
-        )}
-
-        <div className="fixed inset-x-0 bottom-0 border-t border-slate-200 bg-white p-4">
-          <div className="mx-auto max-w-lg">
-            <button type="submit" disabled={mengirim} className="tombol-utama w-full">
-              {mengirim ? 'Mengirim…' : 'Kirim laporan'}
-            </button>
           </div>
-        </div>
-      </form>
+        </form>
+      </main>
     </div>
   );
 }

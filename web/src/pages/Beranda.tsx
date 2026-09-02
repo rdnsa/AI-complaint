@@ -1,65 +1,94 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api, type Toilet } from '../lib/api';
+import Kop from '../components/Kop';
+import { api, type Gedung } from '../lib/api';
+import { useBahasa } from '../lib/i18n';
 
-/** Halaman cadangan bila QR rusak atau tidak terbaca: pengguna memilih WC manual. */
 export default function Beranda() {
-  const [toilets, setToilets] = useState<Toilet[]>([]);
+  const { t } = useBahasa();
+  const [gedung, setGedung] = useState<Gedung[]>([]);
   const [memuat, setMemuat] = useState(true);
 
   useEffect(() => {
     api
-      .daftarToilet()
-      .then((r) => setToilets(r.data))
-      .catch(() => setToilets([]))
+      .daftarGedung()
+      .then((r) => setGedung(r.data))
+      .catch(() => setGedung([]))
       .finally(() => setMemuat(false));
   }, []);
 
-  const perGedung = toilets.reduce<Record<string, Toilet[]>>((acc, t) => {
-    (acc[t.gedung] ??= []).push(t);
-    return acc;
-  }, {});
-
   return (
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="text-2xl font-bold">Lapor Kondisi WC Kampus</h1>
-      <p className="mt-2 text-slate-600">
-        Biasanya kamu cukup memindai QR yang tertempel di pintu toilet. Kalau QR-nya hilang atau
-        rusak, pilih lokasinya di bawah ini.
-      </p>
+    <div className="min-h-screen pb-16">
+      <Kop judul={t('app.judul')} keterangan={t('app.subjudul')} />
 
-      {memuat ? (
-        <p className="mt-8 text-slate-500">Memuat daftar lokasi…</p>
-      ) : (
-        <div className="mt-6 space-y-6">
-          {Object.entries(perGedung).map(([gedung, daftar]) => (
-            <section key={gedung}>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                {gedung}
-              </h2>
-              <ul className="kartu divide-y divide-slate-100">
-                {daftar.map((t) => (
-                  <li key={t.id}>
+      <main className="mx-auto max-w-5xl px-4">
+        <p className="mt-6 leading-relaxed text-maroon-700">{t('beranda.petunjuk')}</p>
+
+        <figure className="kartu mt-5 overflow-hidden">
+          <a href="/peta-lokasi-gedung.jpg" target="_blank" rel="noreferrer" className="block">
+            <img
+              src="/peta-lokasi-gedung.jpg"
+              alt={t('beranda.peta_alt')}
+              className="w-full"
+              loading="lazy"
+            />
+          </a>
+          <figcaption className="flex items-center justify-between gap-3 border-t border-krem-200 bg-krem-50 px-4 py-2.5 text-xs text-maroon-600">
+            <span>{t('beranda.peta_keterangan')}</span>
+            <span className="shrink-0 font-bold text-bata-600">{t('beranda.peta_perbesar')}</span>
+          </figcaption>
+        </figure>
+
+        <h2 className="judul-bagian mt-8">{t('beranda.pilih')}</h2>
+
+        {memuat ? (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="kartu h-28 animate-pulse bg-krem-50" />
+            ))}
+          </div>
+        ) : !gedung.length ? (
+          <p className="kartu mt-3 p-8 text-center text-maroon-600">{t('beranda.kosong')}</p>
+        ) : (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {gedung.map((g) => (
+              <section key={g.kode} className="kartu p-4 transition hover:shadow-naik">
+                <div className="flex items-center gap-3">
+                  {/* Lingkaran kode gedung meniru penanda pada poster peta kampus. */}
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-maroon-800 bg-bata-500 text-base font-extrabold text-white">
+                    {g.kode}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-bata-600">
+                      {t('umum.gedung', { kode: g.kode })}
+                    </p>
+                    <p className="truncate font-bold text-maroon-900">{g.nama}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {g.lantai.map((l) => (
                     <Link
-                      to={`/lapor/${t.id}`}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
+                      key={l}
+                      to={`/lapor/${g.kode}-${l}`}
+                      className="rounded-lg border border-krem-300 bg-krem-50 px-3 py-1.5 text-sm font-semibold text-maroon-700 transition hover:border-bata-400 hover:bg-bata-50 hover:text-bata-700"
                     >
-                      <span>
-                        Lantai {t.lantai} · <span className="capitalize">{t.jenis}</span>
-                      </span>
-                      <span className="text-merek-600">Lapor →</span>
+                      {t('umum.lantai', { n: l })}
                     </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-      )}
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
 
-      <Link to="/petugas" className="mt-10 block text-center text-sm text-slate-500 underline">
-        Masuk sebagai petugas
-      </Link>
+        <Link
+          to="/petugas"
+          className="mx-auto mt-10 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
+        >
+          {t('nav.petugas')}
+        </Link>
+      </main>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { logger } from 'hono/logger';
 import authRoutes from './routes/auth';
 import reportRoutes from './routes/reports';
 import summaryRoutes from './routes/summary';
-import toiletRoutes from './routes/toilets';
+import lokasiRoutes from './routes/lokasi';
 import uploadRoutes from './routes/uploads';
 import { buatRingkasanHarian } from './lib/ringkasan';
 import { tanggalWIB } from './lib/waktu';
@@ -16,7 +16,7 @@ app.use('*', logger());
 app.get('/api/health', (c) => c.json({ ok: true, waktu: new Date().toISOString() }));
 
 app.route('/api/auth', authRoutes);
-app.route('/api/toilets', toiletRoutes);
+app.route('/api/lokasi', lokasiRoutes);
 app.route('/api/reports', reportRoutes);
 app.route('/api/uploads', uploadRoutes);
 app.route('/api/summary', summaryRoutes);

@@ -1,13 +1,18 @@
 # AI Complaint — Sistem Klasifikasi & Prioritas Keluhan Toilet Kampus
 
-Mahasiswa memindai QR di pintu toilet, menulis keluhan dengan bahasa sehari-hari,
-lalu LLM mengubahnya menjadi tiket kerja terstruktur untuk petugas kebersihan.
+Dibuat untuk **UPI Kampus Tasikmalaya**, Jln. Dadaha No. 18. Mahasiswa memindai
+QR di pintu toilet, menulis keluhan dengan bahasa sehari-hari, lalu LLM
+mengubahnya menjadi tiket kerja terstruktur untuk petugas kebersihan.
 
 ```
-QR di pintu WC  →  form keluhan  →  LLM (kategori + prioritas + rekomendasi)  →  dashboard petugas
-                                          ↓
-                                cron 17.00 WIB → ringkasan harian
+QR di lantai WC  →  pilih toilet  →  tulis keluhan  →  LLM (kategori + prioritas + rekomendasi)
+                                                             ↓
+                                          dashboard petugas + cron 17.00 WIB → ringkasan harian
 ```
+
+Satu QR mewakili satu **lantai** pada satu gedung, bukan satu WC. Jenis toilet
+(pria/wanita/disabilitas) dipilih pelapor di formulir, sehingga jumlah stiker
+yang perlu dicetak dan dirawat jauh lebih sedikit.
 
 ## Fitur
 
@@ -15,8 +20,9 @@ QR di pintu WC  →  form keluhan  →  LLM (kategori + prioritas + rekomendasi)
 2. **Penentuan prioritas** — `rendah` / `sedang` / `tinggi`, dengan aturan berbasis risiko keselamatan.
 3. **Ringkasan harian** — merangkum seluruh laporan sehari, menyebut lokasi paling bermasalah dan tindakan mendesak.
 
-Pelengkapnya: foto lampiran (R2), alur status `baru → diproses → selesai`, dan
-statistik harian untuk dashboard.
+Pelengkapnya: foto lampiran (R2), alur status `baru → diproses → selesai`,
+statistik harian untuk dashboard, peta lokasi gedung di halaman depan, serta
+antarmuka **dwibahasa Indonesia–Inggris** yang bisa diganti dari header.
 
 ## Teknologi
 
@@ -28,6 +34,7 @@ statistik harian untuk dashboard.
 | Database | Cloudflare D1 (SQLite) |
 | Penyimpanan foto | Cloudflare R2 (disajikan lewat Worker) |
 | Frontend | React 18 + Vite + Tailwind CSS |
+| Dwibahasa | kamus sendiri di `web/src/lib/i18n.tsx`, tanpa library |
 | LLM | DeepSeek `deepseek-chat` (JSON mode), tanpa training |
 
 Frontend dan API berada pada satu Worker dan satu domain, sehingga tidak ada
@@ -46,7 +53,7 @@ npm run build                      # frontend perlu di-build sekali sebelum wran
 npm run dev                        # Vite (5173) + Worker (8787) berjalan bersamaan
 ```
 
-Buka `http://localhost:5173/lapor/A-2-PRIA` untuk halaman mahasiswa dan
+Buka `http://localhost:5173/lapor/A-1` untuk halaman mahasiswa dan
 `http://localhost:5173/petugas` untuk dashboard.
 
 ## Deploy
@@ -82,8 +89,16 @@ dan `npm run db:remote` sekali di awal.
 BASE_URL=https://<worker-kamu>.workers.dev npm run qr
 ```
 
-Menghasilkan `qr-codes/<ID-WC>.png` dan `qr-codes/cetak.html` (halaman A4 siap cetak).
-Sebelum mencetak, sesuaikan daftar WC di `seed/toilets.sql` dengan denah kampus.
+Menghasilkan `qr-codes/<kode gedung>-<lantai>.png` dan `qr-codes/cetak.html`
+(halaman A4 siap cetak, stikernya dwibahasa). Folder dikosongkan tiap kali
+dijalankan supaya QR dari daftar lokasi versi lama tidak ikut tercetak.
+
+Sebelum mencetak, sesuaikan daftar WC di `seed/toilets.sql` dengan kondisi
+kampus lalu jalankan ulang seed. Berkas seed aman dijalankan berkali-kali:
+seluruh WC dinonaktifkan lebih dulu, lalu yang ada di daftar dihidupkan lagi.
+WC yang dihapus dari daftar tidak ikut terhapus dari database — ia hanya
+berhenti muncul di aplikasi, sehingga laporan lama yang menunjuk ke sana tetap
+utuh beserta riwayatnya.
 
 ## Struktur
 
@@ -96,11 +111,15 @@ src/
   lib/ringkasan.ts     ringkasan harian (dipakai cron dan tombol manual)
   lib/auth.ts          sesi petugas berbasis cookie JWT
   lib/waktu.ts         konversi hari UTC ↔ WIB
-  routes/              reports, toilets, uploads, summary, auth
+  routes/              reports, lokasi, uploads, summary, auth
 web/src/
+  lib/i18n.tsx         kamus dan pengalih bahasa Indonesia/Inggris
+  components/Kop.tsx   kepala halaman + pengalih bahasa
+  pages/Beranda.tsx    peta gedung + pilih lokasi manual
   pages/Lapor.tsx      form mahasiswa (tujuan QR)
   pages/StatusLaporan.tsx  konfirmasi + hasil analisis
   pages/Dashboard.tsx  dashboard petugas
+  ../public/peta-lokasi-gedung.jpg   peta gedung UPI Kampus Tasikmalaya
 migrations/            skema D1
 seed/toilets.sql       daftar WC
 scripts/generate-qr.mjs
@@ -122,6 +141,16 @@ prioritas tak dikenal jatuh ke `sedang`.
 
 **Latensi tiap panggilan dicatat** di kolom `ai_ms`, berguna sebagai data
 kuantitatif pada bab hasil dan pembahasan.
+
+**Antarmuka dwibahasa, analisis tetap Bahasa Indonesia.** Label dan pesan
+mengikuti pilihan bahasa pembaca, tetapi ringkasan dan rekomendasi dari LLM
+selalu ditulis dalam Bahasa Indonesia karena yang mengerjakannya adalah petugas
+kebersihan. Keluhan berbahasa Inggris tetap dipahami dan tetap diringkas ke
+Bahasa Indonesia.
+
+**Warna diambil dari poster resmi kampus.** Maroon, oranye bata, dan krem pada
+antarmuka berasal dari poster "Peta Lokasi Gedung" UPI Kampus Tasikmalaya, agar
+tampilannya terbaca sebagai bagian dari kampus dan bukan aplikasi generik.
 
 **Foto tidak melewati domain pihak ketiga.** Endpoint `GET /api/uploads/<key>`
 membaca objek langsung dari binding R2, membatasi akses hanya ke prefix

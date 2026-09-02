@@ -12,7 +12,7 @@ import type { Env } from '../types';
 export async function jalankanAnalisis(env: Env, reportId: string): Promise<void> {
   const row = await env.DB.prepare(
     `SELECT r.teks, t.nama AS lokasi
-       FROM reports r JOIN toilets t ON t.id = r.toilet_id
+       FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
       WHERE r.id = ?`,
   )
     .bind(reportId)

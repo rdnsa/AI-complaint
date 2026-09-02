@@ -5,7 +5,7 @@ import { wajibPetugas } from '../lib/auth';
 import { rentangHariWIB } from '../lib/waktu';
 import { PRIORITAS, STATUS, toDTO, type AppEnv, type ReportRow } from '../types';
 
-const KOLOM = `r.*, t.nama AS toilet_nama, t.gedung AS gedung, t.lantai AS lantai`;
+const KOLOM = `r.*, t.nama AS toilet_nama, t.gedung_kode, t.gedung_nama, t.lantai, t.jenis`;
 
 const BuatLaporanSchema = z.object({
   toilet_id: z.string().min(1).max(50),
@@ -23,7 +23,7 @@ app.post('/', async (c) => {
   }
   const { toilet_id, teks, foto_key } = parsed.data;
 
-  const toilet = await c.env.DB.prepare(`SELECT nama FROM toilets WHERE id = ? AND aktif = 1`)
+  const toilet = await c.env.DB.prepare(`SELECT nama FROM toilet_info WHERE id = ? AND aktif = 1`)
     .bind(toilet_id)
     .first<{ nama: string }>();
   if (!toilet) return c.json({ error: 'Kode WC tidak dikenal. Periksa QR yang kamu scan.' }, 404);
@@ -55,7 +55,7 @@ app.post('/', async (c) => {
 /** Publik: mahasiswa melihat status laporannya sendiri lewat link konfirmasi. */
 app.get('/:id', async (c) => {
   const row = await c.env.DB.prepare(
-    `SELECT ${KOLOM} FROM reports r JOIN toilets t ON t.id = r.toilet_id WHERE r.id = ?`,
+    `SELECT ${KOLOM} FROM reports r JOIN toilet_info t ON t.id = r.toilet_id WHERE r.id = ?`,
   )
     .bind(c.req.param('id'))
     .first<ReportRow>();
@@ -84,8 +84,8 @@ app.get('/', wajibPetugas, async (c) => {
     params.push(toilet_id);
   }
   if (gedung) {
-    where.push('t.gedung = ?');
-    params.push(gedung);
+    where.push('t.gedung_kode = ?');
+    params.push(gedung.toUpperCase());
   }
   if (tanggal) {
     const { mulai, selesai } = rentangHariWIB(tanggal);
@@ -95,7 +95,7 @@ app.get('/', wajibPetugas, async (c) => {
 
   const rows = await c.env.DB.prepare(
     `SELECT ${KOLOM}
-       FROM reports r JOIN toilets t ON t.id = r.toilet_id
+       FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY
         CASE r.status WHEN 'baru' THEN 0 WHEN 'diproses' THEN 1 ELSE 2 END,

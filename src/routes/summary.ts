@@ -26,7 +26,7 @@ app.get('/stats', wajibPetugas, async (c) => {
     c.env.DB.prepare(`SELECT COUNT(*) AS n FROM reports WHERE status <> 'selesai'`),
     c.env.DB.prepare(
       `SELECT t.nama AS lokasi, COUNT(*) AS jumlah
-         FROM reports r JOIN toilets t ON t.id = r.toilet_id
+         FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
         WHERE r.created_at >= ? AND r.created_at < ?
         GROUP BY r.toilet_id ORDER BY jumlah DESC LIMIT 5`,
     ).bind(mulai, selesai),

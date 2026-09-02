@@ -1,20 +1,30 @@
 export type Prioritas = 'rendah' | 'sedang' | 'tinggi';
 export type StatusLaporan = 'baru' | 'diproses' | 'selesai';
 
-export interface Toilet {
-  id: string;
-  gedung: string;
-  lantai: number;
-  jenis: string;
+export type Jenis = 'pria' | 'wanita' | 'disabilitas';
+
+export interface Gedung {
+  kode: string;
   nama: string;
+  lantai: number[];
+}
+
+/** Satu lantai pada satu gedung — inilah yang diwakili sebuah QR. */
+export interface Lokasi {
+  gedung_kode: string;
+  gedung_nama: string;
+  lantai: number;
+  toilets: Array<{ id: string; jenis: Jenis }>;
 }
 
 export interface Laporan {
   id: string;
   toilet_id: string;
   toilet_nama: string;
-  gedung: string;
+  gedung_kode: string;
+  gedung_nama: string;
   lantai: number;
+  jenis: Jenis;
   teks: string;
   foto_url: string | null;
   status: StatusLaporan;
@@ -69,8 +79,8 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  toilet: (id: string) => req<Toilet>(`/api/toilets/${encodeURIComponent(id)}`),
-  daftarToilet: () => req<{ data: Toilet[] }>('/api/toilets'),
+  daftarGedung: () => req<{ data: Gedung[] }>('/api/lokasi'),
+  lokasi: (id: string) => req<Lokasi>(`/api/lokasi/${encodeURIComponent(id)}`),
 
   kirimLaporan: (body: { toilet_id: string; teks: string; foto_key?: string | null }) =>
     req<{ id: string; toilet: string; duplikat: boolean }>('/api/reports', {
@@ -105,14 +115,3 @@ export const api = {
   buatRingkasan: (tanggal?: string) =>
     req<Ringkasan>(`/api/summary/generate${tanggal ? `?tanggal=${tanggal}` : ''}`, { method: 'POST' }),
 };
-
-export function waktuRelatif(iso: string): string {
-  // created_at dari D1 berformat 'YYYY-MM-DD HH:MM:SS' dalam UTC.
-  const t = Date.parse(iso.includes('T') ? iso : `${iso.replace(' ', 'T')}Z`);
-  const menit = Math.floor((Date.now() - t) / 60000);
-  if (menit < 1) return 'baru saja';
-  if (menit < 60) return `${menit} menit lalu`;
-  const jam = Math.floor(menit / 60);
-  if (jam < 24) return `${jam} jam lalu`;
-  return `${Math.floor(jam / 24)} hari lalu`;
-}

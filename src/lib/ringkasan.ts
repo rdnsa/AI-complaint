@@ -18,7 +18,7 @@ export async function buatRingkasanHarian(env: Env, tanggal: string): Promise<Ha
 
   const rows = await env.DB.prepare(
     `SELECT t.nama AS lokasi, r.prioritas, r.ringkasan, r.teks
-       FROM reports r JOIN toilets t ON t.id = r.toilet_id
+       FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
       WHERE r.created_at >= ? AND r.created_at < ?
       ORDER BY r.created_at`,
   )
