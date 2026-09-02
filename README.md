@@ -20,7 +20,8 @@ yang perlu dicetak dan dirawat jauh lebih sedikit.
 2. **Penentuan prioritas** — `rendah` / `sedang` / `tinggi`, dengan aturan berbasis risiko keselamatan.
 3. **Ringkasan harian** — merangkum seluruh laporan sehari, menyebut lokasi paling bermasalah dan tindakan mendesak.
 
-Pelengkapnya: foto lampiran (R2), alur status `baru → diproses → selesai`,
+Pelengkapnya: foto lampiran (R2), pelacakan status oleh pelapor tanpa login,
+alur status `baru → diproses → selesai`,
 statistik harian untuk dashboard, peta lokasi gedung di halaman depan, serta
 antarmuka **dwibahasa Indonesia–Inggris** yang bisa diganti dari header.
 
@@ -141,6 +142,13 @@ prioritas tak dikenal jatuh ke `sedang`.
 
 **Latensi tiap panggilan dicatat** di kolom `ai_ms`, berguna sebagai data
 kuantitatif pada bab hasil dan pembahasan.
+
+**Pelapor bisa melacak laporannya tanpa akun.** Id laporan disimpan di
+`localStorage` perangkat pelapor, lalu halaman depan menampilkan daftar
+"Laporan saya" beserta status terkininya. Halaman konfirmasi memuat garis waktu
+tiga langkah — diterima, dikerjakan, selesai — dan menyegarkan dirinya sendiri
+selama dibuka. Pendekatan ini menjaga sistem tetap anonim: tidak ada login,
+tidak ada nomor telepon, dan tidak ada data pelapor yang disimpan di server.
 
 **Antarmuka dwibahasa, analisis tetap Bahasa Indonesia.** Label dan pesan
 mengikuti pilihan bahasa pembaca, tetapi ringkasan dan rekomendasi dari LLM

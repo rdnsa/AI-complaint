@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Kop from '../components/Kop';
-import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
+import Lacak from '../components/Lacak';
+import { LencanaKategori, LencanaPrioritas } from '../components/Lencana';
 import { api, type Laporan } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
 
@@ -18,18 +19,26 @@ export default function StatusLaporan() {
   useEffect(() => {
     let batal = false;
     let timer: ReturnType<typeof setTimeout>;
-    let percobaan = 0;
+    let cepat = 0;
 
     async function ambil() {
+      // Tab yang tersembunyi tidak perlu dimuat ulang; cukup diperiksa lagi nanti.
+      if (document.hidden) return jadwalkan(15_000);
       try {
         const data = await api.laporan(id);
         if (batal) return;
         setLaporan(data);
-        // Berhenti polling begitu analisis selesai, atau setelah ~40 detik.
-        if (data.ai_status === 'pending' && percobaan++ < 20) timer = setTimeout(ambil, 2000);
+        // Selagi analisis berjalan, muat ulang tiap 2 detik supaya hasilnya
+        // muncul seketika. Sesudah itu cukup pelan, sekadar memantau perubahan
+        // status penanganan oleh petugas selama halaman dibuka.
+        jadwalkan(data.ai_status === 'pending' && cepat++ < 20 ? 2000 : 15_000);
       } catch {
         if (!batal) setGalat(t('status.galat_muat'));
       }
+    }
+
+    function jadwalkan(jeda: number) {
+      if (!batal) timer = setTimeout(ambil, jeda);
     }
 
     ambil();
@@ -67,10 +76,9 @@ export default function StatusLaporan() {
               {laporan.foto_url && (
                 <img src={laporan.foto_url} alt="" className="mt-3 w-full rounded-xl" />
               )}
-              <div className="mt-3">
-                <LencanaStatus nilai={laporan.status} />
-              </div>
             </div>
+
+            <Lacak laporan={laporan} />
 
             <div className="kartu mt-4 p-4">
               <h2 className="judul-bagian">{t('status.hasil')}</h2>
@@ -106,9 +114,15 @@ export default function StatusLaporan() {
           </>
         )}
 
+        {laporan && (
+          <p className="mt-4 text-center text-xs leading-relaxed text-maroon-600">
+            {t('status.tersimpan')}
+          </p>
+        )}
+
         <Link
           to="/"
-          className="mx-auto mt-8 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
+          className="mx-auto mt-6 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
         >
           {t('nav.beranda')}
         </Link>

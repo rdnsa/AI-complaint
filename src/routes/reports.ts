@@ -52,6 +52,34 @@ app.post('/', async (c) => {
   return c.json({ id, toilet: toilet.nama, duplikat: false }, 201);
 });
 
+/**
+ * Publik: status ringkas beberapa laporan sekaligus.
+ *
+ * Dipakai daftar "Laporan saya" di beranda. Id laporan berupa UUID acak yang
+ * hanya dipegang pelapornya, jadi endpoint ini tidak membocorkan apa pun yang
+ * tidak sudah bisa dilihat lewat halaman konfirmasi.
+ */
+app.get('/ringkas', async (c) => {
+  const ids = (c.req.query('ids') ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 30);
+  if (!ids.length) return c.json({ data: [] });
+
+  const rows = await c.env.DB.prepare(
+    `SELECT r.id, r.status, r.prioritas, r.ai_status, r.ringkasan, r.teks, r.created_at,
+            t.nama AS toilet_nama
+       FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
+      WHERE r.id IN (${ids.map(() => '?').join(',')})
+      ORDER BY r.created_at DESC`,
+  )
+    .bind(...ids)
+    .all();
+
+  return c.json({ data: rows.results });
+});
+
 /** Publik: mahasiswa melihat status laporannya sendiri lewat link konfirmasi. */
 app.get('/:id', async (c) => {
   const row = await c.env.DB.prepare(

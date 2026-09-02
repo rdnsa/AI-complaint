@@ -65,6 +65,20 @@ const ID = {
     'Analisis otomatis belum berhasil, tetapi laporan kamu tetap tercatat dan akan ditinjau petugas.',
   'status.tindakan': 'Tindakan untuk petugas:',
   'status.galat_muat': 'Gagal memuat laporan',
+  'status.tersimpan': 'Laporan ini tersimpan di daftar “Laporan saya” pada halaman depan.',
+
+  'riwayat.judul': 'Laporan saya',
+  'riwayat.keterangan': 'Tersimpan di perangkat ini saja.',
+  'riwayat.lihat': 'Lihat',
+  'riwayat.hapus': 'Hapus riwayat',
+
+  'lacak.judul': 'Status penanganan',
+  'lacak.diterima': 'Laporan diterima',
+  'lacak.dikerjakan': 'Sedang dikerjakan petugas',
+  'lacak.selesai': 'Selesai ditangani',
+  'lacak.menunggu': 'Menunggu dikerjakan petugas',
+  'lacak.oleh': 'oleh {nama}',
+  'lacak.otomatis': 'Halaman ini memperbarui dirinya sendiri.',
 
   'login.judul': 'Masuk Petugas',
   'login.keterangan': 'Nama dipakai untuk mencatat siapa yang menangani laporan.',
@@ -178,6 +192,20 @@ const EN: Record<Kunci, string> = {
     'Automatic analysis has not succeeded yet, but your report is recorded and staff will review it.',
   'status.tindakan': 'Action for staff:',
   'status.galat_muat': 'Could not load the report',
+  'status.tersimpan': 'This report is saved in the “My reports” list on the home page.',
+
+  'riwayat.judul': 'My reports',
+  'riwayat.keterangan': 'Saved on this device only.',
+  'riwayat.lihat': 'View',
+  'riwayat.hapus': 'Clear history',
+
+  'lacak.judul': 'Handling status',
+  'lacak.diterima': 'Report received',
+  'lacak.dikerjakan': 'Staff are working on it',
+  'lacak.selesai': 'Resolved',
+  'lacak.menunggu': 'Waiting for staff',
+  'lacak.oleh': 'by {nama}',
+  'lacak.otomatis': 'This page refreshes itself.',
 
   'login.judul': 'Staff Sign In',
   'login.keterangan': 'Your name is used to record who handled each report.',

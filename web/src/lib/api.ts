@@ -29,12 +29,25 @@ export interface Laporan {
   foto_url: string | null;
   status: StatusLaporan;
   petugas: string | null;
+  selesai_at: string | null;
   ai_status: 'pending' | 'ok' | 'gagal';
   kategori: string[];
   prioritas: Prioritas | null;
   ringkasan: string | null;
   rekomendasi: string | null;
   ai_ms: number | null;
+  created_at: string;
+}
+
+/** Bentuk ringkas yang dipakai daftar "Laporan saya". */
+export interface LaporanRingkas {
+  id: string;
+  status: StatusLaporan;
+  prioritas: Prioritas | null;
+  ai_status: 'pending' | 'ok' | 'gagal';
+  ringkasan: string | null;
+  teks: string;
+  toilet_nama: string;
   created_at: string;
 }
 
@@ -89,6 +102,10 @@ export const api = {
     }),
 
   laporan: (id: string) => req<Laporan>(`/api/reports/${id}`),
+
+  /** Status ringkas beberapa laporan sekaligus, untuk daftar "Laporan saya". */
+  ringkasLaporan: (ids: string[]) =>
+    req<{ data: LaporanRingkas[] }>(`/api/reports/ringkas?ids=${ids.join(',')}`),
 
   unggahFoto: (file: File) => {
     const fd = new FormData();
