@@ -64,6 +64,16 @@ npm run deploy
 Agar foto bisa dilihat di dashboard, aktifkan **Public Development URL** pada
 bucket R2 `kato`, lalu samakan nilainya dengan `R2_PUBLIC_URL` di `wrangler.jsonc`.
 
+### Deploy otomatis (Cloudflare Workers Builds)
+
+Cukup setel **deploy command** ke `npx wrangler deploy`; kolom build command
+boleh dibiarkan kosong. Frontend dibangun sendiri lewat `build.command` di
+`wrangler.jsonc`, yang juga memasang dependensi bila `node_modules` belum ada
+pada checkout yang bersih.
+
+Secret dan migrasi database tidak ikut otomatis — jalankan `wrangler secret put`
+dan `npm run db:remote` sekali di awal.
+
 ## Mencetak QR
 
 ```bash

@@ -8,7 +8,7 @@
     "dev:api": "wrangler dev",
     "dev:web": "vite --config web/vite.config.ts",
     "build": "vite build --config web/vite.config.ts",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "wrangler deploy",
     "db:local": "wrangler d1 migrations apply kato --local",
     "db:remote": "wrangler d1 migrations apply kato --remote",
     "db:seed": "wrangler d1 execute kato --local --file=./seed/toilets.sql",

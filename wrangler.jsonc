@@ -7,6 +7,12 @@
 
   "observability": { "enabled": true },
 
+  // Frontend dibangun otomatis sebelum deploy, sehingga `wrangler deploy`
+  // tidak pernah menemukan ./dist dalam keadaan kosong.
+  "build": {
+    "command": "node scripts/build-frontend.mjs"
+  },
+
   // Frontend React (hasil `npm run build`) di-serve dari Worker yang sama.
   // run_worker_first: request /api/* selalu masuk ke Worker, sisanya static file.
   "assets": {
