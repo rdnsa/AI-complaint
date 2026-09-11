@@ -326,7 +326,9 @@ export async function periksaFotoBukti(
         ],
       },
     ],
-    300,
+    // Generous: "thinking" models (Gemini 3.x) spend part of this budget on
+    // reasoning before the answer, and a budget of a few hundred cut the JSON off.
+    2000,
   );
 
   const parsed = PeriksaBuktiSchema.parse(raw);
