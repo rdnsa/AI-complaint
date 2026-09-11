@@ -25,6 +25,18 @@ export type Prioritas = (typeof PRIORITAS)[number];
 export const STATUS = ['baru', 'diproses', 'selesai'] as const;
 export type Status = (typeof STATUS)[number];
 
+/** What the vision model concluded about a staff proof photo. */
+export const HASIL_BUKTI = ['bersih', 'kotor', 'bukan_toilet'] as const;
+export type HasilBukti = (typeof HASIL_BUKTI)[number];
+
+/** The verdict as stored on the report, together with the cost of obtaining it. */
+export interface VerifikasiBukti {
+  hasil: HasilBukti;
+  alasan: string;
+  model: string;
+  ms: number;
+}
+
 /** A raw `reports` row as stored, joined with its location. */
 export interface ReportRow {
   id: string;
@@ -32,6 +44,10 @@ export interface ReportRow {
   teks: string;
   foto_key: string | null;
   foto_selesai_key: string | null;
+  bukti_ai_hasil: HasilBukti | null;
+  bukti_ai_alasan: string | null;
+  bukti_ai_model: string | null;
+  bukti_ai_ms: number | null;
   status: Status;
   petugas: string | null;
   selesai_at: string | null;
@@ -78,11 +94,18 @@ export function toDTO(row: ReportRow): ReportDTO {
 }
 
 /**
- * A report may only be closed once evidence exists.
+ * A report may only be closed once evidence exists — and the evidence must
+ * show a clean toilet, as judged by the vision model.
  *
  * This is the one business rule strict enough to deserve its own function: the
  * HTTP layer, the service layer, and any future caller all decide the same way.
+ * A proof photo that was never verified (uploaded before this rule existed) does
+ * not count; staff must take a new one.
  */
-export function bolehDiselesaikan(status: Status, fotoBukti: string | null): boolean {
-  return status !== 'selesai' || Boolean(fotoBukti);
+export function bolehDiselesaikan(
+  status: Status,
+  fotoBukti: string | null,
+  hasilBukti: HasilBukti | null,
+): boolean {
+  return status !== 'selesai' || (Boolean(fotoBukti) && hasilBukti === 'bersih');
 }

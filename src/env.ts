@@ -15,9 +15,15 @@ export interface Env {
   // vars (wrangler.jsonc)
   LLM_BASE_URL: string;
   LLM_MODEL: string;
+  // The text model (DeepSeek) cannot see images, so proof photos are judged by
+  // a separate vision model. Any OpenAI-compatible endpoint works.
+  VISION_BASE_URL: string;
+  VISION_MODEL: string;
 
   // secrets (wrangler secret put)
   LLM_API_KEY: string;
+  /** Falls back to LLM_API_KEY when both models live at the same provider. */
+  VISION_API_KEY?: string;
   AUTH_SECRET: string;
 }
 

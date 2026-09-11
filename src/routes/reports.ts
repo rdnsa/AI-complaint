@@ -99,7 +99,12 @@ const UbahStatusSchema = z.object({
   foto_selesai_key: z.string().max(200).nullish(),
 });
 
-/** Staff: mark a report as being worked on, or as resolved. */
+/**
+ * Staff: mark a report as being worked on, or as resolved.
+ *
+ * Closing needs a proof photo, and the photo is judged by the vision model
+ * before the status changes — a photo of a dirty toilet is refused.
+ */
 app.patch('/:id', wajibPetugas, async (c) => {
   const parsed = UbahStatusSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'Status tidak valid' }, 400);
@@ -112,11 +117,31 @@ app.patch('/:id', wajibPetugas, async (c) => {
     parsed.data.foto_selesai_key ?? null,
   );
 
-  if (hasil.jenis === 'tidak-ditemukan') return c.json({ error: 'Laporan tidak ditemukan' }, 404);
-  if (hasil.jenis === 'bukti-kurang') {
-    return c.json({ error: 'Foto bukti penyelesaian wajib diunggah lebih dulu.' }, 400);
+  switch (hasil.jenis) {
+    case 'tidak-ditemukan':
+      return c.json({ error: 'Laporan tidak ditemukan' }, 404);
+    case 'foto-tidak-ditemukan':
+      return c.json({ error: 'Foto bukti tidak ditemukan. Unggah ulang.' }, 400);
+    case 'bukti-kurang':
+      return c.json({ error: 'Foto bukti penyelesaian wajib diunggah lebih dulu.' }, 400);
+    // 422: the request was well-formed, the photo simply did not pass.
+    case 'bukti-ditolak':
+      return c.json(
+        {
+          error:
+            hasil.hasil === 'bukan_toilet'
+              ? 'Foto tidak menunjukkan toilet. Ambil foto kondisi toilet yang sudah dibersihkan.'
+              : 'Toilet pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang.',
+          hasil: hasil.hasil,
+          alasan: hasil.alasan,
+        },
+        422,
+      );
+    case 'verifikasi-gagal':
+      return c.json({ error: 'Pemeriksaan foto gagal. Coba lagi sebentar.' }, 502);
+    default:
+      return c.json({ ok: true, status: hasil.status, verifikasi: hasil.verifikasi });
   }
-  return c.json({ ok: true, status: hasil.status });
 });
 
 /** Staff: retry the analysis of a report the LLM failed on. */

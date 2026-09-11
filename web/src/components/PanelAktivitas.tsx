@@ -2,7 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, type Aktivitas } from '../lib/api';
 import { useBahasa, useWaktuRelatif } from '../lib/i18n';
 
-const AKSI = ['lapor', 'status', 'hapus', 'analisis', 'analisis_gagal', 'masuk', 'ringkasan'] as const;
+const AKSI = [
+  'lapor',
+  'status',
+  'bukti_ditolak',
+  'hapus',
+  'analisis',
+  'analisis_gagal',
+  'verifikasi_gagal',
+  'masuk',
+  'ringkasan',
+] as const;
 
 const WARNA: Record<string, string> = {
   lapor: 'bg-bata-50 text-bata-700 ring-bata-200',
@@ -10,6 +20,8 @@ const WARNA: Record<string, string> = {
   hapus: 'bg-red-50 text-red-800 ring-red-200',
   analisis: 'bg-krem-100 text-maroon-700 ring-krem-300',
   analisis_gagal: 'bg-amber-50 text-amber-800 ring-amber-200',
+  bukti_ditolak: 'bg-amber-50 text-amber-800 ring-amber-200',
+  verifikasi_gagal: 'bg-amber-50 text-amber-800 ring-amber-200',
   masuk: 'bg-krem-100 text-maroon-700 ring-krem-300',
   ringkasan: 'bg-krem-100 text-maroon-700 ring-krem-300',
 };

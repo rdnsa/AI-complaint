@@ -52,11 +52,18 @@
 
   "vars": {
     "LLM_BASE_URL": "https://api.deepseek.com",
-    "LLM_MODEL": "deepseek-chat"
+    "LLM_MODEL": "deepseek-chat",
+    // deepseek-chat cannot see images, so proof photos are judged by a separate
+    // vision model. Any OpenAI-compatible chat endpoint that accepts image_url
+    // works; e.g. OpenAI "https://api.openai.com/v1" + "gpt-4o-mini", or
+    // OpenRouter "https://openrouter.ai/api/v1" + any vision model there.
+    "VISION_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "VISION_MODEL": "gemini-2.5-flash"
   }
 
   // Secrets (do NOT put them here, use `wrangler secret put`):
   //   LLM_API_KEY
+  //   VISION_API_KEY   (optional: falls back to LLM_API_KEY when both models share a provider)
   //   AUTH_SECRET
 
 }

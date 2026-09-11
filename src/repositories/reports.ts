@@ -1,6 +1,12 @@
 import { rentangHariWIB } from '../adapters/clock';
 import type { Env } from '../env';
-import { PRIORITAS, STATUS, type ReportRow, type Status } from '../domain/types';
+import {
+  PRIORITAS,
+  STATUS,
+  type ReportRow,
+  type Status,
+  type VerifikasiBukti,
+} from '../domain/types';
 
 /**
  * Every SQL statement about reports lives here.
@@ -149,21 +155,34 @@ export async function simpan(
     .run();
 }
 
+/** The proof photo and its verdict are written together: one never exists without the other. */
 export async function ubahStatus(
   env: Env,
   id: string,
   status: Status,
   petugas: string,
-  fotoBukti: string | null,
+  bukti: { key: string; verifikasi: VerifikasiBukti } | null,
 ): Promise<void> {
   await env.DB.prepare(
     `UPDATE reports
-        SET status = ?, petugas = ?, foto_selesai_key = ?,
+        SET status = ?, petugas = ?,
+            foto_selesai_key = ?, bukti_ai_hasil = ?, bukti_ai_alasan = ?,
+            bukti_ai_model = ?, bukti_ai_ms = ?,
             selesai_at = CASE WHEN ? = 'selesai' THEN datetime('now') ELSE NULL END,
             updated_at = datetime('now')
       WHERE id = ?`,
   )
-    .bind(status, petugas, fotoBukti, status, id)
+    .bind(
+      status,
+      petugas,
+      bukti?.key ?? null,
+      bukti?.verifikasi.hasil ?? null,
+      bukti?.verifikasi.alasan ?? null,
+      bukti?.verifikasi.model ?? null,
+      bukti?.verifikasi.ms ?? null,
+      status,
+      id,
+    )
     .run();
 }
 

@@ -39,6 +39,8 @@ stickers to print and maintain by two thirds.
 
 - Public report board readable by anyone, editable only by staff
 - Mandatory condition photo from reporters, mandatory proof photo from staff
+- **AI-checked proof photos** — a vision model judges whether the staff photo
+  shows a clean toilet; a report cannot be closed until it does
 - Immutable activity log for management oversight
 - Charts in the dashboard: daily series, priority spread, categories, buildings,
   mean time to resolution
@@ -53,7 +55,7 @@ stickers to print and maintain by two thirds.
 | Role | How the account is created | Can do |
 |---|---|---|
 | **Admin** | ships with the database (`admin` / `Admin123!`) | everything staff can, plus create staff accounts and change their name, password, and active status |
-| **Staff** | created by an admin | change report status, upload proof, re-run analysis, delete reports |
+| **Staff** | created by an admin | change report status, upload proof (checked by the vision model), re-run analysis, delete reports |
 | **Reporter** | self-registers at `/daftar` | file reports under their name and appear on the leaderboard |
 | No account | — | still file reports and read the public board |
 
@@ -76,7 +78,8 @@ salt via WebCrypto. The plaintext is never stored anywhere.
 | File storage | Cloudflare R2, served through the Worker |
 | Frontend | React 18 + Vite + Tailwind CSS |
 | i18n | hand-rolled dictionary in `web/src/lib/i18n.tsx`, no library |
-| LLM | DeepSeek `deepseek-chat` in JSON mode — no training, no dataset |
+| LLM (text) | DeepSeek `deepseek-chat` in JSON mode — no training, no dataset |
+| LLM (vision) | any OpenAI-compatible vision model, default Gemini `gemini-2.5-flash` — judges proof photos |
 
 The frontend and the API live in the same Worker on the same origin, so there is
 no CORS configuration and only one thing to deploy.
@@ -87,7 +90,7 @@ no CORS configuration and only one thing to deploy.
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY and AUTH_SECRET
+cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY, VISION_API_KEY and AUTH_SECRET
 
 npm run db:local                 # apply migrations to the local D1
 npm run db:seed                  # load the toilet list
@@ -110,6 +113,7 @@ npm run dev                      # Vite (5173) + Worker (8787) side by side
 
 ```bash
 npx wrangler secret put LLM_API_KEY
+npx wrangler secret put VISION_API_KEY # key for the vision model; see wrangler.jsonc vars
 npx wrangler secret put AUTH_SECRET   # a long random string
 
 npm run db:remote                     # migrations against production D1
@@ -176,7 +180,7 @@ old reports pointing at it keep their location and history intact.
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/api/reports` | dashboard list, with filters |
-| `PATCH` | `/api/reports/:id` | change status (proof photo required to close) |
+| `PATCH` | `/api/reports/:id` | change status (proof photo required to close; the photo is checked by the vision model and refused with `422` when the toilet still looks dirty) |
 | `POST` | `/api/reports/:id/analisa-ulang` | re-run a failed analysis |
 | `DELETE` | `/api/reports/:id` | delete permanently, logged with a full copy |
 | `GET` | `/api/summary`, `/api/summary/stats`, `/api/summary/grafik` | daily summary, counters, chart data |
@@ -224,7 +228,7 @@ src/
   env.ts                 infrastructure bindings and configuration
   domain/types.ts        entities, enums, DTO mapping, closing rule
   adapters/
-    llm.ts               prompt, few-shot examples, output validation
+    llm.ts               prompts, few-shot examples, output validation, proof-photo check
     storage.ts           R2 photo storage, prefixes and limits
     session.ts           JWT cookie sessions and role guards
     password.ts          PBKDF2 hashing
@@ -293,8 +297,22 @@ marked resolved. Both are enforced on the server, not merely hidden in the UI.
 The proof photo is shown on the public board so that "already handled" can be checked
 by anyone.
 
+**The proof photo is judged before it is accepted.** A photo alone only proves
+that *something* was photographed. So `PATCH /api/reports/:id` hands the
+uploaded photo, together with the original complaint, to a vision model and
+asks two questions: is this the inside of a toilet, and does it look clean? Only
+a `bersih` verdict lets the status become `selesai`; `kotor` and `bukan_toilet`
+come back as `422` with the model's one-sentence reason, the photo is deleted
+from R2, and the attempt is written to the activity log as `bukti_ditolak`. The
+accepted verdict is stored on the report (`bukti_ai_*`) and shown under the
+photo. The text model (DeepSeek) cannot see images, which is why the vision
+model has its own `VISION_*` configuration; anything OpenAI-compatible works.
+When the vision endpoint itself is down the close is refused with `502` rather
+than waved through — the rule is "clean, verified", and an outage does not
+lower that bar.
+
 **The activity log cannot be erased from the app.** Every report, analysis result,
-status change, deletion, staff sign-in, account change, and generated summary is
+status change, rejected proof photo, deletion, staff sign-in, account change, and generated summary is
 written to the `aktivitas` table. That table deliberately has no foreign key to
 `reports`: a deleted report is exactly the one that most needs to stay traceable,
 so its full contents are copied into the log before the row disappears.
