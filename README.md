@@ -79,7 +79,7 @@ salt via WebCrypto. The plaintext is never stored anywhere.
 | Frontend | React 18 + Vite + Tailwind CSS |
 | i18n | hand-rolled dictionary in `web/src/lib/i18n.tsx`, no library |
 | LLM (text) | DeepSeek `deepseek-chat` in JSON mode — no training, no dataset |
-| LLM (vision) | any OpenAI-compatible vision model, default Gemini `gemini-2.5-flash` — judges proof photos |
+| LLM (vision) | any OpenAI-compatible vision model, default Gemini `gemini-3.6-flash` — judges proof photos |
 
 The frontend and the API live in the same Worker on the same origin, so there is
 no CORS configuration and only one thing to deploy.

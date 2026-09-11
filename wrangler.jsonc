@@ -58,7 +58,7 @@
     // works; e.g. OpenAI "https://api.openai.com/v1" + "gpt-4o-mini", or
     // OpenRouter "https://openrouter.ai/api/v1" + any vision model there.
     "VISION_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
-    "VISION_MODEL": "gemini-2.5-flash"
+    "VISION_MODEL": "gemini-3.6-flash"
   }
 
   // Secrets (do NOT put them here, use `wrangler secret put`):
