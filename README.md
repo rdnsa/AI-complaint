@@ -48,6 +48,10 @@ stickers to print and maintain by two thirds.
    alongside how many of those reports were actually resolved.
 5. **Proof-photo verification** — a vision model judges the staff photo before a
    report can be closed: is it a toilet, and is it clean?
+6. **Ask the data** — anyone types a question in plain language on the landing
+   page ("which building had the most blockages this month?") and the text
+   model answers it by calling a small set of aggregate queries; it never sees
+   raw rows, and staff names are only revealed to signed-in staff.
 
 **Supporting features**
 
@@ -58,6 +62,8 @@ stickers to print and maintain by two thirds.
   mean time to resolution
 - Status tracking for reporters without an account
 - Building map on the landing page
+- Light and dark theme (follows the device, switchable in the header) and an
+  Indonesian/English interface
 - Bilingual interface (Indonesian / English), switchable from the header
 
 ---
@@ -69,10 +75,10 @@ Two models, never for the same job — the split follows the input type.
 | | DeepSeek `deepseek-chat` | Gemini `gemini-3.6-flash` |
 |---|---|---|
 | Input | complaint text; the day's list of summaries | staff proof photo, plus the original complaint as context |
-| Job | features 1–3: classify, prioritise, summarise, daily summary | feature 5: is this a toilet, and is it clean? |
-| Called | on every new report (async, after the response) and once a day by cron | every time staff press "Mark done" (sync — staff wait for the verdict) |
+| Job | features 1–3: classify, prioritise, summarise, daily summary; feature 6: answer admin questions via tool calls | feature 5: is this a toilet, and is it clean? |
+| Called | on every new report (async, after the response), once a day by cron, and per admin question | every time staff press "Mark done" (sync — staff wait for the verdict) |
 | On failure | report is kept unlabelled, can be re-analysed | the close is refused (`502`); staff retry |
-| Code | `analisaKeluhan()`, `ringkasHarian()` in `src/adapters/llm.ts` | `periksaFotoBukti()` in the same file |
+| Code | `analisaKeluhan()`, `ringkasHarian()`, `chatDenganAlat()` in `src/adapters/llm.ts` | `periksaFotoBukti()` in the same file |
 | Config | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | `VISION_BASE_URL`, `VISION_MODEL`, `VISION_API_KEY` |
 | Stored in | `reports.kategori/prioritas/ringkasan/rekomendasi/ai_*`, `daily_summaries` | `reports.bukti_ai_*`; `aktivitas` rows `bukti_ditolak`, `verifikasi_gagal` |
 | Cost | paid, very cheap | Google AI Studio free tier |
@@ -257,6 +263,7 @@ old reports pointing at it keep their location and history intact.
 | `POST` | `/api/uploads?jenis=laporan\|bukti` | upload a photo |
 | `GET` | `/api/uploads/:key` | serve a photo from R2 |
 | `GET` | `/api/peringkat` | leaderboard |
+| `POST` | `/api/tanya` | ask a question about the report data; body `{pertanyaan, riwayat[]}`; `429` once a budget is spent |
 
 **Staff and admin**
 
@@ -316,18 +323,21 @@ src/
     session.ts           JWT cookie sessions and role guards
     password.ts          PBKDF2 hashing
     clock.ts             UTC ↔ WIB day conversion
-  repositories/          reports, locations, users, activity, summaries
+  repositories/          reports, locations, users, activity, summaries,
+                         analitik (the aggregate queries the question tools run)
   services/
     report-service.ts    filing, closing, deleting a report
     analysis-service.ts  per-report analysis, run after the response is sent
     summary-service.ts   daily summary, statistics, charts, leaderboard
+    tanya-service.ts     tool definitions, system prompt and daily budget for admin questions
     user-service.ts      registration, sign-in, account management
     activity-service.ts  writing and reading the audit trail
   routes/                auth, locations, reports, uploads, summary, activity,
-                         users, leaderboard
+                         users, leaderboard, tanya
 
 web/src/
   lib/i18n.tsx           dictionary and language switcher
+  lib/tema.tsx           light/dark theme provider
   lib/sesi.tsx           session context
   lib/api.ts             typed API client
   components/Kop.tsx     page header, back button, floating pill bar
@@ -396,6 +406,34 @@ When the vision endpoint itself is down the close is refused with `502` rather
 than waved through — the rule is "clean, verified", and an outage does not
 lower that bar. This is the opposite of the text analysis, which deliberately
 degrades: an unanalysed complaint is still useful, unverified proof is not.
+
+**Questions are answered through tools, not by reading the table.** The
+model receives four function definitions (`hitung_laporan`, `waktu_penyelesaian`,
+`daftar_laporan`, `ringkasan_harian`), picks one or two, and answers from the
+aggregate that comes back. Groupings and filter values are whitelisted in
+`repositories/analitik.ts` and bound as parameters, so the model chooses *which*
+query runs but never writes SQL. `daftar_laporan` returns the model-written
+`ringkasan`, never the raw complaint text, which keeps a reporter's words out of
+the asker's prompt. The endpoint is public, so it has two audiences: signed-in
+staff may group by `petugas`; everyone else gets the same tools minus that
+grouping, and staff names are stripped from listed reports. A question costs
+roughly 3–4k tokens (about half served from DeepSeek's prompt cache), only the
+last six turns travel with a follow-up, and `tanya-service.ts` refuses with
+`429` after `BATAS_HARIAN` (50) questions a day overall or `BATAS_PER_IP` (20)
+from one anonymous address (a hashed IP kept in the activity row). Every
+question is written to the activity log with the tools it called and the tokens
+it used.
+
+**Dark mode is a palette swap, not a second stylesheet.** Every colour in
+`tailwind.config.js` reads an RGB triplet from a CSS variable; `:root` in
+`web/src/index.css` holds the light values and `.dark` the dark ones, with the
+scales mirrored (the darkest ink becomes the lightest text). Components keep
+their `bg-krem-50` / `text-maroon-900` classes unchanged. Two exceptions are
+deliberate: `permukaan` names the card surface (white or deep brown) where
+`bg-white` used to be, and `tetap-*` colours never flip, so the maroon header
+stays maroon in both themes. The choice lives in `localStorage` (`tema`) and
+defaults to the device setting; a tiny inline script in `index.html` applies it
+before React loads, so a dark-mode visitor never sees a white flash.
 
 **The vision call gets a large token budget.** Gemini 3.x "thinks" before it
 answers and the thinking counts against `max_tokens`; a budget of 300 cut the

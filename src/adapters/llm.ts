@@ -122,6 +122,25 @@ interface ChatMessage {
   content: string | BagianPesan[];
 }
 
+/** One tool the model may call, in the OpenAI/DeepSeek function-calling shape. */
+export interface DefinisiAlat {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+interface PanggilanAlat {
+  id: string;
+  type: 'function';
+  function: { name: string; arguments: string };
+}
+
+/** A message in a tool-calling exchange: the two extra shapes the chat loop needs. */
+type PesanAlat =
+  | ChatMessage
+  | { role: 'assistant'; content: string | null; tool_calls?: PanggilanAlat[] }
+  | { role: 'tool'; tool_call_id: string; content: string };
+
 /** Which model answers: the text model for complaints, the vision model for photos. */
 interface Tujuan {
   baseUrl: string;
@@ -175,6 +194,130 @@ async function chatJSON(tujuan: Tujuan, messages: ChatMessage[], maxTokens = 500
     const match = content.match(/\{[\s\S]*\}/);
     if (!match) throw new Error(`Respons LLM bukan JSON: ${content.slice(0, 200)}`);
     return JSON.parse(match[0]);
+  }
+}
+
+export interface PemakaianToken {
+  prompt: number;
+  jawaban: number;
+  /** Prompt tokens served from DeepSeek's cache — billed at a fraction of the price. */
+  cache_hit: number;
+}
+
+export interface JejakAlat {
+  nama: string;
+  argumen: Record<string, unknown>;
+}
+
+export interface JawabanAlat {
+  teks: string;
+  alat: JejakAlat[];
+  token: PemakaianToken;
+}
+
+interface ResponsAlat {
+  choices?: Array<{
+    message?: { content?: string | null; tool_calls?: PanggilanAlat[] };
+    finish_reason?: string;
+  }>;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    prompt_cache_hit_tokens?: number;
+  };
+}
+
+/**
+ * Feature #6: answer a free-form question by letting the model call tools.
+ *
+ * The model never sees the database. It sees only the tool definitions, and
+ * each tool returns a small aggregate that `jalankan` computes on our side —
+ * that is what keeps a question at a few thousand tokens regardless of how
+ * many reports exist. The loop is capped: after `maksPutaran` rounds the model
+ * is forced to answer with whatever it has.
+ */
+export async function chatDenganAlat(
+  env: Env,
+  masukan: {
+    system: string;
+    riwayat: Array<{ role: 'user' | 'assistant'; content: string }>;
+    pertanyaan: string;
+    alat: DefinisiAlat[];
+    jalankan: (nama: string, argumen: Record<string, unknown>) => Promise<unknown>;
+    maksPutaran?: number;
+    maxTokens?: number;
+  },
+): Promise<JawabanAlat> {
+  const tujuan = modelTeks(env);
+  const maksPutaran = masukan.maksPutaran ?? 4;
+  const messages: PesanAlat[] = [
+    { role: 'system', content: masukan.system },
+    ...masukan.riwayat,
+    { role: 'user', content: masukan.pertanyaan },
+  ];
+  const jejak: JejakAlat[] = [];
+  const token: PemakaianToken = { prompt: 0, jawaban: 0, cache_hit: 0 };
+
+  for (let putaran = 0; ; putaran++) {
+    const terakhir = putaran >= maksPutaran;
+    const res = await fetch(`${tujuan.baseUrl.replace(/\/$/, '')}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${tujuan.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: tujuan.model,
+        messages,
+        tools: masukan.alat.map((a) => ({ type: 'function', function: a })),
+        // On the final round the model may no longer ask for data; it must answer.
+        tool_choice: terakhir ? 'none' : 'auto',
+        temperature: 0.2,
+        max_tokens: masukan.maxTokens ?? 600,
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`LLM HTTP ${res.status}: ${body.slice(0, 300)}`);
+    }
+
+    const data = (await res.json()) as ResponsAlat;
+    token.prompt += data.usage?.prompt_tokens ?? 0;
+    token.jawaban += data.usage?.completion_tokens ?? 0;
+    token.cache_hit += data.usage?.prompt_cache_hit_tokens ?? 0;
+
+    const pesan = data.choices?.[0]?.message;
+    if (!pesan) throw new Error('LLM mengembalikan respons kosong');
+
+    const panggilan = pesan.tool_calls ?? [];
+    if (!panggilan.length || terakhir) {
+      const teks = (pesan.content ?? '').trim();
+      if (!teks) throw new Error('LLM tidak memberikan jawaban');
+      return { teks, alat: jejak, token };
+    }
+
+    messages.push({ role: 'assistant', content: pesan.content ?? null, tool_calls: panggilan });
+    for (const p of panggilan) {
+      let argumen: Record<string, unknown> = {};
+      try {
+        argumen = JSON.parse(p.function.arguments || '{}') as Record<string, unknown>;
+      } catch {
+        /* the model produced malformed arguments; run the tool with none */
+      }
+      jejak.push({ nama: p.function.name, argumen });
+
+      // A failing tool is reported back to the model rather than aborting the
+      // question: it can rephrase the call or answer from what it already has.
+      let hasil: unknown;
+      try {
+        hasil = await masukan.jalankan(p.function.name, argumen);
+      } catch (err) {
+        hasil = { error: err instanceof Error ? err.message : String(err) };
+      }
+      messages.push({ role: 'tool', tool_call_id: p.id, content: JSON.stringify(hasil) });
+    }
   }
 }
 

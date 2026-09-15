@@ -10,7 +10,8 @@ export type Aksi =
   | 'ringkasan'
   | 'pengguna'
   | 'bukti_ditolak'
-  | 'verifikasi_gagal';
+  | 'verifikasi_gagal'
+  | 'tanya';
 
 export const AKSI: Aksi[] = [
   'lapor',
@@ -23,6 +24,7 @@ export const AKSI: Aksi[] = [
   'pengguna',
   'bukti_ditolak',
   'verifikasi_gagal',
+  'tanya',
 ];
 
 export interface BarisAktivitas {

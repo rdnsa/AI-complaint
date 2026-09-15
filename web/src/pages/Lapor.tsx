@@ -158,7 +158,7 @@ export default function Lapor() {
                   key={c}
                   type="button"
                   onClick={() => setTeks(c)}
-                  className="rounded-full border border-krem-200 bg-white px-3 py-1 text-xs text-maroon-600 transition hover:border-bata-300 hover:text-bata-700"
+                  className="rounded-full border border-krem-200 bg-permukaan px-3 py-1 text-xs text-maroon-600 transition hover:border-bata-300 hover:text-bata-700"
                 >
                   {c.length > 36 ? `${c.slice(0, 36)}…` : c}
                 </button>
@@ -193,7 +193,7 @@ export default function Lapor() {
                     setFoto(null);
                     if (inputFoto.current) inputFoto.current.value = '';
                   }}
-                  className="absolute right-2 top-2 rounded-lg bg-maroon-900/75 px-3 py-1.5 text-sm font-semibold text-white"
+                  className="absolute right-2 top-2 rounded-lg bg-tetap-maroon/75 px-3 py-1.5 text-sm font-semibold text-white"
                 >
                   {t('lapor.hapus_foto')}
                 </button>

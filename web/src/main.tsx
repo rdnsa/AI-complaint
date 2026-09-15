@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { PenyediaBahasa } from './lib/i18n';
 import { PenyediaSesi } from './lib/sesi';
+import { PenyediaTema } from './lib/tema';
 import Beranda from './pages/Beranda';
 import Daftar from './pages/Daftar';
 import Dashboard from './pages/Dashboard';
@@ -15,6 +16,7 @@ import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    <PenyediaTema>
     <PenyediaBahasa>
       <PenyediaSesi>
         <BrowserRouter>
@@ -34,5 +36,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         </BrowserRouter>
       </PenyediaSesi>
     </PenyediaBahasa>
+    </PenyediaTema>
   </React.StrictMode>,
 );

@@ -118,7 +118,8 @@ export interface Aktivitas {
     | 'ringkasan'
     | 'pengguna'
     | 'bukti_ditolak'
-    | 'verifikasi_gagal';
+    | 'verifikasi_gagal'
+    | 'tanya';
   report_id: string | null;
   pelaku: string;
   ringkas: string;
@@ -144,6 +145,20 @@ export interface Ringkasan {
   total_laporan?: number;
   ringkasan?: string;
   sorotan?: string[];
+}
+
+/** One turn of the admin question-answering chat. */
+export interface PesanTanya {
+  peran: 'pengguna' | 'asisten';
+  teks: string;
+}
+
+export interface JawabanTanya {
+  teks: string;
+  alat: Array<{ nama: string; argumen: Record<string, unknown> }>;
+  token: { prompt: number; jawaban: number; cache_hit: number };
+  ms: number;
+  sisa_hari_ini: number;
 }
 
 export class ApiError extends Error {
@@ -247,6 +262,10 @@ export const api = {
 
   statistik: (tanggal?: string) => req<Statistik>(`/api/summary/stats${tanggal ? `?tanggal=${tanggal}` : ''}`),
   ringkasan: (tanggal?: string) => req<Ringkasan>(`/api/summary${tanggal ? `?tanggal=${tanggal}` : ''}`),
+  /** Admin only. `riwayat` carries the recent turns so follow-up questions make sense. */
+  tanya: (pertanyaan: string, riwayat: PesanTanya[]) =>
+    req<JawabanTanya>('/api/tanya', { method: 'POST', body: JSON.stringify({ pertanyaan, riwayat }) }),
+
   buatRingkasan: (tanggal?: string) =>
     req<Ringkasan>(`/api/summary/generate${tanggal ? `?tanggal=${tanggal}` : ''}`, { method: 'POST' }),
 };

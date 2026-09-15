@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Kop from '../components/Kop';
+import PanelTanya from '../components/PanelTanya';
 import { LencanaStatus } from '../components/Lencana';
 import { api, type Gedung, type Laporan } from '../lib/api';
 import { useBahasa, useWaktuRelatif } from '../lib/i18n';
@@ -66,7 +67,7 @@ export default function Beranda() {
           </section>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-white px-4 py-3 ring-1 ring-krem-200">
+        <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-permukaan px-4 py-3 ring-1 ring-krem-200">
           {sesi ? (
             <>
               <span className="font-semibold text-maroon-900">
@@ -105,7 +106,15 @@ export default function Beranda() {
           </Link>
         </div>
 
-        <p className="mt-6 leading-relaxed text-maroon-700">{t('beranda.petunjuk')}</p>
+        <section className="mt-8">
+          <h2 className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-maroon-900">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-bata-500 text-lg text-white shadow-naik">🤖</span>
+            {t('tanya.judul')}
+          </h2>
+          <PanelTanya rapat />
+        </section>
+
+        <p className="mt-8 leading-relaxed text-maroon-700">{t('beranda.petunjuk')}</p>
 
         <figure className="kartu mt-5 overflow-hidden">
           <a href="/peta-lokasi-gedung.jpg" target="_blank" rel="noreferrer" className="block">

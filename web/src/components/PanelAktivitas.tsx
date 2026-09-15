@@ -12,6 +12,7 @@ const AKSI = [
   'verifikasi_gagal',
   'masuk',
   'ringkasan',
+  'tanya',
 ] as const;
 
 const WARNA: Record<string, string> = {
@@ -24,6 +25,7 @@ const WARNA: Record<string, string> = {
   verifikasi_gagal: 'bg-amber-50 text-amber-800 ring-amber-200',
   masuk: 'bg-krem-100 text-maroon-700 ring-krem-300',
   ringkasan: 'bg-krem-100 text-maroon-700 ring-krem-300',
+  tanya: 'bg-krem-100 text-maroon-700 ring-krem-300',
 };
 
 export default function PanelAktivitas() {
@@ -49,7 +51,7 @@ export default function PanelAktivitas() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-xl bg-white px-4 py-3 text-sm leading-relaxed text-maroon-700 ring-1 ring-krem-200">
+      <p className="rounded-xl bg-permukaan px-4 py-3 text-sm leading-relaxed text-maroon-700 ring-1 ring-krem-200">
         {t('aktivitas.keterangan')}
       </p>
 

@@ -45,7 +45,7 @@ export default function Lacak({ laporan }: { laporan: Laporan }) {
                   className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ring-2 ${
                     tercapai
                       ? 'bg-bata-500 text-white ring-bata-200'
-                      : 'bg-white text-krem-300 ring-krem-200'
+                      : 'bg-permukaan text-krem-300 ring-krem-200'
                   }`}
                 >
                   {tercapai ? '✓' : i + 1}

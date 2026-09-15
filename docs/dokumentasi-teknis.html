@@ -61,7 +61,7 @@
   <li>Model data: tabel, kolom, migrasi, seed</li>
   <li>Lokasi dan kode QR</li>
   <li>Alur laporan dari ujung ke ujung</li>
-  <li>Analisis LLM teks</li>
+  <li>Analisis LLM teks dan tanya data</li>
   <li>Verifikasi foto bukti (LLM vision)</li>
   <li>Akun, sesi, dan wewenang</li>
   <li>Jejak audit</li>
@@ -102,6 +102,7 @@ lewat rekayasa prompt dan validasi keluaran.</p>
       <li><strong>Ringkasan harian</strong> satu paragraf, otomatis pukul 17.00 WIB</li>
       <li><strong>Papan peringkat pelapor</strong> beserta jumlah yang benar-benar selesai</li>
       <li><strong>Verifikasi foto bukti</strong>: benar toilet, dan sudah bersih?</li>
+      <li><strong>Chatbot AI (tanya data)</strong>: pertanyaan bahasa sehari-hari dijawab model lewat <em>tool calling</em> ke query agregat</li>
     </ol>
   </td><td>
     <ul>
@@ -110,7 +111,7 @@ lewat rekayasa prompt dan validasi keluaran.</p>
       <li>Jejak audit yang tidak dapat dihapus dari aplikasi</li>
       <li>Dashboard: KPI, deret harian, komposisi prioritas, pola hari×jam, gedung×kategori, waktu penyelesaian</li>
       <li>Pelacakan status untuk pelapor tanpa akun</li>
-      <li>Peta gedung di halaman depan; antarmuka dwibahasa ID/EN</li>
+      <li>Peta gedung di halaman depan; antarmuka dwibahasa ID/EN; tema terang/gelap</li>
     </ul>
   </td></tr>
 </table>
@@ -137,18 +138,20 @@ jenis masukan: teks ke DeepSeek, gambar ke Gemini.</p>
 <table>
   <tr><th></th><th>DeepSeek <span class="mono">deepseek-chat</span></th><th>Gemini <span class="mono">gemini-3.6-flash</span></th></tr>
   <tr><td>Masukan</td><td>Teks keluhan mahasiswa; daftar ringkasan sehari</td><td>Foto bukti petugas + teks keluhan asli sebagai konteks</td></tr>
-  <tr><td>Pekerjaan</td><td>(1) Klasifikasi kategori, (2) prioritas, ringkasan, rekomendasi, (3) ringkasan harian</td><td>(5) Menilai foto bukti: benar toilet? sudah bersih?</td></tr>
-  <tr><td>Kapan dipanggil</td><td>Tiap laporan masuk (asinkron, setelah respons dikirim) dan sekali sehari lewat cron</td><td>Tiap petugas menekan &ldquo;Tandai selesai&rdquo; (sinkron; petugas menunggu putusan)</td></tr>
+  <tr><td>Pekerjaan</td><td>(1) Klasifikasi kategori, (2) prioritas, ringkasan, rekomendasi, (3) ringkasan harian, (6) tanya data lewat <em>tool calling</em></td><td>(5) Menilai foto bukti: benar toilet? sudah bersih?</td></tr>
+  <tr><td>Kapan dipanggil</td><td>Tiap laporan masuk (asinkron, setelah respons dikirim), sekali sehari lewat cron, dan tiap pertanyaan ke <strong>Chatbot AI</strong> (sinkron, maks. 50/hari)</td><td>Tiap petugas menekan &ldquo;Tandai selesai&rdquo; (sinkron; petugas menunggu putusan)</td></tr>
   <tr><td>Parameter</td><td><span class="mono">temperature 0.1</span>, <span class="mono">max_tokens</span> 500 (analisis) / 700 (ringkasan), <span class="mono">response_format json_object</span>, <em>timeout</em> 30 detik</td><td><span class="mono">temperature 0.1</span>, <span class="mono">max_tokens 2000</span>, gambar <span class="mono">detail: low</span>, <em>timeout</em> 30 detik</td></tr>
   <tr><td>Bila gagal</td><td>Laporan tetap tersimpan tanpa label (<span class="mono">ai_status='gagal'</span>), dapat dianalisis ulang</td><td>Penutupan ditolak (502); petugas diminta mencoba lagi</td></tr>
-  <tr><td>Fungsi di kode</td><td class="mono">analisaKeluhan(), ringkasHarian()</td><td class="mono">periksaFotoBukti()</td></tr>
+  <tr><td>Fungsi di kode</td><td class="mono">analisaKeluhan(), ringkasHarian(), chatDenganAlat()</td><td class="mono">periksaFotoBukti()</td></tr>
   <tr><td>Konfigurasi</td><td class="mono">LLM_BASE_URL, LLM_MODEL, LLM_API_KEY</td><td class="mono">VISION_BASE_URL, VISION_MODEL, VISION_API_KEY</td></tr>
-  <tr><td>Hasil disimpan di</td><td class="mono">reports.kategori, prioritas, ringkasan, rekomendasi, ai_*; daily_summaries</td><td class="mono">reports.bukti_ai_*; aktivitas (bukti_ditolak, verifikasi_gagal)</td></tr>
+  <tr><td>Hasil disimpan di</td><td class="mono">reports.kategori, prioritas, ringkasan, rekomendasi, ai_*; daily_summaries; aktivitas (tanya)</td><td class="mono">reports.bukti_ai_*; aktivitas (bukti_ditolak, verifikasi_gagal)</td></tr>
   <tr><td>Biaya</td><td>Berbayar, sangat murah</td><td>Tingkat gratis Google AI Studio</td></tr>
 </table>
 <p>Keduanya dipanggil lewat satu fungsi yang sama, <span class="mono">chatJSON()</span> di
 <span class="mono">src/adapters/llm.ts</span>, karena kedua penyedia memakai format
-<em>chat completions</em> OpenAI. Yang berbeda hanya tujuan (URL, model, kunci) dan isi pesan.</p>
+<em>chat completions</em> OpenAI. Yang berbeda hanya tujuan (URL, model, kunci) dan isi pesan.
+Fitur tanya data memakai fungsi kedua, <span class="mono">chatDenganAlat()</span>, yang menjalankan
+putaran <em>tool calling</em> (bagian 7).</p>
 
 <h2 class="pecah">3. Arsitektur dan struktur proyek</h2>
 <p>Backend disusun berlapis dengan arah ketergantungan hanya ke dalam.</p>
@@ -182,32 +185,38 @@ jenis masukan: teks ke DeepSeek, gambar ke Gemini.</p>
   env.ts                   binding infrastruktur dan konfigurasi (Env, AppEnv)
   domain/types.ts          enum, ReportRow/ReportDTO, urlFoto(), toDTO(), bolehDiselesaikan()
   adapters/
-    llm.ts                 prompt, few-shot, validasi keluaran, chatJSON(), periksaFotoBukti()
+    llm.ts                 prompt, few-shot, validasi keluaran, chatJSON(), chatDenganAlat(), periksaFotoBukti()
     storage.ts             R2: prefix, batas ukuran/tipe, simpan/ambil/baca/hapus foto
     session.ts             JWT dalam cookie, wajibPeran(), wajibPetugas, wajibAdmin
     password.ts            PBKDF2-SHA256 lewat WebCrypto, perbandingan waktu-konstan
     clock.ts               tanggalWIB(), rentangHariWIB()
-  repositories/            reports, locations, users, activity, summaries
+  repositories/            reports, locations, users, activity, summaries,
+                           analitik (query agregat untuk alat tanya data)
   services/
     report-service.ts      kirim, ubah status (+ verifikasi bukti), hapus laporan
     analysis-service.ts    analisis satu laporan, dijalankan setelah respons dikirim
     summary-service.ts     ringkasan harian, statistik, data grafik, papan peringkat
+    tanya-service.ts       definisi alat, prompt sistem, batas harian, pencatatan tanya data
     user-service.ts        daftar, masuk, kelola akun
     activity-service.ts    tulis dan baca jejak audit
-  routes/                  auth, locations, reports, uploads, summary, activity, users, leaderboard
+  routes/                  auth, locations, reports, uploads, summary, activity, users, leaderboard, tanya
 
 web/src/
   main.tsx                 router: 8 rute halaman
   lib/i18n.tsx             kamus ID/EN, useBahasa(), useWaktuRelatif()
   lib/sesi.tsx             konteks sesi (useSesi)
+  lib/tema.tsx             konteks tema terang/gelap (useTema), disimpan di localStorage
   lib/api.ts               klien API bertipe, ApiError (status + data)
-  components/Kop.tsx       kepala halaman, tombol kembali, sakelar bahasa
+  components/Kop.tsx       kepala halaman, tombol kembali, sakelar bahasa, sakelar tema
+  components/InputSandi.tsx kolom sandi dengan tombol tampilkan/sembunyikan
+  components/PanelTanya.tsx kotak tanya data (beranda dan tab dashboard)
   components/Lacak.tsx     linimasa status tiga tahap
   components/Lencana.tsx   lencana prioritas/status/kategori
-  components/Panel*.tsx    tab dashboard: Grafik, Aktivitas, Pengguna
+  components/Panel*.tsx    tab dashboard: Grafik, Aktivitas, Pengguna, Tanya
   components/grafik/       warna tervalidasi, Garis, Batang, BatangBertumpuk, PetaPanas, Sparkline, KartuKPI
   pages/                   Beranda, Lapor, StatusLaporan, LaporanPublik, Masuk, Daftar, Peringkat, Dashboard
 web/public/peta-lokasi-gedung.jpg
+web/public/logo.svg        favicon (tulisan UPI)
 
 migrations/                0001–0005, diterapkan berurutan
 seed/toilets.sql           daftar toilet aktif
@@ -381,7 +390,7 @@ maks. 200. Dashboard memuat ulang tiap 30 detik. Transisi status:</p>
   <tr><td>Hapus</td><td><span class="mono">DELETE /:id</span></td><td>Konfirmasi di browser; salinan utuh ditulis ke jejak audit, lalu baris dan kedua fotonya dihapus</td></tr>
 </table>
 
-<h2 class="pecah">7. Analisis LLM teks</h2>
+<h2 class="pecah">7. Analisis LLM teks dan tanya data</h2>
 <h3>Prompt berbasis aturan</h3>
 <p>Prompt sistem (bahasa Indonesia) memerankan model sebagai asisten petugas kebersihan dan
 mendefinisikan:</p>
@@ -430,6 +439,48 @@ bukan gagal.</p>
 meminta paragraf 2–4 kalimat berangka konkret plus ≤ 4 sorotan tindakan ≤ 12 kata, tanpa mengarang di
 luar daftar. Hari tanpa laporan <strong>tidak memanggil LLM</strong>; disimpan kalimat tetap
 &ldquo;Tidak ada keluhan yang masuk pada hari ini.&rdquo;</p>
+
+<h3><strong>Chatbot AI</strong> (tanya data): <em>tool calling</em>, bukan membaca tabel</h3>
+<p>Kotak <strong>&ldquo;🤖 Chatbot AI — tanya data laporan&rdquo;</strong> di beranda (dan tab <em>🤖 Chatbot AI</em> di dashboard admin)
+menerima pertanyaan bahasa sehari-hari: <em>&ldquo;gedung mana yang paling sering mampet bulan ini?&rdquo;</em>.
+Model <strong>tidak pernah melihat tabel</strong>. Ia menerima empat definisi fungsi, memilih satu atau dua,
+dan menjawab dari agregat kecil yang dikembalikan — sehingga biaya satu pertanyaan tetap
+3&ndash;4 ribu token berapa pun jumlah laporannya (sekitar separuhnya dilayani dari <em>prompt cache</em> DeepSeek).</p>
+<table>
+  <tr><th>Alat</th><th>Parameter</th><th>Mengembalikan</th></tr>
+  <tr><td class="mono">hitung_laporan</td><td><span class="mono">kelompok</span> (gedung, toilet, lantai, jenis, kategori, prioritas, status, petugas, tanggal, minggu, bulan, jam, hari_minggu) + filter</td><td>Total, dan per kelompok: jumlah, selesai, prioritas tinggi (maks. 20 baris)</td></tr>
+  <tr><td class="mono">waktu_penyelesaian</td><td><span class="mono">kelompok</span> + filter</td><td>Jumlah selesai, rata-rata/tercepat/terlama dalam menit</td></tr>
+  <tr><td class="mono">daftar_laporan</td><td><span class="mono">urut</span>, <span class="mono">limit</span> (≤15) + filter</td><td>Lokasi, status, prioritas, kategori, <em>ringkasan</em>, waktu WIB — bukan teks mentah</td></tr>
+  <tr><td class="mono">ringkasan_harian</td><td class="mono">tanggal</td><td>Ringkasan tersimpan di <span class="mono">daily_summaries</span></td></tr>
+</table>
+<p>Filter yang sama untuk semua alat: <span class="mono">sejak</span>, <span class="mono">sampai</span> (tanggal WIB),
+<span class="mono">gedung</span>, <span class="mono">kategori</span>, <span class="mono">prioritas</span>,
+<span class="mono">status</span>, <span class="mono">jenis</span>.</p>
+<ul>
+  <li><strong>Model tidak menulis SQL.</strong> Nama kelompok dicari di tabel tetap <span class="mono">KELOMPOK</span>
+    di <span class="mono">repositories/analitik.ts</span>; setiap nilai filter diperiksa terhadap enum lalu
+    diikat sebagai parameter. Argumen dari model divalidasi Zod sebelum menyentuh query.</li>
+  <li><strong>Dua audiens.</strong> Endpoint terbuka untuk umum. Admin/petugas yang masuk boleh mengelompokkan per
+    <span class="mono">petugas</span>; penanya lain mendapat alat yang sama tanpa pilihan itu, dan bila model
+    memaksa, server menolaknya lagi. Kolom petugas juga tidak ikut dalam <span class="mono">daftar_laporan</span>
+    untuk umum — selaras dengan papan publik.</li>
+  <li><strong>Teks mahasiswa tidak masuk prompt.</strong> <span class="mono">daftar_laporan</span> hanya mengembalikan
+    <span class="mono">ringkasan</span> buatan model, sehingga pelapor tidak dapat menyelipkan instruksi lewat keluhannya.
+    Prompt sistem juga menegaskan hasil alat adalah data, bukan perintah.</li>
+  <li><strong>Putaran dibatasi.</strong> Maksimal 4 putaran alat; pada putaran terakhir
+    <span class="mono">tool_choice: 'none'</span> memaksa model menjawab. Alat yang gagal dilaporkan balik ke model
+    sebagai <span class="mono">{error}</span> alih-alih menggagalkan pertanyaan.</li>
+  <li><strong>Konteks tidak menumpuk.</strong> Klien mengirim maksimal 6 giliran terakhir, tiap giliran dipotong 500 karakter.
+    <span class="mono">temperature 0.2</span>, <span class="mono">max_tokens 600</span>, jawaban teks polos tanpa Markdown.</li>
+  <li><strong>Anggaran.</strong> <span class="mono">BATAS_HARIAN</span> = 50 pertanyaan/hari untuk semua penanya;
+    <span class="mono">BATAS_PER_IP</span> = 20/hari per alamat anonim (hash SHA-256 16 heksa dari IP, disimpan di
+    <span class="mono">rincian.ip</span>). Lewat batas → 429. Kedua hitungan dibaca dari tabel <span class="mono">aktivitas</span>.</li>
+  <li><strong>Setiap pertanyaan dicatat</strong> (<span class="mono">aksi='tanya'</span>): pertanyaan, alat yang dipanggil beserta
+    argumennya, token (<span class="mono">prompt</span>, <span class="mono">jawaban</span>, <span class="mono">cache_hit</span>),
+    model, dan durasi. Antarmuka tidak menampilkan rincian ini; ia hanya untuk pemantauan lewat tab Aktivitas.</li>
+</ul>
+<p>Hasil uji pada data seed: satu pertanyaan agregat 3.700&ndash;4.200 token dan 1,8&ndash;2,7 detik; pertanyaan
+di luar topik dijawab penolakan singkat tanpa memanggil alat (~1.800 token, &lt;1 detik).</p>
 
 <h2 class="pecah">8. Verifikasi foto bukti (LLM vision)</h2>
 <p>Foto bukti semula hanya membuktikan bahwa <em>sesuatu</em> difoto. Kini foto itu dinilai lebih
@@ -487,9 +538,9 @@ karena alasannya dibatasi 25 kata.</p>
 <table>
   <tr><th>Peran</th><th>Cara akun dibuat</th><th>Wewenang</th></tr>
   <tr><td class="mono">admin</td><td>Bawaan migrasi 0004 (<span class="mono">admin</span> / <span class="mono">Admin123!</span>)</td><td>Semua wewenang petugas + kelola akun petugas (<span class="mono">/api/pengguna</span>)</td></tr>
-  <tr><td class="mono">petugas</td><td>Dibuat admin</td><td>Daftar dashboard, ubah status, unggah bukti, analisis ulang, hapus laporan, statistik/grafik, jejak audit, buat ringkasan</td></tr>
+  <tr><td class="mono">petugas</td><td>Dibuat admin</td><td>Daftar dashboard, ubah status, unggah bukti, analisis ulang, hapus laporan, statistik/grafik, jejak audit, buat ringkasan, tanya data termasuk per petugas</td></tr>
   <tr><td class="mono">pelapor</td><td>Mendaftar sendiri di <span class="mono">/daftar</span></td><td>Melapor atas nama, &ldquo;Laporan saya&rdquo;, posisi di papan peringkat</td></tr>
-  <tr><td>tanpa akun</td><td>—</td><td>Melapor anonim, melacak lewat tautan, membaca papan publik dan peringkat</td></tr>
+  <tr><td>tanpa akun</td><td>—</td><td>Melapor anonim, melacak lewat tautan, membaca papan publik dan peringkat, tanya data (tanpa nama petugas, maks. 20/hari per alamat)</td></tr>
 </table>
 <table>
   <tr><th>Aspek</th><th>Penerapan</th></tr>
@@ -520,6 +571,7 @@ atau dihapus lewat aplikasi.</p>
   <tr><td class="mono">masuk</td><td>admin/petugas</td><td>Sign-in ke dashboard</td><td>—</td></tr>
   <tr><td class="mono">ringkasan</td><td class="mono">sistem</td><td>Ringkasan harian disusun (cron atau tombol)</td><td>—</td></tr>
   <tr><td class="mono">pengguna</td><td>admin</td><td>Akun petugas dibuat/diubah</td><td>—; ringkas menyebut kolom yang diubah</td></tr>
+  <tr><td class="mono">tanya</td><td>nama penanya / <span class="mono">pengunjung</span></td><td>Pertanyaan tanya data dijawab</td><td>pertanyaan, alat[{nama, argumen}], token{prompt, jawaban, cache_hit}, model, ms, ip (hash, hanya non-staf)</td></tr>
 </table>
 <p>Tab Aktivitas di dashboard memfilter per aksi, menampilkan 100 baris terbaru (maks. 300 lewat API),
 dan membentangkan salinan laporan yang dihapus secara langsung tanpa perlu diklik.</p>
@@ -605,6 +657,8 @@ dengan bidang tambahan. Body permintaan JSON kecuali unggah (multipart). Sesi di
   <tr><td class="mono">GET /api/reports/saya</td><td>—</td><td class="mono">{data:[Laporan]}</span> (kosong bila bukan pelapor)</td><td></td></tr>
   <tr><td class="mono">GET /api/reports/:id</td><td>—</td><td>Laporan (DTO lengkap)</td><td>404</td></tr>
   <tr><td class="mono">GET /api/peringkat</td><td>—</td><td class="mono">{data:[{id, nama, laporan, selesai}], saya:{peringkat, laporan}|null}</td><td></td></tr>
+  <tr><td class="mono">GET /api/tanya</td><td>—</td><td class="mono">{batas_harian}</td><td></td></tr>
+  <tr><td class="mono">POST /api/tanya</td><td class="mono">{pertanyaan (3–500), riwayat:[{peran:'pengguna'|'asisten', teks}]}</td><td class="mono">{teks, alat:[{nama, argumen}], token:{prompt, jawaban, cache_hit}, ms, sisa_hari_ini}</td><td>400 validasi; <strong>429</strong> batas harian/per alamat; 502 model gagal</td></tr>
 </table>
 
 <h3>Petugas dan admin (<span class="mono">wajibPetugas</span>)</h3>
@@ -632,21 +686,21 @@ dengan bidang tambahan. Body permintaan JSON kecuali unggah (multipart). Sesi di
 <h3>Kode status yang dipakai</h3>
 <p>200 sukses · 201 dibuat · 304 belum berubah · 400 permintaan tak valid atau aturan bisnis
 sederhana · 401 belum masuk · 403 peran tidak berhak · 404 tidak ditemukan · 409 konflik username ·
-413 berkas terlalu besar · 415 tipe berkas · <strong>422 foto bukti ditolak model</strong> ·
+413 berkas terlalu besar · 415 tipe berkas · <strong>422 foto bukti ditolak model</strong> · 429 batas tanya data ·
 500 galat tak tertangani (<span class="mono">app.onError</span>) · 502 layanan LLM/vision gagal.
 Path <span class="mono">/api/*</span> yang tak dikenal → 404 JSON; path lain yang bukan aset → <span class="mono">index.html</span> (fallback SPA).</p>
 
 <h2 class="pecah">15. Antarmuka pengguna</h2>
 <table>
   <tr><th>Rute</th><th>Halaman</th><th>Isi</th></tr>
-  <tr><td class="mono">/</td><td>Beranda</td><td>Peta gedung (dapat diperbesar), pemilih gedung → lantai manual (cadangan bila QR rusak), &ldquo;Laporan saya&rdquo; bagi pelapor yang masuk, tautan papan publik, peringkat, dan masuk petugas</td></tr>
+  <tr><td class="mono">/</td><td>Beranda</td><td>Peta gedung (dapat diperbesar), pemilih gedung → lantai manual (cadangan bila QR rusak), &ldquo;Laporan saya&rdquo; bagi pelapor yang masuk, kotak <strong>Chatbot AI</strong>, tautan papan publik, peringkat, dan masuk petugas</td></tr>
   <tr><td class="mono">/lapor/:lokasiId</td><td>Lapor</td><td>Tujuan QR. Pilih jenis toilet, teks (contoh cepat tersedia), foto wajib dengan <span class="mono">capture="environment"</span>, kirim. Menampilkan identitas pelapor atau catatan anonim</td></tr>
   <tr><td class="mono">/laporan/:id</td><td>StatusLaporan</td><td>Konfirmasi, linimasa tiga tahap, hasil analisis (polling), saran menyimpan tautan</td></tr>
   <tr><td class="mono">/laporan</td><td>LaporanPublik</td><td>Papan terbuka dengan filter status/prioritas dan hitungan &ldquo;x dari y selesai&rdquo;</td></tr>
-  <tr><td class="mono">/masuk</td><td>Masuk</td><td>Satu formulir untuk semua peran; pelapor diarahkan ke beranda, petugas/admin ke dashboard</td></tr>
+  <tr><td class="mono">/masuk</td><td>Masuk</td><td>Satu formulir untuk semua peran; kolom sandi punya tombol tampilkan/sembunyikan; pelapor diarahkan ke beranda, petugas/admin ke dashboard</td></tr>
   <tr><td class="mono">/daftar</td><td>Daftar</td><td>Pendaftaran pelapor</td></tr>
   <tr><td class="mono">/peringkat</td><td>Peringkat</td><td>20 besar dan posisi sendiri</td></tr>
-  <tr><td class="mono">/petugas</td><td>Dashboard</td><td>Tab Laporan / Grafik / Aktivitas / Akun Petugas (admin). Pelapor dan tamu diarahkan ke <span class="mono">/masuk</span>; server tetap menolak walau tab dipaksa tampil</td></tr>
+  <tr><td class="mono">/petugas</td><td>Dashboard</td><td>Tab Laporan / Grafik / Aktivitas / 🤖 Chatbot AI (admin) / Akun Petugas (admin). Pelapor dan tamu diarahkan ke <span class="mono">/masuk</span>; server tetap menolak walau tab dipaksa tampil</td></tr>
 </table>
 <h3>Kartu laporan di dashboard</h3>
 <p>Tepi kiri berwarna menandai prioritas (merah tinggi, kuning sedang, hijau rendah) agar terbaca
@@ -660,6 +714,7 @@ beserta &ldquo;Penilaian AI: …&rdquo; sampai percobaan berikutnya.</p>
 <ul>
   <li>Sakelar ID/EN di kepala halaman; pilihan disimpan di <span class="mono">localStorage</span> (<span class="mono">bahasa</span>). Keluaran LLM tetap Indonesia karena pembacanya petugas.</li>
   <li>Palet maroon, bata, krem diambil dari poster &ldquo;Peta Lokasi Gedung&rdquo; UPI Tasikmalaya.</li>
+  <li><strong>Tema terang/gelap</strong>: sakelar geser di kepala halaman; pilihan disimpan di <span class="mono">localStorage</span> (<span class="mono">tema</span>), bawaan mengikuti perangkat. Setiap warna palet di <span class="mono">tailwind.config.js</span> membaca variabel CSS; <span class="mono">:root</span> di <span class="mono">index.css</span> berisi nilai terang dan <span class="mono">.dark</span> nilai gelap dengan skala dicerminkan (tinta paling gelap menjadi teks paling terang). Komponen tetap memakai kelas <span class="mono">bg-krem-50</span>/<span class="mono">text-maroon-900</span> tanpa perubahan. Dua pengecualian: <span class="mono">permukaan</span> untuk latar kartu (putih ↔ cokelat tua) dan <span class="mono">tetap-*</span> yang tidak pernah berubah, sehingga kepala halaman tetap maroon di kedua tema. Skrip kecil di <span class="mono">index.html</span> memasang kelas sebelum React dimuat agar tidak ada kedipan putih.</li>
   <li>Palet grafik (<span class="mono">grafik/warna.ts</span>) lolos pemeriksaan rentang terang, ambang chroma, keterpisahan buta warna (deutan/protan/tritan), dan kontras; ramp sekuensial peta panas monoton dalam luminansi (0,933 → 0,164). Jangan diubah tanpa menjalankan ulang validatornya.</li>
   <li>Seluruh halaman dirancang untuk layar ponsel lebih dulu — formulir laporan dibuka dari kamera QR.</li>
 </ul>
@@ -802,6 +857,13 @@ situs dibersihkan.</p>
 <h3>Antarmuka dwibahasa, analisis tetap Indonesia</h3>
 <p>Label mengikuti pembaca; ringkasan dan rekomendasi selalu Indonesia karena yang bertindak adalah
 petugas kebersihan. Keluhan berbahasa Inggris tetap dipahami dan diringkas dalam bahasa Indonesia.</p>
+<h3>Pertanyaan dijawab lewat alat, bukan membaca tabel</h3>
+<p>Alternatifnya — memasukkan seluruh baris ke prompt — tumbuh linear dengan data dan membuka
+jalan teks mahasiswa masuk ke prompt. Dengan <em>tool calling</em>, biaya per pertanyaan tetap
+(~3&ndash;4 ribu token), model hanya memilih query dari daftar tetap, dan hak akses (nama petugas)
+ditegakkan di server, bukan oleh prompt. Batas 50 pertanyaan/hari dan 20/alamat menjaga agar fitur
+publik ini tidak bisa dipakai menguras anggaran.</p>
+
 <h3>Warna grafik dihitung, bukan dikira-kira</h3>
 <p>Lihat bagian 15.</p>
 

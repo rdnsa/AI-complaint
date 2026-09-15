@@ -96,8 +96,8 @@ export default function Garis({
             <g>
               <line x1={x(sorot)} x2={x(sorot)} y1={A} y2={H - B} stroke={TINTA.redup} strokeWidth={1} strokeDasharray="3 3" />
               {/* Cincin putih memisahkan penanda dari garis di belakangnya. */}
-              <circle cx={x(sorot)} cy={y(aktif.total)} r={5} fill={SERI.masuk} stroke="#fff" strokeWidth={2} />
-              <circle cx={x(sorot)} cy={y(aktif.selesai)} r={5} fill={SERI.selesai} stroke="#fff" strokeWidth={2} />
+              <circle cx={x(sorot)} cy={y(aktif.total)} r={5} fill={SERI.masuk} stroke={TINTA.permukaan} strokeWidth={2} />
+              <circle cx={x(sorot)} cy={y(aktif.selesai)} r={5} fill={SERI.selesai} stroke={TINTA.permukaan} strokeWidth={2} />
             </g>
           )}
 
@@ -117,7 +117,7 @@ export default function Garis({
 
         {sorot !== null && aktif && (
           <div
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-lg bg-maroon-900 px-2.5 py-1.5 text-xs text-white shadow-naik"
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-lg bg-maroon-900 px-2.5 py-1.5 text-xs text-permukaan shadow-naik"
             style={{ left: `${(x(sorot) / W) * 100}%`, top: `${(y(Math.max(aktif.total, aktif.selesai)) / H) * 100}%` }}
           >
             <p className="font-bold">{aktif.tanggal}</p>

@@ -3,6 +3,7 @@ import Kop from '../components/Kop';
 import PanelAktivitas from '../components/PanelAktivitas';
 import PanelGrafik from '../components/PanelGrafik';
 import PanelPengguna from '../components/PanelPengguna';
+import PanelTanya from '../components/PanelTanya';
 import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -53,12 +54,12 @@ function Papan({ sesi }: { sesi: Sesi }) {
   const [filter, setFilter] = useState({ status: '', prioritas: '' });
   const [memuat, setMemuat] = useState(true);
   const [menyusun, setMenyusun] = useState(false);
-  const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas' | 'pengguna'>('laporan');
-  // Account management appears for admins only — staff never see the tab at all,
-  // and the server still refuses even if the tab is forced into view.
+  const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas' | 'tanya' | 'pengguna'>('laporan');
+  // Account management and data questions appear for admins only — staff never
+  // see the tabs at all, and the server still refuses even if a tab is forced into view.
   const tabs =
     sesi.peran === 'admin'
-      ? (['laporan', 'grafik', 'aktivitas', 'pengguna'] as const)
+      ? (['laporan', 'grafik', 'aktivitas', 'tanya', 'pengguna'] as const)
       : (['laporan', 'grafik', 'aktivitas'] as const);
 
   const muat = useCallback(async () => {
@@ -113,14 +114,14 @@ function Papan({ sesi }: { sesi: Sesi }) {
       />
 
       <main className="mx-auto max-w-5xl px-4">
-        <nav className="mt-5 flex gap-1 rounded-xl bg-white p-1 ring-1 ring-krem-200">
+        <nav className="mt-5 flex gap-1 rounded-xl bg-permukaan p-1 ring-1 ring-krem-200">
           {tabs.map((k) => (
             <button
               key={k}
               onClick={() => setTab(k)}
               aria-pressed={tab === k}
               className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold transition ${
-                tab === k ? 'bg-maroon-800 text-white' : 'text-maroon-700 hover:bg-krem-50'
+                tab === k ? 'bg-maroon-800 text-permukaan' : 'text-maroon-700 hover:bg-krem-50'
               }`}
             >
               {t(`tab.${k}`)}
@@ -130,6 +131,7 @@ function Papan({ sesi }: { sesi: Sesi }) {
 
         {tab === 'grafik' && <PanelGrafik />}
         {tab === 'aktivitas' && <PanelAktivitas />}
+        {tab === 'tanya' && sesi.peran === 'admin' && <PanelTanya />}
         {tab === 'pengguna' && sesi.peran === 'admin' && <PanelPengguna />}
 
         {tab === 'laporan' && (

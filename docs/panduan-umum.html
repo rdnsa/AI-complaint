@@ -61,7 +61,7 @@
 <div class="toc"><ol>
   <li>Masalah yang diselesaikan</li>
   <li>Apa yang terjadi pada sebuah laporan</li>
-  <li>Dua &ldquo;otak&rdquo; kecerdasan buatan</li>
+  <li>Tiga cara kecerdasan buatan (AI) dipakai, termasuk <strong>Chatbot AI</strong></li>
   <li>Siapa saja yang memakai</li>
   <li>Panduan mahasiswa: melapor</li>
   <li>Panduan petugas kebersihan</li>
@@ -117,18 +117,34 @@ keluhan dengan bahasa sehari-hari. Sisanya dikerjakan sistem — termasuk memast
   <tr><td>Direkap</td><td>Sistem</td><td>Setiap pukul 17.00, satu paragraf ringkasan hari itu untuk pimpinan.</td></tr>
 </table>
 
-<h2>3. Dua &ldquo;otak&rdquo; kecerdasan buatan</h2>
-<p>Sistem memakai dua layanan kecerdasan buatan, masing-masing untuk satu tugas:</p>
+<h2>3. Tiga cara kecerdasan buatan (AI) dipakai</h2>
+<p>Sistem memakai dua layanan <strong>kecerdasan buatan (AI)</strong> untuk tiga pekerjaan:
+<strong>AI pembaca keluhan</strong>, <strong>AI pemeriksa foto</strong>, dan <strong>Chatbot AI</strong> yang menjawab
+pertanyaan tentang data laporan. Setiap tempat di aplikasi yang memakai AI ditandai jelas — lencana
+&ldquo;Diverifikasi AI&rdquo; pada foto, &ldquo;Hasil analisis&rdquo; pada laporan, dan kotak &ldquo;🤖 Chatbot AI&rdquo; di halaman depan.</p>
 <table>
   <tr><th></th><th>DeepSeek</th><th>Google Gemini</th></tr>
   <tr><td>Yang dibaca</td><td>Tulisan mahasiswa</td><td>Foto dari petugas</td></tr>
-  <tr><td>Tugasnya</td><td>Memahami keluhan, menggolongkan, menentukan prioritas, menyusun perintah kerja, dan membuat ringkasan harian</td><td>Memeriksa apakah foto bukti benar-benar toilet dan sudah bersih</td></tr>
-  <tr><td>Kapan bekerja</td><td>Setiap ada laporan masuk, dan setiap sore pukul 17.00</td><td>Setiap petugas hendak menandai laporan selesai</td></tr>
-  <tr><td>Kalau layanannya sedang gangguan</td><td>Laporan tetap masuk dan tetap tampil, hanya tanpa label; bisa dianalisis ulang</td><td>Laporan belum bisa ditutup; petugas diminta mencoba lagi beberapa saat kemudian</td></tr>
+  <tr><td>Tugasnya</td><td><strong>AI pembaca keluhan</strong>: memahami keluhan, menggolongkan, menentukan prioritas, menyusun perintah kerja, membuat ringkasan harian — dan menjadi otak <strong>Chatbot AI</strong> yang menjawab pertanyaan tentang data laporan</td><td><strong>AI pemeriksa foto</strong>: memeriksa apakah foto bukti benar-benar toilet dan sudah bersih</td></tr>
+  <tr><td>Kapan bekerja</td><td>Setiap ada laporan masuk, setiap sore pukul 17.00, dan setiap ada pertanyaan ke Chatbot AI</td><td>Setiap petugas hendak menandai laporan selesai</td></tr>
+  <tr><td>Kalau layanannya sedang gangguan</td><td>Laporan tetap masuk dan tetap tampil, hanya tanpa label; bisa dianalisis ulang. Chatbot AI menjawab &ldquo;coba lagi sebentar&rdquo;</td><td>Laporan belum bisa ditutup; petugas diminta mencoba lagi beberapa saat kemudian</td></tr>
   <tr><td>Biaya</td><td>Berbayar, sangat murah — kira-kira seharga secangkir kopi untuk ribuan laporan</td><td>Gratis (tingkat gratis Google)</td></tr>
 </table>
 <p>DeepSeek dipilih untuk teks karena murah dan akurat, tetapi ia tidak bisa melihat gambar;
 karena itu foto diserahkan ke Gemini.</p>
+
+<h3>Contoh nyata: <strong>Chatbot AI</strong> menjawab pertanyaan</h3>
+<p>Di halaman depan ada kotak <strong>&ldquo;🤖 Chatbot AI — tanya data laporan&rdquo;</strong>. Siapa saja bisa
+mengetik pertanyaan biasa, misalnya <em>&ldquo;Gedung mana yang paling banyak laporan 30 hari terakhir?&rdquo;</em>,
+dan dalam 2&ndash;3 detik chatbot menjawab dengan angka nyata:</p>
+<div class="catatan"><em>&ldquo;Dalam 30 hari terakhir, gedung dengan laporan terbanyak adalah Gedung A – Ki Hajar Dewantara
+dengan 4 laporan (1 selesai, 1 prioritas tinggi). Disusul Gedung C – Dewi Sartika (3 laporan). Total ada 8 laporan.&rdquo;</em></div>
+<p>Chatbot <strong>tidak mengarang</strong>: ia hanya boleh menjawab dari angka yang ditariknya dari basis data
+lewat beberapa &ldquo;alat&rdquo; yang sudah ditentukan (hitung laporan, waktu penyelesaian, daftar laporan, ringkasan harian).
+Kalau datanya tidak ada, ia berkata tidak ada. Pertanyaan di luar urusan toilet kampus ditolak dengan sopan.
+Nama petugas hanya diberikan kepada petugas/admin yang sedang masuk — pengunjung umum mendapat angka tanpa nama,
+sama seperti di papan laporan publik. Jumlah pertanyaan dibatasi <strong>50 per hari</strong> untuk seluruh kampus
+(dan 20 per perangkat bagi pengunjung tanpa akun) supaya biayanya tetap kecil.</p>
 
 <h3>Contoh nyata: memahami tulisan</h3>
 <div class="kutip">&ldquo;WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.&rdquo;</div>
@@ -182,13 +198,15 @@ mampet&rdquo; dikenali sebagai kerusakan dengan genangan air berprioritas tinggi
   <tr>
     <td><strong>Umum</strong></td>
     <td>Tidak perlu akun</td>
-    <td>Membaca seluruh laporan dan status penanganannya, serta papan peringkat</td>
+    <td>Membaca seluruh laporan dan status penanganannya, papan peringkat, dan bertanya ke <strong>Chatbot AI</strong> di halaman depan</td>
   </tr>
 </table>
 <div class="catatan">
   Alamat sistem: <strong>ai-complaint.yvrtz.workers.dev</strong>. Halaman petugas ada di
   <strong>/petugas</strong>. Tidak ada aplikasi yang perlu dipasang; semuanya dibuka lewat browser ponsel
-  atau komputer. Bahasa dapat diganti Indonesia/Inggris dari tombol <span class="tombol netral">ID · EN</span> di bagian atas setiap halaman.
+  atau komputer. Bahasa dapat diganti Indonesia/Inggris dari tombol <span class="tombol netral">ID · EN</span> di bagian atas setiap halaman,
+  dan di sebelahnya ada sakelar <span class="tombol netral">☀️ / 🌙</span> untuk <strong>mode terang/gelap</strong> (bawaan mengikuti pengaturan ponsel).
+  Pada kolom sandi, ikon mata 👁️ menampilkan apa yang sedang diketik.
 </div>
 
 <h2>5. Panduan mahasiswa: melapor</h2>
@@ -339,7 +357,8 @@ perlu masuk kembali. Tombol <span class="tombol netral">Keluar</span> ada di kan
 <h3>Tab lain</h3>
 <ul>
   <li><strong>Grafik</strong> — pola dan efektivitas, dijelaskan di bagian 8.</li>
-  <li><strong>Aktivitas</strong> — catatan semua kejadian, dapat disaring per jenis.</li>
+  <li><strong>Aktivitas</strong> — catatan semua kejadian, dapat disaring per jenis, termasuk setiap pertanyaan ke Chatbot AI.</li>
+  <li><strong>🤖 Chatbot AI</strong> (admin) — kotak tanya data yang sama dengan di halaman depan, tetapi boleh bertanya per nama petugas, misalnya <em>&ldquo;siapa yang paling banyak menyelesaikan laporan minggu ini?&rdquo;</em></li>
 </ul>
 
 <h2 class="pecah">7. Panduan admin</h2>
@@ -437,6 +456,7 @@ yang membuahkan perbaikan. Kampus dapat memakainya untuk apresiasi berkala.</p>
   <tr><td><strong>Laporan Masuk</strong> (<em>/laporan</em>)</td><td>Semua laporan: lokasi, jenis masalah, prioritas, ringkasan rapi, status, kapan masuk dan selesai, foto bukti bila selesai, serta hitungan &ldquo;x dari y laporan sudah selesai&rdquo;. Bisa disaring status dan prioritas.</td><td>Teks asli mahasiswa, foto keadaan dari pelapor, nama petugas — demi privasi dan agar papan tidak menjadi saluran teks yang belum disaring.</td></tr>
   <tr><td><strong>Papan Peringkat</strong> (<em>/peringkat</em>)</td><td>20 pelapor teratas dengan jumlah laporan dan jumlah selesai; pelapor yang masuk melihat posisinya sendiri.</td><td>Laporan tanpa akun.</td></tr>
   <tr><td><strong>Halaman status</strong> (<em>/laporan/…</em>)</td><td>Satu laporan lengkap bagi pemegang tautannya.</td><td>—</td></tr>
+  <tr><td><strong>🤖 Chatbot AI</strong> (halaman depan)</td><td>Jawaban atas pertanyaan bebas tentang data laporan: jumlah per gedung, tren per hari/jam, waktu penyelesaian, daftar laporan terbaru, ringkasan harian.</td><td>Teks asli mahasiswa dan nama petugas. Maksimal 20 pertanyaan per perangkat per hari.</td></tr>
 </table>
 <p>Membaca tidak butuh akun; mengubah dan menghapus hanya bisa dilakukan petugas, dan aturan itu dijaga
 di sisi server — bukan sekadar tombol yang disembunyikan.</p>
@@ -478,13 +498,14 @@ di sisi server — bukan sekadar tombol yang disembunyikan.</p>
   <tr><td>Foto keadaan dari pelapor</td><td>Ya</td><td>Petugas dan admin, serta pemegang tautan laporan itu. Tidak tampil di papan umum.</td></tr>
   <tr><td>Foto bukti dari petugas</td><td>Hanya yang lolos pemeriksaan</td><td>Siapa saja, di papan umum. Foto yang ditolak dihapus.</td></tr>
   <tr><td>Nama pelapor</td><td>Hanya bila melapor dengan akun</td><td>Petugas; dan di papan peringkat.</td></tr>
-  <tr><td>Nama petugas</td><td>Ya, pada laporan yang ditanganinya</td><td>Petugas dan admin, serta pelapor di halaman statusnya. Tidak tampil di papan umum.</td></tr>
+  <tr><td>Nama petugas</td><td>Ya, pada laporan yang ditanganinya</td><td>Petugas dan admin, serta pelapor di halaman statusnya. Tidak tampil di papan umum, dan tidak diberikan Chatbot AI kepada pengunjung umum.</td></tr>
+  <tr><td>Pertanyaan ke Chatbot AI</td><td>Ya, di catatan aktivitas</td><td>Petugas dan admin. Pengunjung tanpa akun tercatat sebagai &ldquo;pengunjung&rdquo; dengan sidik acak alamat internetnya (bukan alamat aslinya), hanya untuk membatasi jumlah pertanyaan.</td></tr>
   <tr><td>Kata sandi</td><td>Tidak — hanya sidik acaknya</td><td>Tidak seorang pun, termasuk admin.</td></tr>
   <tr><td>Lokasi ponsel, identitas perangkat</td><td>Tidak</td><td>—</td></tr>
 </table>
 <h3>Layanan luar yang menerima data</h3>
 <ul>
-  <li><strong>DeepSeek</strong> menerima teks keluhan dan nama lokasi — tanpa nama pelapor.</li>
+  <li><strong>DeepSeek</strong> menerima teks keluhan dan nama lokasi — tanpa nama pelapor. Untuk Chatbot AI ia menerima pertanyaan penanya dan angka agregat hasil query, bukan isi tabel.</li>
   <li><strong>Google Gemini</strong> menerima foto bukti dari petugas beserta teks keluhan sebagai konteks. Pada tingkat gratis, Google menyatakan data yang dikirim boleh dipakai untuk memperbaiki layanannya. Foto bukti berisi toilet kosong, tetapi <strong>petugas sebaiknya tidak ikut memotret orang</strong>. Bila kampus keberatan, penagihan dapat diaktifkan pada akun Google tersebut; dengan itu data tidak dipakai, dan biayanya nyaris nol pada volume kampus.</li>
   <li><strong>Cloudflare</strong> menyimpan basis data dan foto.</li>
 </ul>
@@ -496,6 +517,7 @@ di sisi server — bukan sekadar tombol yang disembunyikan.</p>
 <p><strong>Saya kehilangan tautan laporan.</strong> Tanpa akun, tautan itu satu-satunya jalan kembali; tetapi kamu tetap bisa melihat laporanmu (tanpa teks asli) di halaman <em>Laporan Masuk</em>. Dengan akun, semuanya ada di &ldquo;Laporan saya&rdquo;.</p>
 <p><strong>Bolehkah melapor toilet yang sama lagi?</strong> Boleh, bila masalahnya masih ada atau berbeda. Hanya laporan yang <em>sama persis</em> dalam dua menit yang digabung.</p>
 <p><strong>Bahasa Inggris bisa?</strong> Bisa. Antarmuka tersedia dalam Inggris, dan keluhan berbahasa Inggris dipahami; ringkasannya tetap ditulis dalam bahasa Indonesia karena pembacanya petugas.</p>
+<p><strong>Apa itu kotak Chatbot AI di halaman depan?</strong> Tempat bertanya tentang data laporan dengan bahasa biasa — &ldquo;toilet mana yang paling sering dilaporkan?&rdquo;, &ldquo;jam berapa laporan paling banyak masuk?&rdquo;. Jawabannya diambil dari data sungguhan, bukan dikarang. Kalau muncul &ldquo;batas pertanyaan hari ini sudah tercapai&rdquo;, coba lagi besok.</p>
 
 <h3>Petugas</h3>
 <p><strong>Foto saya ditolak padahal sudah bersih.</strong> Baca alasannya di kotak merah. Yang paling sering: lantai masih basah merata (keringkan dulu), foto terlalu gelap atau buram, atau bingkai tidak memperlihatkan kloset dan lantai. Potret ulang dari pintu ke arah kloset dengan lampu menyala.</p>
@@ -506,6 +528,7 @@ di sisi server — bukan sekadar tombol yang disembunyikan.</p>
 
 <h3>Pimpinan</h3>
 <p><strong>Bisakah petugas menghapus jejak?</strong> Tidak. Penghapusan laporan justru menyalin isinya ke catatan aktivitas, dan catatan itu tidak dapat diubah dari aplikasi.</p>
+<p><strong>Bisakah saya bertanya langsung tanpa membuka grafik?</strong> Bisa, lewat <strong>Chatbot AI</strong> — di halaman depan, atau tab Chatbot AI di dashboard bila masuk sebagai admin (di sana boleh bertanya per nama petugas). Setiap pertanyaan tercatat di tab Aktivitas beserta data yang ditariknya.</p>
 <p><strong>Seberapa akurat kecerdasan buatannya?</strong> Untuk teks, latensi dan hasil tiap laporan tersimpan dan dapat dibandingkan dengan penilaian manusia. Untuk foto, putusan bersifat perkiraan: bisa salah tolak atau salah terima, dan alasannya selalu tercatat sehingga dapat diaudit. Angka akurasi yang sesungguhnya adalah bagian dari penelitian yang menyertai sistem ini.</p>
 
 <h2 class="pecah">13. Bila ada masalah</h2>
@@ -516,6 +539,8 @@ di sisi server — bukan sekadar tombol yang disembunyikan.</p>
   <tr><td>&ldquo;Foto ditolak&rdquo; saat menandai selesai</td><td>Pemeriksa menilai masih kotor / bukan toilet</td><td>Baca alasannya, bereskan, potret ulang (bagian 6)</td></tr>
   <tr><td>&ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo;</td><td>Layanan pemeriksa foto tidak terjangkau, kuota harian habis, atau pengaturan kunci layanan bermasalah</td><td>Coba lagi setelah beberapa saat; bila berulang sepanjang hari, hubungi admin/pengelola sistem — penyebab pastinya tercatat di catatan aktivitas (&ldquo;Verifikasi gagal&rdquo;)</td></tr>
   <tr><td>Laporan tanpa prioritas dan kategori; kartu &ldquo;Analisis gagal&rdquo; &gt; 0</td><td>Layanan pemahaman teks sedang gangguan</td><td>Tekan <em>Analisis ulang</em>; bila berulang, hubungi pengelola</td></tr>
+  <tr><td>Chatbot AI: &ldquo;Batas … pertanyaan per hari sudah tercapai&rdquo;</td><td>Kuota 50 pertanyaan/hari (atau 20 per perangkat) habis</td><td>Coba lagi besok; bila kuota perlu dinaikkan, hubungi pengelola sistem</td></tr>
+  <tr><td>Chatbot AI: &ldquo;Model tidak dapat menjawab saat ini&rdquo;</td><td>Layanan pemahaman teks sedang gangguan</td><td>Coba lagi beberapa saat kemudian</td></tr>
   <tr><td>Ringkasan hari ini kosong setelah pukul 17.00</td><td>Belum ada laporan, atau penyusunan otomatis gagal</td><td>Tekan <em>Buat ulang</em></td></tr>
   <tr><td>Petugas lupa sandi</td><td>—</td><td>Admin mengatur sandi baru di tab Akun Petugas</td></tr>
   <tr><td>Admin lupa sandi</td><td>—</td><td>Perlu pengelola sistem (akses basis data); tidak ada alur otomatis</td></tr>
@@ -526,7 +551,7 @@ di sisi server — bukan sekadar tombol yang disembunyikan.</p>
 <table>
   <tr><th>Komponen</th><th>Biaya pada skala kampus</th></tr>
   <tr><td>Hosting, basis data, penyimpanan foto (Cloudflare)</td><td>Gratis pada paket bawaan untuk volume kampus</td></tr>
-  <tr><td>Pemahaman teks (DeepSeek)</td><td>Berbayar per pemakaian, sangat murah — ribuan laporan untuk harga secangkir kopi</td></tr>
+  <tr><td>Pemahaman teks + Chatbot AI (DeepSeek)</td><td>Berbayar per pemakaian, sangat murah — ribuan laporan untuk harga secangkir kopi. Chatbot dibatasi 50 pertanyaan/hari, kira-kira beberapa ribu rupiah per hari pada pemakaian penuh</td></tr>
   <tr><td>Pemeriksaan foto (Google Gemini)</td><td>Gratis pada tingkat gratis, dengan batas jumlah pemeriksaan per hari yang jauh di atas kebutuhan kampus; bila kelak kurang, ada model yang lebih ringan atau tingkat berbayar yang tetap nyaris nol</td></tr>
   <tr><td>Stiker QR</td><td>Cetak 13 stiker; cetak ulang hanya bila daftar lokasi berubah</td></tr>
 </table>
