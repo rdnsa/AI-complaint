@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8">
-<title>Panduan Sistem AI Complaint</title>
+<title>Panduan Umum AI Complaint</title>
 <style>
   @page { size: A4; margin: 16mm 15mm 14mm; }
   * { box-sizing: border-box; }
@@ -23,6 +23,7 @@
   th { background: #FDF6F1; font-weight: 700; color: #5D2A20; }
   .kartu { border: 1px solid #EFE4D6; border-radius: 3mm; padding: 5mm; margin: 3mm 0;
            background: #FDFAF6; page-break-inside: avoid; }
+  .kartu h3 { margin-top: 0; }
   .langkah { display: flex; gap: 4mm; margin-bottom: 4mm; page-break-inside: avoid; }
   .nomor { flex: 0 0 9mm; height: 9mm; border-radius: 50%; background: #E2571F; color: #fff;
            font-weight: 800; font-size: 12pt; display: flex; align-items: center; justify-content: center; }
@@ -31,79 +32,106 @@
   .kutip { border-left: 3px solid #E2571F; background: #FEF6F1; padding: 3mm 4mm;
            margin: 2mm 0; font-style: italic; }
   .hasil { border-left: 3px solid #0E9F6E; background: #F0FBF6; padding: 3mm 4mm; margin: 2mm 0; }
+  .tolak { border-left: 3px solid #B91C1C; background: #FEF2F2; padding: 3mm 4mm; margin: 2mm 0; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
   .angka { font-size: 20pt; font-weight: 800; color: #E2571F; line-height: 1; }
   .angka-ket { font-size: 8.5pt; color: #7A3628; margin-top: 1mm; }
-  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
   li { margin-bottom: 1.5mm; }
-  .catatan { background: #FDF6F1; border-radius: 2mm; padding: 4mm; font-size: 9.5pt; margin: 3mm 0; }
+  .catatan { background: #FDF6F1; border-radius: 2mm; padding: 4mm; font-size: 9.5pt; margin: 3mm 0; page-break-inside: avoid; }
+  .tombol { display: inline-block; background: #8A3A22; color: #fff; font-weight: 700; font-size: 9pt;
+            padding: 0.6mm 2.5mm; border-radius: 1.5mm; white-space: nowrap; }
+  .tombol.netral { background: #FDF0E8; color: #5D2A20; border: 1px solid #EFD9C8; }
+  .toc { columns: 2; column-gap: 8mm; font-size: 9.5pt; margin: 3mm 0 2mm; }
+  .toc ol { margin: 0; padding-left: 5mm; }
+  .toc li { margin-bottom: 0.8mm; break-inside: avoid; }
   .kaki { margin-top: 10mm; padding-top: 3mm; border-top: 1px solid #EFE4D6;
           font-size: 8.5pt; color: #7A3628; }
   .pecah { page-break-before: always; }
 </style></head><body>
 
 <div class="sampul">
-  <span class="lencana">Panduan untuk Pengguna &amp; Pimpinan</span>
+  <span class="lencana">Panduan untuk Pengguna &amp; Pimpinan &middot; Edisi lengkap</span>
   <h1>Sistem Pelaporan Kondisi Toilet</h1>
   <p class="sub">UPI Kampus Tasikmalaya &middot; Jln. Dadaha No. 18<br>
-  Dokumen ini menjelaskan apa yang sudah dibuat, tanpa istilah teknis.</p>
+  Dokumen ini menjelaskan apa yang sudah dibuat dan cara memakainya, tanpa istilah teknis.</p>
 </div>
 
-<h2>Masalah yang diselesaikan</h2>
+<h2 style="margin-top:0">Daftar isi</h2>
+<div class="toc"><ol>
+  <li>Masalah yang diselesaikan</li>
+  <li>Apa yang terjadi pada sebuah laporan</li>
+  <li>Dua &ldquo;otak&rdquo; kecerdasan buatan</li>
+  <li>Siapa saja yang memakai</li>
+  <li>Panduan mahasiswa: melapor</li>
+  <li>Panduan petugas kebersihan</li>
+  <li>Panduan admin</li>
+  <li>Panduan pimpinan: membaca dashboard</li>
+  <li>Halaman yang terbuka untuk umum</li>
+  <li>Empat pengaman agar laporan tidak menguap</li>
+  <li>Privasi dan data</li>
+  <li>Pertanyaan yang sering diajukan</li>
+  <li>Bila ada masalah</li>
+  <li>Biaya menjalankan sistem</li>
+  <li>Yang masih membutuhkan keputusan kampus</li>
+  <li>Istilah yang dipakai</li>
+</ol></div>
+
+<h2>1. Masalah yang diselesaikan</h2>
 <p>Selama ini keluhan tentang toilet kampus jarang sampai ke petugas kebersihan. Mahasiswa
 yang menemukan toilet bau, becek, atau kehabisan sabun umumnya tidak melapor: tidak jelas
 harus lapor ke siapa, dan kalaupun melapor, tidak ada yang tahu apakah ditindaklanjuti.
 Akibatnya masalah kecil dibiarkan sampai menjadi besar.</p>
 
 <p>Sistem ini memotong jarak itu. Mahasiswa cukup memindai QR di pintu toilet dan menulis
-keluhan dengan bahasa sehari-hari. Sisanya dikerjakan sistem.</p>
+keluhan dengan bahasa sehari-hari. Sisanya dikerjakan sistem — termasuk memastikan bahwa
+&ldquo;sudah dibersihkan&rdquo; benar-benar sudah bersih.</p>
 
 <div class="grid">
   <div class="kartu">
     <div class="angka">13</div>
-    <div class="angka-ket">stiker QR, satu per lantai ber-toilet</div>
+    <div class="angka-ket">stiker QR, satu per lantai ber-toilet, di 6 gedung</div>
   </div>
   <div class="kartu">
     <div class="angka">~1 detik</div>
     <div class="angka-ket">waktu sistem memahami dan menggolongkan keluhan</div>
   </div>
-</div>
-
-<h2>Cara mahasiswa memakainya</h2>
-
-<div class="langkah">
-  <div class="nomor">1</div>
-  <div>
-    <h3>Pindai QR di pintu toilet</h3>
-    <p>Tidak perlu memasang aplikasi apa pun. Kamera ponsel langsung membuka halaman
-    laporan, dan lokasinya sudah terisi otomatis.</p>
+  <div class="kartu">
+    <div class="angka">2 foto</div>
+    <div class="angka-ket">foto keadaan dari pelapor, foto bukti dari petugas — keduanya wajib</div>
+  </div>
+  <div class="kartu">
+    <div class="angka">0 akun</div>
+    <div class="angka-ket">yang dibutuhkan mahasiswa untuk melapor</div>
   </div>
 </div>
 
-<div class="langkah">
-  <div class="nomor">2</div>
-  <div>
-    <h3>Pilih toilet dan tulis keluhannya</h3>
-    <p>Pilih pria, wanita, atau disabilitas, lalu tulis apa adanya — tidak perlu bahasa resmi.
-    Foto keadaan wajib dilampirkan agar petugas tahu persis apa yang harus dibawa.</p>
-  </div>
-</div>
+<h2>2. Apa yang terjadi pada sebuah laporan</h2>
+<table>
+  <tr><th>Tahap</th><th>Siapa</th><th>Apa yang terjadi</th></tr>
+  <tr><td>Masuk</td><td>Mahasiswa</td><td>Pindai QR, pilih toilet, tulis keluhan, lampirkan foto, kirim. Langsung muncul halaman konfirmasi.</td></tr>
+  <tr><td>Dianalisis</td><td>Kecerdasan buatan (teks)</td><td>Dalam ~1 detik: jenis masalah, tingkat prioritas, ringkasan rapi, dan perintah kerja untuk petugas.</td></tr>
+  <tr><td>Dikerjakan</td><td>Petugas</td><td>Laporan tampil di dashboard, yang mendesak di atas. Petugas menekan <span class="tombol netral">Kerjakan</span>; mahasiswa melihat statusnya berubah.</td></tr>
+  <tr><td>Diperiksa</td><td>Kecerdasan buatan (foto)</td><td>Petugas memotret toilet setelah dibereskan. Foto dinilai: benar toilet? sudah bersih? Bila belum, ditolak beserta alasannya.</td></tr>
+  <tr><td>Selesai</td><td>Sistem</td><td>Hanya setelah foto dinilai bersih, laporan berstatus selesai. Foto tampil di papan umum dengan tanda &ldquo;diverifikasi&rdquo;.</td></tr>
+  <tr><td>Direkap</td><td>Sistem</td><td>Setiap pukul 17.00, satu paragraf ringkasan hari itu untuk pimpinan.</td></tr>
+</table>
 
-<div class="langkah">
-  <div class="nomor">3</div>
-  <div>
-    <h3>Selesai</h3>
-    <p>Laporan langsung masuk ke layar petugas. Mahasiswa bisa memantau sendiri sampai
-    sejauh mana keluhannya ditangani.</p>
-  </div>
-</div>
+<h2>3. Dua &ldquo;otak&rdquo; kecerdasan buatan</h2>
+<p>Sistem memakai dua layanan kecerdasan buatan, masing-masing untuk satu tugas:</p>
+<table>
+  <tr><th></th><th>DeepSeek</th><th>Google Gemini</th></tr>
+  <tr><td>Yang dibaca</td><td>Tulisan mahasiswa</td><td>Foto dari petugas</td></tr>
+  <tr><td>Tugasnya</td><td>Memahami keluhan, menggolongkan, menentukan prioritas, menyusun perintah kerja, dan membuat ringkasan harian</td><td>Memeriksa apakah foto bukti benar-benar toilet dan sudah bersih</td></tr>
+  <tr><td>Kapan bekerja</td><td>Setiap ada laporan masuk, dan setiap sore pukul 17.00</td><td>Setiap petugas hendak menandai laporan selesai</td></tr>
+  <tr><td>Kalau layanannya sedang gangguan</td><td>Laporan tetap masuk dan tetap tampil, hanya tanpa label; bisa dianalisis ulang</td><td>Laporan belum bisa ditutup; petugas diminta mencoba lagi beberapa saat kemudian</td></tr>
+  <tr><td>Biaya</td><td>Berbayar, sangat murah — kira-kira seharga secangkir kopi untuk ribuan laporan</td><td>Gratis (tingkat gratis Google)</td></tr>
+</table>
+<p>DeepSeek dipilih untuk teks karena murah dan akurat, tetapi ia tidak bisa melihat gambar;
+karena itu foto diserahkan ke Gemini.</p>
 
-<h2>Apa yang dikerjakan kecerdasan buatannya</h2>
-<p>Bagian inilah yang membedakan sistem ini dari kotak saran biasa. Tulisan bebas mahasiswa
-diubah menjadi perintah kerja yang rapi. Contoh nyata dari pengujian:</p>
-
+<h3>Contoh nyata: memahami tulisan</h3>
 <div class="kutip">&ldquo;WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.&rdquo;</div>
-
 <div class="hasil">
   <strong>Prioritas:</strong> tinggi<br>
   <strong>Jenis masalah:</strong> bau, genangan air, perlengkapan habis<br>
@@ -111,104 +139,429 @@ diubah menjadi perintah kerja yang rapi. Contoh nyata dari pengujian:</p>
   <strong>Perintah kerja:</strong> Keringkan lantai lebih dulu karena berisiko membuat pengguna
   terpeleset. Setelah itu bersihkan sumber bau dan isi ulang sabun.
 </div>
+<p>Perhatikan urutan tindakannya: pengeringan lantai didahulukan karena berisiko membuat orang
+jatuh. Sistem tidak sekadar mendaftar masalah, tetapi menimbang mana yang paling membahayakan.
+Bahasa gaul pun dipahami: &ldquo;airnya nggenang parah, hampir ke luar toilet, kloset yg pojok
+mampet&rdquo; dikenali sebagai kerusakan dengan genangan air berprioritas tinggi.</p>
 
-<p>Perhatikan urutan tindakannya: pengeringan lantai didahulukan karena berisiko membuat
-orang jatuh. Sistem tidak sekadar mendaftar masalah, tetapi menimbang mana yang paling
-membahayakan.</p>
+<h3>Contoh nyata: memeriksa foto</h3>
+<div class="tolak">
+  <strong>Foto:</strong> lantai toilet masih basah, ada tisu bekas di sudut<br>
+  <strong>Putusan:</strong> ditolak — &ldquo;Lantai masih basah dan ada tisu bekas.&rdquo;<br>
+  <strong>Yang terjadi:</strong> laporan tetap terbuka; petugas diminta membersihkan lagi lalu memotret ulang.
+</div>
+<div class="hasil">
+  <strong>Foto:</strong> kloset dan lantai kering, tempat sampah kosong<br>
+  <strong>Putusan:</strong> diterima — &ldquo;Kloset dan lantai terlihat bersih tanpa sampah.&rdquo;<br>
+  <strong>Yang terjadi:</strong> laporan berstatus selesai; foto tampil di papan umum bertanda &ldquo;Diverifikasi AI: bersih&rdquo;.
+</div>
 
-<p>Bahasa gaul pun dipahami. Kalimat &ldquo;airnya nggenang parah, hampir ke luar toilet, kloset yg
-pojok mampet&rdquo; dikenali sebagai kerusakan dengan genangan air berprioritas tinggi.</p>
-
-<h2 class="pecah">Siapa saja yang memakai</h2>
-
+<h2 class="pecah">4. Siapa saja yang memakai</h2>
 <table>
   <tr><th>Peran</th><th>Cara mendapat akun</th><th>Bisa melakukan apa</th></tr>
   <tr>
     <td><strong>Mahasiswa</strong><br>(pelapor)</td>
     <td>Mendaftar sendiri, atau melapor tanpa akun sama sekali</td>
-    <td>Mengirim laporan, memantau statusnya, dan masuk papan peringkat bila memakai akun</td>
+    <td>Mengirim laporan, memantau statusnya, dan — bila memakai akun — melihat daftar &ldquo;Laporan saya&rdquo; serta masuk papan peringkat</td>
   </tr>
   <tr>
     <td><strong>Petugas kebersihan</strong></td>
     <td>Dibuatkan oleh admin</td>
-    <td>Melihat daftar laporan, menandai sedang dikerjakan, dan menutup laporan dengan foto bukti</td>
+    <td>Melihat daftar laporan, menandai sedang dikerjakan, menutup laporan dengan foto bukti yang lolos pemeriksaan, meminta analisis ulang, menghapus laporan tak pantas, melihat grafik dan catatan aktivitas</td>
   </tr>
   <tr>
     <td><strong>Admin</strong></td>
-    <td>Sudah tersedia sejak awal</td>
-    <td>Semua kewenangan petugas, ditambah membuat dan mengatur akun petugas</td>
+    <td>Sudah tersedia sejak awal (satu akun bawaan)</td>
+    <td>Semua kewenangan petugas, ditambah membuat akun petugas, mengganti nama/sandi, dan menonaktifkan akun</td>
+  </tr>
+  <tr>
+    <td><strong>Pimpinan</strong></td>
+    <td>Memakai akun admin atau petugas</td>
+    <td>Membaca ringkasan harian, grafik, dan catatan aktivitas</td>
   </tr>
   <tr>
     <td><strong>Umum</strong></td>
     <td>Tidak perlu akun</td>
-    <td>Membaca seluruh laporan dan status penanganannya</td>
+    <td>Membaca seluruh laporan dan status penanganannya, serta papan peringkat</td>
   </tr>
 </table>
+<div class="catatan">
+  Alamat sistem: <strong>ai-complaint.yvrtz.workers.dev</strong>. Halaman petugas ada di
+  <strong>/petugas</strong>. Tidak ada aplikasi yang perlu dipasang; semuanya dibuka lewat browser ponsel
+  atau komputer. Bahasa dapat diganti Indonesia/Inggris dari tombol <span class="tombol netral">ID · EN</span> di bagian atas setiap halaman.
+</div>
 
-<h2>Tiga pengaman agar laporan tidak menguap</h2>
+<h2>5. Panduan mahasiswa: melapor</h2>
+
+<div class="langkah">
+  <div class="nomor">1</div>
+  <div>
+    <h3>Pindai QR di pintu toilet</h3>
+    <p>Arahkan kamera ponsel ke stiker QR. Halaman laporan terbuka dengan gedung dan lantai sudah
+    terisi. Tidak perlu memasang aplikasi apa pun. <strong>Kalau stiker hilang atau rusak:</strong> buka
+    alamat sistem, lalu pilih gedung dan lantai secara manual di halaman depan — ada peta kampus untuk membantu.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">2</div>
+  <div>
+    <h3>Pilih toilet yang mana</h3>
+    <p>Satu QR mewakili satu lantai. Pilih <em>Pria</em>, <em>Wanita</em>, atau <em>Disabilitas</em>.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">3</div>
+  <div>
+    <h3>Tulis apa yang bermasalah</h3>
+    <p>Tulis apa adanya dengan bahasa sehari-hari, minimal lima huruf. Ada tiga contoh cepat yang bisa
+    diketuk. Sistem yang akan merapikan dan menentukan prioritasnya — tidak perlu bahasa resmi.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">4</div>
+  <div>
+    <h3>Lampirkan foto keadaan (wajib)</h3>
+    <p>Ketuk <span class="tombol">📷 Ambil atau pilih foto</span>. Foto membuat petugas tahu persis apa
+    yang harus dibawa dan dikerjakan. Ukuran maksimal 5 MB; foto dari kamera ponsel biasa selalu cukup.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">5</div>
+  <div>
+    <h3>Kirim, lalu pantau</h3>
+    <p>Tekan <span class="tombol">Kirim laporan</span>. Halaman &ldquo;Laporan kamu sudah masuk&rdquo;
+    langsung muncul dan dalam beberapa detik menampilkan hasil analisis. Di bawahnya ada linimasa
+    <em>Laporan diterima → Sedang dikerjakan petugas → Selesai ditangani</em> yang memperbarui dirinya
+    sendiri selama halaman terbuka. <strong>Simpan tautan halaman ini</strong> bila melapor tanpa akun —
+    itulah satu-satunya jalan kembali ke laporanmu.</p>
+  </div>
+</div>
+
+<h3>Melapor dengan akun</h3>
+<p>Mendaftar di halaman <em>Daftar Akun Pelapor</em> hanya butuh username, nama, dan sandi (minimal 8
+karakter). Keuntungannya: laporan tercatat atas namamu, daftar &ldquo;Laporan saya&rdquo; muncul di
+halaman depan dari perangkat mana pun, dan kamu masuk papan peringkat. Melapor tanpa akun tetap
+diterima dan ditangani sama cepatnya — hanya tidak diperingkat.</p>
+
+<h3>Tips laporan yang membantu petugas</h3>
+<ul>
+  <li>Sebutkan yang terlihat: <em>&ldquo;kloset pojok mampet, air hampir meluap&rdquo;</em> lebih berguna daripada <em>&ldquo;WC rusak&rdquo;</em>.</li>
+  <li>Satu laporan boleh berisi beberapa masalah; sistem akan memecahnya sendiri.</li>
+  <li>Foto yang menunjukkan masalahnya (lantai yang becek, dispenser yang kosong) lebih berguna daripada foto pintu.</li>
+  <li>Kalau tombol kirim tertekan dua kali, jangan khawatir: laporan yang sama persis dalam dua menit dianggap satu.</li>
+</ul>
+
+<h2 class="pecah">6. Panduan petugas kebersihan</h2>
+
+<h3>Masuk</h3>
+<p>Buka <strong>/petugas</strong> (atau tautan &ldquo;Masuk sebagai petugas&rdquo; di halaman depan),
+isi username dan sandi yang diberikan admin. Sesi berlaku 12 jam — cukup untuk satu shift — lalu
+perlu masuk kembali. Tombol <span class="tombol netral">Keluar</span> ada di kanan atas.</p>
+
+<h3>Mengenal layar dashboard (tab Laporan)</h3>
+<ul>
+  <li><strong>Empat kartu angka</strong> di atas: laporan hari ini, yang berprioritas tinggi, yang belum selesai (dari hari mana pun), dan analisis yang gagal.</li>
+  <li><strong>Ringkasan hari ini</strong>: paragraf otomatis pukul 17.00, plus lima lokasi terbanyak. Tombol <span class="tombol netral">Buat ulang</span> menyusunnya sekarang juga.</li>
+  <li><strong>Saringan</strong> status dan prioritas.</li>
+  <li><strong>Daftar laporan</strong>, diurutkan otomatis: yang baru di atas yang sedang dikerjakan di atas yang selesai; di dalam tiap kelompok, prioritas tinggi lebih dulu, lalu yang terbaru. Layar memuat ulang sendiri setiap 30 detik, jadi bisa dibiarkan terbuka di ruang petugas.</li>
+</ul>
+
+<h3>Membaca satu kartu laporan</h3>
+<table>
+  <tr><th>Bagian</th><th>Artinya</th></tr>
+  <tr><td>Garis warna di tepi kiri</td><td>Merah = prioritas tinggi, kuning = sedang, hijau = rendah. Terbaca dari seberang ruangan.</td></tr>
+  <tr><td>Lencana</td><td>Prioritas, status (baru / diproses / selesai), dan jenis masalah: kebersihan, perlengkapan, kerusakan, bau, genangan, lainnya.</td></tr>
+  <tr><td>Lokasi</td><td>Mis. &ldquo;WC Pria – Lantai 1, Gedung A (Ki Hajar Dewantara)&rdquo;.</td></tr>
+  <tr><td>Kalimat ringkasan + &ldquo;Laporan asli&rdquo;</td><td>Versi rapi dari sistem, dan tulisan mahasiswa apa adanya.</td></tr>
+  <tr><td>Kotak &ldquo;Tindakan&rdquo;</td><td>Perintah kerja: apa yang dikerjakan dulu, apa berikutnya.</td></tr>
+  <tr><td>Foto</td><td>Foto keadaan dari pelapor; setelah selesai, foto bukti berbingkai hijau dengan tulisan &ldquo;✓ Bukti penyelesaian · Diverifikasi AI: bersih&rdquo; dan penilaian singkat.</td></tr>
+  <tr><td>&ldquo;Ditangani: nama&rdquo;</td><td>Siapa yang terakhir mengubah status.</td></tr>
+</table>
+
+<h3>Mengerjakan laporan, langkah demi langkah</h3>
+
+<div class="langkah">
+  <div class="nomor">1</div>
+  <div>
+    <h3>Tekan <span class="tombol netral">Kerjakan</span> saat mulai</h3>
+    <p>Status berubah menjadi <em>diproses</em> dan nama Anda tercatat. Mahasiswa yang melapor melihat
+    &ldquo;Sedang dikerjakan petugas&rdquo;. Langkah ini boleh dilewati kalau langsung selesai.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">2</div>
+  <div>
+    <h3>Bereskan toiletnya</h3>
+    <p>Ikuti urutan di kotak &ldquo;Tindakan&rdquo;: yang berisiko mencelakakan orang (lantai licin, air meluap) selalu didahulukan.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">3</div>
+  <div>
+    <h3>Tekan <span class="tombol">📷 Tandai selesai</span> dan potret toiletnya</h3>
+    <p>Kamera terbuka. Potret kondisi <em>setelah</em> dibereskan: usahakan kloset dan lantai terlihat
+    dalam satu bingkai, cahaya cukup, tidak buram, dan <strong>tanpa orang</strong>. Tombol berubah
+    menjadi &ldquo;Mengunggah…&rdquo; lalu &ldquo;AI memeriksa foto…&rdquo; — tunggu beberapa detik.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">4</div>
+  <div>
+    <h3>Baca putusannya</h3>
+    <p><strong>Diterima:</strong> laporan langsung berstatus selesai dan foto tampil berbingkai hijau.
+    <strong>Ditolak:</strong> muncul kotak merah &ldquo;Foto ditolak&rdquo; dengan alasan, misalnya
+    &ldquo;Lantai masih basah dan ada tisu bekas&rdquo;. Status tidak berubah, foto tidak disimpan. Bereskan
+    yang disebutkan, lalu ulangi langkah 3. Kalau alasannya &ldquo;Foto tidak menunjukkan toilet&rdquo;,
+    berarti yang terpotret koridor, dinding, atau terlalu gelap — potret ulang ke arah kloset dan lantai.</p>
+  </div>
+</div>
+
+<div class="catatan">
+  <strong>Kalau yang muncul &ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo;</strong> — ini bukan
+  penolakan. Layanan pemeriksa foto sedang tidak dapat dihubungi. Tunggu setengah menit, tekan
+  <em>Tandai selesai</em> lagi. Bila berulang lebih dari beberapa kali, beri tahu admin; penyebabnya biasanya
+  ada di pengaturan, bukan di foto Anda.
+</div>
+
+<h3>Tombol lain di kartu</h3>
+<ul>
+  <li><span class="tombol netral">Analisis ulang</span> hanya muncul bila analisis otomatis gagal (laporan tampil tanpa lencana prioritas/kategori). Tekan sekali; hasilnya muncul beberapa detik kemudian.</li>
+  <li><span class="tombol netral">Hapus</span> untuk laporan yang jelas spam atau tidak pantas, karena daftar laporan terbuka untuk umum. Ada konfirmasi. Penghapusan <strong>tercatat permanen</strong> beserta isi laporannya dan nama Anda — jadi pakai hanya bila memang perlu.</li>
+</ul>
+
+<h3>Tab lain</h3>
+<ul>
+  <li><strong>Grafik</strong> — pola dan efektivitas, dijelaskan di bagian 8.</li>
+  <li><strong>Aktivitas</strong> — catatan semua kejadian, dapat disaring per jenis.</li>
+</ul>
+
+<h2 class="pecah">7. Panduan admin</h2>
+<p>Admin masuk di tempat yang sama dengan petugas dan melihat satu tab tambahan: <strong>Akun Petugas</strong>.</p>
+
+<div class="langkah">
+  <div class="nomor">1</div>
+  <div>
+    <h3>Ganti sandi admin bawaan — segera</h3>
+    <p>Akun bawaan adalah <em>admin</em> dengan sandi <em>Admin123!</em>, dan sandi itu tertulis di kode
+    program yang terbuka. Di tab Akun Petugas, tekan <span class="tombol netral">Ubah</span> pada akun admin,
+    isi sandi baru (minimal 8 karakter), simpan.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">2</div>
+  <div>
+    <h3>Menambah petugas</h3>
+    <p>Tekan <span class="tombol">Tambah petugas</span>: username (huruf, angka, titik, garis bawah, strip;
+    3–30 karakter, huruf besar-kecil tidak dibedakan), nama lengkap (yang akan tampil di dashboard dan
+    catatan), sandi awal. Sampaikan sandi awal secara langsung, dan minta petugas segera mengganti lewat Anda.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">3</div>
+  <div>
+    <h3>Mengubah nama atau sandi</h3>
+    <p><span class="tombol netral">Ubah</span> pada baris akun. Kosongkan kolom sandi bila hanya mengganti nama.
+    Ini juga cara menangani petugas yang lupa sandi — tidak ada alur &ldquo;lupa sandi&rdquo; otomatis.</p>
+  </div>
+</div>
+
+<div class="langkah">
+  <div class="nomor">4</div>
+  <div>
+    <h3>Petugas berhenti: nonaktifkan, jangan hapus</h3>
+    <p>Tekan <span class="tombol netral">Nonaktifkan</span>. Akun tidak bisa masuk lagi, tetapi namanya tetap
+    tercantum di riwayat laporan dan catatan aktivitas. Dapat diaktifkan kembali kapan saja. Admin tidak
+    dapat menonaktifkan akunnya sendiri, supaya tidak terkunci dari sistemnya sendiri.</p>
+  </div>
+</div>
+
+<div class="catatan">
+  Setiap penambahan dan perubahan akun tercatat di tab Aktivitas dengan nama admin yang melakukannya.
+  Pendaftaran mandiri di halaman <em>Daftar</em> hanya pernah membuat akun pelapor — tidak ada jalan bagi
+  orang luar untuk membuat akun petugas.
+</div>
+
+<h2>8. Panduan pimpinan: membaca dashboard</h2>
+<p>Dashboard menyediakan ringkasan yang menjawab pertanyaan pengelolaan, bukan sekadar menampilkan angka.</p>
+
+<h3>Ringkasan hari ini</h3>
+<p>Setiap pukul 17.00 sistem menyusun satu paragraf: berapa laporan masuk, lokasi mana yang paling
+bermasalah, pola apa yang berulang, dan sampai empat tindakan paling mendesak. Bisa disusun ulang
+kapan saja dengan tombol <span class="tombol netral">Buat ulang</span>. Hari tanpa laporan ditulis apa adanya.</p>
+
+<h3>Tab Grafik</h3>
+<table>
+  <tr><th>Bagian</th><th>Pertanyaan yang dijawab</th></tr>
+  <tr><td>Empat kartu ringkas</td><td>Berapa laporan masuk 14 hari terakhir dan naik/turun berapa persen dibanding 14 hari sebelumnya; berapa yang prioritas tinggi; berapa persen yang sudah selesai; berapa lama rata-rata penyelesaian.</td></tr>
+  <tr><td>Laporan 14 hari terakhir</td><td>Garis masuk vs selesai per hari. Bila garis selesai tertinggal jauh, tumpukan pekerjaan bertambah.</td></tr>
+  <tr><td>Komposisi prioritas per hari</td><td>Apakah beban yang <em>berat</em> bertambah, atau hanya jumlahnya yang naik?</td></tr>
+  <tr><td>Kapan keluhan masuk</td><td>Peta hari × jam. Dasar untuk menyusun jadwal ronda petugas: bila keluhan menumpuk Senin pagi, ronda harus lebih pagi.</td></tr>
+  <tr><td>Gedung × jenis masalah</td><td>Masalah apa yang menempel pada gedung tertentu — bau yang terus berulang di satu gedung menunjuk ke masalah saluran, bukan ke kelalaian petugas.</td></tr>
+  <tr><td>Waktu penyelesaian per prioritas</td><td>Ujian nyata: laporan prioritas tinggi <em>seharusnya</em> selesai lebih cepat daripada yang rendah. Bila tidak, urutan kerja tidak diikuti.</td></tr>
+  <tr><td>Laporan per gedung</td><td>Gedung mana yang paling sering dilaporkan.</td></tr>
+</table>
+
+<h3>Tab Aktivitas</h3>
+<p>Catatan urut waktu setiap kejadian, dapat disaring per jenis:</p>
+<table>
+  <tr><th>Jenis catatan</th><th>Artinya</th></tr>
+  <tr><td>Laporan masuk</td><td>Laporan baru diterima, dengan lokasi dan teksnya.</td></tr>
+  <tr><td>Analisis / Analisis gagal</td><td>Hasil pemahaman otomatis, atau kegagalannya.</td></tr>
+  <tr><td>Ubah status</td><td>Siapa mengubah laporan mana ke status apa; untuk penutupan, ikut tercatat putusan pemeriksa foto.</td></tr>
+  <tr><td>Bukti ditolak</td><td>Foto bukti yang tidak lolos, beserta alasan pemeriksa. Berguna untuk melihat pola: petugas mana yang sering ditolak, alasan apa yang berulang.</td></tr>
+  <tr><td>Verifikasi gagal</td><td>Layanan pemeriksa foto tidak dapat dihubungi saat itu.</td></tr>
+  <tr><td>Penghapusan</td><td>Laporan yang dihapus petugas — <strong>isinya dibentangkan utuh</strong> di sini, beserta nama penghapus dan waktunya.</td></tr>
+  <tr><td>Petugas masuk</td><td>Siapa masuk ke dashboard dan kapan.</td></tr>
+  <tr><td>Ringkasan harian</td><td>Ringkasan disusun (otomatis atau manual).</td></tr>
+  <tr><td>Kelola akun</td><td>Akun petugas ditambah atau diubah oleh admin.</td></tr>
+</table>
+<p>Tidak ada tombol untuk mengubah atau menghapus catatan ini, bagi siapa pun.</p>
+
+<h3>Papan peringkat sebagai alat mendorong partisipasi</h3>
+<p>Papan peringkat pelapor diurutkan dari jumlah laporan terbanyak, dan di sampingnya ditampilkan berapa
+yang benar-benar selesai ditangani — supaya yang dihargai bukan sekadar rajin mengirim, melainkan laporan
+yang membuahkan perbaikan. Kampus dapat memakainya untuk apresiasi berkala.</p>
+
+<h2 class="pecah">9. Halaman yang terbuka untuk umum</h2>
+<table>
+  <tr><th>Halaman</th><th>Yang ditampilkan</th><th>Yang sengaja tidak ditampilkan</th></tr>
+  <tr><td><strong>Laporan Masuk</strong> (<em>/laporan</em>)</td><td>Semua laporan: lokasi, jenis masalah, prioritas, ringkasan rapi, status, kapan masuk dan selesai, foto bukti bila selesai, serta hitungan &ldquo;x dari y laporan sudah selesai&rdquo;. Bisa disaring status dan prioritas.</td><td>Teks asli mahasiswa, foto keadaan dari pelapor, nama petugas — demi privasi dan agar papan tidak menjadi saluran teks yang belum disaring.</td></tr>
+  <tr><td><strong>Papan Peringkat</strong> (<em>/peringkat</em>)</td><td>20 pelapor teratas dengan jumlah laporan dan jumlah selesai; pelapor yang masuk melihat posisinya sendiri.</td><td>Laporan tanpa akun.</td></tr>
+  <tr><td><strong>Halaman status</strong> (<em>/laporan/…</em>)</td><td>Satu laporan lengkap bagi pemegang tautannya.</td><td>—</td></tr>
+</table>
+<p>Membaca tidak butuh akun; mengubah dan menghapus hanya bisa dilakukan petugas, dan aturan itu dijaga
+di sisi server — bukan sekadar tombol yang disembunyikan.</p>
+
+<h2>10. Empat pengaman agar laporan tidak menguap</h2>
 
 <div class="kartu">
   <h3>1. Menutup laporan wajib disertai foto bukti</h3>
-  <p>Petugas tidak bisa menandai sebuah laporan &ldquo;selesai&rdquo; hanya dengan menekan tombol.
-  Sistem menolaknya sampai foto kondisi setelah dibereskan diunggah. Foto bukti itu
-  ditampilkan terbuka, sehingga siapa pun dapat menilai sendiri apakah benar sudah ditangani.</p>
+  <p>Petugas tidak bisa menandai sebuah laporan &ldquo;selesai&rdquo; hanya dengan menekan tombol. Sistem
+  menolaknya sampai foto kondisi setelah dibereskan diunggah.</p>
 </div>
 
 <div class="kartu">
-  <h3>2. Daftar laporan terbuka untuk siapa saja</h3>
-  <p>Seluruh laporan beserta statusnya dapat dibaca tanpa login. Yang ditampilkan hanya
-  ringkasan yang sudah dirapikan sistem — teks asli, foto pelapor, dan nama petugas
-  sengaja tidak ikut, demi menjaga privasi. Mengubah dan menghapus tetap hanya bisa
+  <h3>2. Foto bukti itu diperiksa kecerdasan buatan</h3>
+  <p>Bila toiletnya masih terlihat kotor, atau fotonya bukan foto toilet, penutupan ditolak beserta alasannya
+  dan foto tidak disimpan. Bila layanan pemeriksanya sedang gangguan, laporan <em>tidak</em> diloloskan begitu
+  saja — ditunda sampai bisa diperiksa. Foto yang diterima ditampilkan terbuka dengan tanda
+  &ldquo;Diverifikasi AI&rdquo;, sehingga siapa pun dapat menilai sendiri.</p>
+</div>
+
+<div class="kartu">
+  <h3>3. Daftar laporan terbuka untuk siapa saja</h3>
+  <p>Seluruh laporan beserta statusnya dapat dibaca tanpa login. Mengubah dan menghapus tetap hanya bisa
   dilakukan petugas.</p>
 </div>
 
 <div class="kartu">
-  <h3>3. Catatan aktivitas yang tidak bisa dihapus</h3>
-  <p>Setiap pergerakan tercatat: laporan masuk, hasil analisis, perubahan status, siapa yang
-  masuk ke sistem, dan penghapusan. <strong>Bila sebuah laporan dihapus petugas, seluruh isinya
-  tetap tersimpan di catatan</strong> lengkap dengan nama penghapus dan waktunya. Pimpinan tetap
-  bisa memeriksa apa yang hilang.</p>
+  <h3>4. Catatan aktivitas yang tidak bisa dihapus</h3>
+  <p>Setiap pergerakan tercatat: laporan masuk, hasil analisis, perubahan status, foto bukti yang ditolak
+  beserta alasannya, siapa yang masuk ke sistem, perubahan akun, dan penghapusan. <strong>Bila sebuah laporan
+  dihapus petugas, seluruh isinya tetap tersimpan di catatan</strong> lengkap dengan nama penghapus dan
+  waktunya. Pimpinan tetap bisa memeriksa apa yang hilang.</p>
 </div>
 
-<h2>Yang bisa dilihat pimpinan</h2>
-<p>Dashboard menyediakan ringkasan yang menjawab pertanyaan pengelolaan, bukan sekadar
-menampilkan angka:</p>
-
+<h2 class="pecah">11. Privasi dan data</h2>
+<table>
+  <tr><th>Data</th><th>Disimpan?</th><th>Siapa yang bisa melihat</th></tr>
+  <tr><td>Teks keluhan asli</td><td>Ya</td><td>Petugas dan admin. Tidak tampil di papan umum.</td></tr>
+  <tr><td>Foto keadaan dari pelapor</td><td>Ya</td><td>Petugas dan admin, serta pemegang tautan laporan itu. Tidak tampil di papan umum.</td></tr>
+  <tr><td>Foto bukti dari petugas</td><td>Hanya yang lolos pemeriksaan</td><td>Siapa saja, di papan umum. Foto yang ditolak dihapus.</td></tr>
+  <tr><td>Nama pelapor</td><td>Hanya bila melapor dengan akun</td><td>Petugas; dan di papan peringkat.</td></tr>
+  <tr><td>Nama petugas</td><td>Ya, pada laporan yang ditanganinya</td><td>Petugas dan admin, serta pelapor di halaman statusnya. Tidak tampil di papan umum.</td></tr>
+  <tr><td>Kata sandi</td><td>Tidak — hanya sidik acaknya</td><td>Tidak seorang pun, termasuk admin.</td></tr>
+  <tr><td>Lokasi ponsel, identitas perangkat</td><td>Tidak</td><td>—</td></tr>
+</table>
+<h3>Layanan luar yang menerima data</h3>
 <ul>
-  <li><strong>Ringkasan harian otomatis</strong> setiap pukul 17.00 — satu paragraf yang menyebut lokasi
-  paling bermasalah hari itu dan tindakan yang paling mendesak.</li>
-  <li><strong>Kapan keluhan biasanya masuk</strong>, dipetakan per hari dan per jam. Ini dasar untuk
-  menyusun jadwal ronda petugas.</li>
-  <li><strong>Gedung mana bermasalah dalam hal apa</strong>, sehingga terlihat masalah yang menempel
-  pada satu gedung tertentu.</li>
-  <li><strong>Berapa lama laporan diselesaikan, dipilah menurut prioritas.</strong> Ini ujian nyata:
-  laporan mendesak seharusnya selesai lebih cepat daripada yang ringan.</li>
-  <li><strong>Tren naik-turun</strong> dibanding dua pekan sebelumnya.</li>
+  <li><strong>DeepSeek</strong> menerima teks keluhan dan nama lokasi — tanpa nama pelapor.</li>
+  <li><strong>Google Gemini</strong> menerima foto bukti dari petugas beserta teks keluhan sebagai konteks. Pada tingkat gratis, Google menyatakan data yang dikirim boleh dipakai untuk memperbaiki layanannya. Foto bukti berisi toilet kosong, tetapi <strong>petugas sebaiknya tidak ikut memotret orang</strong>. Bila kampus keberatan, penagihan dapat diaktifkan pada akun Google tersebut; dengan itu data tidak dipakai, dan biayanya nyaris nol pada volume kampus.</li>
+  <li><strong>Cloudflare</strong> menyimpan basis data dan foto.</li>
 </ul>
 
-<h2>Mendorong mahasiswa ikut melapor</h2>
-<p>Ada papan peringkat pelapor yang diurutkan dari jumlah laporan terbanyak. Di sampingnya
-ditampilkan berapa laporan yang benar-benar sudah selesai ditangani — supaya yang dihargai
-bukan sekadar rajin mengirim, melainkan laporan yang membuahkan perbaikan.</p>
+<h2>12. Pertanyaan yang sering diajukan</h2>
+<h3>Mahasiswa</h3>
+<p><strong>Apakah petugas tahu siapa saya?</strong> Tidak, kecuali kamu melapor dengan akun — itu pun hanya nama yang kamu daftarkan.</p>
+<p><strong>Laporan saya tidak muncul hasil analisisnya.</strong> Tunggu beberapa detik; halaman memperbarui sendiri. Bila tertulis &ldquo;Analisis otomatis belum berhasil&rdquo;, laporan tetap masuk dan tetap dikerjakan petugas.</p>
+<p><strong>Saya kehilangan tautan laporan.</strong> Tanpa akun, tautan itu satu-satunya jalan kembali; tetapi kamu tetap bisa melihat laporanmu (tanpa teks asli) di halaman <em>Laporan Masuk</em>. Dengan akun, semuanya ada di &ldquo;Laporan saya&rdquo;.</p>
+<p><strong>Bolehkah melapor toilet yang sama lagi?</strong> Boleh, bila masalahnya masih ada atau berbeda. Hanya laporan yang <em>sama persis</em> dalam dua menit yang digabung.</p>
+<p><strong>Bahasa Inggris bisa?</strong> Bisa. Antarmuka tersedia dalam Inggris, dan keluhan berbahasa Inggris dipahami; ringkasannya tetap ditulis dalam bahasa Indonesia karena pembacanya petugas.</p>
 
-<div class="catatan">
-  <strong>Melapor tetap bisa tanpa akun.</strong> Ini disengaja. Memaksa mahasiswa mendaftar sebelum
-  boleh melapor akan membuat sebagian besar batal melapor, dan justru laporan itulah yang
-  dibutuhkan. Yang memakai akun mendapat dua keuntungan: laporannya tercatat atas namanya
-  dan bisa dipantau dari perangkat mana pun.
-</div>
+<h3>Petugas</h3>
+<p><strong>Foto saya ditolak padahal sudah bersih.</strong> Baca alasannya di kotak merah. Yang paling sering: lantai masih basah merata (keringkan dulu), foto terlalu gelap atau buram, atau bingkai tidak memperlihatkan kloset dan lantai. Potret ulang dari pintu ke arah kloset dengan lampu menyala.</p>
+<p><strong>Bolehkah memakai foto dari galeri?</strong> Secara teknis bisa, tetapi jangan: foto lama dari toilet lain merusak kepercayaan pada sistem dan pemeriksa foto tidak bisa membedakannya. Catatan waktu di sistem memperlihatkan kapan foto diunggah.</p>
+<p><strong>Kenapa ada laporan tanpa prioritas?</strong> Analisis otomatisnya gagal. Kerjakan berdasarkan teks aslinya, dan tekan <em>Analisis ulang</em>.</p>
+<p><strong>Saya tidak bisa masuk.</strong> Sesi berakhir setelah 12 jam — masuk lagi. Bila sandi ditolak terus, minta admin mengatur sandi baru. Akun yang dinonaktifkan admin tidak bisa masuk.</p>
+<p><strong>Apakah dashboard harus dibuka terus?</strong> Sistem tidak mengirim notifikasi. Biarkan dashboard terbuka di ruang petugas; ia memuat ulang sendiri tiap 30 detik, dan prioritas tinggi selalu di atas.</p>
 
-<h2>Yang masih membutuhkan keputusan kampus</h2>
+<h3>Pimpinan</h3>
+<p><strong>Bisakah petugas menghapus jejak?</strong> Tidak. Penghapusan laporan justru menyalin isinya ke catatan aktivitas, dan catatan itu tidak dapat diubah dari aplikasi.</p>
+<p><strong>Seberapa akurat kecerdasan buatannya?</strong> Untuk teks, latensi dan hasil tiap laporan tersimpan dan dapat dibandingkan dengan penilaian manusia. Untuk foto, putusan bersifat perkiraan: bisa salah tolak atau salah terima, dan alasannya selalu tercatat sehingga dapat diaudit. Angka akurasi yang sesungguhnya adalah bagian dari penelitian yang menyertai sistem ini.</p>
+
+<h2 class="pecah">13. Bila ada masalah</h2>
+<table>
+  <tr><th>Yang terlihat</th><th>Kemungkinan penyebab</th><th>Yang harus dilakukan</th></tr>
+  <tr><td>&ldquo;Kode lokasi tidak dikenal&rdquo; setelah memindai QR</td><td>Stiker dari daftar lokasi lama, atau lantai itu dinonaktifkan</td><td>Pilih lokasi manual di halaman depan; laporkan stiker itu ke admin agar dicetak ulang</td></tr>
+  <tr><td>&ldquo;Ukuran foto maksimal 5 MB&rdquo;</td><td>Foto beresolusi sangat tinggi</td><td>Turunkan resolusi kamera, atau pilih foto lain</td></tr>
+  <tr><td>&ldquo;Foto ditolak&rdquo; saat menandai selesai</td><td>Pemeriksa menilai masih kotor / bukan toilet</td><td>Baca alasannya, bereskan, potret ulang (bagian 6)</td></tr>
+  <tr><td>&ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo;</td><td>Layanan pemeriksa foto tidak terjangkau, kuota harian habis, atau pengaturan kunci layanan bermasalah</td><td>Coba lagi setelah beberapa saat; bila berulang sepanjang hari, hubungi admin/pengelola sistem — penyebab pastinya tercatat di catatan aktivitas (&ldquo;Verifikasi gagal&rdquo;)</td></tr>
+  <tr><td>Laporan tanpa prioritas dan kategori; kartu &ldquo;Analisis gagal&rdquo; &gt; 0</td><td>Layanan pemahaman teks sedang gangguan</td><td>Tekan <em>Analisis ulang</em>; bila berulang, hubungi pengelola</td></tr>
+  <tr><td>Ringkasan hari ini kosong setelah pukul 17.00</td><td>Belum ada laporan, atau penyusunan otomatis gagal</td><td>Tekan <em>Buat ulang</em></td></tr>
+  <tr><td>Petugas lupa sandi</td><td>—</td><td>Admin mengatur sandi baru di tab Akun Petugas</td></tr>
+  <tr><td>Admin lupa sandi</td><td>—</td><td>Perlu pengelola sistem (akses basis data); tidak ada alur otomatis</td></tr>
+  <tr><td>Semua orang tiba-tiba harus masuk lagi</td><td>Kunci sesi sistem diganti pengelola</td><td>Wajar; masuk kembali</td></tr>
+</table>
+
+<h2>14. Biaya menjalankan sistem</h2>
+<table>
+  <tr><th>Komponen</th><th>Biaya pada skala kampus</th></tr>
+  <tr><td>Hosting, basis data, penyimpanan foto (Cloudflare)</td><td>Gratis pada paket bawaan untuk volume kampus</td></tr>
+  <tr><td>Pemahaman teks (DeepSeek)</td><td>Berbayar per pemakaian, sangat murah — ribuan laporan untuk harga secangkir kopi</td></tr>
+  <tr><td>Pemeriksaan foto (Google Gemini)</td><td>Gratis pada tingkat gratis, dengan batas jumlah pemeriksaan per hari yang jauh di atas kebutuhan kampus; bila kelak kurang, ada model yang lebih ringan atau tingkat berbayar yang tetap nyaris nol</td></tr>
+  <tr><td>Stiker QR</td><td>Cetak 13 stiker; cetak ulang hanya bila daftar lokasi berubah</td></tr>
+</table>
+
+<h2>15. Yang masih membutuhkan keputusan kampus</h2>
 <table>
   <tr><th>Hal</th><th>Keadaan saat ini</th></tr>
-  <tr><td>Gedung D, E, F</td><td>Belum didaftarkan karena keberadaan toiletnya belum dipastikan</td></tr>
-  <tr><td>Jenis toilet per lantai</td><td>Saat ini diasumsikan setiap lantai punya WC pria dan wanita; perlu dicocokkan dengan kenyataan</td></tr>
+  <tr><td>Gedung D, E, F</td><td>Belum didaftarkan karena keberadaan toiletnya belum dipastikan; begitu dipastikan, tinggal ditambahkan dan stikernya dicetak</td></tr>
+  <tr><td>Jenis toilet per lantai</td><td>Saat ini diasumsikan setiap lantai punya WC pria dan wanita; perlu dicocokkan dengan kenyataan, termasuk toilet disabilitas</td></tr>
   <tr><td>Kata sandi admin</td><td>Masih memakai sandi bawaan dan wajib diganti</td></tr>
+  <tr><td>Layanan pemeriksa foto</td><td>Memakai layanan Google tingkat gratis: tanpa biaya, tetapi Google boleh memakai foto yang dikirim untuk memperbaiki layanannya. Bila kampus keberatan, cukup mengaktifkan penagihan pada akun Google tersebut</td></tr>
+  <tr><td>Arahan untuk petugas</td><td>Foto bukti cukup memperlihatkan toilet; hindari memotret orang; potret langsung dari kamera, bukan galeri</td></tr>
+  <tr><td>Siapa memegang akun admin</td><td>Perlu ditetapkan satu penanggung jawab, dan pengelola teknis untuk keadaan darurat (lupa sandi admin, gangguan layanan)</td></tr>
+  <tr><td>Apresiasi pelapor</td><td>Papan peringkat sudah ada; bentuk penghargaannya keputusan kampus</td></tr>
+</table>
+
+<h2>16. Istilah yang dipakai</h2>
+<table>
+  <tr><th>Istilah</th><th>Artinya</th></tr>
+  <tr><td>Kecerdasan buatan / AI</td><td>Layanan yang membaca teks atau foto dan memberi jawaban; di sini tidak dilatih khusus, dipakai apa adanya</td></tr>
+  <tr><td>Prioritas</td><td>Rendah / sedang / tinggi — tinggi berarti ada risiko keselamatan atau toilet tidak bisa dipakai</td></tr>
+  <tr><td>Status</td><td>Baru → diproses → selesai</td></tr>
+  <tr><td>Foto keadaan</td><td>Foto dari mahasiswa saat melapor</td></tr>
+  <tr><td>Foto bukti</td><td>Foto dari petugas setelah membereskan; wajib lolos pemeriksaan</td></tr>
+  <tr><td>Diverifikasi AI</td><td>Foto bukti yang dinilai bersih oleh pemeriksa foto</td></tr>
+  <tr><td>Dashboard</td><td>Halaman kerja petugas dan admin</td></tr>
+  <tr><td>Catatan aktivitas</td><td>Riwayat semua kejadian yang tidak dapat dihapus</td></tr>
+  <tr><td>Papan laporan / Laporan Masuk</td><td>Halaman umum berisi semua laporan dan statusnya</td></tr>
+  <tr><td>Ringkasan harian</td><td>Paragraf otomatis pukul 17.00 tentang keadaan hari itu</td></tr>
 </table>
 
 <div class="kaki">
   Sistem sudah berjalan dan dapat diakses di <strong>ai-complaint.yvrtz.workers.dev</strong>.
-  Antarmuka tersedia dalam Bahasa Indonesia dan Bahasa Inggris.
+  Antarmuka tersedia dalam Bahasa Indonesia dan Bahasa Inggris. Rincian teknis ada pada
+  <em>Dokumentasi Teknis</em> yang menyertai dokumen ini.
 </div>
 
 </body></html>

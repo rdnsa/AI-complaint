@@ -10,13 +10,14 @@
   h2 { font-size: 13.5pt; margin: 8mm 0 2.5mm; padding-bottom: 1.5mm;
        border-bottom: 2px solid #E2571F; page-break-after: avoid; }
   h3 { font-size: 10.5pt; margin: 4.5mm 0 1.5mm; page-break-after: avoid; }
+  h4 { font-size: 9.5pt; margin: 3mm 0 1mm; page-break-after: avoid; color: #5D2A20; }
   p { margin: 0 0 2.5mm; }
   code, .mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.8pt;
                 background: #FDF0E8; padding: 0.3mm 1.2mm; border-radius: 1mm; }
   pre { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.2pt; line-height: 1.45;
         background: #FDFAF6; border: 1px solid #EFE4D6; border-left: 3px solid #E2571F;
         border-radius: 2mm; padding: 3.5mm 4mm; overflow: hidden; page-break-inside: avoid;
-        margin: 2mm 0 3.5mm; }
+        margin: 2mm 0 3.5mm; white-space: pre-wrap; }
   .sampul { background: linear-gradient(135deg,#4A1D16,#8A3A22); color: #fff;
             padding: 13mm 12mm; border-radius: 4mm; margin-bottom: 7mm; }
   .sampul h1 { color: #fff; }
@@ -28,49 +29,129 @@
   th, td { text-align: left; padding: 2mm 2.5mm; border-bottom: 1px solid #EFE4D6; vertical-align: top; }
   th { background: #FDF6F1; font-weight: 700; color: #5D2A20; }
   td.mono, th.mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.3pt; background: none; }
+  table.kolom td:first-child { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.3pt; white-space: nowrap; }
   .catatan { border-left: 3px solid #0E9F6E; background: #F0FBF6; padding: 3mm 4mm;
              margin: 2.5mm 0 3.5mm; font-size: 9.3pt; page-break-inside: avoid; }
   .peringatan { border-left: 3px solid #D97706; background: #FFFAF0; padding: 3mm 4mm;
                 margin: 2.5mm 0 3.5mm; font-size: 9.3pt; page-break-inside: avoid; }
-  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
   li { margin-bottom: 1.2mm; }
+  .toc { columns: 2; column-gap: 8mm; font-size: 9.3pt; margin: 3mm 0 2mm; }
+  .toc ol { margin: 0; padding-left: 5mm; }
+  .toc li { margin-bottom: 0.8mm; break-inside: avoid; }
   .kaki { margin-top: 9mm; padding-top: 3mm; border-top: 1px solid #EFE4D6;
           font-size: 8.5pt; color: #7A3628; }
   .pecah { page-break-before: always; }
+  .kecil { font-size: 8.6pt; color: #7A3628; }
 </style></head><body>
 
 <div class="sampul">
-  <span class="lencana">Dokumentasi Teknis</span>
+  <span class="lencana">Dokumentasi Teknis &middot; Edisi lengkap</span>
   <h1>AI Complaint</h1>
-  <p class="sub">Klasifikasi dan penentuan prioritas keluhan toilet berbasis LLM<br>
-  UPI Kampus Tasikmalaya &middot; <span class="mono" style="background:rgba(255,255,255,.15);color:#fff">ai-complaint.yvrtz.workers.dev</span></p>
+  <p class="sub">Klasifikasi dan penentuan prioritas keluhan toilet berbasis LLM, dengan verifikasi foto bukti<br>
+  UPI Kampus Tasikmalaya &middot; <span class="mono" style="background:rgba(255,255,255,.15);color:#fff">ai-complaint.yvrtz.workers.dev</span> &middot;
+  <span class="mono" style="background:rgba(255,255,255,.15);color:#fff">github.com/rdnsa/AI-complaint</span></p>
 </div>
+
+<h2 style="margin-top:0">Daftar isi</h2>
+<div class="toc"><ol>
+  <li>Ringkasan sistem</li>
+  <li>Tumpukan teknologi dan pembagian kerja dua model</li>
+  <li>Arsitektur dan struktur proyek</li>
+  <li>Model data: tabel, kolom, migrasi, seed</li>
+  <li>Lokasi dan kode QR</li>
+  <li>Alur laporan dari ujung ke ujung</li>
+  <li>Analisis LLM teks</li>
+  <li>Verifikasi foto bukti (LLM vision)</li>
+  <li>Akun, sesi, dan wewenang</li>
+  <li>Jejak audit</li>
+  <li>Ringkasan harian, statistik, dan grafik</li>
+  <li>Papan publik dan papan peringkat</li>
+  <li>Penyimpanan foto</li>
+  <li>Referensi API lengkap</li>
+  <li>Antarmuka pengguna</li>
+  <li>Konfigurasi, variabel, dan rahasia</li>
+  <li>Pengembangan lokal</li>
+  <li>Penyebaran dan operasi</li>
+  <li>Pemantauan dan pemecahan masalah</li>
+  <li>Keputusan rancangan yang berbiaya</li>
+  <li>Batasan yang diketahui dan pekerjaan lanjutan</li>
+  <li>Lampiran: contoh respons, glosarium</li>
+</ol></div>
 
 <h2>1. Ringkasan sistem</h2>
 <p>Mahasiswa memindai QR di pintu toilet, menulis keluhan dengan bahasa bebas, lalu
 <em>pretrained LLM</em> mengubahnya menjadi tiket kerja terstruktur — kategori, prioritas,
-ringkasan netral, dan rekomendasi tindakan. Tidak ada pelatihan model dan tidak ada dataset
-yang perlu dilabeli; kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
+ringkasan netral, dan rekomendasi tindakan. Petugas kebersihan mengerjakannya dari dashboard,
+dan hanya dapat menutup laporan dengan foto bukti yang <strong>dinilai bersih oleh model vision</strong>.
+Tidak ada pelatihan model dan tidak ada dataset yang perlu dilabeli; kendali mutu dilakukan
+lewat rekayasa prompt dan validasi keluaran.</p>
 
-<pre>QR per lantai  →  pilih jenis WC  →  tulis keluhan + foto  →  LLM
+<pre>QR per lantai  →  pilih jenis WC  →  tulis keluhan + foto  →  LLM teks (DeepSeek)
                                                                 ↓
-                          dashboard petugas  +  cron 17.00 WIB → ringkasan harian</pre>
+                          dashboard petugas  +  cron 17.00 WIB → ringkasan harian
+                                ↓
+              petugas unggah foto bukti  →  LLM vision (Gemini): bersih?  →  selesai</pre>
+
+<table>
+  <tr><th>Fitur inti (kontribusi penelitian)</th><th>Fitur pendukung</th></tr>
+  <tr><td>
+    <ol>
+      <li><strong>Klasifikasi otomatis</strong> ke enam kategori, boleh lebih dari satu</li>
+      <li><strong>Penentuan prioritas</strong> rendah/sedang/tinggi berbasis risiko keselamatan</li>
+      <li><strong>Ringkasan harian</strong> satu paragraf, otomatis pukul 17.00 WIB</li>
+      <li><strong>Papan peringkat pelapor</strong> beserta jumlah yang benar-benar selesai</li>
+      <li><strong>Verifikasi foto bukti</strong>: benar toilet, dan sudah bersih?</li>
+    </ol>
+  </td><td>
+    <ul>
+      <li>Papan laporan publik, dapat dibaca siapa saja</li>
+      <li>Foto keadaan wajib dari pelapor; foto bukti wajib dari petugas</li>
+      <li>Jejak audit yang tidak dapat dihapus dari aplikasi</li>
+      <li>Dashboard: KPI, deret harian, komposisi prioritas, pola hari×jam, gedung×kategori, waktu penyelesaian</li>
+      <li>Pelacakan status untuk pelapor tanpa akun</li>
+      <li>Peta gedung di halaman depan; antarmuka dwibahasa ID/EN</li>
+    </ul>
+  </td></tr>
+</table>
 
 <h2>2. Tumpukan teknologi</h2>
 <table>
   <tr><th>Lapisan</th><th>Pilihan</th><th>Alasan</th></tr>
-  <tr><td>Bahasa</td><td>TypeScript</td><td>Binding D1 dan R2 hanya tersedia di runtime JS/TS Workers</td></tr>
-  <tr><td>Runtime</td><td>Cloudflare Workers</td><td>Tanpa server, mulai dingin di bawah 20 ms, gratis pada skala kampus</td></tr>
-  <tr><td>Framework API</td><td>Hono</td><td>Router ringan yang berjalan native di Workers</td></tr>
-  <tr><td>Basis data</td><td>Cloudflare D1 (SQLite)</td><td>Binding langsung, migrasi ter-versi</td></tr>
+  <tr><td>Bahasa</td><td>TypeScript 5, mode <span class="mono">strict</span></td><td>Binding D1 dan R2 hanya tersedia di runtime JS/TS Workers</td></tr>
+  <tr><td>Runtime</td><td>Cloudflare Workers, <span class="mono">nodejs_compat</span></td><td>Tanpa server, mulai dingin di bawah 20 ms, gratis pada skala kampus</td></tr>
+  <tr><td>Framework API</td><td>Hono 4</td><td>Router ringan yang berjalan native di Workers; middleware cookie dan JWT bawaan</td></tr>
+  <tr><td>Validasi</td><td>Zod 3</td><td>Satu skema untuk body HTTP dan untuk keluaran LLM</td></tr>
+  <tr><td>Basis data</td><td>Cloudflare D1 (SQLite)</td><td>Binding langsung, migrasi ter-versi, <span class="mono">json_each</span> untuk kolom kategori</td></tr>
   <tr><td>Penyimpanan berkas</td><td>Cloudflare R2</td><td>Diakses lewat binding, disajikan ulang oleh Worker</td></tr>
-  <tr><td>Frontend</td><td>React 18 + Vite + Tailwind</td><td>Satu Worker melayani API dan aset, sehingga tanpa CORS</td></tr>
-  <tr><td>LLM</td><td>DeepSeek <span class="mono">deepseek-chat</span></td><td>JSON mode, latensi ~1,1 detik, biaya rendah</td></tr>
+  <tr><td>Frontend</td><td>React 18 + Vite 6 + Tailwind 3, react-router 6</td><td>Satu Worker melayani API dan aset statis, sehingga tanpa CORS</td></tr>
+  <tr><td>i18n</td><td>Kamus buatan sendiri (<span class="mono">web/src/lib/i18n.tsx</span>)</td><td>Bahasa Indonesia mendefinisikan bentuk kamus; TypeScript menolak kunci yang belum diterjemahkan</td></tr>
+  <tr><td>LLM teks</td><td>DeepSeek <span class="mono">deepseek-chat</span></td><td>JSON mode, latensi ~1,1 detik, biaya rendah; tidak bisa membaca gambar</td></tr>
+  <tr><td>LLM vision</td><td>Google Gemini <span class="mono">gemini-3.6-flash</span></td><td>Menilai foto bukti; endpoint kompatibel OpenAI sehingga penyedia dapat diganti tanpa mengubah kode</td></tr>
+  <tr><td>Dokumen</td><td>HTML + Chrome headless → PDF</td><td>Satu sumber untuk layar dan cetak (<span class="mono">npm run docs</span>)</td></tr>
 </table>
 
-<h2>3. Arsitektur</h2>
-<p>Backend disusun berlapis dengan arah ketergantungan hanya ke dalam. Aturan tiap lapisan
-diperiksa dan tidak ada yang dilanggar.</p>
+<h3>Pembagian kerja dua model</h3>
+<p>Kedua model tidak pernah dipanggil untuk pekerjaan yang sama. Pemisahannya mengikuti
+jenis masukan: teks ke DeepSeek, gambar ke Gemini.</p>
+<table>
+  <tr><th></th><th>DeepSeek <span class="mono">deepseek-chat</span></th><th>Gemini <span class="mono">gemini-3.6-flash</span></th></tr>
+  <tr><td>Masukan</td><td>Teks keluhan mahasiswa; daftar ringkasan sehari</td><td>Foto bukti petugas + teks keluhan asli sebagai konteks</td></tr>
+  <tr><td>Pekerjaan</td><td>(1) Klasifikasi kategori, (2) prioritas, ringkasan, rekomendasi, (3) ringkasan harian</td><td>(5) Menilai foto bukti: benar toilet? sudah bersih?</td></tr>
+  <tr><td>Kapan dipanggil</td><td>Tiap laporan masuk (asinkron, setelah respons dikirim) dan sekali sehari lewat cron</td><td>Tiap petugas menekan &ldquo;Tandai selesai&rdquo; (sinkron; petugas menunggu putusan)</td></tr>
+  <tr><td>Parameter</td><td><span class="mono">temperature 0.1</span>, <span class="mono">max_tokens</span> 500 (analisis) / 700 (ringkasan), <span class="mono">response_format json_object</span>, <em>timeout</em> 30 detik</td><td><span class="mono">temperature 0.1</span>, <span class="mono">max_tokens 2000</span>, gambar <span class="mono">detail: low</span>, <em>timeout</em> 30 detik</td></tr>
+  <tr><td>Bila gagal</td><td>Laporan tetap tersimpan tanpa label (<span class="mono">ai_status='gagal'</span>), dapat dianalisis ulang</td><td>Penutupan ditolak (502); petugas diminta mencoba lagi</td></tr>
+  <tr><td>Fungsi di kode</td><td class="mono">analisaKeluhan(), ringkasHarian()</td><td class="mono">periksaFotoBukti()</td></tr>
+  <tr><td>Konfigurasi</td><td class="mono">LLM_BASE_URL, LLM_MODEL, LLM_API_KEY</td><td class="mono">VISION_BASE_URL, VISION_MODEL, VISION_API_KEY</td></tr>
+  <tr><td>Hasil disimpan di</td><td class="mono">reports.kategori, prioritas, ringkasan, rekomendasi, ai_*; daily_summaries</td><td class="mono">reports.bukti_ai_*; aktivitas (bukti_ditolak, verifikasi_gagal)</td></tr>
+  <tr><td>Biaya</td><td>Berbayar, sangat murah</td><td>Tingkat gratis Google AI Studio</td></tr>
+</table>
+<p>Keduanya dipanggil lewat satu fungsi yang sama, <span class="mono">chatJSON()</span> di
+<span class="mono">src/adapters/llm.ts</span>, karena kedua penyedia memakai format
+<em>chat completions</em> OpenAI. Yang berbeda hanya tujuan (URL, model, kunci) dan isi pesan.</p>
+
+<h2 class="pecah">3. Arsitektur dan struktur proyek</h2>
+<p>Backend disusun berlapis dengan arah ketergantungan hanya ke dalam.</p>
 
 <pre>routes/  →  services/  →  repositories/  →  D1
                 ↓
@@ -78,131 +159,719 @@ diperiksa dan tidak ada yang dilanggar.</p>
 
 <table>
   <tr><th>Lapisan</th><th>Tanggung jawab</th><th>Aturan yang dipatuhi</th></tr>
-  <tr><td class="mono">domain/</td><td>Kosakata dan aturan masalah</td><td>Tidak mengimpor apa pun — tanpa Hono, D1, R2</td></tr>
-  <tr><td class="mono">repositories/</td><td>Seluruh pernyataan SQL</td><td>Tahu basis data, tidak tahu HTTP</td></tr>
+  <tr><td class="mono">domain/</td><td>Kosakata (enum peran, kategori, prioritas, status, hasil bukti), entitas, pemetaan DTO, aturan penutupan</td><td>Tidak mengimpor apa pun — tanpa Hono, D1, R2</td></tr>
+  <tr><td class="mono">repositories/</td><td>Seluruh pernyataan SQL, satu berkas per agregat</td><td>Tahu basis data, tidak tahu HTTP</td></tr>
   <tr><td class="mono">services/</td><td><em>Use case</em> dan aturan bisnis</td><td>Tidak menyebut Hono sama sekali</td></tr>
-  <tr><td class="mono">adapters/</td><td>LLM, R2, hash sandi, sesi, waktu</td><td>Membungkus dunia luar</td></tr>
-  <tr><td class="mono">routes/</td><td>Parse, validasi, delegasi, format</td><td>Nol SQL, nol aturan bisnis</td></tr>
+  <tr><td class="mono">adapters/</td><td>LLM (teks + vision), R2, hash sandi, sesi JWT, konversi waktu WIB</td><td>Membungkus dunia luar di balik antarmuka kecil</td></tr>
+  <tr><td class="mono">routes/</td><td>Parse, validasi, delegasi, format respons</td><td>Nol SQL, nol aturan bisnis</td></tr>
+  <tr><td class="mono">index.ts</td><td><em>Composition root</em>: pasang route, fallback SPA, penangan cron</td><td>Satu-satunya berkas yang melihat semua lapisan</td></tr>
 </table>
 
 <div class="catatan">
-  <strong>Konsekuensi yang dapat diuji:</strong> seluruh 38 pernyataan SQL berada di
+  <strong>Konsekuensi yang dapat diuji:</strong> seluruh pernyataan SQL berada di
   <span class="mono">repositories/</span>. Berpindah dari D1 ke Postgres berarti menulis ulang
   satu direktori, bukan seluruh berkas route. Aturan &ldquo;laporan hanya boleh ditutup bila ada
-  bukti&rdquo; tinggal di lapisan domain, sehingga setiap pemanggil memutuskan dengan cara yang sama.
+  bukti <em>yang lolos verifikasi</em>&rdquo; tinggal di lapisan domain
+  (<span class="mono">bolehDiselesaikan(status, fotoBukti, hasilBukti)</span>), sehingga setiap
+  pemanggil — HTTP hari ini, cron atau alat admin esok — memutuskan dengan cara yang sama.
 </div>
+
+<h3>Struktur berkas</h3>
+<pre>src/
+  index.ts                 composition root: routes, fallback SPA, penangan cron
+  env.ts                   binding infrastruktur dan konfigurasi (Env, AppEnv)
+  domain/types.ts          enum, ReportRow/ReportDTO, urlFoto(), toDTO(), bolehDiselesaikan()
+  adapters/
+    llm.ts                 prompt, few-shot, validasi keluaran, chatJSON(), periksaFotoBukti()
+    storage.ts             R2: prefix, batas ukuran/tipe, simpan/ambil/baca/hapus foto
+    session.ts             JWT dalam cookie, wajibPeran(), wajibPetugas, wajibAdmin
+    password.ts            PBKDF2-SHA256 lewat WebCrypto, perbandingan waktu-konstan
+    clock.ts               tanggalWIB(), rentangHariWIB()
+  repositories/            reports, locations, users, activity, summaries
+  services/
+    report-service.ts      kirim, ubah status (+ verifikasi bukti), hapus laporan
+    analysis-service.ts    analisis satu laporan, dijalankan setelah respons dikirim
+    summary-service.ts     ringkasan harian, statistik, data grafik, papan peringkat
+    user-service.ts        daftar, masuk, kelola akun
+    activity-service.ts    tulis dan baca jejak audit
+  routes/                  auth, locations, reports, uploads, summary, activity, users, leaderboard
+
+web/src/
+  main.tsx                 router: 8 rute halaman
+  lib/i18n.tsx             kamus ID/EN, useBahasa(), useWaktuRelatif()
+  lib/sesi.tsx             konteks sesi (useSesi)
+  lib/api.ts               klien API bertipe, ApiError (status + data)
+  components/Kop.tsx       kepala halaman, tombol kembali, sakelar bahasa
+  components/Lacak.tsx     linimasa status tiga tahap
+  components/Lencana.tsx   lencana prioritas/status/kategori
+  components/Panel*.tsx    tab dashboard: Grafik, Aktivitas, Pengguna
+  components/grafik/       warna tervalidasi, Garis, Batang, BatangBertumpuk, PetaPanas, Sparkline, KartuKPI
+  pages/                   Beranda, Lapor, StatusLaporan, LaporanPublik, Masuk, Daftar, Peringkat, Dashboard
+web/public/peta-lokasi-gedung.jpg
+
+migrations/                0001–0005, diterapkan berurutan
+seed/toilets.sql           daftar toilet aktif
+scripts/generate-qr.mjs    QR per lantai + lembar cetak A4
+scripts/build-frontend.mjs membangun frontend sebelum wrangler deploy
+scripts/build-docs.mjs     merender docs/*.html ke PDF
+docs/                      dokumentasi-teknis, panduan-umum (HTML + PDF)
+qr-codes/                  hasil generate-qr (13 PNG + cetak.html)</pre>
 
 <h2 class="pecah">4. Model data</h2>
-<table>
-  <tr><th>Tabel</th><th>Isi</th><th>Catatan rancangan</th></tr>
-  <tr><td class="mono">gedung</td><td>Sepuluh gedung kampus</td><td>Nama dipisah agar tidak diulang di tiap baris toilet</td></tr>
-  <tr><td class="mono">toilets</td><td>Satu baris per WC fisik</td><td>Dinonaktifkan, bukan dihapus, agar riwayat laporan tetap utuh</td></tr>
-  <tr><td class="mono">toilet_info</td><td><em>View</em> gabungan</td><td>Merakit nama tampilan di satu tempat</td></tr>
-  <tr><td class="mono">reports</td><td>Laporan + hasil analisis</td><td>Kolom manusia dan kolom mesin dipisah</td></tr>
-  <tr><td class="mono">pengguna</td><td>Akun admin, petugas, pelapor</td><td>PBKDF2-SHA256, salt per pengguna</td></tr>
-  <tr><td class="mono">aktivitas</td><td>Jejak audit</td><td><strong>Tanpa foreign key</strong> ke reports — lihat bagian 7</td></tr>
-  <tr><td class="mono">daily_summaries</td><td>Ringkasan harian</td><td>Ditulis cron, dapat dibuat ulang manual</td></tr>
+<p>Basis data D1 (SQLite). Semua stempel waktu disimpan UTC dalam format
+<span class="mono">YYYY-MM-DD HH:MM:SS</span>; konversi ke hari WIB dilakukan di
+<span class="mono">adapters/clock.ts</span> dan di SQL lewat <span class="mono">'+7 hours'</span>.</p>
+
+<h3>gedung</h3>
+<table class="kolom">
+  <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+  <tr><td>kode</td><td>TEXT PK</td><td>Satu huruf, A–J</td></tr>
+  <tr><td>nama</td><td>TEXT</td><td>Nama gedung dari poster &ldquo;Peta Lokasi Gedung&rdquo; (A Ki Hajar Dewantara, B Masjid At-Tarbiyah, C Dewi Sartika, D KH. Ahmad Dahlan, E Dr. Wahidin Sudirohusodo, F Daoed Joesoef, G RA. Kartini, H Mohamad Yamin, I Dr. Sutomo, J KH. Moh. Hasyim Ashari)</td></tr>
+  <tr><td>urutan</td><td>INTEGER</td><td>Urutan tampil di pemilih lokasi</td></tr>
 </table>
 
-<h2>5. Alur analisis LLM</h2>
-<p>Tiga hal menjaga keluaran model tetap dapat dipercaya:</p>
+<h3>toilets</h3>
+<table class="kolom">
+  <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+  <tr><td>id</td><td>TEXT PK</td><td>Format <span class="mono">&lt;gedung&gt;-&lt;lantai&gt;-&lt;JENIS&gt;</span>, mis. <span class="mono">A-2-PRIA</span>. Generator QR dan tampilan lokasi bergantung pada format ini</td></tr>
+  <tr><td>gedung_kode</td><td>TEXT FK → gedung</td><td></td></tr>
+  <tr><td>lantai</td><td>INTEGER</td><td></td></tr>
+  <tr><td>jenis</td><td>TEXT</td><td><span class="mono">pria</span> | <span class="mono">wanita</span> | <span class="mono">disabilitas</span></td></tr>
+  <tr><td>aktif</td><td>INTEGER</td><td>0/1. Toilet yang dihapus dari daftar dinonaktifkan, bukan dihapus, agar riwayat laporan tetap utuh</td></tr>
+  <tr><td>created_at</td><td>TEXT</td><td></td></tr>
+</table>
+<p>Indeks: <span class="mono">idx_toilets_lokasi (gedung_kode, lantai, jenis)</span>.
+Saat ini 26 toilet aktif di 13 lantai pada 6 gedung (A lantai 1–3, B 1, C 1–5, G 1, H 1, I 1–2);
+tiap lantai diasumsikan punya WC pria dan wanita.</p>
 
-<h3>Prompt berbasis aturan, bukan contoh acak</h3>
-<p>Prompt sistem mendefinisikan enam kategori dan tiga tingkat prioritas dengan kriteria
-eksplisit berbasis risiko keselamatan — bukan berbasis kata kunci. Ditambah tiga contoh
-<em>few-shot</em> untuk mengunci gaya bahasa dan penerapan aturannya.</p>
+<h3>toilet_info (view)</h3>
+<p>Menggabungkan <span class="mono">toilets</span> dan <span class="mono">gedung</span>, dan merakit
+nama tampilan di satu tempat: <span class="mono">'WC Pria - Lantai 1, Gedung A (Ki Hajar Dewantara)'</span>.
+Dashboard, ringkasan harian, dan konteks yang dikirim ke LLM semuanya memakai nama ini.
+Kolom: <span class="mono">id, gedung_kode, gedung_nama, gedung_urutan, lantai, jenis, aktif, nama</span>.</p>
+
+<h3>reports</h3>
+<table class="kolom">
+  <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+  <tr><td>id</td><td>TEXT PK</td><td>UUID v4</td></tr>
+  <tr><td>toilet_id</td><td>TEXT FK → toilets</td><td></td></tr>
+  <tr><td>teks</td><td>TEXT</td><td>Keluhan mentah, 5–1000 karakter</td></tr>
+  <tr><td>foto_key</td><td>TEXT</td><td>Kunci objek R2 foto keadaan (<span class="mono">laporan/…</span>); wajib sejak versi berfoto</td></tr>
+  <tr><td>pelapor_id</td><td>TEXT FK → pengguna</td><td>NULL untuk laporan anonim; hanya yang terisi dihitung di papan peringkat</td></tr>
+  <tr><td>status</td><td>TEXT</td><td><span class="mono">baru</span> → <span class="mono">diproses</span> → <span class="mono">selesai</span> (CHECK)</td></tr>
+  <tr><td>petugas</td><td>TEXT</td><td>Nama petugas yang terakhir mengubah status</td></tr>
+  <tr><td>selesai_at</td><td>TEXT</td><td>Diisi saat status menjadi selesai, dikosongkan bila dibuka kembali</td></tr>
+  <tr><td>foto_selesai_key</td><td>TEXT</td><td>Kunci objek R2 foto bukti (<span class="mono">bukti/…</span>); hanya foto yang lolos verifikasi</td></tr>
+  <tr><td>bukti_ai_hasil</td><td>TEXT</td><td>Putusan model vision atas foto bukti yang diterima; dalam praktik selalu <span class="mono">bersih</span> (foto <span class="mono">kotor</span>/<span class="mono">bukan_toilet</span> tidak pernah disimpan)</td></tr>
+  <tr><td>bukti_ai_alasan</td><td>TEXT</td><td>Satu kalimat dari model, maks. 300 karakter</td></tr>
+  <tr><td>bukti_ai_model</td><td>TEXT</td><td>Nama model vision saat itu</td></tr>
+  <tr><td>bukti_ai_ms</td><td>INTEGER</td><td>Latensi pemeriksaan foto</td></tr>
+  <tr><td>ai_status</td><td>TEXT</td><td><span class="mono">pending</span> | <span class="mono">ok</span> | <span class="mono">gagal</span> (CHECK)</td></tr>
+  <tr><td>kategori</td><td>TEXT</td><td>Array JSON, mis. <span class="mono">["kebersihan","perlengkapan"]</span>; dibaca dengan <span class="mono">json_each</span> di grafik</td></tr>
+  <tr><td>prioritas</td><td>TEXT</td><td><span class="mono">rendah</span> | <span class="mono">sedang</span> | <span class="mono">tinggi</span> | NULL (CHECK)</td></tr>
+  <tr><td>ringkasan</td><td>TEXT</td><td>Satu kalimat netral dari LLM, maks. 300 karakter</td></tr>
+  <tr><td>rekomendasi</td><td>TEXT</td><td>Instruksi kerja dari LLM, maks. 500 karakter</td></tr>
+  <tr><td>ai_error</td><td>TEXT</td><td>Pesan galat terakhir (maks. 500 karakter), untuk analisis ulang</td></tr>
+  <tr><td>ai_model</td><td>TEXT</td><td>Nama model teks saat itu</td></tr>
+  <tr><td>ai_ms</td><td>INTEGER</td><td>Latensi panggilan LLM teks — bahan kuantitatif bab hasil</td></tr>
+  <tr><td>created_at, updated_at</td><td>TEXT</td><td></td></tr>
+</table>
+<p>Indeks: <span class="mono">created_at DESC</span>; <span class="mono">(status, created_at DESC)</span>;
+<span class="mono">(toilet_id, created_at DESC)</span>; <span class="mono">ai_status WHERE ai_status &lt;&gt; 'ok'</span>;
+<span class="mono">pelapor_id</span>.</p>
+
+<h3>pengguna</h3>
+<table class="kolom">
+  <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+  <tr><td>id</td><td>TEXT PK</td><td>UUID; admin bawaan <span class="mono">adm-0001</span></td></tr>
+  <tr><td>username</td><td>TEXT UNIQUE COLLATE NOCASE</td><td>3–30 karakter, <span class="mono">[a-zA-Z0-9._-]</span>; &lsquo;Budi&rsquo; dan &lsquo;budi&rsquo; dianggap sama</td></tr>
+  <tr><td>nama</td><td>TEXT</td><td>2–60 karakter, ditampilkan di dashboard dan jejak audit</td></tr>
+  <tr><td>peran</td><td>TEXT</td><td><span class="mono">admin</span> | <span class="mono">petugas</span> | <span class="mono">pelapor</span> (CHECK)</td></tr>
+  <tr><td>sandi_hash, sandi_salt</td><td>TEXT</td><td>PBKDF2-SHA256 100.000 iterasi, salt 16 byte per pengguna, keduanya heksadesimal</td></tr>
+  <tr><td>aktif</td><td>INTEGER</td><td>Akun nonaktif tidak bisa masuk; tidak pernah dihapus</td></tr>
+  <tr><td>created_at</td><td>TEXT</td><td></td></tr>
+</table>
+
+<h3>aktivitas</h3>
+<table class="kolom">
+  <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+  <tr><td>id</td><td>INTEGER PK AUTOINCREMENT</td><td></td></tr>
+  <tr><td>waktu</td><td>TEXT</td><td>UTC</td></tr>
+  <tr><td>aksi</td><td>TEXT</td><td>Sepuluh nilai, lihat bagian 10</td></tr>
+  <tr><td>report_id</td><td>TEXT</td><td><strong>Tanpa foreign key</strong>: tetap tercatat walau laporannya sudah dihapus</td></tr>
+  <tr><td>pelaku</td><td>TEXT</td><td>Nama petugas/admin, atau <span class="mono">pelapor</span> / <span class="mono">sistem</span></td></tr>
+  <tr><td>ringkas</td><td>TEXT</td><td>Satu baris yang langsung terbaca manusia</td></tr>
+  <tr><td>rincian</td><td>TEXT</td><td>JSON: perubahan nilai, putusan model, atau salinan utuh laporan yang dihapus</td></tr>
+</table>
+<p>Indeks: <span class="mono">waktu DESC</span>; <span class="mono">report_id</span>; <span class="mono">(aksi, waktu DESC)</span>.</p>
+
+<h3>daily_summaries</h3>
+<table class="kolom">
+  <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+  <tr><td>tanggal</td><td>TEXT PK</td><td><span class="mono">YYYY-MM-DD</span> menurut WIB</td></tr>
+  <tr><td>total_laporan</td><td>INTEGER</td><td></td></tr>
+  <tr><td>ringkasan</td><td>TEXT</td><td>Paragraf 2–4 kalimat</td></tr>
+  <tr><td>sorotan</td><td>TEXT</td><td>Array JSON, maks. 4 poin tindakan</td></tr>
+  <tr><td>created_at</td><td>TEXT</td><td>Diperbarui setiap kali ringkasan dibuat ulang (<em>upsert</em>)</td></tr>
+</table>
+
+<h3>Migrasi</h3>
+<table>
+  <tr><th>Berkas</th><th>Isi</th></tr>
+  <tr><td class="mono">0001_init.sql</td><td>Tabel <span class="mono">toilets</span>, <span class="mono">reports</span>, <span class="mono">daily_summaries</span> beserta indeks</td></tr>
+  <tr><td class="mono">0002_gedung_upi.sql</td><td>Tabel <span class="mono">gedung</span> berisi 10 gedung UPI Tasikmalaya; QR menjadi per lantai; view <span class="mono">toilet_info</span></td></tr>
+  <tr><td class="mono">0003_bukti_dan_aktivitas.sql</td><td>Kolom <span class="mono">foto_selesai_key</span>; tabel <span class="mono">aktivitas</span></td></tr>
+  <tr><td class="mono">0004_pengguna.sql</td><td>Tabel <span class="mono">pengguna</span> menggantikan sandi bersama; kolom <span class="mono">pelapor_id</span>; akun admin bawaan (<span class="mono">admin</span> / <span class="mono">Admin123!</span>)</td></tr>
+  <tr><td class="mono">0005_verifikasi_bukti.sql</td><td>Empat kolom <span class="mono">bukti_ai_*</span> untuk putusan model vision</td></tr>
+</table>
+
+<h3>Seed daftar toilet</h3>
+<p><span class="mono">seed/toilets.sql</span> aman dijalankan berulang, termasuk setelah laporan ada:
+ia menonaktifkan semua toilet (<span class="mono">UPDATE toilets SET aktif = 0</span>) lalu
+mengaktifkan kembali yang tercantum lewat <span class="mono">INSERT … ON CONFLICT(id) DO UPDATE</span>.
+Gedung D, E, F disiapkan sebagai baris berkomentar di bagian bawah; buka komentarnya begitu
+keberadaan toiletnya dipastikan, jalankan seed, lalu regenerasi QR — dalam urutan itu.</p>
+
+<h2 class="pecah">5. Lokasi dan kode QR</h2>
+<p>Satu kode QR mewakili <strong>satu lantai</strong> satu gedung, bukan satu toilet. URL yang
+dikodekan: <span class="mono">&lt;BASE_URL&gt;/lapor/&lt;gedung&gt;-&lt;lantai&gt;</span>, mis.
+<span class="mono">/lapor/A-1</span>. Jenis toilet (pria/wanita/disabilitas) dipilih pelapor di
+formulir. Keputusan ini memangkas jumlah stiker yang harus dicetak dan dirawat menjadi
+sepertiga.</p>
+<ul>
+  <li><span class="mono">GET /api/lokasi</span> mengelompokkan toilet aktif per gedung → daftar lantai; dipakai halaman depan (pemilih manual) dan generator QR.</li>
+  <li><span class="mono">GET /api/lokasi/:id</span> memvalidasi pola <span class="mono">^[A-Za-z]-\d{1,2}$</span>, huruf dibesarkan, lalu mengembalikan toilet aktif pada lantai itu terurut pria → wanita → disabilitas. Kode yang tidak dikenal → 404, dan halaman formulir menawarkan pemilihan manual.</li>
+</ul>
+<h3>Generator QR</h3>
+<pre>BASE_URL=https://ai-complaint.yvrtz.workers.dev npm run qr</pre>
+<p>Skrip mengambil <span class="mono">/api/lokasi</span> dari Worker (lokal <span class="mono">127.0.0.1:8787</span>
+bila <span class="mono">BASE_URL</span> kosong), <strong>mengosongkan</strong> folder
+<span class="mono">qr-codes/</span>, lalu menulis <span class="mono">&lt;gedung&gt;-&lt;lantai&gt;.png</span>
+(900 px) untuk tiap lantai dan <span class="mono">cetak.html</span> — lembar A4 berisi stiker
+dwibahasa 55 mm. Folder dikosongkan tiap kali agar kode dari daftar lokasi lama tidak pernah ikut
+tercetak. Saat ini: 13 kode (A-1, A-2, A-3, B-1, C-1…C-5, G-1, H-1, I-1, I-2).</p>
+
+<h2>6. Alur laporan dari ujung ke ujung</h2>
+<h3>Pengiriman</h3>
+<ol>
+  <li>Frontend memvalidasi: teks ≥ 5 karakter (maks. 1000), foto wajib, ukuran ≤ 5 MB.</li>
+  <li><span class="mono">POST /api/uploads?jenis=laporan</span> (multipart, kolom <span class="mono">file</span>): tipe harus JPEG/PNG/WebP (415 bila bukan), ≤ 5 MB (413 bila lebih). Mengembalikan <span class="mono">{key, url}</span>.</li>
+  <li><span class="mono">POST /api/reports</span> dengan <span class="mono">{toilet_id, teks, foto_key}</span>. Server memvalidasi ulang dengan Zod, memastikan toilet aktif (404 bila tidak), lalu memeriksa <strong>kembar</strong>: teks identik untuk toilet yang sama dalam 2 menit terakhir dianggap tombol kirim yang tertekan dua kali — id laporan lama dikembalikan dengan <span class="mono">duplikat: true</span> (200), tanpa analisis ulang.</li>
+  <li>Laporan baru disimpan (201), dicatat <span class="mono">aksi='lapor'</span>, dan analisis dijadwalkan lewat <span class="mono">ctx.waitUntil()</span>. Bila pengirim masuk sebagai pelapor, <span class="mono">pelapor_id</span> terisi.</li>
+  <li>Browser diarahkan ke <span class="mono">/laporan/&lt;id&gt;</span>.</li>
+</ol>
+<h3>Halaman status</h3>
+<p>Halaman memanggil <span class="mono">GET /api/reports/:id</span> setiap 2 detik selama
+<span class="mono">ai_status='pending'</span> (maksimal 20 kali ≈ 40 detik), lalu setiap 15 detik
+untuk menangkap perubahan status oleh petugas; tab yang tersembunyi diperiksa tiap 15 detik.
+Ditampilkan: linimasa tiga tahap (diterima → dikerjakan → selesai, dengan nama petugas), hasil
+analisis begitu tersedia, atau pesan bahwa analisis belum berhasil tetapi laporan tetap tercatat.
+Pelapor anonim diminta menyimpan tautan; pelapor berakun melihatnya juga di &ldquo;Laporan saya&rdquo;
+(<span class="mono">GET /api/reports/saya</span>, 50 terbaru).</p>
+<h3>Di dashboard</h3>
+<p><span class="mono">GET /api/reports</span> mengurutkan: status (baru, diproses, selesai) →
+prioritas (tinggi, sedang, rendah, belum dianalisis) → terbaru. Filter: <span class="mono">status,
+prioritas, toilet_id, gedung, tanggal</span> (hari WIB), <span class="mono">limit</span> bawaan 100,
+maks. 200. Dashboard memuat ulang tiap 30 detik. Transisi status:</p>
+<table>
+  <tr><th>Tombol</th><th>Permintaan</th><th>Syarat</th></tr>
+  <tr><td>Kerjakan</td><td><span class="mono">PATCH {status:'diproses'}</span></td><td>—; <span class="mono">petugas</span> diisi nama pengubah</td></tr>
+  <tr><td>Tandai selesai</td><td>unggah foto <span class="mono">jenis=bukti</span>, lalu <span class="mono">PATCH {status:'selesai', foto_selesai_key}</span></td><td>Foto harus lolos model vision (bagian 8). Tanpa foto → 400; ditolak → 422; pemeriksa gagal → 502</td></tr>
+  <tr><td>Analisis ulang</td><td><span class="mono">POST /:id/analisa-ulang</span></td><td>Muncul hanya bila <span class="mono">ai_status='gagal'</span>; mengembalikan ke <span class="mono">pending</span> lalu menjalankan analisis; UI memuat ulang 3 detik kemudian</td></tr>
+  <tr><td>Hapus</td><td><span class="mono">DELETE /:id</span></td><td>Konfirmasi di browser; salinan utuh ditulis ke jejak audit, lalu baris dan kedua fotonya dihapus</td></tr>
+</table>
+
+<h2 class="pecah">7. Analisis LLM teks</h2>
+<h3>Prompt berbasis aturan</h3>
+<p>Prompt sistem (bahasa Indonesia) memerankan model sebagai asisten petugas kebersihan dan
+mendefinisikan:</p>
+<table>
+  <tr><th>Kategori</th><th>Cakupan</th></tr>
+  <tr><td class="mono">kebersihan</td><td>kotor, jorok, noda, sampah berserakan, lantai dekil, coretan</td></tr>
+  <tr><td class="mono">perlengkapan</td><td>sabun/tisu/pengharum habis, tidak ada gayung, tempat sampah tidak tersedia</td></tr>
+  <tr><td class="mono">kerusakan</td><td>kloset mampet, keran/flush rusak, pintu/kunci/lampu rusak, kaca pecah</td></tr>
+  <tr><td class="mono">bau</td><td>bau tidak sedap, pesing, menyengat</td></tr>
+  <tr><td class="mono">genangan</td><td>lantai becek, air tergenang, meluap, bocor</td></tr>
+  <tr><td class="mono">lainnya</td><td>selain di atas; juga untuk teks yang tidak jelas atau bukan keluhan toilet</td></tr>
+</table>
+<table>
+  <tr><th>Prioritas</th><th>Kriteria (berbasis risiko keselamatan, bukan kata kunci)</th></tr>
+  <tr><td class="mono">tinggi</td><td>Ada risiko keselamatan atau toilet praktis tidak bisa dipakai: air meluap, kloset mampet, lantai licin parah, lampu mati total, pintu tidak bisa dikunci, bau sangat menyengat, pecahan kaca, banyak masalah sekaligus</td></tr>
+  <tr><td class="mono">sedang</td><td>Mengganggu kenyamanan tetapi toilet masih bisa dipakai: bau biasa, lantai kotor, sabun habis, tempat sampah penuh</td></tr>
+  <tr><td class="mono">rendah</td><td>Keluhan kecil atau antisipatif: tisu hampir habis, sedikit noda, cermin buram, saran</td></tr>
+</table>
+<p>Aturan penulisan: <span class="mono">ringkasan</span> satu kalimat netral ≤ 15 kata dengan istilah
+baku; <span class="mono">rekomendasi</span> ≤ 2 kalimat, masalah yang paling berisiko mencelakakan
+didahulukan; dilarang mengarang masalah yang tidak disebut pelapor. Tiga contoh <em>few-shot</em>
+mengunci gaya dan penerapan aturan. Pesan pengguna berbentuk
+<span class="mono">Lokasi: …\nKeluhan: …</span>.</p>
 
 <h3>Validasi berlapis</h3>
-<pre>respons JSON → Zod schema → coerceAnalisis() → enum basis data</pre>
-<p>Kategori di luar daftar dibuang; prioritas tak dikenal jatuh ke <span class="mono">sedang</span>.
-Model tidak pernah bisa menuliskan nilai yang tidak dikenal basis data.</p>
+<pre>respons JSON → Zod (kategori: string[] ≥1, prioritas, ringkasan, rekomendasi) → coerceAnalisis() → enum basis data</pre>
+<ul>
+  <li>Kategori dihuruf-kecilkan, dirapikan, yang di luar daftar dibuang; bila kosong → <span class="mono">["lainnya"]</span>.</li>
+  <li>Prioritas tak dikenal → <span class="mono">sedang</span>.</li>
+  <li>Ringkasan dipotong 300 karakter, rekomendasi 500.</li>
+  <li>Bila model membungkus JSON dalam <span class="mono">```json</span>, objek pertama diekstrak dengan regex sebelum diparse.</li>
+</ul>
 
 <h3>Asinkron dan tahan gagal</h3>
-<p>Analisis dijalankan lewat <span class="mono">ctx.waitUntil()</span> setelah respons dikirim,
-sehingga pelapor menerima konfirmasi seketika. Kegagalan ditandai
-<span class="mono">ai_status='gagal'</span> beserta pesan errornya; laporan tetap tampil di
-dashboard dan dapat dianalisis ulang. Latensi tiap panggilan disimpan di kolom
-<span class="mono">ai_ms</span> sebagai data kuantitatif.</p>
+<p><span class="mono">jalankanAnalisis()</span> dipanggil lewat <span class="mono">ctx.waitUntil()</span>
+setelah respons 201 dikirim. Ia tidak pernah melempar: sukses → <span class="mono">ai_status='ok'</span>,
+model dan latensi tersimpan, dicatat <span class="mono">aksi='analisis'</span>; gagal →
+<span class="mono">ai_status='gagal'</span> + <span class="mono">ai_error</span>, dicatat
+<span class="mono">aksi='analisis_gagal'</span>. Laporan tetap tampil di dashboard tanpa label dan
+dapat dianalisis ulang. Bila API DeepSeek mati, sistem menurun menjadi alat pelaporan biasa,
+bukan gagal.</p>
 
-<h2>6. Keamanan dan wewenang</h2>
-<table>
-  <tr><th>Aspek</th><th>Penerapan</th></tr>
-  <tr><td>Kata sandi</td><td>PBKDF2-SHA256, 100.000 iterasi, salt 16 byte per pengguna, lewat WebCrypto</td></tr>
-  <tr><td>Sesi</td><td>JWT HS256 dalam cookie <span class="mono">HttpOnly</span>, <span class="mono">SameSite=Lax</span>, masa berlaku 12 jam</td></tr>
-  <tr><td>Wewenang</td><td>Middleware <span class="mono">wajibPeran()</span>; tiap endpoint menyebut sendiri peran yang boleh</td></tr>
-  <tr><td>Enumerasi akun</td><td>Pesan galat identik untuk akun tak dikenal dan sandi salah</td></tr>
-  <tr><td>Perbandingan hash</td><td>Waktu-konstan, agar lama respons tidak membocorkan isi hash</td></tr>
-  <tr><td>Akses berkas</td><td>Hanya prefix <span class="mono">laporan/</span> dan <span class="mono">bukti/</span> yang boleh dibaca</td></tr>
-</table>
+<h3>Ringkasan harian</h3>
+<p><span class="mono">ringkasHarian()</span> mengirim daftar bernomor
+<span class="mono">[prioritas] lokasi - ringkasan|teks</span> seluruh laporan pada satu hari WIB dan
+meminta paragraf 2–4 kalimat berangka konkret plus ≤ 4 sorotan tindakan ≤ 12 kata, tanpa mengarang di
+luar daftar. Hari tanpa laporan <strong>tidak memanggil LLM</strong>; disimpan kalimat tetap
+&ldquo;Tidak ada keluhan yang masuk pada hari ini.&rdquo;</p>
 
-<p>Batas wewenang diuji langsung terhadap sistem berjalan: <span class="mono">GET /api/reports</span>
-tanpa sesi menghasilkan <strong>401</strong>, akun pelapor yang mengakses
-<span class="mono">/api/pengguna</span> menghasilkan <strong>403</strong>, dan admin tidak dapat
-menonaktifkan akunnya sendiri.</p>
+<h2 class="pecah">8. Verifikasi foto bukti (LLM vision)</h2>
+<p>Foto bukti semula hanya membuktikan bahwa <em>sesuatu</em> difoto. Kini foto itu dinilai lebih
+dulu, di dalam <span class="mono">ubahStatus()</span> pada <span class="mono">report-service.ts</span>,
+sehingga berlaku untuk pemanggil mana pun.</p>
 
-<h2 class="pecah">7. Empat keputusan rancangan yang berbiaya</h2>
+<pre>petugas unggah foto  →  R2 (prefix bukti/)
+PATCH /api/reports/:id {status:'selesai', foto_selesai_key}
+   ├─ bacaFoto(): objek dibaca dari R2 (hanya prefix laporan/ dan bukti/), 
+   │  dikodekan base64 per potongan 32 KB (btoa), dikirim sebagai data URL
+   ├─ periksaFotoBukti(): prompt sistem + [teks konteks, image_url detail:low]
+   ├─ model menjawab {"toilet":bool,"bersih":bool,"keyakinan":0-1,"alasan":"…"}
+   ├─ toilet=false            → hasil 'bukan_toilet'
+   ├─ toilet=true, bersih=false → hasil 'kotor'
+   ├─ bersih                  → status=selesai, bukti_ai_* terisi, aksi='status'      (200)
+   ├─ kotor / bukan_toilet    → foto dihapus dari R2, aksi='bukti_ditolak'            (422)
+   └─ pemeriksa gagal         → foto dihapus, aksi='verifikasi_gagal'                 (502)</pre>
 
-<h3>Jejak audit sengaja tanpa foreign key</h3>
-<p>Tabel <span class="mono">aktivitas</span> tidak menunjuk <span class="mono">reports</span>
-dengan foreign key. Alasannya justru laporan yang <em>dihapus</em>-lah yang paling perlu
-terlacak. Saat penghapusan, seluruh isi laporan disalin ke kolom
-<span class="mono">rincian</span> sebelum barisnya hilang, lengkap dengan pelaku dan waktunya.
-Foreign key akan memaksa baris audit ikut terhapus — kebalikan dari tujuannya.</p>
+<h3>Kriteria dalam prompt</h3>
+<ul>
+  <li><strong>toilet</strong>: harus memperlihatkan bagian dalam toilet/kamar mandi (kloset, urinoir, wastafel, lantai kamar mandi, bilik). Koridor, orang, layar, langit-langit, foto gelap/blur → <span class="mono">false</span>.</li>
+  <li><strong>bersih</strong>: <em>tidak</em> bersih bila terlihat kotoran/noda, sampah, tisu bekas di lantai, genangan atau lantai basah merata, tempat sampah meluap, coretan, kerak tebal, atau bekas keluhan yang jelas belum ditangani. Noda permanen kecil, keramik tua, lantai lembap tipis bekas pel masih bersih.</li>
+  <li>Keluhan asli (kategori + teks) dijadikan konteks: bila keluhannya terlihat di foto (sampah, genangan), periksa apakah sudah hilang; keluhan yang tak terlihat (bau, sabun habis) tidak boleh menjadi alasan menolak.</li>
+  <li>Bila ragu, pilih tidak bersih. Dilarang mengarang detail. Alasan ≤ 25 kata, bahasa Indonesia.</li>
+</ul>
 
-<h3>Penyelesaian menuntut bukti, ditolak di server</h3>
-<p>Baik foto keadaan dari pelapor maupun foto bukti dari petugas divalidasi di sisi server,
-bukan sekadar disembunyikan di antarmuka. Status <span class="mono">selesai</span> tanpa
-<span class="mono">foto_selesai_key</span> dijawab <strong>400</strong>.</p>
+<h3>Validasi keluaran</h3>
+<pre>respons JSON → Zod (toilet, bersih: boolean longgar; keyakinan?: 0–1; alasan: string) → hasil ∈ {bersih, kotor, bukan_toilet}</pre>
+<p>Boolean yang datang sebagai string (&ldquo;true&rdquo;, &ldquo;ya&rdquo;, &ldquo;yes&rdquo;, &ldquo;1&rdquo;)
+diterima lewat <span class="mono">z.preprocess</span> — <span class="mono">z.coerce.boolean()</span>
+sengaja tidak dipakai karena akan mengubah string &ldquo;false&rdquo; menjadi <span class="mono">true</span>.
+Alasan dipotong 300 karakter.</p>
 
-<h3>Foto tidak melewati domain pihak ketiga</h3>
-<p>Endpoint <span class="mono">GET /api/uploads/&lt;key&gt;</span> membaca objek langsung dari
-binding R2. Selain menghilangkan kebutuhan membuka bucket ke publik, ini menghindari domain
-<span class="mono">pub-*.r2.dev</span> yang DNS-nya dibajak sebagian ISP di Indonesia —
-terverifikasi saat pengembangan: resolver lokal mengembalikan alamat non-Cloudflare dan
-koneksi TLS gagal, sedangkan lewat 1.1.1.1 hostname yang sama benar mengarah ke Cloudflare.</p>
+<h3>Anggaran token untuk model &ldquo;berpikir&rdquo;</h3>
+<p>Gemini 3.x menghabiskan sebagian <span class="mono">max_tokens</span> untuk penalaran sebelum
+menjawab. Batas 300 token yang semula dipakai memotong JSON di tengah jalan dan muncul sebagai galat
+&ldquo;Respons LLM bukan JSON&rdquo;; anggaran dinaikkan ke 2.000. Jawaban akhirnya tetap pendek
+karena alasannya dibatasi 25 kata.</p>
 
-<h3>Warna grafik dihitung, bukan dikira-kira</h3>
-<p>Palet deret dan palet prioritas lolos pemeriksaan rentang terang, ambang chroma,
-keterpisahan bagi buta warna (deutan/protan/tritan), dan kontras terhadap latar. Ramp
-sekuensial untuk <em>heatmap</em> diverifikasi monoton dalam luminansi (0,933 → 0,164).</p>
-
-<h2>8. Antarmuka API</h2>
-<table>
-  <tr><th>Akses</th><th class="mono">Endpoint</th><th>Keterangan</th></tr>
-  <tr><td rowspan="6">Publik</td><td class="mono">POST /api/auth/masuk · /daftar · /keluar</td><td>Sesi</td></tr>
-  <tr><td class="mono">GET /api/lokasi · /api/lokasi/:id</td><td>Gedung dan lantai; tujuan QR</td></tr>
-  <tr><td class="mono">POST /api/reports</td><td>Kirim laporan (foto wajib)</td></tr>
-  <tr><td class="mono">GET /api/reports/publik</td><td>Papan laporan terbuka</td></tr>
-  <tr><td class="mono">POST/GET /api/uploads</td><td>Unggah dan sajikan foto</td></tr>
-  <tr><td class="mono">GET /api/peringkat</td><td>Papan peringkat pelapor</td></tr>
-  <tr><td rowspan="4">Petugas</td><td class="mono">GET /api/reports</td><td>Daftar dashboard berikut filter</td></tr>
-  <tr><td class="mono">PATCH /api/reports/:id</td><td>Ubah status (bukti wajib untuk menutup)</td></tr>
-  <tr><td class="mono">DELETE /api/reports/:id</td><td>Hapus permanen, dicatat utuh</td></tr>
-  <tr><td class="mono">GET /api/summary/* · /api/aktivitas</td><td>Statistik, grafik, jejak audit</td></tr>
-  <tr><td>Admin</td><td class="mono">GET/POST/PATCH /api/pengguna</td><td>Kelola akun petugas</td></tr>
-</table>
-
-<h2>9. Penyebaran</h2>
-<pre>npx wrangler secret put LLM_API_KEY
-npx wrangler secret put AUTH_SECRET
-
-npm run db:remote        # migrasi D1 produksi
-npm run db:seed:remote   # daftar toilet
-npm run deploy</pre>
-
-<p>Cloudflare Workers Builds cukup disetel dengan perintah deploy
-<span class="mono">npx wrangler deploy</span>; frontend dibangun sendiri lewat
-<span class="mono">build.command</span> yang juga memasang dependensi pada checkout bersih.
-Cron <span class="mono">0 10 * * *</span> (17.00 WIB) memicu penyusunan ringkasan harian.</p>
+<h3>Apa yang disimpan, apa yang dibuang</h3>
+<ul>
+  <li>Foto yang <strong>diterima</strong>: kunci tersimpan di <span class="mono">foto_selesai_key</span>, putusan di <span class="mono">bukti_ai_hasil/alasan/model/ms</span>, dan salinan putusan ikut di <span class="mono">rincian</span> baris <span class="mono">aksi='status'</span>.</li>
+  <li>Foto yang <strong>ditolak</strong> atau gagal diperiksa: dihapus dari R2 (bucket hanya berisi bukti yang lolos), putusan/galat tercatat di jejak audit beserta alasan, keyakinan, model, dan latensi — cukup untuk menghitung tingkat penolakan.</li>
+  <li>Foto bukti dari sebelum fitur ini ada (<span class="mono">bukti_ai_hasil</span> NULL) tidak dianggap terverifikasi; bila laporan itu dibuka kembali dan hendak ditutup, petugas harus mengunggah foto baru.</li>
+</ul>
 
 <div class="peringatan">
-  <strong>Wajib dilakukan sebelum dipakai sungguhan:</strong> ganti kata sandi admin bawaan.
-  Nilainya tercatat di berkas migrasi yang ter-commit sehingga harus dianggap publik.
+  <strong>Pemadaman layanan vision tidak menurunkan standar.</strong> Bila endpoint tidak dapat
+  dihubungi, penutupan ditolak dengan 502 &ldquo;coba lagi&rdquo;, bukan diloloskan tanpa
+  pemeriksaan. Ini berbeda dari analisis teks yang sengaja <em>degrade</em>: keluhan yang tidak
+  dianalisis masih berguna, sedangkan bukti yang tidak diperiksa tidak.
 </div>
+
+<h2 class="pecah">9. Akun, sesi, dan wewenang</h2>
+<table>
+  <tr><th>Peran</th><th>Cara akun dibuat</th><th>Wewenang</th></tr>
+  <tr><td class="mono">admin</td><td>Bawaan migrasi 0004 (<span class="mono">admin</span> / <span class="mono">Admin123!</span>)</td><td>Semua wewenang petugas + kelola akun petugas (<span class="mono">/api/pengguna</span>)</td></tr>
+  <tr><td class="mono">petugas</td><td>Dibuat admin</td><td>Daftar dashboard, ubah status, unggah bukti, analisis ulang, hapus laporan, statistik/grafik, jejak audit, buat ringkasan</td></tr>
+  <tr><td class="mono">pelapor</td><td>Mendaftar sendiri di <span class="mono">/daftar</span></td><td>Melapor atas nama, &ldquo;Laporan saya&rdquo;, posisi di papan peringkat</td></tr>
+  <tr><td>tanpa akun</td><td>—</td><td>Melapor anonim, melacak lewat tautan, membaca papan publik dan peringkat</td></tr>
+</table>
+<table>
+  <tr><th>Aspek</th><th>Penerapan</th></tr>
+  <tr><td>Kata sandi</td><td>PBKDF2-SHA256, 100.000 iterasi, salt 16 byte per pengguna, WebCrypto; teks asli tidak pernah disimpan. Mengganti sandi juga mengganti salt</td></tr>
+  <tr><td>Sesi</td><td>JWT HS256 (<span class="mono">{id, nama, peran, exp}</span>) ditandatangani <span class="mono">AUTH_SECRET</span>, dalam cookie <span class="mono">sesi</span>: <span class="mono">HttpOnly</span>, <span class="mono">SameSite=Lax</span>, <span class="mono">Secure</span> di HTTPS, <span class="mono">path=/</span>, umur 12 jam (satu shift)</td></tr>
+  <tr><td>Wewenang</td><td><span class="mono">wajibPeran(...peran)</span>: 401 tanpa sesi, 403 bila peran tidak termasuk. Admin tidak mendapat akses menyeluruh secara implisit — setiap endpoint menyebut sendiri peran yang boleh (<span class="mono">wajibPetugas</span> = admin+petugas, <span class="mono">wajibAdmin</span>)</td></tr>
+  <tr><td>Pendaftaran</td><td>Hanya pernah membuat <span class="mono">pelapor</span>; akun petugas hanya dari admin. Username unik tanpa peduli huruf besar-kecil (409 bila dipakai)</td></tr>
+  <tr><td>Enumerasi akun</td><td>Akun tak dikenal, akun nonaktif, dan sandi salah semuanya dijawab 401 dengan pesan yang sama</td></tr>
+  <tr><td>Perbandingan hash</td><td>Waktu-konstan (XOR seluruh karakter), agar lama respons tidak membocorkan isi hash</td></tr>
+  <tr><td>Pengaman admin</td><td>Admin tidak dapat menonaktifkan akunnya sendiri (400 &ldquo;kunci diri sendiri&rdquo;)</td></tr>
+  <tr><td>Masuk petugas dicatat</td><td>Sign-in admin/petugas ditulis ke jejak audit (<span class="mono">aksi='masuk'</span>); sign-in pelapor tidak</td></tr>
+</table>
+
+<h2>10. Jejak audit</h2>
+<p>Setiap pergerakan ditulis ke <span class="mono">aktivitas</span> lewat <span class="mono">catat()</span>.
+Kegagalan mencatat <strong>tidak pernah</strong> menggagalkan tindakan yang dicatat — menerima laporan
+lebih penting daripada merekamnya — galatnya hanya dicetak ke log Worker. Baris tidak pernah diubah
+atau dihapus lewat aplikasi.</p>
+<table>
+  <tr><th class="mono">aksi</th><th>Pelaku</th><th>Kapan</th><th>Isi <span class="mono">rincian</span></th></tr>
+  <tr><td class="mono">lapor</td><td>nama pelapor / <span class="mono">pelapor</span></td><td>Laporan baru diterima</td><td>toilet_id, teks</td></tr>
+  <tr><td class="mono">analisis</td><td class="mono">sistem</td><td>Analisis teks selesai</td><td>kategori, prioritas, model</td></tr>
+  <tr><td class="mono">analisis_gagal</td><td class="mono">sistem</td><td>Analisis teks gagal</td><td>error (≤300 karakter)</td></tr>
+  <tr><td class="mono">status</td><td>petugas</td><td>Status berubah</td><td>dari, ke, foto_bukti, verifikasi {hasil, alasan, model, ms}</td></tr>
+  <tr><td class="mono">bukti_ditolak</td><td>petugas</td><td>Foto bukti dinilai kotor/bukan toilet</td><td>hasil, alasan, keyakinan, model, ms</td></tr>
+  <tr><td class="mono">verifikasi_gagal</td><td>petugas</td><td>Layanan vision tidak dapat dihubungi / respons rusak</td><td>error (≤300 karakter), model</td></tr>
+  <tr><td class="mono">hapus</td><td>petugas</td><td>Laporan dihapus</td><td>salinan: toilet_nama, teks, status, prioritas, kategori, ringkasan, dibuat, ada_foto</td></tr>
+  <tr><td class="mono">masuk</td><td>admin/petugas</td><td>Sign-in ke dashboard</td><td>—</td></tr>
+  <tr><td class="mono">ringkasan</td><td class="mono">sistem</td><td>Ringkasan harian disusun (cron atau tombol)</td><td>—</td></tr>
+  <tr><td class="mono">pengguna</td><td>admin</td><td>Akun petugas dibuat/diubah</td><td>—; ringkas menyebut kolom yang diubah</td></tr>
+</table>
+<p>Tab Aktivitas di dashboard memfilter per aksi, menampilkan 100 baris terbaru (maks. 300 lewat API),
+dan membentangkan salinan laporan yang dihapus secara langsung tanpa perlu diklik.</p>
+
+<h2 class="pecah">11. Ringkasan harian, statistik, dan grafik</h2>
+<h3>Cron</h3>
+<p><span class="mono">"crons": ["0 10 * * *"]</span> — 10.00 UTC = 17.00 WIB. Penangan
+<span class="mono">scheduled()</span> memanggil <span class="mono">buatRingkasanHarian(tanggalWIB())</span>
+lewat <span class="mono">ctx.waitUntil()</span>. Tombol &ldquo;Buat ulang&rdquo; di dashboard
+(<span class="mono">POST /api/summary/generate</span>) menjalankan hal yang sama kapan saja dan menimpa
+ringkasan hari itu (<em>upsert</em>). Secara lokal, cron dapat dipicu dengan
+<span class="mono">wrangler dev --test-scheduled</span> lalu membuka <span class="mono">/__scheduled</span>.</p>
+
+<h3>Kartu angka (<span class="mono">GET /api/summary/stats</span>)</h3>
+<p>Untuk satu hari WIB (bawaan hari ini): total laporan, jumlah per prioritas, jumlah analisis gagal;
+<strong>belum selesai</strong> (sepanjang waktu, status ≠ selesai); lima lokasi terbanyak hari itu.</p>
+
+<h3>Data grafik (<span class="mono">GET /api/summary/grafik?hari=14</span>, maks. 90)</h3>
+<p>Dihitung dalam dua <em>batch</em> D1. Hari kosong diisi nol, bukan dilewati — celah terbaca sebagai
+data hilang, nol terbaca sebagai &ldquo;tidak ada laporan&rdquo;, dan itulah kebenarannya.</p>
+<table>
+  <tr><th>Bidang</th><th>Isi</th><th>Rentang</th><th>Pertanyaan yang dijawab di tab Grafik</th></tr>
+  <tr><td class="mono">tren</td><td>laporan, laporan_lalu, perubahan %, selesai, tinggi</td><td>jendela <em>n</em> hari vs <em>n</em> hari sebelumnya</td><td>Empat kartu KPI: laporan masuk (+/− %), prioritas tinggi, tingkat penyelesaian, rata-rata waktu penyelesaian</td></tr>
+  <tr><td class="mono">harian</td><td>total, selesai per tanggal</td><td><em>n</em> hari</td><td>Grafik garis &ldquo;Laporan 14 hari terakhir&rdquo;</td></tr>
+  <tr><td class="mono">harianPrioritas</td><td>tinggi/sedang/rendah per tanggal</td><td><em>n</em> hari</td><td>Batang bertumpuk: apakah beban yang berat bertambah, atau hanya jumlahnya?</td></tr>
+  <tr><td class="mono">jamHari</td><td>jumlah per hari-dalam-minggu × jam WIB</td><td>sepanjang waktu</td><td>Peta panas &ldquo;Kapan keluhan masuk&rdquo; — dasar jadwal ronda</td></tr>
+  <tr><td class="mono">matriks</td><td>jumlah per gedung × kategori</td><td>sepanjang waktu</td><td>Peta panas &ldquo;Gedung × jenis masalah&rdquo;</td></tr>
+  <tr><td class="mono">waktuPrioritas</td><td>jumlah dan rata-rata menit penyelesaian per prioritas</td><td>sepanjang waktu, yang sudah selesai</td><td>&ldquo;Waktu penyelesaian per prioritas&rdquo; — uji nyata: prioritas tinggi harus lebih cepat</td></tr>
+  <tr><td class="mono">gedung</td><td>jumlah per gedung, 10 teratas</td><td>sepanjang waktu</td><td>Batang &ldquo;Laporan per gedung&rdquo;</td></tr>
+  <tr><td class="mono">kategori, prioritas</td><td>jumlah per kategori / per prioritas</td><td>sepanjang waktu</td><td>Sebaran (kategori dihitung dengan <span class="mono">json_each</span>, satu laporan dapat masuk beberapa kategori)</td></tr>
+  <tr><td class="mono">penyelesaian</td><td>jumlah selesai dan rata-rata menit</td><td>sepanjang waktu</td><td>Kartu &ldquo;Rata-rata waktu penyelesaian&rdquo;</td></tr>
+</table>
+<p>Waktu penyelesaian = <span class="mono">selesai_at − created_at</span> dalam menit
+(<span class="mono">julianday</span>). Pengelompokan per hari memakai
+<span class="mono">date(created_at, '+7 hours')</span> sehingga &ldquo;hari&rdquo; berarti hari WIB.</p>
+
+<h2>12. Papan publik dan papan peringkat</h2>
+<h3>Papan publik (<span class="mono">/laporan</span>)</h3>
+<p>Dapat dibaca tanpa login. <span class="mono">GET /api/reports/publik</span> memakai filter yang sama
+dengan dashboard tetapi <strong>hanya</strong> mengembalikan: id, status, prioritas, kategori,
+ringkasan, ai_status, waktu, selesai_at, lokasi, dan URL foto bukti. Teks mentah, foto pelapor, dan
+nama petugas sengaja tidak ikut — agar papan tidak menjadi saluran teks keluhan yang belum
+disaring atau memuat wajah yang tak sengaja terfoto. Foto bukti ditampilkan karena itulah yang
+membuat klaim &ldquo;sudah ditangani&rdquo; dapat diperiksa siapa pun. Ikut dikembalikan hitungan
+<span class="mono">{total, selesai}</span> seluruh laporan.</p>
+<h3>Papan peringkat (<span class="mono">/peringkat</span>)</h3>
+<p>20 pelapor teratas diurutkan jumlah laporan, lalu jumlah selesai, lalu nama. Hanya laporan
+dengan <span class="mono">pelapor_id</span> yang dihitung. Pelapor yang sedang masuk juga menerima
+posisinya sendiri (<span class="mono">saya: {peringkat, laporan}</span>; peringkat = 1 + jumlah pelapor
+yang laporannya lebih banyak), termasuk bila berada di luar 20 besar.</p>
+
+<h2 class="pecah">13. Penyimpanan foto</h2>
+<table>
+  <tr><th>Aspek</th><th>Penerapan</th></tr>
+  <tr><td>Bucket</td><td>R2 <span class="mono">kato</span>, binding <span class="mono">BUCKET</span>, <strong>tanpa akses publik</strong></td></tr>
+  <tr><td>Kunci objek</td><td><span class="mono">&lt;laporan|bukti&gt;/&lt;YYYY-MM-DD&gt;/&lt;uuid&gt;.&lt;jpg|png|webp&gt;</span>; prefix tanggal memudahkan penelusuran dan pembersihan per periode</td></tr>
+  <tr><td>Batas unggah</td><td>≤ 5 MB; tipe <span class="mono">image/jpeg</span>, <span class="mono">image/png</span>, <span class="mono">image/webp</span>; tanpa kompresi di sisi klien</td></tr>
+  <tr><td>Unggah</td><td>Lewat binding (Worker mengalirkan body ke bucket), bukan <em>presigned URL</em> — tidak ada kredensial S3 di mana pun</td></tr>
+  <tr><td>Penyajian</td><td><span class="mono">GET /api/uploads/&lt;key&gt;</span> hanya untuk prefix <span class="mono">laporan/</span> dan <span class="mono">bukti/</span>; <span class="mono">Cache-Control: public, max-age=31536000, immutable</span> (nama UUID tak pernah ditimpa); <span class="mono">ETag</span> + <span class="mono">If-None-Match</span> → 304</td></tr>
+  <tr><td>Pembacaan untuk vision</td><td><span class="mono">bacaFoto()</span> memuat seluruh objek ke memori lalu dikodekan base64 — 5 MB → ~6,7 MB data URL, jauh di bawah batas memori Worker</td></tr>
+  <tr><td>Penghapusan</td><td>Saat laporan dihapus: kedua foto dihapus <em>setelah</em> baris dan log ditulis; foto bukti yang ditolak/gagal diperiksa dihapus seketika. Penghapusan foto tidak pernah menggagalkan operasi induknya</td></tr>
+  <tr><td>Mengapa bukan r2.dev</td><td>DNS <span class="mono">pub-*.r2.dev</span> dibajak sebagian ISP Indonesia — terverifikasi saat pengembangan: resolver lokal mengembalikan alamat non-Cloudflare dan TLS gagal, sedangkan lewat 1.1.1.1 benar. Menyajikan dari origin sendiri menghilangkan ketergantungan itu</td></tr>
+</table>
+
+<h2>14. Referensi API lengkap</h2>
+<p>Semua respons JSON. Galat selalu berbentuk <span class="mono">{"error": "pesan"}</span>, kadang
+dengan bidang tambahan. Body permintaan JSON kecuali unggah (multipart). Sesi dibawa oleh cookie.</p>
+
+<h3>Publik</h3>
+<table>
+  <tr><th>Endpoint</th><th>Permintaan</th><th>Respons</th><th>Galat</th></tr>
+  <tr><td class="mono">GET /api/health</td><td>—</td><td class="mono">{ok:true, waktu}</td><td></td></tr>
+  <tr><td class="mono">POST /api/auth/masuk</td><td class="mono">{username, password}</td><td class="mono">{id, nama, peran}</td><td>400 kosong; 401 salah/nonaktif</td></tr>
+  <tr><td class="mono">POST /api/auth/daftar</td><td class="mono">{username, nama, password}</td><td>201 <span class="mono">{id, nama, peran:'pelapor'}</span></td><td>400 validasi; 409 username dipakai</td></tr>
+  <tr><td class="mono">POST /api/auth/keluar</td><td>—</td><td class="mono">{ok:true}</td><td></td></tr>
+  <tr><td class="mono">GET /api/auth/saya</td><td>—</td><td class="mono">{id, nama, peran}</td><td>401 belum masuk</td></tr>
+  <tr><td class="mono">GET /api/lokasi</td><td>—</td><td class="mono">{data:[{kode, nama, lantai:[…]}]}</td><td></td></tr>
+  <tr><td class="mono">GET /api/lokasi/:id</td><td><span class="mono">A-1</span></td><td class="mono">{gedung_kode, gedung_nama, lantai, toilets:[{id, jenis}]}</td><td>404 tidak dikenal</td></tr>
+  <tr><td class="mono">POST /api/uploads?jenis=laporan|bukti</td><td>multipart <span class="mono">file</span></td><td>201 <span class="mono">{key, url}</span></td><td>400 tanpa berkas; 413 &gt; 5 MB; 415 tipe</td></tr>
+  <tr><td class="mono">GET /api/uploads/:key</td><td>—</td><td>biner + cache header; 304</td><td>404 prefix salah/tak ada</td></tr>
+  <tr><td class="mono">POST /api/reports</td><td class="mono">{toilet_id, teks, foto_key}</td><td>201 <span class="mono">{id, toilet, duplikat:false}</span> atau 200 <span class="mono">{…, duplikat:true}</span></td><td>400 validasi; 404 toilet tak dikenal</td></tr>
+  <tr><td class="mono">GET /api/reports/publik</td><td><span class="mono">?status&amp;prioritas&amp;limit</span></td><td class="mono">{data:[LaporanPublik], jumlah:{total, selesai}}</td><td></td></tr>
+  <tr><td class="mono">GET /api/reports/saya</td><td>—</td><td class="mono">{data:[Laporan]}</span> (kosong bila bukan pelapor)</td><td></td></tr>
+  <tr><td class="mono">GET /api/reports/:id</td><td>—</td><td>Laporan (DTO lengkap)</td><td>404</td></tr>
+  <tr><td class="mono">GET /api/peringkat</td><td>—</td><td class="mono">{data:[{id, nama, laporan, selesai}], saya:{peringkat, laporan}|null}</td><td></td></tr>
+</table>
+
+<h3>Petugas dan admin (<span class="mono">wajibPetugas</span>)</h3>
+<table>
+  <tr><th>Endpoint</th><th>Permintaan</th><th>Respons</th><th>Galat</th></tr>
+  <tr><td class="mono">GET /api/reports</td><td><span class="mono">?status&amp;prioritas&amp;toilet_id&amp;gedung&amp;tanggal&amp;limit</span></td><td class="mono">{data:[Laporan]}</td><td>401/403</td></tr>
+  <tr><td class="mono">PATCH /api/reports/:id</td><td class="mono">{status, foto_selesai_key?}</td><td class="mono">{ok:true, status, verifikasi:{hasil, alasan, model, ms}|null}</td><td>400 status tak valid / foto tak ditemukan / bukti kurang; 404; <strong>422</strong> <span class="mono">{error, hasil:'kotor'|'bukan_toilet', alasan}</span>; <strong>502</strong> pemeriksaan gagal</td></tr>
+  <tr><td class="mono">POST /api/reports/:id/analisa-ulang</td><td>—</td><td class="mono">{ok:true}</td><td>404</td></tr>
+  <tr><td class="mono">DELETE /api/reports/:id</td><td>—</td><td class="mono">{ok:true}</td><td>404</td></tr>
+  <tr><td class="mono">GET /api/summary?tanggal=</td><td>bawaan hari ini WIB</td><td class="mono">{ada:false, tanggal}</span> atau <span class="mono">{ada:true, tanggal, total_laporan, ringkasan, sorotan}</td><td>400 format tanggal</td></tr>
+  <tr><td class="mono">GET /api/summary/stats?tanggal=</td><td></td><td class="mono">{tanggal, hari_ini:{total, tinggi, sedang, rendah, ai_gagal}, belum_selesai, lokasi_teratas:[{lokasi, jumlah}]}</td><td>400</td></tr>
+  <tr><td class="mono">GET /api/summary/grafik?hari=14</td><td>maks. 90</td><td>lihat bagian 11</td><td></td></tr>
+  <tr><td class="mono">POST /api/summary/generate?tanggal=</td><td></td><td class="mono">{ada:true, tanggal, total_laporan, ringkasan, sorotan}</td><td>400; 502 LLM gagal</td></tr>
+  <tr><td class="mono">GET /api/aktivitas</td><td><span class="mono">?aksi&amp;report_id&amp;limit</span> (maks. 300)</td><td class="mono">{data:[{id, waktu, aksi, report_id, pelaku, ringkas, rincian}]}</td><td></td></tr>
+</table>
+
+<h3>Admin (<span class="mono">wajibAdmin</span>)</h3>
+<table>
+  <tr><th>Endpoint</th><th>Permintaan</th><th>Respons</th><th>Galat</th></tr>
+  <tr><td class="mono">GET /api/pengguna</td><td>—</td><td class="mono">{data:[{id, username, nama, peran, aktif, created_at}]}</span> (admin + petugas)</td><td>401/403</td></tr>
+  <tr><td class="mono">POST /api/pengguna</td><td class="mono">{username, nama, password}</td><td>201 akun baru berperan <span class="mono">petugas</span></td><td>400; 409</td></tr>
+  <tr><td class="mono">PATCH /api/pengguna/:id</td><td class="mono">{nama?, password?, aktif?}</span> minimal satu</td><td class="mono">{ok:true}</td><td>400 kosong / kunci diri sendiri; 404</td></tr>
+</table>
+
+<h3>Kode status yang dipakai</h3>
+<p>200 sukses · 201 dibuat · 304 belum berubah · 400 permintaan tak valid atau aturan bisnis
+sederhana · 401 belum masuk · 403 peran tidak berhak · 404 tidak ditemukan · 409 konflik username ·
+413 berkas terlalu besar · 415 tipe berkas · <strong>422 foto bukti ditolak model</strong> ·
+500 galat tak tertangani (<span class="mono">app.onError</span>) · 502 layanan LLM/vision gagal.
+Path <span class="mono">/api/*</span> yang tak dikenal → 404 JSON; path lain yang bukan aset → <span class="mono">index.html</span> (fallback SPA).</p>
+
+<h2 class="pecah">15. Antarmuka pengguna</h2>
+<table>
+  <tr><th>Rute</th><th>Halaman</th><th>Isi</th></tr>
+  <tr><td class="mono">/</td><td>Beranda</td><td>Peta gedung (dapat diperbesar), pemilih gedung → lantai manual (cadangan bila QR rusak), &ldquo;Laporan saya&rdquo; bagi pelapor yang masuk, tautan papan publik, peringkat, dan masuk petugas</td></tr>
+  <tr><td class="mono">/lapor/:lokasiId</td><td>Lapor</td><td>Tujuan QR. Pilih jenis toilet, teks (contoh cepat tersedia), foto wajib dengan <span class="mono">capture="environment"</span>, kirim. Menampilkan identitas pelapor atau catatan anonim</td></tr>
+  <tr><td class="mono">/laporan/:id</td><td>StatusLaporan</td><td>Konfirmasi, linimasa tiga tahap, hasil analisis (polling), saran menyimpan tautan</td></tr>
+  <tr><td class="mono">/laporan</td><td>LaporanPublik</td><td>Papan terbuka dengan filter status/prioritas dan hitungan &ldquo;x dari y selesai&rdquo;</td></tr>
+  <tr><td class="mono">/masuk</td><td>Masuk</td><td>Satu formulir untuk semua peran; pelapor diarahkan ke beranda, petugas/admin ke dashboard</td></tr>
+  <tr><td class="mono">/daftar</td><td>Daftar</td><td>Pendaftaran pelapor</td></tr>
+  <tr><td class="mono">/peringkat</td><td>Peringkat</td><td>20 besar dan posisi sendiri</td></tr>
+  <tr><td class="mono">/petugas</td><td>Dashboard</td><td>Tab Laporan / Grafik / Aktivitas / Akun Petugas (admin). Pelapor dan tamu diarahkan ke <span class="mono">/masuk</span>; server tetap menolak walau tab dipaksa tampil</td></tr>
+</table>
+<h3>Kartu laporan di dashboard</h3>
+<p>Tepi kiri berwarna menandai prioritas (merah tinggi, kuning sedang, hijau rendah) agar terbaca
+dari seberang ruangan. Isi: lencana prioritas/status/kategori, waktu relatif, lokasi, ringkasan
+(atau teks mentah bila belum dianalisis), teks asli, kotak &ldquo;Tindakan&rdquo;, foto keadaan, foto
+bukti berbingkai hijau dengan keterangan &ldquo;✓ Bukti penyelesaian · Diverifikasi AI: bersih&rdquo;
+dan alasan model. Tombol &ldquo;Tandai selesai&rdquo; berubah menjadi &ldquo;Mengunggah…&rdquo; lalu
+&ldquo;AI memeriksa foto…&rdquo;; putusan penolakan tampil sebagai kotak merah &ldquo;Foto ditolak&rdquo;
+beserta &ldquo;Penilaian AI: …&rdquo; sampai percobaan berikutnya.</p>
+<h3>Bahasa, warna, responsivitas</h3>
+<ul>
+  <li>Sakelar ID/EN di kepala halaman; pilihan disimpan di <span class="mono">localStorage</span> (<span class="mono">bahasa</span>). Keluaran LLM tetap Indonesia karena pembacanya petugas.</li>
+  <li>Palet maroon, bata, krem diambil dari poster &ldquo;Peta Lokasi Gedung&rdquo; UPI Tasikmalaya.</li>
+  <li>Palet grafik (<span class="mono">grafik/warna.ts</span>) lolos pemeriksaan rentang terang, ambang chroma, keterpisahan buta warna (deutan/protan/tritan), dan kontras; ramp sekuensial peta panas monoton dalam luminansi (0,933 → 0,164). Jangan diubah tanpa menjalankan ulang validatornya.</li>
+  <li>Seluruh halaman dirancang untuk layar ponsel lebih dulu — formulir laporan dibuka dari kamera QR.</li>
+</ul>
+
+<h2>16. Konfigurasi, variabel, dan rahasia</h2>
+<table>
+  <tr><th>Nama</th><th>Jenis</th><th>Nilai / keterangan</th></tr>
+  <tr><td class="mono">LLM_BASE_URL</td><td>var</td><td class="mono">https://api.deepseek.com</td></tr>
+  <tr><td class="mono">LLM_MODEL</td><td>var</td><td class="mono">deepseek-chat</td></tr>
+  <tr><td class="mono">VISION_BASE_URL</td><td>var</td><td class="mono">https://generativelanguage.googleapis.com/v1beta/openai</td></tr>
+  <tr><td class="mono">VISION_MODEL</td><td>var</td><td><span class="mono">gemini-3.6-flash</span>; alternatif <span class="mono">gemini-3.5-flash-lite</span> (kuota gratis lebih besar)</td></tr>
+  <tr><td class="mono">LLM_API_KEY</td><td>secret</td><td>Kunci DeepSeek</td></tr>
+  <tr><td class="mono">VISION_API_KEY</td><td>secret</td><td>Kunci Gemini dari <span class="mono">aistudio.google.com/apikey</span>. Bila kosong, jatuh ke <span class="mono">LLM_API_KEY</span> — hanya berguna bila kedua model di penyedia yang sama</td></tr>
+  <tr><td class="mono">AUTH_SECRET</td><td>secret</td><td>String acak panjang untuk menandatangani JWT; menggantinya membatalkan semua sesi</td></tr>
+  <tr><td class="mono">DB, BUCKET, ASSETS</td><td>binding</td><td>D1 <span class="mono">kato</span>, R2 <span class="mono">kato</span>, aset statis <span class="mono">./dist</span></td></tr>
+</table>
+<p><em>Vars</em> ada di <span class="mono">wrangler.jsonc</span> dan ter-commit; <em>secrets</em> dipasang
+dengan <span class="mono">npx wrangler secret put</span> dan tidak pernah ada di repositori. Untuk lokal,
+salin <span class="mono">.dev.vars.example</span> menjadi <span class="mono">.dev.vars</span> (diabaikan git)
+dan isi ketiga rahasia. Mengganti penyedia vision: ubah dua <em>vars</em> dan satu <em>secret</em>;
+format panggilan (OpenAI chat completions dengan <span class="mono">image_url</span>) didukung OpenAI
+(<span class="mono">https://api.openai.com/v1</span>, <span class="mono">gpt-4o-mini</span>), OpenRouter
+(<span class="mono">https://openrouter.ai/api/v1</span>), dan Anthropic
+(<span class="mono">https://api.anthropic.com/v1</span>, <span class="mono">claude-haiku-4-5-20251001</span>).</p>
+
+<h2 class="pecah">17. Pengembangan lokal</h2>
+<pre>npm install
+cp .dev.vars.example .dev.vars    # isi LLM_API_KEY, VISION_API_KEY, AUTH_SECRET
+npm run db:local                  # migrasi ke D1 lokal
+npm run db:seed                   # daftar toilet
+npm run build                     # frontend harus dibangun sekali sebelum wrangler dev
+npm run dev                       # Vite (5173) + Worker (8787) berdampingan</pre>
+<table>
+  <tr><th>Skrip</th><th>Fungsi</th></tr>
+  <tr><td class="mono">dev / dev:api / dev:web</td><td>Keduanya bersamaan (<span class="mono">concurrently</span>) / Worker saja / Vite saja</td></tr>
+  <tr><td class="mono">build</td><td>Vite build ke <span class="mono">./dist</span></td></tr>
+  <tr><td class="mono">typecheck</td><td><span class="mono">tsc --noEmit</span> untuk backend, frontend, dan skrip sekaligus</td></tr>
+  <tr><td class="mono">db:local / db:remote</td><td>Menerapkan migrasi yang belum dijalankan</td></tr>
+  <tr><td class="mono">db:seed / db:seed:remote</td><td>Menjalankan <span class="mono">seed/toilets.sql</span></td></tr>
+  <tr><td class="mono">qr</td><td>Menghasilkan QR + lembar cetak (butuh <span class="mono">BASE_URL</span>)</td></tr>
+  <tr><td class="mono">docs</td><td>Merender kedua dokumen ke PDF lewat Chrome headless</td></tr>
+  <tr><td class="mono">cf-typegen</td><td>Menghasilkan tipe binding dari wrangler</td></tr>
+  <tr><td class="mono">deploy</td><td><span class="mono">wrangler deploy</span> (membangun frontend lebih dulu lewat <span class="mono">build.command</span>)</td></tr>
+</table>
+<h3>Menguji tanpa kunci API sungguhan</h3>
+<p>Karena kedua model dipanggil lewat URL yang dapat dikonfigurasi, verifikasi foto dapat diuji dengan
+server tiruan lokal yang menjawab format chat completions, lalu Worker dijalankan dengan
+<span class="mono">wrangler dev --var VISION_BASE_URL:http://127.0.0.1:8799/v1</span>. Skenario yang
+diverifikasi dengan cara ini sebelum rilis: selesai tanpa foto (400), foto bersih (200, kolom terisi),
+foto kotor (422, foto hilang dari R2 → 404), bukan toilet (422), kunci foto salah (400), diproses tanpa
+foto (200), layanan mati (502, tercatat <span class="mono">verifikasi_gagal</span>).</p>
+
+<h2>18. Penyebaran dan operasi</h2>
+<pre>npx wrangler secret put LLM_API_KEY      # DeepSeek
+npx wrangler secret put VISION_API_KEY   # Gemini
+npx wrangler secret put AUTH_SECRET
+
+npm run db:remote        # migrasi D1 produksi — jalankan SEBELUM deploy
+npm run db:seed:remote   # daftar toilet
+npm run deploy</pre>
+<ul>
+  <li><strong>Urutan penting:</strong> kode baru menulis kolom <span class="mono">bukti_ai_*</span>; bila migrasi 0005 belum diterapkan, penutupan laporan gagal dengan galat SQL.</li>
+  <li><span class="mono">wrangler.jsonc</span>: <span class="mono">run_worker_first: ["/api/*", "/__scheduled"]</span> sehingga API selalu mencapai Worker; path lain yang tidak cocok aset dikembalikan sebagai <span class="mono">index.html</span> (<span class="mono">not_found_handling: single-page-application</span>). <span class="mono">observability</span> aktif.</li>
+  <li><strong>Workers Builds</strong> (deploy otomatis dari GitHub): perintah deploy <span class="mono">npx wrangler deploy</span>, perintah build dikosongkan; frontend dibangun oleh <span class="mono">build.command</span> yang juga memasang dependensi pada checkout bersih. Rahasia dan migrasi tidak otomatis. Bila push tidak memicu deploy, periksa Workers &amp; Pages → ai-complaint → Settings → Builds: repo tersambung, branch <span class="mono">main</span>, dan GitHub App Cloudflare punya akses ke repo.</li>
+  <li>Memeriksa keadaan produksi dari terminal: <span class="mono">npx wrangler deployments list</span>, <span class="mono">npx wrangler secret list</span>, <span class="mono">npx wrangler d1 migrations list kato --remote</span>, <span class="mono">curl https://ai-complaint.yvrtz.workers.dev/api/health</span>.</li>
+  <li>Log langsung: <span class="mono">npx wrangler tail</span>.</li>
+</ul>
+<div class="peringatan">
+  <strong>Wajib dilakukan sebelum dipakai sungguhan:</strong> ganti kata sandi admin bawaan
+  (tab Akun Petugas, atau <span class="mono">PATCH /api/pengguna/adm-0001</span>). Nilainya tercatat di
+  berkas migrasi yang ter-commit sehingga harus dianggap publik.
+</div>
+
+<h2 class="pecah">19. Pemantauan dan pemecahan masalah</h2>
+<h3>Menghitung pemakaian model vision dari aplikasi sendiri</h3>
+<pre>npx wrangler d1 execute kato --remote --command "
+SELECT date(waktu) AS hari, aksi, COUNT(*) AS jumlah
+  FROM aktivitas
+ WHERE aksi IN ('bukti_ditolak','verifikasi_gagal')
+    OR (aksi='status' AND rincian LIKE '%\"hasil\":\"bersih\"%')
+ GROUP BY hari, aksi ORDER BY hari DESC"</pre>
+<p>Jumlah ketiga baris per hari = jumlah panggilan ke Gemini hari itu. Angka batas dan pemakaian
+resmi ada di <span class="mono">aistudio.google.com/rate-limits</span> (per project) dan Google Cloud
+Console → APIs → Generative Language API → Metrics/Quotas.</p>
+<h3>Membaca galat verifikasi terakhir</h3>
+<pre>npx wrangler d1 execute kato --remote --command "
+SELECT waktu, rincian FROM aktivitas WHERE aksi='verifikasi_gagal' ORDER BY id DESC LIMIT 3"</pre>
+<h3>Latensi dan tingkat keberhasilan (bahan bab hasil)</h3>
+<pre>-- analisis teks
+SELECT ai_status, COUNT(*) n, ROUND(AVG(ai_ms)) rata_ms, MIN(ai_ms) min_ms, MAX(ai_ms) maks_ms
+  FROM reports GROUP BY ai_status;
+-- verifikasi foto yang diterima
+SELECT COUNT(*) n, ROUND(AVG(bukti_ai_ms)) rata_ms FROM reports WHERE bukti_ai_hasil='bersih';
+-- sebaran prioritas dan kategori
+SELECT prioritas, COUNT(*) FROM reports GROUP BY prioritas;
+SELECT je.value kategori, COUNT(*) FROM reports, json_each(kategori) je GROUP BY je.value;</pre>
+<h3>Gejala → penyebab → tindakan</h3>
+<table>
+  <tr><th>Gejala</th><th>Penyebab yang lazim</th><th>Tindakan</th></tr>
+  <tr><td>&ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo; terus-menerus</td><td>Lihat <span class="mono">verifikasi_gagal</span>: <span class="mono">LLM HTTP 404 … no longer available</span> = nama model kedaluwarsa; <span class="mono">401/403</span> = kunci salah/kosong; <span class="mono">429</span> = kuota habis; &ldquo;Respons LLM bukan JSON&rdquo; = JSON terpotong (anggaran token) atau model tidak patuh</td><td>Ganti <span class="mono">VISION_MODEL</span> ke nama yang disebut galat; pasang ulang <span class="mono">VISION_API_KEY</span>; pindah ke model lite atau aktifkan billing; periksa <span class="mono">max_tokens</span></td></tr>
+  <tr><td>Foto bersih ditolak berulang</td><td>Foto gelap/blur, sudut sempit, atau lantai masih basah merata</td><td>Foto ulang dengan cahaya cukup, tampak kloset + lantai; keringkan lantai. Alasan model tampil di kartu — gunakan untuk mengoreksi</td></tr>
+  <tr><td>Kartu laporan tanpa label AI, &ldquo;Analisis gagal&rdquo; &gt; 0</td><td>DeepSeek tidak terjangkau / kunci salah; lihat <span class="mono">ai_error</span></td><td>Perbaiki kunci, tekan &ldquo;Analisis ulang&rdquo;</td></tr>
+  <tr><td>Push ke GitHub tidak men-deploy</td><td>Workers Builds belum tersambung / branch salah / build gagal</td><td>Dashboard Cloudflare → Builds; sementara itu <span class="mono">npm run deploy</span></td></tr>
+  <tr><td>Galat SQL <span class="mono">no such column: bukti_ai_hasil</span></td><td>Deploy sebelum migrasi</td><td class="mono">npm run db:remote</td></tr>
+  <tr><td>Semua pengguna terlempar keluar</td><td><span class="mono">AUTH_SECRET</span> diganti</td><td>Wajar; masuk kembali</td></tr>
+  <tr><td>QR mengarah ke &ldquo;Kode lokasi tidak dikenal&rdquo;</td><td>Toilet lantai itu dinonaktifkan di seed, atau QR dari daftar lama</td><td>Perbarui seed → <span class="mono">db:seed:remote</span> → <span class="mono">npm run qr</span> → cetak ulang</td></tr>
+  <tr><td>Foto tidak tampil di jaringan kampus</td><td>Seharusnya tidak terjadi (disajikan dari origin sendiri); bila terjadi, periksa prefix kunci</td><td>Hanya <span class="mono">laporan/</span> dan <span class="mono">bukti/</span> yang disajikan</td></tr>
+  <tr><td>Ringkasan harian kosong pukul 17.05</td><td>Cron gagal (LLM) atau belum ada laporan</td><td>Lihat <span class="mono">aksi='ringkasan'</span>; tekan &ldquo;Buat ulang&rdquo;</td></tr>
+</table>
+
+<h2 class="pecah">20. Keputusan rancangan yang berbiaya</h2>
+<p>Masing-masing adalah keputusan yang mengorbankan sesuatu di tempat lain, sehingga alasannya dicatat.</p>
+<h3>Analisis berjalan setelah respons dikirim</h3>
+<p>Pelapor menerima konfirmasi seketika sementara panggilan LLM berlanjut di latar; halaman konfirmasi
+melakukan polling. Panggilan sinkron akan menaruh jeda tiga detik antara mahasiswa dan tombol kirim.</p>
+<h3>Panggilan LLM yang gagal tidak pernah menghilangkan laporan</h3>
+<p>Baris ditandai <span class="mono">gagal</span> beserta teks galatnya, tetap tampil, dan dapat dianalisis
+ulang. Sistem menurun menjadi alat pelaporan biasa, bukan gagal.</p>
+<h3>Keluaran LLM tidak pernah dipercaya apa adanya</h3>
+<p>Setiap respons divalidasi Zod lalu dipaksa ke enum yang dikenal basis data — untuk teks maupun vision.</p>
+<h3>Penyelesaian menuntut bukti yang diperiksa, ditolak di server</h3>
+<p>Foto keadaan dan foto bukti divalidasi di server, bukan sekadar disembunyikan di antarmuka. Selesai
+tanpa foto → 400; dengan foto yang dinilai kotor/bukan toilet → 422 beserta alasan. Biayanya: petugas
+menunggu beberapa detik dan sistem bergantung pada penyedia model kedua.</p>
+<h3>Pemadaman vision tidak diloloskan</h3>
+<p>Lihat bagian 8. Kebalikan dari analisis teks, dan disengaja.</p>
+<h3>Jejak audit sengaja tanpa foreign key</h3>
+<p>Laporan yang <em>dihapus</em>-lah yang paling perlu terlacak. Foreign key akan memaksa baris audit
+ikut terhapus — kebalikan dari tujuannya. Seluruh isi laporan disalin ke <span class="mono">rincian</span>
+sebelum barisnya hilang.</p>
+<h3>Melapor tidak butuh akun, tetapi akun dihargai</h3>
+<p>Dinding pendaftaran di pintu toilet mematikan adopsi. Laporan berakun masuk papan peringkat; laporan
+anonim tetap diterima dan ditangani, hanya tidak diperingkat. Laporan menempel pada akun, bukan
+perangkat — versi awal yang memakai <span class="mono">localStorage</span> kehilangan daftar saat data
+situs dibersihkan.</p>
+<h3>Satu QR per lantai</h3>
+<p>Sepertiga jumlah stiker, dengan biaya satu ketukan tambahan (pilih jenis toilet) di formulir.</p>
+<h3>Foto tidak melewati domain pihak ketiga</h3>
+<p>Lihat bagian 13.</p>
+<h3>Antarmuka dwibahasa, analisis tetap Indonesia</h3>
+<p>Label mengikuti pembaca; ringkasan dan rekomendasi selalu Indonesia karena yang bertindak adalah
+petugas kebersihan. Keluhan berbahasa Inggris tetap dipahami dan diringkas dalam bahasa Indonesia.</p>
+<h3>Warna grafik dihitung, bukan dikira-kira</h3>
+<p>Lihat bagian 15.</p>
+
+<h2>21. Batasan yang diketahui dan pekerjaan lanjutan</h2>
+<table>
+  <tr><th>Batasan</th><th>Dampak</th><th>Arah perbaikan</th></tr>
+  <tr><td>Tidak ada pembatasan laju atau CAPTCHA pada <span class="mono">POST /api/reports</span></td><td>Spam bisa masuk; hanya deteksi kembar 2 menit yang menahannya. Petugas dapat menghapus (tercatat)</td><td>Rate limiting per IP lewat Cloudflare, atau Turnstile</td></tr>
+  <tr><td>Tidak ada notifikasi ke petugas</td><td>Dashboard harus terbuka (memuat ulang tiap 30 detik)</td><td>Web Push atau WhatsApp/Telegram untuk prioritas tinggi</td></tr>
+  <tr><td>Verifikasi foto dapat dikelabui</td><td>Foto toilet lain atau foto lama yang bersih akan lolos; tidak ada pemeriksaan EXIF/waktu/lokasi</td><td>Wajibkan kamera langsung (bukan galeri), bandingkan dengan foto keadaan, atau minta dua sudut</td></tr>
+  <tr><td>Putusan model bersifat probabilistik</td><td>Ada kemungkinan salah tolak/salah terima; belum ada ukuran akurasi terhadap penilaian manusia</td><td>Uji dengan set foto berlabel; laporkan presisi/recall di bab hasil</td></tr>
+  <tr><td>Tingkat gratis Gemini</td><td>Kuota harian; data dapat dipakai Google</td><td>Model lite / billing (lihat bagian 16)</td></tr>
+  <tr><td>Nama model penyedia berumur pendek</td><td>404 mendadak saat model ditutup</td><td>Pantau <span class="mono">verifikasi_gagal</span>; pertimbangkan alias &ldquo;latest&rdquo; bila penyedia menyediakannya</td></tr>
+  <tr><td>Tidak ada alur lupa sandi</td><td>Petugas yang lupa harus minta admin mengatur sandi baru; admin yang lupa harus diperbaiki lewat SQL</td><td>Reset lewat e-mail/OTP</td></tr>
+  <tr><td>Belum ada uji otomatis</td><td>Verifikasi dilakukan manual (curl + server tiruan)</td><td>Vitest + <span class="mono">unstable_dev</span> wrangler</td></tr>
+  <tr><td>Gedung D, E, F belum terdaftar; jenis toilet per lantai diasumsikan</td><td>Lokasi tersebut tidak dapat dilaporkan</td><td>Pastikan di lapangan, perbarui seed, regenerasi QR</td></tr>
+  <tr><td>Foto tidak dikompresi di klien</td><td>Unggahan hingga 5 MB di jaringan seluler</td><td>Kompresi <span class="mono">canvas</span> sebelum unggah</td></tr>
+  <tr><td>Keluhan berbahasa selain Indonesia/Inggris</td><td>Belum diuji</td><td>—</td></tr>
+</table>
+
+<h2 class="pecah">22. Lampiran</h2>
+<h3>A. Contoh respons</h3>
+<h4><span class="mono">POST /api/reports</span> → 201</h4>
+<pre>{"id":"8f0c…","toilet":"WC Pria - Lantai 1, Gedung A (Ki Hajar Dewantara)","duplikat":false}</pre>
+<h4><span class="mono">GET /api/reports/:id</span> setelah analisis</h4>
+<pre>{"id":"8f0c…","toilet_id":"A-1-PRIA","toilet_nama":"WC Pria - Lantai 1, Gedung A (Ki Hajar Dewantara)",
+ "gedung_kode":"A","gedung_nama":"Ki Hajar Dewantara","lantai":1,"jenis":"pria",
+ "teks":"WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.",
+ "foto_url":"/api/uploads/laporan/2026-09-11/….jpg","foto_selesai_url":null,
+ "bukti_ai_hasil":null,"bukti_ai_alasan":null,"bukti_ai_model":null,"bukti_ai_ms":null,
+ "status":"baru","petugas":null,"selesai_at":null,
+ "ai_status":"ok","kategori":["bau","genangan","perlengkapan"],"prioritas":"tinggi",
+ "ringkasan":"Toilet berbau menyengat, lantai tergenang air, dan sabun habis.",
+ "rekomendasi":"Keringkan lantai lebih dulu karena berisiko membuat pengguna terpeleset. Setelah itu bersihkan sumber bau dan isi ulang sabun.",
+ "ai_error":null,"ai_model":"deepseek-chat","ai_ms":1130,"pelapor_id":null,
+ "created_at":"2026-09-11 08:40:12","updated_at":"2026-09-11 08:40:14"}</pre>
+<h4><span class="mono">PATCH /api/reports/:id</span> → 200 (foto diterima)</h4>
+<pre>{"ok":true,"status":"selesai",
+ "verifikasi":{"hasil":"bersih","alasan":"Kloset dan lantai terlihat bersih tanpa sampah.","model":"gemini-3.6-flash","ms":4210}}</pre>
+<h4><span class="mono">PATCH /api/reports/:id</span> → 422 (foto ditolak)</h4>
+<pre>{"error":"Toilet pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang.",
+ "hasil":"kotor","alasan":"Lantai masih basah dan ada tisu bekas."}</pre>
+<h4>Keluaran mentah model vision yang diharapkan</h4>
+<pre>{"toilet":true,"bersih":false,"keyakinan":0.9,"alasan":"Lantai masih basah dan ada tisu bekas."}</pre>
+
+<h3>B. Glosarium</h3>
+<table>
+  <tr><th>Istilah</th><th>Arti dalam dokumen ini</th></tr>
+  <tr><td>LLM</td><td><em>Large language model</em>; model bahasa terlatih yang dipakai apa adanya lewat API</td></tr>
+  <tr><td>Model vision</td><td>LLM yang menerima gambar sebagai masukan (<em>multimodal</em>)</td></tr>
+  <tr><td>Few-shot</td><td>Contoh pasangan masukan–keluaran di dalam prompt untuk mengunci gaya jawaban</td></tr>
+  <tr><td>JSON mode / <span class="mono">response_format</span></td><td>Permintaan agar model menjawab dengan JSON valid saja</td></tr>
+  <tr><td>Model &ldquo;berpikir&rdquo;</td><td>Model yang menghasilkan token penalaran internal sebelum jawaban; ikut menghabiskan <span class="mono">max_tokens</span></td></tr>
+  <tr><td>Worker</td><td>Fungsi tanpa server di jaringan tepi Cloudflare yang menjalankan seluruh backend dan menyajikan frontend</td></tr>
+  <tr><td>D1 / R2</td><td>Basis data SQLite terkelola / penyimpanan objek Cloudflare</td></tr>
+  <tr><td>Binding</td><td>Cara Worker mengakses D1/R2 tanpa kredensial jaringan</td></tr>
+  <tr><td>Migrasi</td><td>Berkas SQL ber-nomor yang mengubah skema secara berurutan</td></tr>
+  <tr><td>Seed</td><td>Data awal (daftar toilet) yang aman dijalankan ulang</td></tr>
+  <tr><td>JWT</td><td>Token sesi bertanda tangan; disimpan di cookie HttpOnly</td></tr>
+  <tr><td>PBKDF2</td><td>Fungsi turunan kunci untuk menyimpan sandi secara aman</td></tr>
+  <tr><td><span class="mono">waitUntil</span></td><td>Mekanisme Workers untuk melanjutkan pekerjaan setelah respons dikirim</td></tr>
+  <tr><td>Cron</td><td>Pemicu terjadwal Cloudflare; di sini 17.00 WIB setiap hari</td></tr>
+  <tr><td>WIB</td><td>Waktu Indonesia Barat, UTC+7; semua &ldquo;hari&rdquo; dalam aplikasi mengikuti WIB</td></tr>
+  <tr><td>Jejak audit</td><td>Tabel <span class="mono">aktivitas</span>; catatan yang tidak dapat dihapus dari aplikasi</td></tr>
+  <tr><td>Bukti</td><td>Foto dari petugas yang menunjukkan kondisi setelah ditangani</td></tr>
+</table>
 
 <div class="kaki">
   Repositori: <span class="mono">github.com/rdnsa/AI-complaint</span> &middot;
-  Dokumentasi lengkap ada pada <span class="mono">README.md</span>.
+  Aplikasi: <span class="mono">ai-complaint.yvrtz.workers.dev</span> &middot;
+  Sumber dokumen ini: <span class="mono">docs/dokumentasi-teknis.html</span> (render ulang dengan <span class="mono">npm run docs</span>).
 </div>
 
 </body></html>
