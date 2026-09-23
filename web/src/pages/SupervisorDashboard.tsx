@@ -4,8 +4,6 @@ import ActivityPanel from '../components/ActivityPanel';
 import ChartsPanel from '../components/ChartsPanel';
 import WorkLogPanel from '../components/WorkLogPanel';
 import AccountsPanel from '../components/AccountsPanel';
-import AskPanel from '../components/AskPanel';
-import QrCodesPanel from '../components/QrCodesPanel';
 import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges';
 import { useNavigate } from 'react-router-dom';
 import { api, type DailyStats, type DailySummary, type Report, type Session } from '../lib/api';
@@ -50,9 +48,10 @@ function Board({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [tab, setTab] = useState<
-    'reports' | 'work_logs' | 'charts' | 'activity' | 'ask' | 'accounts' | 'qr_codes'
+    'reports' | 'work_logs' | 'charts' | 'activity' | 'accounts'
   >('reports');
-  const tabs = ['reports', 'work_logs', 'charts', 'activity', 'ask', 'accounts', 'qr_codes'] as const;
+  // The AI chatbot and the QR stickers are on the home page, open to everyone.
+  const tabs = ['reports', 'work_logs', 'charts', 'activity', 'accounts'] as const;
 
   const load = useCallback(async () => {
     const [r, s, sum] = await Promise.all([
@@ -100,7 +99,7 @@ function Board({ session }: { session: Session }) {
       />
 
       <main className="mx-auto max-w-5xl px-4">
-        {/* Seven tabs do not fit one phone row: a three-column grid there, a single row from md up. */}
+        {/* Five tabs do not fit one phone row: a three-column grid there, a single row from md up. */}
         <nav className="mt-5 grid grid-cols-3 gap-1 rounded-xl bg-permukaan p-1 ring-1 ring-krem-200 md:flex">
           {tabs.map((k) => (
             <button
@@ -119,9 +118,7 @@ function Board({ session }: { session: Session }) {
         {tab === 'work_logs' && <WorkLogPanel />}
         {tab === 'charts' && <ChartsPanel />}
         {tab === 'activity' && <ActivityPanel />}
-        {tab === 'ask' && <AskPanel />}
         {tab === 'accounts' && <AccountsPanel />}
-        {tab === 'qr_codes' && <QrCodesPanel />}
 
         {tab === 'reports' && (
           <>

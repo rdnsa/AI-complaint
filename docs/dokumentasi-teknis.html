@@ -124,7 +124,7 @@ keluaran.</p>
       <li>Laporan pekerjaan petugas (&ldquo;Sudah saya bersihkan&rdquo;) terpisah dari laporan mahasiswa</li>
       <li>Jejak audit yang tidak dapat dihapus dari aplikasi</li>
       <li>Dashboard SPV: filter waktu (tanggal + jam WIB), stempel waktu persis, KPI, grafik</li>
-      <li>Stiker QR dicetak langsung dari dashboard (tab Kode QR)</li>
+      <li>Stiker QR dicetak langsung dari Beranda (bagian Kode QR, terbuka untuk umum)</li>
       <li>Pelacakan status untuk pelapor tanpa akun</li>
       <li>Peta gedung; antarmuka dwibahasa ID/EN; tema terang (bawaan) dan gelap</li>
     </ul>
@@ -141,7 +141,7 @@ keluaran.</p>
   <tr><td>Basis data</td><td>Cloudflare D1 (SQLite)</td><td>Binding langsung, migrasi ter-versi, <span class="mono">json_each</span> untuk kolom kategori</td></tr>
   <tr><td>Penyimpanan berkas</td><td>Cloudflare R2</td><td>Diakses lewat binding, disajikan ulang oleh Worker</td></tr>
   <tr><td>Frontend</td><td>React 18 + Vite 6 + Tailwind 3, react-router 6</td><td>Satu Worker melayani API dan aset statis, sehingga tanpa CORS</td></tr>
-  <tr><td>Kode QR</td><td>Pustaka <span class="mono">qrcode</span></td><td>Dipakai di browser (tab Kode QR) dan di skrip CLI</td></tr>
+  <tr><td>Kode QR</td><td>Pustaka <span class="mono">qrcode</span></td><td>Dipakai di browser (bagian Kode QR di Beranda) dan di skrip CLI</td></tr>
   <tr><td>i18n</td><td>Kamus buatan sendiri (<span class="mono">web/src/lib/i18n.tsx</span>)</td><td>Bahasa Indonesia mendefinisikan bentuk kamus; TypeScript menolak kunci yang belum diterjemahkan</td></tr>
   <tr><td>LLM teks</td><td>DeepSeek <span class="mono">deepseek-chat</span></td><td>JSON mode, latensi ~1,1 detik, biaya rendah; tidak bisa membaca gambar</td></tr>
   <tr><td>LLM vision</td><td>Google Gemini <span class="mono">gemini-3.6-flash</span></td><td>Menilai foto bukti dan foto laporan pekerjaan; endpoint kompatibel OpenAI sehingga penyedia dapat diganti tanpa mengubah kode</td></tr>
@@ -436,7 +436,7 @@ dikodekan: <span class="mono">&lt;situs&gt;/report/&lt;gedung&gt;-&lt;lantai&gt;
 Keputusan ini memangkas jumlah stiker yang harus dicetak dan dirawat menjadi sepertiga. QR yang sama
 dipakai mahasiswa dan petugas: sakelar di bagian atas halaman memisahkan keduanya (bagian 6).</p>
 <ul>
-  <li><span class="mono">GET /api/locations</span> mengelompokkan toilet aktif per gedung → daftar lantai; dipakai pemilih lokasi, tab Kode QR, dan generator CLI.</li>
+  <li><span class="mono">GET /api/locations</span> mengelompokkan toilet aktif per gedung → daftar lantai; dipakai pemilih lokasi, bagian Kode QR di Beranda, dan generator CLI.</li>
   <li><span class="mono">GET /api/locations/:id</span> memvalidasi pola <span class="mono">^[A-Za-z]-\d{1,2}$</span>, huruf dibesarkan, lalu mengembalikan toilet aktif pada lantai itu terurut <span class="mono">men</span> → <span class="mono">women</span> → <span class="mono">accessible</span>. Kode yang tidak dikenal → 404, dan halaman menawarkan pemilihan manual.</li>
 </ul>
 
@@ -447,8 +447,9 @@ dibawa (lihat tabel pengalihan di bagian 16). Worker menyajikan <span class="mon
 setiap path non-API yang bukan aset, sehingga pengalihan ini tidak memerlukan konfigurasi server. Stiker
 lama <strong>tidak perlu dicetak ulang</strong>.</p>
 
-<h3>Mencetak dari aplikasi (tab Kode QR)</h3>
-<p>Dashboard SPV → tab <strong>Kode QR</strong> (<span class="mono">QrCodesPanel.tsx</span>) membuat satu stiker
+<h3>Mencetak dari aplikasi (Beranda → Kode QR)</h3>
+<p>Beranda → <strong>&ldquo;🔳 Kode QR untuk pintu toilet&rdquo;</strong> → <em>Tampilkan</em> (<span class="mono">QrCodesPanel.tsx</span>, dilipat secara bawaan agar Beranda tetap pendek).
+Bagian ini terbuka untuk umum, tanpa login: stiker hanya memuat alamat lantai yang sudah tertempel di pintu. Panel ini membuat satu stiker
 per lantai <strong>di browser</strong> dari daftar lokasi langsung (<span class="mono">/api/locations</span>),
 sehingga lantai yang ditambahkan ke basis data langsung muncul tanpa langkah lain. Tiap stiker memuat
 &ldquo;Lapor kondisi toilet&rdquo;, gedung · lantai, nama gedung, QR (SVG, koreksi galat <span class="mono">M</span>,
@@ -622,7 +623,7 @@ berangka konkret plus ≤ 4 sorotan tindakan ≤ 12 kata, tanpa mengarang di lua
 <strong>tidak memanggil LLM</strong>; disimpan kalimat tetap &ldquo;Tidak ada keluhan yang masuk pada hari ini.&rdquo;</p>
 
 <h3><strong>Chatbot AI</strong> (tanya data): <em>tool calling</em>, bukan membaca tabel</h3>
-<p>Kotak <strong>&ldquo;🤖 Chatbot AI — tanya data laporan&rdquo;</strong> di Beranda (dan tab <em>🤖 Chatbot AI</em> di dashboard SPV)
+<p>Kotak <strong>&ldquo;🤖 Chatbot AI — tanya data laporan&rdquo;</strong> di Beranda (satu-satunya tempat chatbot; tidak ada tab chatbot di dashboard SPV)
 menerima pertanyaan bahasa sehari-hari: <em>&ldquo;gedung mana yang paling sering mampet bulan ini?&rdquo;</em>.
 Model <strong>tidak pernah melihat tabel</strong>. Ia menerima empat definisi fungsi, memilih satu atau dua,
 dan menjawab dari agregat kecil yang dikembalikan — sehingga biaya satu pertanyaan tetap
@@ -932,7 +933,7 @@ menjawab 404.</p>
 <h2 class="pecah">16. Antarmuka pengguna</h2>
 <table>
   <tr><th>Rute</th><th>Halaman</th><th>Isi</th></tr>
-  <tr><td class="mono">/</td><td>Home</td><td>Tiga kartu peran: <strong>🎓 Saya mahasiswa</strong> (→ <span class="mono">/student</span>), <strong>🧹 Saya petugas</strong> (→ <span class="mono">/staff</span>), <strong>👔 Saya SPV</strong> (→ <span class="mono">/supervisor</span> bila sudah masuk sebagai SPV, selain itu <span class="mono">/login</span>). Juga &ldquo;Laporan saya&rdquo; bagi pelapor yang masuk, baris masuk/daftar, tautan papan publik dan peringkat, kotak <strong>Chatbot AI</strong></td></tr>
+  <tr><td class="mono">/</td><td>Home</td><td>Tiga kartu peran: <strong>🎓 Saya mahasiswa</strong> (→ <span class="mono">/student</span>), <strong>🧹 Saya petugas</strong> (→ <span class="mono">/staff</span>), <strong>👔 Saya SPV</strong> (→ <span class="mono">/supervisor</span> bila sudah masuk sebagai SPV, selain itu <span class="mono">/login</span>). Juga &ldquo;Laporan saya&rdquo; bagi pelapor yang masuk, baris masuk/daftar, tautan papan publik dan peringkat, kotak <strong>Chatbot AI</strong>, dan bagian lipat <strong>Kode QR untuk pintu toilet</strong> (stiker per lantai, cetak/unduh; bagian 5)</td></tr>
   <tr><td class="mono">/student</td><td>StudentHome</td><td>Peta gedung (dapat diperbesar) + pemilih gedung → lantai → <span class="mono">/report/:floorId?as=student</span></td></tr>
   <tr><td class="mono">/report/:floorId</td><td>ReportForm</td><td>Tujuan QR. Sakelar peran, pilih jenis toilet, teks (contoh cepat), foto dari kamera, kirim. Dialihkan ke <span class="mono">/staff/:floorId</span> bila HP menyimpan nama petugas, kecuali <span class="mono">?as=student</span></td></tr>
   <tr><td class="mono">/reports/:id</td><td>ReportStatus</td><td>Konfirmasi, linimasa tiga tahap, hasil analisis (polling), saran menyimpan tautan</td></tr>
@@ -960,8 +961,9 @@ dengan parameter, query, dan hash tetap dibawa; <span class="mono">?sebagai=maha
 </table>
 
 <h3>Dashboard SPV</h3>
-<p>Tujuh tab: <strong>Laporan</strong>, <strong>Pekerjaan</strong>, <strong>Grafik</strong>, <strong>Aktivitas</strong>,
-<strong>🤖 Chatbot AI</strong>, <strong>Petugas &amp; SPV</strong>, <strong>Kode QR</strong>. Di ponsel tab tersusun dalam grid
+<p>Lima tab: <strong>Laporan</strong>, <strong>Pekerjaan</strong>, <strong>Grafik</strong>, <strong>Aktivitas</strong>,
+<strong>Petugas &amp; SPV</strong>. Chatbot AI dan stiker QR sengaja ada di Beranda, bukan di sini; SPV yang sedang masuk tetap
+mendapat jawaban chatbot dengan hak SPV (boleh per petugas) karena server membaca sesinya. Di ponsel tab tersusun dalam grid
 tiga kolom; mulai lebar <span class="mono">md</span> menjadi satu baris.</p>
 <table>
   <tr><th>Tab</th><th>Isi</th></tr>
@@ -969,9 +971,7 @@ tiga kolom; mulai lebar <span class="mono">md</span> menjadi satu baris.</p>
   <tr><td>Pekerjaan</td><td>Filter per petugas (dropdown petugas aktif), filter waktu, jumlah entri per petugas (bila tidak difilter), kartu laporan pekerjaan dengan &ldquo;🧹 Dibersihkan: …&rdquo;</td></tr>
   <tr><td>Grafik</td><td>KPI dan grafik dari <span class="mono">/api/summary/charts</span> (bagian 12)</td></tr>
   <tr><td>Aktivitas</td><td>Jejak audit, filter per aksi (bagian 11)</td></tr>
-  <tr><td>🤖 Chatbot AI</td><td>Tanya data dengan hak SPV (boleh per petugas)</td></tr>
   <tr><td>Petugas &amp; SPV</td><td>&ldquo;Tambah petugas&rdquo; (nama saja — muncul di &ldquo;Siapa kamu?&rdquo;) atau &ldquo;Tambah akun SPV&rdquo; (username, nama, sandi); ubah nama, ganti sandi SPV, aktifkan/nonaktifkan. Tombol nonaktifkan tidak tampil untuk akun sendiri</td></tr>
-  <tr><td>Kode QR</td><td>Stiker per lantai, filter gedung, Cetak, Unduh PNG (bagian 5)</td></tr>
 </table>
 <h4>Filter waktu (tab Laporan dan Pekerjaan)</h4>
 <p>Preset <strong>Semua, Hari ini, Kemarin, 7 hari, 30 hari, Pilih tanggal…</strong> (rentang tanggal &ldquo;Dari
@@ -1143,7 +1143,7 @@ SELECT staff_name, COUNT(*) FROM work_logs
   <tr><td>Galat SQL <span class="mono">no such table: activity_log</span> / <span class="mono">no such column: description</span></td><td>Deploy sebelum migrasi 0008</td><td class="mono">npm run db:remote</td></tr>
   <tr><td><span class="mono">db:remote</span> gagal dengan <span class="mono">code 7403</span></td><td>Galat sesaat di sisi Cloudflare</td><td>Jalankan ulang; migrasi per berkas bersifat atomik</td></tr>
   <tr><td>Semua pengguna terlempar keluar</td><td><span class="mono">AUTH_SECRET</span> diganti, atau pembaruan yang mengganti nama cookie ke <span class="mono">session</span></td><td>Wajar; masuk kembali</td></tr>
-  <tr><td>QR mengarah ke &ldquo;Kode lokasi tidak dikenal&rdquo;</td><td>Toilet lantai itu dinonaktifkan di seed, atau QR dari daftar lama</td><td>Perbarui seed → <span class="mono">db:seed:remote</span> → cetak ulang dari tab Kode QR (atau <span class="mono">npm run qr</span>)</td></tr>
+  <tr><td>QR mengarah ke &ldquo;Kode lokasi tidak dikenal&rdquo;</td><td>Toilet lantai itu dinonaktifkan di seed, atau QR dari daftar lama</td><td>Perbarui seed → <span class="mono">db:seed:remote</span> → cetak ulang dari bagian Kode QR di Beranda (atau <span class="mono">npm run qr</span>)</td></tr>
   <tr><td>Skrip/alat lama memanggil <span class="mono">/api/lokasi</span> dan mendapat 404</td><td>Path API lama tidak dialihkan</td><td>Ganti ke path baru (bagian 15)</td></tr>
   <tr><td>Foto tidak tampil</td><td>Seharusnya tidak terjadi (disajikan dari origin sendiri); bila terjadi, periksa prefix kunci</td><td>Hanya <span class="mono">report/ proof/ work/ laporan/ bukti/ kerja/</span> yang disajikan</td></tr>
   <tr><td>Ringkasan harian kosong pukul 17.05</td><td>Cron gagal (LLM) atau belum ada laporan</td><td>Lihat <span class="mono">action='daily_summary'</span> di jejak audit dan log Worker; tekan &ldquo;Buat ulang&rdquo;</td></tr>

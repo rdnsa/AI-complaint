@@ -202,7 +202,7 @@ Petugas tidak pernah login — cukup memilih namanya dari daftar.</p>
   <tr>
     <td><strong>SPV</strong><br>(pengawas)</td>
     <td>Ya, dengan username dan password. Satu akun bawaan sudah tersedia; SPV dapat menambah akun SPV lain</td>
-    <td>Memantau semua laporan dan pekerjaan petugas, melihat grafik dan catatan aktivitas, bertanya ke Chatbot AI, mengelola nama petugas dan akun SPV, mencetak stiker QR, menghapus laporan spam, meminta analisis ulang</td>
+    <td>Memantau semua laporan dan pekerjaan petugas, melihat grafik dan catatan aktivitas, mengelola nama petugas dan akun SPV, menghapus laporan spam, meminta analisis ulang. Chatbot AI dan stiker QR ada di halaman depan, untuk semua orang</td>
   </tr>
   <tr>
     <td><strong>Pimpinan</strong></td>
@@ -538,10 +538,10 @@ di dashboard tidak ada tombol untuk menandai laporan selesai.</p>
   <tr><td><strong>Pekerjaan</strong></td><td>Toilet yang dibersihkan petugas, per orang dan per waktu, lengkap dengan fotonya.</td></tr>
   <tr><td><strong>Grafik</strong></td><td>Pola dan efektivitas penanganan (bagian 8).</td></tr>
   <tr><td><strong>Aktivitas</strong></td><td>Catatan semua kejadian yang tidak bisa dihapus (bagian 8).</td></tr>
-  <tr><td><strong>🤖 Chatbot AI</strong></td><td>Tanya data dengan bahasa biasa; di sini boleh bertanya per nama petugas, misalnya <em>&ldquo;Petugas siapa yang paling banyak menyelesaikan laporan minggu ini?&rdquo;</em></td></tr>
   <tr><td><strong>Petugas &amp; SPV</strong></td><td>Menambah, mengubah, menonaktifkan nama petugas dan akun SPV (langkah 1–5 di atas).</td></tr>
-  <tr><td><strong>Kode QR</strong></td><td>Stiker QR untuk dicetak.</td></tr>
 </table>
+<p><strong>Chatbot AI</strong> dan <strong>stiker QR</strong> tidak ada di dashboard; keduanya di halaman depan. Bila SPV sedang masuk,
+Chatbot AI di halaman depan boleh menjawab per nama petugas, misalnya <em>&ldquo;Petugas siapa yang paling banyak menyelesaikan laporan minggu ini?&rdquo;</em></p>
 
 <h3>Tab Laporan</h3>
 <ul>
@@ -578,8 +578,8 @@ Bila semua petugas ditampilkan, di atas daftar muncul hitungan per orang (&ldquo
 menampilkan lencana &ldquo;✓ Diverifikasi AI: bersih&rdquo;, nama petugas, &ldquo;🧹 Dibersihkan:&rdquo; dengan jam tepatnya,
 toiletnya, apa yang dikerjakan, dan fotonya.</p>
 
-<h3>Tab Kode QR: mencetak dan mengganti stiker</h3>
-<p>Satu kode QR untuk setiap lantai, dibuat otomatis dari daftar lokasi — lantai yang baru ditambahkan langsung muncul.</p>
+<h3>Mencetak dan mengganti stiker QR (halaman depan)</h3>
+<p>Di bagian bawah halaman depan, tekan <span class="tombol netral">🔳 Kode QR untuk pintu toilet — Tampilkan</span>. Bagian ini terbuka untuk siapa saja, karena stiker hanya berisi alamat lantai yang memang sudah tertempel di pintu. Satu kode QR untuk setiap lantai, dibuat otomatis dari daftar lokasi — lantai yang baru ditambahkan langsung muncul.</p>
 <ul>
   <li>Pilih <em>Semua gedung</em> atau satu gedung.</li>
   <li><span class="tombol">🖨️ Cetak</span> mencetak <strong>hanya stikernya</strong>: tiga per baris di kertas A4, berbingkai, tanpa tombol atau kepala halaman.</li>
@@ -754,8 +754,8 @@ nama petugas hanya bisa dilakukan SPV — aturan itu dijaga di sisi server, buka
 <p><strong>Kenapa tidak ada tombol &ldquo;Tandai selesai&rdquo; di dashboard?</strong> Karena keluhan harus diselesaikan di tempat, dengan foto baru yang diperiksa AI. SPV memantau; petugas menyelesaikan.</p>
 <p><strong>Bisakah seseorang memakai nama petugas lain?</strong> Bisa, karena petugas tidak login. Setiap tindakan tercatat atas nama yang dipilih bersama foto dan jamnya, sehingga SPV dapat menelusurinya (bagian 10).</p>
 <p><strong>Bisakah jejak dihapus?</strong> Tidak. Petugas tidak bisa menghapus apa pun. Penghapusan laporan oleh SPV justru menyalin isinya ke catatan aktivitas, dan catatan itu tidak dapat diubah dari aplikasi.</p>
-<p><strong>Apakah stiker QR harus dicetak ulang setelah pembaruan?</strong> Tidak. Stiker lama tetap berfungsi. Cetak ulang hanya untuk stiker yang hilang atau rusak, atau untuk lantai baru — dari tab Kode QR.</p>
-<p><strong>Bisakah saya bertanya langsung tanpa membuka grafik?</strong> Bisa, lewat <strong>Chatbot AI</strong> — di halaman depan, atau tab Chatbot AI di dashboard (di sana boleh bertanya per nama petugas). Setiap pertanyaan tercatat di tab Aktivitas beserta data yang ditariknya.</p>
+<p><strong>Apakah stiker QR harus dicetak ulang setelah pembaruan?</strong> Tidak. Stiker lama tetap berfungsi. Cetak ulang hanya untuk stiker yang hilang atau rusak, atau untuk lantai baru — dari bagian Kode QR di halaman depan.</p>
+<p><strong>Bisakah saya bertanya langsung tanpa membuka grafik?</strong> Bisa, lewat <strong>Chatbot AI</strong> di halaman depan. Bila Anda sedang masuk sebagai SPV, chatbot itu boleh menjawab per nama petugas. Setiap pertanyaan tercatat di tab Aktivitas beserta data yang ditariknya.</p>
 <p><strong>Seberapa akurat kecerdasan buatannya?</strong> Untuk teks, lama proses dan hasil tiap laporan tersimpan dan dapat dibandingkan dengan penilaian manusia. Untuk foto, putusan bersifat perkiraan: bisa salah tolak atau salah terima, dan alasannya selalu tercatat sehingga dapat diperiksa. Angka akurasi yang sesungguhnya adalah bagian dari penelitian yang menyertai sistem ini.</p>
 
 <h2 class="pecah">13. Bila ada masalah</h2>
@@ -766,7 +766,7 @@ nama petugas hanya bisa dilakukan SPV — aturan itu dijaga di sisi server, buka
   <tr><td>&ldquo;Kamera sedang dipakai aplikasi lain, atau terjadi kesalahan.&rdquo;</td><td>Aplikasi kamera atau panggilan video masih terbuka</td><td>Tutup aplikasi itu, tekan <em>Coba lagi</em>; bila tetap gagal, muat ulang halaman</td></tr>
   <tr><td>&ldquo;Perangkat ini tidak punya kamera yang bisa dipakai.&rdquo;</td><td>Perangkat tanpa kamera (mis. komputer meja)</td><td>Pakai ponsel</td></tr>
   <tr><td>Tombol <em>Kirim laporan</em> / <em>Kirim laporan pekerjaan</em> tidak bisa ditekan</td><td>Toilet belum dipilih atau foto belum diambil</td><td>Pilih toilet dan ambil foto</td></tr>
-  <tr><td>&ldquo;Kode lokasi tidak dikenal&rdquo; setelah memindai QR</td><td>Stiker dari daftar lokasi lama, atau lantai itu dinonaktifkan</td><td>Tekan <em>Pilih lokasi</em> dan pilih manual; laporkan stiker itu ke SPV agar dicetak ulang dari tab Kode QR</td></tr>
+  <tr><td>&ldquo;Kode lokasi tidak dikenal&rdquo; setelah memindai QR</td><td>Stiker dari daftar lokasi lama, atau lantai itu dinonaktifkan</td><td>Tekan <em>Pilih lokasi</em> dan pilih manual; laporkan stiker itu ke SPV agar dicetak ulang dari bagian Kode QR di halaman depan</td></tr>
   <tr><td>Stiker lama dengan alamat lama</td><td>Dicetak sebelum pembaruan sistem</td><td>Tidak perlu apa-apa; stiker lama tetap berfungsi</td></tr>
   <tr><td>Nama petugas tidak ada di &ldquo;Siapa kamu?&rdquo;</td><td>Belum ditambahkan, atau sudah dinonaktifkan</td><td>SPV menambahkan atau mengaktifkannya di tab Petugas &amp; SPV; petugas memuat ulang halaman</td></tr>
   <tr><td>HP mahasiswa membuka halaman petugas</td><td>HP itu pernah dipakai memilih nama petugas</td><td>Ketuk <em>🎓 Saya mahasiswa</em>; agar permanen, pilih <em>&ldquo;— Pilih namamu —&rdquo;</em> di halaman petugas</td></tr>
@@ -786,13 +786,13 @@ nama petugas hanya bisa dilakukan SPV — aturan itu dijaga di sisi server, buka
   <tr><td>Hosting, penyimpanan data dan foto (Cloudflare)</td><td>Gratis pada paket bawaan untuk volume kampus</td></tr>
   <tr><td>Pemahaman teks + Chatbot AI (DeepSeek)</td><td>Berbayar per pemakaian, sangat murah — ribuan laporan untuk harga secangkir kopi. Chatbot dibatasi 50 pertanyaan/hari, kira-kira beberapa ribu rupiah per hari pada pemakaian penuh</td></tr>
   <tr><td>Pemeriksaan foto (Google Gemini)</td><td>Gratis pada tingkat gratis, dengan batas jumlah pemeriksaan per hari. Satu pemeriksaan untuk setiap keluhan yang ditutup dan setiap laporan pekerjaan; laporan pekerjaan dari ronda rutin menambah jumlahnya, jadi pemakaian perlu dipantau. Bila kelak kurang, ada model yang lebih ringan atau tingkat berbayar yang tetap nyaris nol</td></tr>
-  <tr><td>Stiker QR</td><td>Cetak 13 stiker dari tab Kode QR; cetak ulang hanya bila stiker rusak atau daftar lokasi berubah</td></tr>
+  <tr><td>Stiker QR</td><td>Cetak 13 stiker dari bagian Kode QR di halaman depan; cetak ulang hanya bila stiker rusak atau daftar lokasi berubah</td></tr>
 </table>
 
 <h2>15. Yang masih membutuhkan keputusan kampus</h2>
 <table>
   <tr><th>Hal</th><th>Keadaan saat ini</th></tr>
-  <tr><td>Gedung D, E, F</td><td>Belum didaftarkan karena keberadaan toiletnya belum dipastikan; begitu dipastikan, tinggal ditambahkan dan stikernya dicetak dari tab Kode QR</td></tr>
+  <tr><td>Gedung D, E, F</td><td>Belum didaftarkan karena keberadaan toiletnya belum dipastikan; begitu dipastikan, tinggal ditambahkan dan stikernya dicetak dari bagian Kode QR di halaman depan</td></tr>
   <tr><td>Jenis toilet per lantai</td><td>Saat ini diasumsikan setiap lantai punya WC pria dan wanita; perlu dicocokkan dengan kenyataan, termasuk toilet disabilitas</td></tr>
   <tr><td>Password SPV bawaan</td><td>Masih memakai password bawaan dan wajib diganti</td></tr>
   <tr><td>Petugas tanpa login</td><td>Dipilih demi kemudahan petugas; konsekuensinya, nama bisa dipilih orang lain. Perlu disepakati bahwa SPV rutin memeriksa tab Pekerjaan dan Aktivitas</td></tr>
@@ -815,7 +815,7 @@ nama petugas hanya bisa dilakukan SPV — aturan itu dijaga di sisi server, buka
   <tr><td>Kamera langsung</td><td>Kamera yang menyala di dalam halaman; satu-satunya cara mengambil foto, galeri tidak bisa dipakai</td></tr>
   <tr><td>Diverifikasi AI</td><td>Foto dari petugas yang dinilai bersih oleh pemeriksa foto</td></tr>
   <tr><td>Halaman Petugas</td><td>Halaman tanpa login tempat petugas memilih nama, melihat keluhan yang menunggu, dan bekerja per lantai</td></tr>
-  <tr><td>Dashboard SPV</td><td>Halaman kerja SPV: laporan, pekerjaan, grafik, aktivitas, chatbot, akun, dan kode QR</td></tr>
+  <tr><td>Dashboard SPV</td><td>Halaman kerja SPV: laporan, pekerjaan, grafik, aktivitas, dan akun</td></tr>
   <tr><td>WIB</td><td>Waktu Indonesia Barat — semua jam di dashboard memakai waktu kampus</td></tr>
   <tr><td>Catatan aktivitas</td><td>Riwayat semua kejadian yang tidak dapat dihapus</td></tr>
   <tr><td>Papan laporan / Laporan Masuk</td><td>Halaman umum berisi semua laporan dan statusnya</td></tr>

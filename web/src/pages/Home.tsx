@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import AskPanel from '../components/AskPanel';
+import QrCodesPanel from '../components/QrCodesPanel';
 import { StatusBadge } from '../components/Badges';
 import { api, type Report } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
@@ -30,6 +31,7 @@ export default function Home() {
   const { t } = useLanguage();
   const { session, logout } = useSession();
   const [myReports, setMyReports] = useState<Report[]>([]);
+  const [showQr, setShowQr] = useState(false);
 
   // Reports belong to the account, not to the device, so the list follows the
   // reporter to any phone or browser they sign in from.
@@ -142,6 +144,30 @@ export default function Home() {
             {t('ask.title')}
           </h2>
           <AskPanel compact />
+        </section>
+
+        {/* The stickers are only floor addresses that are already on every door,
+            so anyone may print a replacement. Folded by default: thirteen QR
+            codes would otherwise bury the rest of the page. */}
+        <section className="mt-8">
+          <button
+            type="button"
+            onClick={() => setShowQr((v) => !v)}
+            aria-expanded={showQr}
+            className="card flex w-full items-center gap-3 p-4 text-left hover:shadow-naik print:hidden"
+          >
+            <span aria-hidden className="grid h-9 w-9 place-items-center rounded-xl bg-maroon-800 text-lg text-white shadow-naik">
+              🔳
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-extrabold tracking-tight text-maroon-900">{t('qr.title')}</span>
+              <span className="block text-sm text-maroon-700">{t('qr.subtitle')}</span>
+            </span>
+            <span className="shrink-0 text-sm font-bold text-bata-600">
+              {showQr ? t('qr.hide') : t('qr.show')}
+            </span>
+          </button>
+          {showQr && <QrCodesPanel />}
         </section>
       </main>
     </div>

@@ -131,7 +131,6 @@ const ID = {
   'leaderboard.no_reports_yet': 'Kamu belum mengirim laporan atas nama akun ini.',
 
   'tab.accounts': 'Petugas & SPV',
-  'tab.ask': '🤖 Chatbot AI',
   'ask.title': 'Chatbot AI — tanya data laporan',
   'ask.ai_label': 'Jawaban Chatbot AI',
   'ask.description':
@@ -257,7 +256,10 @@ const ID = {
   'dashboard.delete_confirm': 'Hapus laporan ini secara permanen? Tindakan ini tidak bisa dibatalkan.',
 
   'tab.work_logs': 'Pekerjaan',
-  'tab.qr_codes': 'Kode QR',
+  'qr.title': 'Kode QR untuk pintu toilet',
+  'qr.subtitle': 'Cetak ulang stiker yang hilang atau rusak.',
+  'qr.show': 'Tampilkan',
+  'qr.hide': 'Sembunyikan',
   'qr.description':
     'Satu kode QR untuk setiap lantai. Cetak lalu tempel di pintu toilet; mahasiswa dan petugas memindainya untuk melapor. Kode baru muncul otomatis saat lantai ditambahkan.',
   'qr.all_buildings': 'Semua gedung',
@@ -487,7 +489,6 @@ const EN: Record<Key, string> = {
   'leaderboard.no_reports_yet': 'You have not filed any report under this account yet.',
 
   'tab.accounts': 'Staff & Supervisors',
-  'tab.ask': '🤖 AI Chatbot',
   'ask.title': 'AI Chatbot — ask about the reports',
   'ask.ai_label': 'AI Chatbot answer',
   'ask.description':
@@ -613,7 +614,10 @@ const EN: Record<Key, string> = {
   'dashboard.delete_confirm': 'Delete this report permanently? This cannot be undone.',
 
   'tab.work_logs': 'Work log',
-  'tab.qr_codes': 'QR codes',
+  'qr.title': 'QR codes for toilet doors',
+  'qr.subtitle': 'Reprint a sticker that is lost or damaged.',
+  'qr.show': 'Show',
+  'qr.hide': 'Hide',
   'qr.description':
     'One QR code per floor. Print it and stick it on the toilet door; students and staff scan it to report. New codes appear automatically when a floor is added.',
   'qr.all_buildings': 'All buildings',

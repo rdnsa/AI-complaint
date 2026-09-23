@@ -100,7 +100,7 @@ Three parties, and only the supervisor ever signs in.
 |---|---|---|---|
 | **Student** (reporter) | nobody — or self-registers at `/register` to appear on the leaderboard | no (optional) | report a toilet's condition with a live-camera photo |
 | **Cleaning staff** | the supervisor adds a **name** in the dashboard | **no** — picks their name from a dropdown on the floor page | finish student reports on that floor (proof photo checked by the vision model), and log the toilets they cleaned (work log, same photo check) |
-| **Supervisor** (SPV) | ships with the database (`admin` / `Admin123!`); can add more | yes | monitor reports and the staff work log, charts, activity log, AI chatbot; manage staff names and supervisor accounts; print the QR stickers |
+| **Supervisor** (SPV) | ships with the database (`admin` / `Admin123!`); can add more | yes | monitor reports and the staff work log, charts, activity log; manage staff names and supervisor accounts. The AI chatbot and the QR stickers are on the home page, for everyone |
 
 > **Change the default supervisor password after the first sign-in.** It is
 > committed in `migrations/0004_pengguna.sql` and therefore public.
@@ -248,7 +248,8 @@ and `npm run db:remote` once, by hand.
 
 ## Printing QR codes
 
-**From the app:** supervisor dashboard → **QR codes** tab. One sticker per
+**From the app:** home page → **QR codes for toilet doors** → *Show* (open to
+everyone; a sticker is only a floor address already on the door). One sticker per
 floor, generated in the browser from the live location list. Filter by
 building, press **Print** (only the stickers are printed, three per row on A4),
 or download a single sticker as PNG. Each code points at
