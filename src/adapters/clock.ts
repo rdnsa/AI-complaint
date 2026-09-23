@@ -10,22 +10,22 @@ function formatUTC(d: Date): string {
 }
 
 /** The WIB date ('YYYY-MM-DD') of a given instant. */
-export function tanggalWIB(now: Date = new Date()): string {
+export function wibDate(now: Date = new Date()): string {
   return new Date(now.getTime() + WIB_OFFSET_MS).toISOString().slice(0, 10);
 }
 
-const POLA_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Whether a string is a 'YYYY-MM-DD' date, so it is safe to turn into a range. */
-export function tanggalSah(nilai: string | undefined): nilai is string {
-  return Boolean(nilai && POLA_TANGGAL.test(nilai) && !Number.isNaN(Date.parse(nilai)));
+export function isValidDate(value: string | undefined): value is string {
+  return Boolean(value && DATE_PATTERN.test(value) && !Number.isNaN(Date.parse(value)));
 }
 
 /** Start and end of a WIB date, expressed as UTC strings for D1 queries. */
-export function rentangHariWIB(tanggal: string): { mulai: string; selesai: string } {
-  const mulaiMs = Date.parse(`${tanggal}T00:00:00Z`) - WIB_OFFSET_MS;
+export function wibDayRange(date: string): { start: string; end: string } {
+  const startMs = Date.parse(`${date}T00:00:00Z`) - WIB_OFFSET_MS;
   return {
-    mulai: formatUTC(new Date(mulaiMs)),
-    selesai: formatUTC(new Date(mulaiMs + 24 * 60 * 60 * 1000)),
+    start: formatUTC(new Date(startMs)),
+    end: formatUTC(new Date(startMs + 24 * 60 * 60 * 1000)),
   };
 }

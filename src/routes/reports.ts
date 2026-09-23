@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { sesiSaatIni, wajibSpv } from '../adapters/session';
-import { STATUS } from '../domain/types';
+import { FOLDER } from '../adapters/storage';
+import { currentSession, requireSupervisor } from '../adapters/session';
+import { STATUSES } from '../domain/types';
 import type { AppEnv } from '../env';
-import { bacaFilterWaktu } from '../repositories/waktu';
-import * as laporan from '../services/report-service';
-import * as akun from '../services/user-service';
+import { readTimeFilter } from '../repositories/time-filter';
+import * as reports from '../services/report-service';
+import * as accounts from '../services/user-service';
 
 /**
  * HTTP layer for reports: parse, validate, delegate, format.
@@ -16,185 +17,188 @@ import * as akun from '../services/user-service';
 
 const app = new Hono<AppEnv>();
 
-const angka = (nilai: string | undefined, bawaan: number, maks: number) =>
-  Math.min(Number(nilai ?? bawaan) || bawaan, maks);
+const clampNumber = (value: string | undefined, fallback: number, max: number) =>
+  Math.min(Number(value ?? fallback) || fallback, max);
 
-const KirimSchema = z.object({
+const SubmitSchema = z.object({
   toilet_id: z.string().min(1).max(50),
-  teks: z.string().trim().min(5, 'Keluhan terlalu pendek').max(1000),
+  description: z.string().trim().min(5, 'Keluhan terlalu pendek').max(1000),
   // A photo is required: a complaint without one is hard for staff to verify,
   // and its presence makes the public board far more trustworthy.
-  foto_key: z
+  photo_key: z
     .string({ required_error: 'Foto keadaan wajib dilampirkan' })
     .min(1, 'Foto keadaan wajib dilampirkan')
-    .max(200),
+    .max(200)
+    // Only a photo uploaded as a condition photo counts: a staff proof photo or
+    // an arbitrary string must not be passed off as the student's evidence.
+    .refine((key) => key.startsWith(`${FOLDER.report}/`), 'Foto keadaan tidak valid. Ambil foto ulang.'),
 });
 
 /** Public: a student files a complaint after scanning the QR code. */
 app.post('/', async (c) => {
-  const parsed = KirimSchema.safeParse(await c.req.json().catch(() => ({})));
+  const parsed = SubmitSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) {
     return c.json({ error: parsed.error.issues[0]?.message ?? 'Data tidak valid' }, 400);
   }
 
   // Reports may stay anonymous; when the reporter is signed in, the report
   // attaches to their account and counts towards the leaderboard.
-  const sesi = await sesiSaatIni(c);
-  const pelapor = sesi?.peran === 'pelapor' ? { id: sesi.id, nama: sesi.nama } : null;
+  const session = await currentSession(c);
+  const reporter = session?.role === 'reporter' ? { id: session.id, name: session.name } : null;
 
-  const hasil = await laporan.kirimLaporan(c.env, parsed.data, pelapor);
-  if (hasil.jenis === 'lokasi-tidak-dikenal') {
+  const result = await reports.submitReport(c.env, parsed.data, reporter);
+  if (result.kind === 'unknown-location') {
     return c.json({ error: 'Kode WC tidak dikenal. Periksa QR yang kamu scan.' }, 404);
   }
 
   // The LLM runs after the response is sent, so the student is confirmed instantly.
-  if (!hasil.duplikat) c.executionCtx.waitUntil(laporan.jalankanAnalisis(c.env, hasil.id));
+  if (!result.duplicate) c.executionCtx.waitUntil(reports.runAnalysis(c.env, result.id));
 
   return c.json(
-    { id: hasil.id, toilet: hasil.toilet, duplikat: hasil.duplikat },
-    hasil.duplikat ? 200 : 201,
+    { id: result.id, toilet: result.toilet, duplicate: result.duplicate },
+    result.duplicate ? 200 : 201,
   );
 });
 
 /** Public: every report and how far it has been handled, open to anyone. */
-app.get('/publik', async (c) => {
-  const { status, prioritas } = c.req.query();
+app.get('/public', async (c) => {
+  const { status, priority } = c.req.query();
   return c.json(
-    await laporan.papanPublik(c.env, {
+    await reports.publicBoard(c.env, {
       status,
-      prioritas,
-      limit: angka(c.req.query('limit'), 100, 200),
+      priority,
+      limit: clampNumber(c.req.query('limit'), 100, 200),
     }),
   );
 });
 
 /**
  * Public: the reports staff still have to handle, optionally for one floor
- * (`?gedung=A&lantai=1`). Staff do not sign in, so this cannot require a session.
+ * (`?building=A&floor=1`). Staff do not sign in, so this cannot require a session.
  */
-app.get('/terbuka', async (c) => {
-  const { gedung, lantai } = c.req.query();
-  const nomorLantai = lantai !== undefined && /^\d{1,2}$/.test(lantai) ? Number(lantai) : undefined;
+app.get('/open', async (c) => {
+  const { building, floor } = c.req.query();
+  const floorNumber = floor !== undefined && /^\d{1,2}$/.test(floor) ? Number(floor) : undefined;
   return c.json({
-    data: await laporan.laporanTerbuka(c.env, {
-      gedung: gedung && /^[A-Za-z]$/.test(gedung) ? gedung : undefined,
-      lantai: nomorLantai,
-      limit: angka(c.req.query('limit'), 100, 200),
+    data: await reports.openReports(c.env, {
+      building: building && /^[A-Za-z]$/.test(building) ? building : undefined,
+      floor: floorNumber,
+      limit: clampNumber(c.req.query('limit'), 100, 200),
     }),
   });
 });
 
 /** Reporter: the reports filed under their own account. */
-app.get('/saya', async (c) => {
-  const sesi = await sesiSaatIni(c);
-  if (sesi?.peran !== 'pelapor') return c.json({ data: [] });
-  return c.json({ data: await laporan.laporanMilikPelapor(c.env, sesi.id) });
+app.get('/mine', async (c) => {
+  const session = await currentSession(c);
+  if (session?.role !== 'reporter') return c.json({ data: [] });
+  return c.json({ data: await reports.reporterReports(c.env, session.id) });
 });
 
 /** Public: a student checks their own report through the confirmation link. */
 app.get('/:id', async (c) => {
-  const dto = await laporan.satuLaporan(c.env, c.req.param('id'));
+  const dto = await reports.getReport(c.env, c.req.param('id'));
   return dto ? c.json(dto) : c.json({ error: 'Laporan tidak ditemukan' }, 404);
 });
 
 /**
- * Supervisor: the dashboard list, with filters. Time: `dari`/`sampai` (WIB
- * dates, inclusive) and `jam_dari`/`jam_sampai` (WIB hours 0–23, inclusive).
+ * Supervisor: the dashboard list, with filters. Time: `from`/`to` (WIB
+ * dates, inclusive) and `hour_from`/`hour_to` (WIB hours 0–23, inclusive).
  */
-app.get('/', wajibSpv, async (c) => {
+app.get('/', requireSupervisor, async (c) => {
   const q = c.req.query();
   return c.json({
-    data: await laporan.laporanDashboard(c.env, {
+    data: await reports.dashboardReports(c.env, {
       status: q.status,
-      prioritas: q.prioritas,
+      priority: q.priority,
       toilet_id: q.toilet_id,
-      gedung: q.gedung,
-      ...bacaFilterWaktu(q),
-      limit: angka(q.limit, 100, 200),
+      building: q.building,
+      ...readTimeFilter(q),
+      limit: clampNumber(q.limit, 100, 200),
     }),
   });
 });
 
-const UbahStatusSchema = z.object({
-  status: z.enum(STATUS),
-  foto_selesai_key: z.string().max(200).nullish(),
-  petugas_id: z.string().max(64).nullish(),
+const StatusChangeSchema = z.object({
+  status: z.enum(STATUSES),
+  proof_photo_key: z.string().max(200).nullish(),
+  staff_id: z.string().max(64).nullish(),
 });
 
 /**
  * Staff: mark a report as being worked on, or as resolved.
  *
- * Staff do not sign in; they send the `petugas_id` picked on the dropdown,
+ * Staff do not sign in; they send the `staff_id` picked on the dropdown,
  * which must belong to an active staff member. A signed-in supervisor may act
  * under their own name instead. Closing needs a proof photo, and the photo is
  * judged by the vision model before the status changes — a photo of a dirty
  * toilet is refused.
  */
 app.patch('/:id', async (c) => {
-  const parsed = UbahStatusSchema.safeParse(await c.req.json().catch(() => ({})));
+  const parsed = StatusChangeSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'Status tidak valid' }, 400);
 
-  const sesi = await sesiSaatIni(c);
-  let pelaku: string;
-  if (parsed.data.petugas_id) {
-    const petugas = await akun.cariPetugasAktif(c.env, parsed.data.petugas_id);
-    if (!petugas) return c.json({ error: 'Nama petugas tidak dikenal. Pilih ulang namamu.' }, 400);
-    pelaku = petugas.nama;
-  } else if (sesi?.peran === 'spv') {
-    pelaku = sesi.nama;
+  const session = await currentSession(c);
+  let actor: string;
+  if (parsed.data.staff_id) {
+    const staff = await accounts.findActiveStaff(c.env, parsed.data.staff_id);
+    if (!staff) return c.json({ error: 'Nama petugas tidak dikenal. Pilih ulang namamu.' }, 400);
+    actor = staff.name;
+  } else if (session?.role === 'supervisor') {
+    actor = session.name;
   } else {
     return c.json({ error: 'Pilih namamu dulu' }, 400);
   }
 
-  const hasil = await laporan.ubahStatus(
+  const result = await reports.changeStatus(
     c.env,
     c.req.param('id'),
     parsed.data.status,
-    pelaku,
-    parsed.data.foto_selesai_key ?? null,
+    actor,
+    parsed.data.proof_photo_key ?? null,
   );
 
-  switch (hasil.jenis) {
-    case 'tidak-ditemukan':
+  switch (result.kind) {
+    case 'not-found':
       return c.json({ error: 'Laporan tidak ditemukan' }, 404);
-    case 'foto-tidak-ditemukan':
+    case 'photo-not-found':
       return c.json({ error: 'Foto bukti tidak ditemukan. Unggah ulang.' }, 400);
-    case 'bukti-kurang':
+    case 'proof-missing':
       return c.json({ error: 'Foto bukti penyelesaian wajib diunggah lebih dulu.' }, 400);
     // 422: the request was well-formed, the photo simply did not pass.
-    case 'bukti-ditolak':
+    case 'proof-rejected':
       return c.json(
         {
           error:
-            hasil.hasil === 'bukan_toilet'
+            result.verdict === 'not_toilet'
               ? 'Foto tidak menunjukkan toilet. Ambil foto kondisi toilet yang sudah dibersihkan.'
               : 'Toilet pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang.',
-          hasil: hasil.hasil,
-          alasan: hasil.alasan,
+          verdict: result.verdict,
+          reason: result.reason,
         },
         422,
       );
-    case 'verifikasi-gagal':
+    case 'verification-failed':
       return c.json({ error: 'Pemeriksaan foto gagal. Coba lagi sebentar.' }, 502);
     default:
-      return c.json({ ok: true, status: hasil.status, verifikasi: hasil.verifikasi });
+      return c.json({ ok: true, status: result.status, verification: result.verification });
   }
 });
 
 /** Staff: retry the analysis of a report the LLM failed on. */
-app.post('/:id/analisa-ulang', wajibSpv, async (c) => {
+app.post('/:id/reanalyze', requireSupervisor, async (c) => {
   const id = c.req.param('id');
-  if (!(await laporan.mintaAnalisisUlang(c.env, id))) {
+  if (!(await reports.requestReanalysis(c.env, id))) {
     return c.json({ error: 'Laporan tidak ditemukan' }, 404);
   }
-  c.executionCtx.waitUntil(laporan.jalankanAnalisis(c.env, id));
+  c.executionCtx.waitUntil(reports.runAnalysis(c.env, id));
   return c.json({ ok: true });
 });
 
 /** Staff: delete a report permanently, keeping a copy in the activity log. */
-app.delete('/:id', wajibSpv, async (c) => {
-  const terhapus = await laporan.hapusLaporan(c.env, c.req.param('id'), c.get('sesi').nama);
-  return terhapus ? c.json({ ok: true }) : c.json({ error: 'Laporan tidak ditemukan' }, 404);
+app.delete('/:id', requireSupervisor, async (c) => {
+  const deleted = await reports.deleteReport(c.env, c.req.param('id'), c.get('session').name);
+  return deleted ? c.json({ ok: true }) : c.json({ error: 'Laporan tidak ditemukan' }, 404);
 });
 
 export default app;

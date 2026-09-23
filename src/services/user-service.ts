@@ -1,16 +1,16 @@
-import { buatSalt, cocok, hitungHash } from '../adapters/password';
-import type { Peran } from '../domain/types';
+import { createSalt, hashPassword, verifyPassword } from '../adapters/password';
+import type { Role } from '../domain/types';
 import type { Env } from '../env';
-import * as pengguna from '../repositories/users';
-import { catat } from './activity-service';
+import * as users from '../repositories/users';
+import { log } from './activity-service';
 
-export interface Identitas {
+export interface Identity {
   id: string;
-  nama: string;
-  peran: Peran;
+  name: string;
+  role: Role;
 }
 
-export type HasilMasuk = { jenis: 'ok'; identitas: Identitas } | { jenis: 'gagal' };
+export type LoginResult = { kind: 'ok'; identity: Identity } | { kind: 'failed' };
 
 /**
  * Verifies credentials.
@@ -23,143 +23,149 @@ export type HasilMasuk = { jenis: 'ok'; identitas: Identitas } | { jenis: 'gagal
  * password: they work without signing in, and a staff session would otherwise
  * be a way into nothing but confusion.
  */
-export async function masuk(env: Env, username: string, password: string): Promise<HasilMasuk> {
-  const akun = await pengguna.cariDenganUsername(env, username);
-  if (!akun || !akun.aktif || akun.peran === 'petugas') return { jenis: 'gagal' };
-  if (!akun.sandi_hash || !akun.sandi_salt) return { jenis: 'gagal' };
-  if (!(await cocok(password, akun.sandi_salt, akun.sandi_hash))) return { jenis: 'gagal' };
+export async function login(env: Env, username: string, password: string): Promise<LoginResult> {
+  const account = await users.findByUsername(env, username);
+  if (!account || !account.active || account.role === 'staff') return { kind: 'failed' };
+  if (!account.password_hash || !account.password_salt) return { kind: 'failed' };
+  if (!(await verifyPassword(password, account.password_salt, account.password_hash))) {
+    return { kind: 'failed' };
+  }
 
-  const identitas = { id: akun.id, nama: akun.nama, peran: akun.peran };
-  if (akun.peran === 'spv') {
-    await catat(env, {
-      aksi: 'masuk',
-      pelaku: akun.nama,
-      ringkas: `${akun.nama} (SPV) masuk ke dashboard`,
+  const identity = { id: account.id, name: account.name, role: account.role };
+  if (account.role === 'supervisor') {
+    await log(env, {
+      action: 'login',
+      actor: account.name,
+      summary: `${account.name} (SPV) masuk ke dashboard`,
     });
   }
-  return { jenis: 'ok', identitas };
+  return { kind: 'ok', identity };
 }
 
-export type HasilBuat = { jenis: 'ok'; identitas: Identitas } | { jenis: 'username-dipakai' };
+export type CreateResult = { kind: 'ok'; identity: Identity } | { kind: 'username-taken' };
 
-async function buatAkun(
+async function createAccount(
   env: Env,
-  data: { username: string; nama: string; password: string; peran: Exclude<Peran, 'petugas'> },
-): Promise<HasilBuat> {
-  if (await pengguna.usernameDipakai(env, data.username)) return { jenis: 'username-dipakai' };
+  data: { username: string; name: string; password: string; role: Exclude<Role, 'staff'> },
+): Promise<CreateResult> {
+  if (await users.usernameTaken(env, data.username)) return { kind: 'username-taken' };
 
-  const salt = buatSalt();
+  const salt = createSalt();
   const id = crypto.randomUUID();
-  await pengguna.simpan(env, {
+  await users.insert(env, {
     id,
     username: data.username,
-    nama: data.nama,
-    peran: data.peran,
-    sandi_hash: await hitungHash(data.password, salt),
-    sandi_salt: salt,
+    name: data.name,
+    role: data.role,
+    password_hash: await hashPassword(data.password, salt),
+    password_salt: salt,
   });
 
-  return { jenis: 'ok', identitas: { id, nama: data.nama, peran: data.peran } };
+  return { kind: 'ok', identity: { id, name: data.name, role: data.role } };
 }
 
 /** Self-registration only ever creates a reporter. */
-export function daftarPelapor(env: Env, data: { username: string; nama: string; password: string }) {
-  return buatAkun(env, { ...data, peran: 'pelapor' });
+export function registerReporter(
+  env: Env,
+  data: { username: string; name: string; password: string },
+) {
+  return createAccount(env, { ...data, role: 'reporter' });
 }
 
 /** A staff member is only a name on the dropdown: no username, no password. */
-export async function tambahPetugas(env: Env, nama: string, spv: string): Promise<Identitas> {
+export async function addStaff(env: Env, name: string, supervisor: string): Promise<Identity> {
   const id = crypto.randomUUID();
-  await pengguna.simpan(env, {
+  await users.insert(env, {
     id,
     username: null,
-    nama,
-    peran: 'petugas',
-    sandi_hash: null,
-    sandi_salt: null,
+    name,
+    role: 'staff',
+    password_hash: null,
+    password_salt: null,
   });
-  await catat(env, { aksi: 'pengguna', pelaku: spv, ringkas: `Menambah petugas ${nama}` });
-  return { id, nama, peran: 'petugas' };
+  await log(env, { action: 'user_changed', actor: supervisor, summary: `Menambah petugas ${name}` });
+  return { id, name, role: 'staff' };
 }
 
 /** Another supervisor, who signs in like the first. */
-export async function tambahSpv(
+export async function addSupervisor(
   env: Env,
-  data: { username: string; nama: string; password: string },
-  spv: string,
-): Promise<HasilBuat> {
-  const hasil = await buatAkun(env, { ...data, peran: 'spv' });
-  if (hasil.jenis === 'ok') {
-    await catat(env, {
-      aksi: 'pengguna',
-      pelaku: spv,
-      ringkas: `Menambah akun SPV ${data.nama} (${data.username})`,
+  data: { username: string; name: string; password: string },
+  supervisor: string,
+): Promise<CreateResult> {
+  const result = await createAccount(env, { ...data, role: 'supervisor' });
+  if (result.kind === 'ok') {
+    await log(env, {
+      action: 'user_changed',
+      actor: supervisor,
+      summary: `Menambah akun SPV ${data.name} (${data.username})`,
     });
   }
-  return hasil;
+  return result;
 }
 
-export function daftarPengelola(env: Env) {
-  return pengguna.daftarPengelola(env);
+export function listManaged(env: Env) {
+  return users.listManaged(env);
 }
 
-export function petugasAktif(env: Env) {
-  return pengguna.petugasAktif(env);
+export function activeStaff(env: Env) {
+  return users.activeStaff(env);
 }
 
-export function cariPetugasAktif(env: Env, id: string) {
-  return pengguna.cariPetugasAktif(env, id);
+export function findActiveStaff(env: Env, id: string) {
+  return users.findActiveStaff(env, id);
 }
 
-export type HasilUbah =
-  | { jenis: 'ok' }
-  | { jenis: 'tidak-ditemukan' }
-  | { jenis: 'kunci-diri-sendiri' }
-  | { jenis: 'petugas-tanpa-sandi' };
+export type UpdateResult =
+  | { kind: 'ok' }
+  | { kind: 'not-found' }
+  | { kind: 'self-lockout' }
+  | { kind: 'staff-without-password' };
 
-export async function ubahAkun(
+export async function updateAccount(
   env: Env,
   id: string,
-  perubahan: { nama?: string; password?: string; aktif?: boolean },
-  spv: Identitas,
-): Promise<HasilUbah> {
-  const target = await pengguna.cariRingkas(env, id);
-  if (!target) return { jenis: 'tidak-ditemukan' };
+  changes: { name?: string; password?: string; active?: boolean },
+  supervisor: Identity,
+): Promise<UpdateResult> {
+  const target = await users.findBrief(env, id);
+  if (!target) return { kind: 'not-found' };
 
   // Deactivating your own account would lock the supervisor out of their own system.
-  if (perubahan.aktif === false && id === spv.id) return { jenis: 'kunci-diri-sendiri' };
-  if (perubahan.password !== undefined && target.peran === 'petugas') {
-    return { jenis: 'petugas-tanpa-sandi' };
+  if (changes.active === false && id === supervisor.id) return { kind: 'self-lockout' };
+  if (changes.password !== undefined && target.role === 'staff') {
+    return { kind: 'staff-without-password' };
   }
 
   const set: string[] = [];
   const params: unknown[] = [];
-  const diubah: string[] = [];
+  // Human-readable labels for the activity-log sentence, hence Indonesian.
+  const changed: string[] = [];
 
-  if (perubahan.nama !== undefined) {
-    set.push('nama = ?');
-    params.push(perubahan.nama);
-    diubah.push('nama');
+  if (changes.name !== undefined) {
+    set.push('name = ?');
+    params.push(changes.name);
+    changed.push('nama');
   }
-  if (perubahan.password !== undefined) {
+  if (changes.password !== undefined) {
     // The salt is replaced too, so the old and new passwords share no derivation.
-    const salt = buatSalt();
-    set.push('sandi_hash = ?', 'sandi_salt = ?');
-    params.push(await hitungHash(perubahan.password, salt), salt);
-    diubah.push('password');
+    const salt = createSalt();
+    set.push('password_hash = ?', 'password_salt = ?');
+    params.push(await hashPassword(changes.password, salt), salt);
+    changed.push('password');
   }
-  if (perubahan.aktif !== undefined) {
-    set.push('aktif = ?');
-    params.push(perubahan.aktif ? 1 : 0);
-    diubah.push(perubahan.aktif ? 'diaktifkan' : 'dinonaktifkan');
+  if (changes.active !== undefined) {
+    set.push('active = ?');
+    params.push(changes.active ? 1 : 0);
+    changed.push(changes.active ? 'diaktifkan' : 'dinonaktifkan');
   }
 
-  await pengguna.perbarui(env, id, set, params);
-  await catat(env, {
-    aksi: 'pengguna',
-    pelaku: spv.nama,
-    ringkas: `Mengubah ${target.peran === 'petugas' ? 'petugas' : 'akun'} ${target.username ?? target.nama}: ${diubah.join(', ')}`,
+  await users.update(env, id, set, params);
+  await log(env, {
+    action: 'user_changed',
+    actor: supervisor.name,
+    summary: `Mengubah ${target.role === 'staff' ? 'petugas' : 'akun'} ${target.username ?? target.name}: ${changed.join(', ')}`,
   });
 
-  return { jenis: 'ok' };
+  return { kind: 'ok' };
 }

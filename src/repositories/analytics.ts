@@ -1,6 +1,6 @@
-import { rentangHariWIB } from '../adapters/clock';
+import { wibDayRange } from '../adapters/clock';
 import type { Env } from '../env';
-import { KATEGORI, PRIORITAS, STATUS } from '../domain/types';
+import { CATEGORIES, PRIORITIES, STATUSES, TOILET_TYPES } from '../domain/types';
 
 /**
  * The aggregate queries behind the admin question-answering feature.
@@ -11,136 +11,135 @@ import { KATEGORI, PRIORITAS, STATUS } from '../domain/types';
  * never writes SQL.
  */
 
-export interface FilterAnalitik {
-  sejak?: string;
-  sampai?: string;
-  gedung?: string;
-  kategori?: string;
-  prioritas?: string;
+export interface AnalyticsFilter {
+  since?: string;
+  until?: string;
+  building?: string;
+  category?: string;
+  priority?: string;
   status?: string;
-  jenis?: string;
+  type?: string;
 }
 
-const POLA_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
-const JENIS = ['pria', 'wanita', 'disabilitas'] as const;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Shared WHERE clause; `r` is reports, `t` is toilet_info. */
-function susunFilter(f: FilterAnalitik): { klausa: string; params: unknown[] } {
+function buildFilter(f: AnalyticsFilter): { clause: string; params: unknown[] } {
   const where: string[] = [];
   const params: unknown[] = [];
 
-  if (f.sejak && POLA_TANGGAL.test(f.sejak)) {
+  if (f.since && DATE_PATTERN.test(f.since)) {
     where.push('r.created_at >= ?');
-    params.push(rentangHariWIB(f.sejak).mulai);
+    params.push(wibDayRange(f.since).start);
   }
-  if (f.sampai && POLA_TANGGAL.test(f.sampai)) {
+  if (f.until && DATE_PATTERN.test(f.until)) {
     where.push('r.created_at < ?');
-    params.push(rentangHariWIB(f.sampai).selesai);
+    params.push(wibDayRange(f.until).end);
   }
-  if (f.gedung && /^[A-Za-z]$/.test(f.gedung)) {
-    where.push('t.gedung_kode = ?');
-    params.push(f.gedung.toUpperCase());
+  if (f.building && /^[A-Za-z]$/.test(f.building)) {
+    where.push('t.building_code = ?');
+    params.push(f.building.toUpperCase());
   }
-  if (f.kategori && (KATEGORI as readonly string[]).includes(f.kategori)) {
-    where.push(`EXISTS (SELECT 1 FROM json_each(r.kategori) WHERE value = ?)`);
-    params.push(f.kategori);
+  if (f.category && (CATEGORIES as readonly string[]).includes(f.category)) {
+    where.push(`EXISTS (SELECT 1 FROM json_each(r.categories) WHERE value = ?)`);
+    params.push(f.category);
   }
-  if (f.prioritas && (PRIORITAS as readonly string[]).includes(f.prioritas)) {
-    where.push('r.prioritas = ?');
-    params.push(f.prioritas);
+  if (f.priority && (PRIORITIES as readonly string[]).includes(f.priority)) {
+    where.push('r.priority = ?');
+    params.push(f.priority);
   }
-  if (f.status && (STATUS as readonly string[]).includes(f.status)) {
+  if (f.status && (STATUSES as readonly string[]).includes(f.status)) {
     where.push('r.status = ?');
     params.push(f.status);
   }
-  if (f.jenis && (JENIS as readonly string[]).includes(f.jenis)) {
-    where.push('t.jenis = ?');
-    params.push(f.jenis);
+  if (f.type && (TOILET_TYPES as readonly string[]).includes(f.type)) {
+    where.push('t.type = ?');
+    params.push(f.type);
   }
 
-  return { klausa: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
+  return { clause: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
 }
 
 /** Groupings the model may ask for, mapped to the SQL expression behind each. */
-export const KELOMPOK = {
-  gedung: `t.gedung_kode || ' - ' || t.gedung_nama`,
-  toilet: `t.nama`,
-  lantai: `t.gedung_kode || ' lantai ' || t.lantai`,
-  jenis: `t.jenis`,
-  kategori: `je.value`,
-  prioritas: `COALESCE(r.prioritas, 'belum dianalisis')`,
+export const GROUPINGS = {
+  building: `t.building_code || ' - ' || t.building_name`,
+  toilet: `t.name`,
+  floor: `t.building_code || ' lantai ' || t.floor`,
+  type: `t.type`,
+  category: `je.value`,
+  priority: `COALESCE(r.priority, 'belum dianalisis')`,
   status: `r.status`,
-  petugas: `COALESCE(r.petugas, 'belum ada')`,
-  tanggal: `date(r.created_at, '+7 hours')`,
-  minggu: `strftime('%Y-W%W', r.created_at, '+7 hours')`,
-  bulan: `strftime('%Y-%m', r.created_at, '+7 hours')`,
-  jam: `strftime('%H', r.created_at, '+7 hours') || ':00'`,
-  hari_minggu: `CASE strftime('%w', r.created_at, '+7 hours')
+  staff: `COALESCE(r.staff_name, 'belum ada')`,
+  date: `date(r.created_at, '+7 hours')`,
+  week: `strftime('%Y-W%W', r.created_at, '+7 hours')`,
+  month: `strftime('%Y-%m', r.created_at, '+7 hours')`,
+  hour: `strftime('%H', r.created_at, '+7 hours') || ':00'`,
+  weekday: `CASE strftime('%w', r.created_at, '+7 hours')
     WHEN '0' THEN 'Minggu' WHEN '1' THEN 'Senin' WHEN '2' THEN 'Selasa' WHEN '3' THEN 'Rabu'
     WHEN '4' THEN 'Kamis' WHEN '5' THEN 'Jumat' ELSE 'Sabtu' END`,
 } as const;
-export type Kelompok = keyof typeof KELOMPOK;
+export type Grouping = keyof typeof GROUPINGS;
 
-const DARI = `FROM reports r JOIN toilet_info t ON t.id = r.toilet_id`;
+const FROM = `FROM reports r JOIN toilet_info t ON t.id = r.toilet_id`;
 
 /** Grouping by category needs the JSON array unrolled; every other grouping does not. */
-function sumber(kelompok: Kelompok | undefined): string {
-  return kelompok === 'kategori' ? `${DARI}, json_each(r.kategori) je` : DARI;
+function source(groupBy: Grouping | undefined): string {
+  return groupBy === 'category' ? `${FROM}, json_each(r.categories) je` : FROM;
 }
 
-export async function hitungLaporan(env: Env, kelompok: Kelompok | undefined, f: FilterAnalitik) {
-  const { klausa, params } = susunFilter(f);
+export async function countReports(env: Env, groupBy: Grouping | undefined, f: AnalyticsFilter) {
+  const { clause, params } = buildFilter(f);
 
-  const total = await env.DB.prepare(`SELECT COUNT(*) AS n ${DARI} ${klausa}`)
+  const total = await env.DB.prepare(`SELECT COUNT(*) AS n ${FROM} ${clause}`)
     .bind(...params)
     .first<{ n: number }>();
 
-  if (!kelompok) return { total: total?.n ?? 0 };
+  if (!groupBy) return { total: total?.n ?? 0 };
 
-  const ekspresi = KELOMPOK[kelompok];
-  const urut = ['tanggal', 'minggu', 'bulan', 'jam'].includes(kelompok) ? 'kelompok' : 'jumlah DESC';
-  const baris = await env.DB.prepare(
-    `SELECT ${ekspresi} AS kelompok,
-            COUNT(*) AS jumlah,
-            SUM(r.status = 'selesai') AS selesai,
-            SUM(r.prioritas = 'tinggi') AS tinggi
-       ${sumber(kelompok)} ${klausa}
-      GROUP BY kelompok ORDER BY ${urut} LIMIT 20`,
+  const expression = GROUPINGS[groupBy];
+  const order = ['date', 'week', 'month', 'hour'].includes(groupBy) ? 'label' : 'count DESC';
+  const rows = await env.DB.prepare(
+    `SELECT ${expression} AS label,
+            COUNT(*) AS count,
+            SUM(r.status = 'resolved') AS resolved,
+            SUM(r.priority = 'high') AS high
+       ${source(groupBy)} ${clause}
+      GROUP BY label ORDER BY ${order} LIMIT 20`,
   )
     .bind(...params)
-    .all<{ kelompok: string; jumlah: number; selesai: number; tinggi: number }>();
+    .all<{ label: string; count: number; resolved: number; high: number }>();
 
-  return { total: total?.n ?? 0, kelompok, baris: baris.results };
+  return { total: total?.n ?? 0, group_by: groupBy, rows: rows.results };
 }
 
-export async function waktuPenyelesaian(
+export async function resolutionTime(
   env: Env,
-  kelompok: Kelompok | undefined,
-  f: FilterAnalitik,
+  groupBy: Grouping | undefined,
+  f: AnalyticsFilter,
 ) {
-  const { klausa, params } = susunFilter(f);
-  const selesai = `${klausa ? `${klausa} AND` : 'WHERE'} r.selesai_at IS NOT NULL`;
-  const menit = `(julianday(r.selesai_at) - julianday(r.created_at)) * 1440`;
-  const pilih = `COUNT(*) AS jumlah_selesai,
-                 ROUND(AVG(${menit})) AS rata_menit,
-                 ROUND(MIN(${menit})) AS tercepat_menit,
-                 ROUND(MAX(${menit})) AS terlama_menit`;
+  const { clause, params } = buildFilter(f);
+  const resolved = `${clause ? `${clause} AND` : 'WHERE'} r.resolved_at IS NOT NULL`;
+  const minutes = `(julianday(r.resolved_at) - julianday(r.created_at)) * 1440`;
+  const select = `COUNT(*) AS resolved_count,
+                 ROUND(AVG(${minutes})) AS avg_minutes,
+                 ROUND(MIN(${minutes})) AS fastest_minutes,
+                 ROUND(MAX(${minutes})) AS slowest_minutes`;
 
-  if (!kelompok) {
-    const baris = await env.DB.prepare(`SELECT ${pilih} ${DARI} ${selesai}`)
+  if (!groupBy) {
+    const row = await env.DB.prepare(`SELECT ${select} ${FROM} ${resolved}`)
       .bind(...params)
       .first();
-    return baris ?? { jumlah_selesai: 0 };
+    return row ?? { resolved_count: 0 };
   }
 
-  const baris = await env.DB.prepare(
-    `SELECT ${KELOMPOK[kelompok]} AS kelompok, ${pilih}
-       ${sumber(kelompok)} ${selesai}
-      GROUP BY kelompok ORDER BY jumlah_selesai DESC LIMIT 20`,
+  const rows = await env.DB.prepare(
+    `SELECT ${GROUPINGS[groupBy]} AS label, ${select}
+       ${source(groupBy)} ${resolved}
+      GROUP BY label ORDER BY resolved_count DESC LIMIT 20`,
   )
     .bind(...params)
     .all();
-  return { kelompok, baris: baris.results };
+  return { group_by: groupBy, rows: rows.results };
 }
 
 /**
@@ -149,29 +148,29 @@ export async function waktuPenyelesaian(
  * smuggle instructions into the asker's question through a complaint. Staff
  * names travel only when the asker is staff.
  */
-export async function daftarLaporan(
+export async function listReports(
   env: Env,
-  f: FilterAnalitik,
-  urut: 'terbaru' | 'terlama',
+  f: AnalyticsFilter,
+  order: 'newest' | 'oldest',
   limit: number,
-  denganPetugas: boolean,
+  withStaff: boolean,
 ) {
-  const { klausa, params } = susunFilter(f);
-  const baris = await env.DB.prepare(
-    `SELECT r.id, t.nama AS lokasi, r.status, r.prioritas, r.kategori, r.ringkasan,
-            ${denganPetugas ? 'r.petugas,' : ''}
-            datetime(r.created_at, '+7 hours') AS dibuat_wib,
-            datetime(r.selesai_at, '+7 hours') AS selesai_wib
-       ${DARI} ${klausa}
-      ORDER BY r.created_at ${urut === 'terlama' ? 'ASC' : 'DESC'} LIMIT ?`,
+  const { clause, params } = buildFilter(f);
+  const rows = await env.DB.prepare(
+    `SELECT r.id, t.name AS location, r.status, r.priority, r.categories, r.summary,
+            ${withStaff ? 'r.staff_name,' : ''}
+            datetime(r.created_at, '+7 hours') AS created_wib,
+            datetime(r.resolved_at, '+7 hours') AS resolved_wib
+       ${FROM} ${clause}
+      ORDER BY r.created_at ${order === 'oldest' ? 'ASC' : 'DESC'} LIMIT ?`,
   )
     .bind(...params, Math.min(Math.max(limit, 1), 15))
-    .all<{ kategori: string | null; ringkasan: string | null }>();
+    .all<{ categories: string | null; summary: string | null }>();
 
-  return baris.results.map((b) => ({
-    ...b,
-    kategori: b.kategori ? (JSON.parse(b.kategori) as string[]) : [],
-    ringkasan: b.ringkasan ?? '(belum dianalisis)',
+  return rows.results.map((row) => ({
+    ...row,
+    categories: row.categories ? (JSON.parse(row.categories) as string[]) : [],
+    summary: row.summary ?? '(belum dianalisis)',
   }));
 }
 
@@ -179,14 +178,14 @@ export async function daftarLaporan(
  * How many questions were asked today — overall, or from one (hashed) address
  * — for the daily budget guards.
  */
-export async function jumlahTanyaHariIni(env: Env, tanggal: string, ip?: string): Promise<number> {
-  const { mulai } = rentangHariWIB(tanggal);
-  const baris = await env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM aktivitas
-      WHERE aksi = 'tanya' AND waktu >= ?
-        ${ip ? `AND json_extract(rincian, '$.ip') = ?` : ''}`,
+export async function questionsToday(env: Env, date: string, ip?: string): Promise<number> {
+  const { start } = wibDayRange(date);
+  const row = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM activity_log
+      WHERE action = 'question' AND created_at >= ?
+        ${ip ? `AND json_extract(details, '$.ip') = ?` : ''}`,
   )
-    .bind(...(ip ? [mulai, ip] : [mulai]))
+    .bind(...(ip ? [start, ip] : [start]))
     .first<{ n: number }>();
-  return baris?.n ?? 0;
+  return row?.n ?? 0;
 }

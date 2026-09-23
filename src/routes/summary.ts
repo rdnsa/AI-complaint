@@ -1,45 +1,45 @@
 import { Hono } from 'hono';
-import { tanggalWIB } from '../adapters/clock';
-import { wajibSpv } from '../adapters/session';
+import { wibDate } from '../adapters/clock';
+import { requireSupervisor } from '../adapters/session';
 import type { AppEnv } from '../env';
-import * as ringkasan from '../services/summary-service';
+import * as summaries from '../services/summary-service';
 
 const app = new Hono<AppEnv>();
 
-const POLA_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Resolves the requested date, defaulting to today in WIB. */
-function tanggalDari(c: { req: { query: (k: string) => string | undefined } }): string | null {
-  const tanggal = c.req.query('tanggal') ?? tanggalWIB();
-  return POLA_TANGGAL.test(tanggal) ? tanggal : null;
+function dateFrom(c: { req: { query: (k: string) => string | undefined } }): string | null {
+  const date = c.req.query('date') ?? wibDate();
+  return DATE_PATTERN.test(date) ? date : null;
 }
 
 /** The counters for the summary cards at the top of the dashboard. */
-app.get('/stats', wajibSpv, async (c) => {
-  const tanggal = tanggalDari(c);
-  if (!tanggal) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
-  return c.json(await ringkasan.statistikHarian(c.env, tanggal));
+app.get('/stats', requireSupervisor, async (c) => {
+  const date = dateFrom(c);
+  if (!date) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
+  return c.json(await summaries.dailyStats(c.env, date));
 });
 
 /** The numbers behind the dashboard charts. */
-app.get('/grafik', wajibSpv, async (c) => {
-  const hari = Math.min(Number(c.req.query('hari') ?? 14) || 14, 90);
-  return c.json(await ringkasan.dataGrafik(c.env, hari));
+app.get('/charts', requireSupervisor, async (c) => {
+  const days = Math.min(Number(c.req.query('days') ?? 14) || 14, 90);
+  return c.json(await summaries.chartData(c.env, days));
 });
 
 /** The stored summary for one date (default: today). */
-app.get('/', wajibSpv, async (c) => {
-  const tanggal = tanggalDari(c);
-  if (!tanggal) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
-  return c.json(await ringkasan.ringkasanTersimpan(c.env, tanggal));
+app.get('/', requireSupervisor, async (c) => {
+  const date = dateFrom(c);
+  if (!date) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
+  return c.json(await summaries.storedSummary(c.env, date));
 });
 
 /** Write the summary right now, without waiting for the afternoon cron. */
-app.post('/generate', wajibSpv, async (c) => {
-  const tanggal = tanggalDari(c);
-  if (!tanggal) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
+app.post('/generate', requireSupervisor, async (c) => {
+  const date = dateFrom(c);
+  if (!date) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
   try {
-    return c.json({ ...(await ringkasan.buatRingkasanHarian(c.env, tanggal)), ada: true });
+    return c.json({ ...(await summaries.generateDailySummary(c.env, date)), exists: true });
   } catch (err) {
     return c.json({ error: err instanceof Error ? err.message : 'Gagal membuat ringkasan' }, 502);
   }

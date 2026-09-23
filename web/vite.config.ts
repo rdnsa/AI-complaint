@@ -8,7 +8,7 @@ const rootDir = fileURLToPath(new URL('..', import.meta.url));
 export default defineConfig({
   root: webDir,
   plugins: [react()],
-  // Konfigurasi Tailwind/PostCSS tinggal di root repo, bukan di dalam web/.
+  // The Tailwind/PostCSS config lives at the repo root, not inside web/.
   css: { postcss: rootDir },
   build: {
     outDir: `${rootDir}dist`,
@@ -16,8 +16,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    // `npm run dev` menjalankan Vite dan Wrangler bersamaan; panggilan /api
-    // diteruskan ke Worker lokal sehingga tidak perlu CORS.
+    // `npm run dev` runs Vite and Wrangler together; /api calls are
+    // forwarded to the local Worker, so no CORS is needed.
     proxy: { '/api': 'http://127.0.0.1:8787' },
   },
 });

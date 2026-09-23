@@ -6,33 +6,36 @@
  * a Worker.
  */
 
-export const PERAN = ['spv', 'petugas', 'pelapor'] as const;
-export type Peran = (typeof PERAN)[number];
+export const ROLES = ['supervisor', 'staff', 'reporter'] as const;
+export type Role = (typeof ROLES)[number];
 
-export const KATEGORI = [
-  'kebersihan',
-  'perlengkapan',
-  'kerusakan',
-  'bau',
-  'genangan',
-  'lainnya',
+export const CATEGORIES = [
+  'cleanliness',
+  'supplies',
+  'damage',
+  'odor',
+  'flooding',
+  'other',
 ] as const;
-export type Kategori = (typeof KATEGORI)[number];
+export type Category = (typeof CATEGORIES)[number];
 
-export const PRIORITAS = ['rendah', 'sedang', 'tinggi'] as const;
-export type Prioritas = (typeof PRIORITAS)[number];
+export const PRIORITIES = ['low', 'medium', 'high'] as const;
+export type Priority = (typeof PRIORITIES)[number];
 
-export const STATUS = ['baru', 'diproses', 'selesai'] as const;
-export type Status = (typeof STATUS)[number];
+export const STATUSES = ['new', 'in_progress', 'resolved'] as const;
+export type ReportStatus = (typeof STATUSES)[number];
+
+export const TOILET_TYPES = ['men', 'women', 'accessible'] as const;
+export type ToiletType = (typeof TOILET_TYPES)[number];
 
 /** What the vision model concluded about a staff proof photo. */
-export const HASIL_BUKTI = ['bersih', 'kotor', 'bukan_toilet'] as const;
-export type HasilBukti = (typeof HASIL_BUKTI)[number];
+export const PROOF_VERDICTS = ['clean', 'dirty', 'not_toilet'] as const;
+export type ProofVerdict = (typeof PROOF_VERDICTS)[number];
 
 /** The verdict as stored on the report, together with the cost of obtaining it. */
-export interface VerifikasiBukti {
-  hasil: HasilBukti;
-  alasan: string;
+export interface ProofVerification {
+  verdict: ProofVerdict;
+  reason: string;
   model: string;
   ms: number;
 }
@@ -41,84 +44,84 @@ export interface VerifikasiBukti {
 export interface ReportRow {
   id: string;
   toilet_id: string;
-  teks: string;
-  foto_key: string | null;
-  foto_selesai_key: string | null;
-  bukti_ai_hasil: HasilBukti | null;
-  bukti_ai_alasan: string | null;
-  bukti_ai_model: string | null;
-  bukti_ai_ms: number | null;
-  status: Status;
-  petugas: string | null;
-  selesai_at: string | null;
-  ai_status: 'pending' | 'ok' | 'gagal';
-  kategori: string | null;
-  prioritas: Prioritas | null;
-  ringkasan: string | null;
-  rekomendasi: string | null;
+  description: string;
+  photo_key: string | null;
+  proof_photo_key: string | null;
+  proof_verdict: ProofVerdict | null;
+  proof_reason: string | null;
+  proof_model: string | null;
+  proof_ms: number | null;
+  status: ReportStatus;
+  staff_name: string | null;
+  resolved_at: string | null;
+  ai_status: 'pending' | 'ok' | 'failed';
+  categories: string | null;
+  priority: Priority | null;
+  summary: string | null;
+  recommendation: string | null;
   ai_error: string | null;
   ai_model: string | null;
   ai_ms: number | null;
-  pelapor_id: string | null;
+  reporter_id: string | null;
   created_at: string;
   updated_at: string;
   // produced by the JOIN against the toilet_info view
-  toilet_nama?: string;
-  gedung_kode?: string;
-  gedung_nama?: string;
-  lantai?: number;
-  jenis?: string;
+  toilet_name?: string;
+  building_code?: string;
+  building_name?: string;
+  floor?: number;
+  type?: string;
 }
 
 /** What the frontend receives: categories parsed, photo keys turned into URLs. */
 export interface ReportDTO
-  extends Omit<ReportRow, 'kategori' | 'foto_key' | 'foto_selesai_key'> {
-  kategori: Kategori[];
-  foto_url: string | null;
-  foto_selesai_url: string | null;
+  extends Omit<ReportRow, 'categories' | 'photo_key' | 'proof_photo_key'> {
+  categories: Category[];
+  photo_url: string | null;
+  proof_photo_url: string | null;
 }
 
 /** Photos are served by our own Worker, never by a third-party domain. */
-export function urlFoto(key: string | null | undefined): string | null {
+export function photoUrl(key: string | null | undefined): string | null {
   return key ? `/api/uploads/${key}` : null;
 }
 
 export function toDTO(row: ReportRow): ReportDTO {
-  const { kategori, foto_key, foto_selesai_key, ...rest } = row;
+  const { categories, photo_key, proof_photo_key, ...rest } = row;
   return {
     ...rest,
-    kategori: kategori ? (JSON.parse(kategori) as Kategori[]) : [],
-    foto_url: urlFoto(foto_key),
-    foto_selesai_url: urlFoto(foto_selesai_key),
+    categories: categories ? (JSON.parse(categories) as Category[]) : [],
+    photo_url: photoUrl(photo_key),
+    proof_photo_url: photoUrl(proof_photo_key),
   };
 }
 
 /** A staff work report ("I cleaned this toilet"), joined with its location. */
-export interface PekerjaanRow {
+export interface WorkLogRow {
   id: string;
   toilet_id: string;
-  petugas_id: string;
-  petugas: string;
-  teks: string;
-  foto_key: string;
-  bukti_ai_hasil: HasilBukti;
-  bukti_ai_alasan: string | null;
-  bukti_ai_model: string | null;
-  bukti_ai_ms: number | null;
+  staff_id: string;
+  staff_name: string;
+  description: string;
+  photo_key: string;
+  proof_verdict: ProofVerdict;
+  proof_reason: string | null;
+  proof_model: string | null;
+  proof_ms: number | null;
   created_at: string;
-  toilet_nama?: string;
-  gedung_kode?: string;
-  gedung_nama?: string;
-  lantai?: number;
-  jenis?: string;
+  toilet_name?: string;
+  building_code?: string;
+  building_name?: string;
+  floor?: number;
+  type?: string;
 }
 
-export interface PekerjaanDTO extends Omit<PekerjaanRow, 'foto_key'> {
-  foto_url: string | null;
+export interface WorkLogDTO extends Omit<WorkLogRow, 'photo_key'> {
+  photo_url: string | null;
 }
 
-export function pekerjaanKeDTO({ foto_key, ...rest }: PekerjaanRow): PekerjaanDTO {
-  return { ...rest, foto_url: urlFoto(foto_key) };
+export function workLogToDTO({ photo_key, ...rest }: WorkLogRow): WorkLogDTO {
+  return { ...rest, photo_url: photoUrl(photo_key) };
 }
 
 /**
@@ -130,10 +133,10 @@ export function pekerjaanKeDTO({ foto_key, ...rest }: PekerjaanRow): PekerjaanDT
  * A proof photo that was never verified (uploaded before this rule existed) does
  * not count; staff must take a new one.
  */
-export function bolehDiselesaikan(
-  status: Status,
-  fotoBukti: string | null,
-  hasilBukti: HasilBukti | null,
+export function canResolve(
+  status: ReportStatus,
+  proofPhoto: string | null,
+  proofVerdict: ProofVerdict | null,
 ): boolean {
-  return status !== 'selesai' || (Boolean(fotoBukti) && hasilBukti === 'bersih');
+  return status !== 'resolved' || (Boolean(proofPhoto) && proofVerdict === 'clean');
 }

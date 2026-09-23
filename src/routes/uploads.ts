@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
 import {
-  ambilFoto,
-  kunciDiizinkan,
-  MAKS_BYTE,
-  simpanFoto,
-  TIPE_DIIZINKAN,
-  type JenisFoto,
+  getPhoto,
+  isAllowedKey,
+  MAX_BYTES,
+  savePhoto,
+  ALLOWED_TYPES,
+  type PhotoKind,
 } from '../adapters/storage';
-import { urlFoto } from '../domain/types';
+import { photoUrl } from '../domain/types';
 import type { AppEnv } from '../env';
 
 const app = new Hono<AppEnv>();
@@ -24,16 +24,16 @@ app.post('/', async (c) => {
   const file = form?.get('file');
 
   if (!(file instanceof File)) return c.json({ error: 'File tidak ditemukan' }, 400);
-  if (!TIPE_DIIZINKAN.has(file.type)) {
+  if (!ALLOWED_TYPES.has(file.type)) {
     return c.json({ error: 'Format harus JPG, PNG, atau WebP' }, 415);
   }
-  if (file.size > MAKS_BYTE) return c.json({ error: 'Ukuran foto maksimal 5 MB' }, 413);
+  if (file.size > MAX_BYTES) return c.json({ error: 'Ukuran foto maksimal 5 MB' }, 413);
 
-  const diminta = c.req.query('jenis');
-  const jenis: JenisFoto = diminta === 'bukti' || diminta === 'kerja' ? diminta : 'laporan';
-  const key = await simpanFoto(c.env, file, jenis);
+  const requested = c.req.query('kind');
+  const kind: PhotoKind = requested === 'proof' || requested === 'work' ? requested : 'report';
+  const key = await savePhoto(c.env, file, kind);
 
-  return c.json({ key, url: urlFoto(key) }, 201);
+  return c.json({ key, url: photoUrl(key) }, 201);
 });
 
 /**
@@ -46,9 +46,9 @@ app.post('/', async (c) => {
  */
 app.get('/:key{.+}', async (c) => {
   const key = c.req.param('key');
-  if (!kunciDiizinkan(key)) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
+  if (!isAllowedKey(key)) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
 
-  const obj = await ambilFoto(c.env, key, c.req.raw.headers);
+  const obj = await getPhoto(c.env, key, c.req.raw.headers);
   if (!obj) return c.json({ error: 'Berkas tidak ditemukan' }, 404);
 
   const headers = new Headers();

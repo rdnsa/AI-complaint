@@ -71,7 +71,7 @@
   body {
     @apply bg-krem-100 text-maroon-900 antialiased;
   }
-  /* Latar bermotif halus supaya halaman tidak terasa kosong tanpa mengganggu teks. */
+  /* A faint dotted background so the page does not feel empty, without getting in the way of the text. */
   #root {
     background-image: radial-gradient(circle at 1px 1px, rgba(90, 42, 32, 0.055) 1px, transparent 0);
     background-size: 22px 22px;
@@ -83,22 +83,22 @@
 }
 
 @layer components {
-  .kartu {
+  .card {
     @apply rounded-2xl border border-krem-200 bg-permukaan shadow-kartu;
   }
 
-  .tombol {
+  .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
            transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50;
   }
-  .tombol-utama {
-    @apply tombol bg-bata-500 text-white shadow-naik hover:bg-bata-600 active:scale-[.98];
+  .btn-primary {
+    @apply btn bg-bata-500 text-white shadow-naik hover:bg-bata-600 active:scale-[.98];
   }
-  .tombol-netral {
-    @apply tombol border border-krem-300 bg-permukaan text-maroon-700 hover:border-bata-300 hover:bg-krem-50;
+  .btn-neutral {
+    @apply btn border border-krem-300 bg-permukaan text-maroon-700 hover:border-bata-300 hover:bg-krem-50;
   }
-  .tombol-gelap {
-    @apply tombol bg-maroon-800 text-permukaan hover:bg-maroon-700;
+  .btn-dark {
+    @apply btn bg-maroon-800 text-permukaan hover:bg-maroon-700;
   }
 
   .input {
@@ -110,19 +110,55 @@
     @apply mb-1.5 block text-sm font-semibold text-maroon-700;
   }
 
-  /* Pilihan jenis WC pada formulir: kartu pilih-satu yang cukup besar untuk jempol. */
-  .pilihan {
+  /* Toilet type choice on the forms: single-choice cards big enough for a thumb. */
+  .choice {
     @apply flex flex-1 flex-col items-center gap-1 rounded-xl border-2 px-3 py-3 text-sm font-semibold
            transition-all duration-150;
   }
-  .pilihan-mati {
-    @apply pilihan border-krem-200 bg-permukaan text-maroon-600 hover:border-bata-200 hover:bg-krem-50;
+  .choice-off {
+    @apply choice border-krem-200 bg-permukaan text-maroon-600 hover:border-bata-200 hover:bg-krem-50;
   }
-  .pilihan-hidup {
-    @apply pilihan border-bata-500 bg-bata-50 text-bata-700 shadow-naik;
+  .choice-on {
+    @apply choice border-bata-500 bg-bata-50 text-bata-700 shadow-naik;
   }
 
-  .judul-bagian {
+  .section-title {
     @apply text-xs font-bold uppercase tracking-[0.14em] text-maroon-600;
+  }
+}
+
+/*
+ * Printing the QR stickers (QrCodesPanel): everything on the page is hidden
+ * except the sticker sheet, which is lifted to the top-left of the paper. Using
+ * visibility rather than display keeps the React tree intact while printing.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  html,
+  body,
+  #root {
+    background: #fff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+  .print-sheet {
+    position: absolute;
+    inset: 0 0 auto 0;
+    margin: 0;
+    /* Colours set in the dark theme would otherwise print as they appear on screen. */
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-sheet .card {
+    background: #fff;
   }
 }

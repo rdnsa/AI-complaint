@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { AppEnv } from '../env';
-import * as akun from '../services/user-service';
+import * as accounts from '../services/user-service';
 
 const app = new Hono<AppEnv>();
 
@@ -10,6 +10,6 @@ const app = new Hono<AppEnv>();
  * Staff do not sign in, so this list has to be readable without a session.
  * It carries names only — the same names already shown on resolved reports.
  */
-app.get('/', async (c) => c.json({ data: await akun.petugasAktif(c.env) }));
+app.get('/', async (c) => c.json({ data: await accounts.activeStaff(c.env) }));
 
 export default app;

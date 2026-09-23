@@ -1,135 +1,124 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Kop from '../components/Kop';
-import PanelTanya from '../components/PanelTanya';
-import { LencanaStatus } from '../components/Lencana';
-import { api, type Gedung, type Laporan } from '../lib/api';
-import { useBahasa, useWaktuRelatif } from '../lib/i18n';
-import { useSesi } from '../lib/sesi';
+import Header from '../components/Header';
+import AskPanel from '../components/AskPanel';
+import { StatusBadge } from '../components/Badges';
+import { api, type Report } from '../lib/api';
+import { useLanguage, useRelativeTime } from '../lib/i18n';
+import { useSession } from '../lib/session';
 
-function BarisLaporanSaya({ laporan }: { laporan: Laporan }) {
-  const { t } = useBahasa();
-  const waktuRelatif = useWaktuRelatif();
+function MyReportRow({ report }: { report: Report }) {
+  const { t } = useLanguage();
+  const relativeTime = useRelativeTime();
 
   return (
-    <Link to={`/laporan/${laporan.id}`} className="kartu flex items-center gap-3 p-3 hover:shadow-naik">
+    <Link to={`/reports/${report.id}`} className="card flex items-center gap-3 p-3 hover:shadow-naik">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <LencanaStatus nilai={laporan.status} />
-          <span className="text-xs text-maroon-600">{waktuRelatif(laporan.created_at)}</span>
+          <StatusBadge value={report.status} />
+          <span className="text-xs text-maroon-600">{relativeTime(report.created_at)}</span>
         </div>
-        <p className="mt-1 truncate text-sm font-semibold text-maroon-900">{laporan.toilet_nama}</p>
-        <p className="truncate text-sm text-maroon-700">{laporan.ringkasan ?? laporan.teks}</p>
+        <p className="mt-1 truncate text-sm font-semibold text-maroon-900">{report.toilet_name}</p>
+        <p className="truncate text-sm text-maroon-700">{report.summary ?? report.description}</p>
       </div>
-      <span className="shrink-0 text-sm font-bold text-bata-600">{t('riwayat.lihat')} →</span>
+      <span className="shrink-0 text-sm font-bold text-bata-600">{t('history.view')} →</span>
     </Link>
   );
 }
 
-export default function Beranda() {
-  const { t } = useBahasa();
-  const { sesi, keluar } = useSesi();
-  const [gedung, setGedung] = useState<Gedung[]>([]);
-  const [memuat, setMemuat] = useState(true);
-  const [laporanSaya, setLaporanSaya] = useState<Laporan[]>([]);
-
-  useEffect(() => {
-    api
-      .daftarGedung()
-      .then((r) => setGedung(r.data))
-      .catch(() => setGedung([]))
-      .finally(() => setMemuat(false));
-  }, []);
+export default function Home() {
+  const { t } = useLanguage();
+  const { session, logout } = useSession();
+  const [myReports, setMyReports] = useState<Report[]>([]);
 
   // Reports belong to the account, not to the device, so the list follows the
   // reporter to any phone or browser they sign in from.
   useEffect(() => {
-    if (sesi?.peran !== 'pelapor') return setLaporanSaya([]);
+    if (session?.role !== 'reporter') return setMyReports([]);
     api
-      .laporanSaya()
-      .then((r) => setLaporanSaya(r.data))
-      .catch(() => setLaporanSaya([]));
-  }, [sesi]);
+      .myReports()
+      .then((r) => setMyReports(r.data))
+      .catch(() => setMyReports([]));
+  }, [session]);
 
   return (
     <div className="min-h-screen pb-16">
-      <Kop
-        judul={t('app.judul')}
-        keterangan={t('app.subjudul')}
-        kanan={
-          // The supervisor's way in sits at the top, next to language and theme.
-          // On a phone the label shrinks to "SPV" so the header stays on one line.
-          <Link
-            to={sesi?.peran === 'spv' ? '/spv' : '/masuk'}
-            aria-label={sesi?.peran === 'spv' ? t('nav.ke_dashboard_spv') : t('nav.petugas')}
-            className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25"
-          >
-            <span aria-hidden>👔</span>
-            <span className="sm:hidden">SPV</span>
-            <span className="hidden sm:inline">
-              {sesi?.peran === 'spv' ? t('nav.ke_dashboard_spv') : t('nav.petugas')}
-            </span>
-          </Link>
-        }
-      />
+      <Header title={t('app.title')} description={t('app.subtitle')} />
 
       <main className="mx-auto max-w-5xl px-4">
-        {!!laporanSaya.length && (
+        {!!myReports.length && (
           <section className="mt-6">
-            <h2 className="judul-bagian">{t('riwayat.judul')}</h2>
+            <h2 className="section-title">{t('history.title')}</h2>
             <div className="mt-2 space-y-2">
-              {laporanSaya.map((l) => (
-                <BarisLaporanSaya key={l.id} laporan={l} />
+              {myReports.map((r) => (
+                <MyReportRow key={r.id} report={r} />
               ))}
             </div>
           </section>
         )}
 
-        {/* Tiga pihak, tiga pintu. Mahasiswa dan petugas tidak perlu login. */}
-        <section className="mt-6 grid gap-3 sm:grid-cols-2">
-          <a href="#pilih-lokasi" className="kartu flex items-center gap-3 p-4 hover:shadow-naik">
+        {/* Three parties, three doors. Students and staff need no sign-in; the supervisor signs in. */}
+        <section className="mt-6 grid gap-3 sm:grid-cols-3">
+          <Link to="/student" className="card flex items-center gap-3 p-4 hover:shadow-naik">
             <span aria-hidden className="text-3xl">
               🎓
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block font-extrabold text-maroon-900">{t('peran.mahasiswa')}</span>
-              <span className="block text-sm text-maroon-700">{t('peran.mahasiswa_isi')}</span>
+              <span className="block font-extrabold text-maroon-900">{t('role.student')}</span>
+              <span className="block text-sm text-maroon-700">{t('role.student_body')}</span>
             </span>
-          </a>
-          <Link to="/petugas" className="kartu flex items-center gap-3 p-4 hover:shadow-naik">
+            <span className="shrink-0 font-bold text-bata-600">→</span>
+          </Link>
+          <Link to="/staff" className="card flex items-center gap-3 p-4 hover:shadow-naik">
             <span aria-hidden className="text-3xl">
               🧹
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block font-extrabold text-maroon-900">{t('peran.petugas')}</span>
-              <span className="block text-sm text-maroon-700">{t('peran.petugas_isi')}</span>
+              <span className="block font-extrabold text-maroon-900">{t('role.staff')}</span>
+              <span className="block text-sm text-maroon-700">{t('role.staff_body')}</span>
+            </span>
+            <span className="shrink-0 font-bold text-bata-600">→</span>
+          </Link>
+          {/* A signed-in supervisor goes straight to the dashboard; anyone else signs in first. */}
+          <Link
+            to={session?.role === 'supervisor' ? '/supervisor' : '/login'}
+            className="card flex items-center gap-3 p-4 hover:shadow-naik"
+          >
+            <span aria-hidden className="text-3xl">
+              👔
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-extrabold text-maroon-900">{t('role.supervisor')}</span>
+              <span className="block text-sm text-maroon-700">
+                {session?.role === 'supervisor' ? t('nav.to_supervisor_dashboard') : t('role.supervisor_body')}
+              </span>
             </span>
             <span className="shrink-0 font-bold text-bata-600">→</span>
           </Link>
         </section>
 
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-permukaan px-4 py-3 ring-1 ring-krem-200">
-          {sesi ? (
+          {session ? (
             <>
               <span className="font-semibold text-maroon-900">
-                {t('sesi.halo', { nama: sesi.nama })}
+                {t('session.hello', { name: session.name })}
               </span>
               <button
-                onClick={keluar}
+                onClick={logout}
                 className="ml-auto text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
               >
-                {t('sesi.keluar')}
+                {t('session.logout')}
               </button>
             </>
           ) : (
             <>
-              <span className="text-sm text-maroon-700">{t('daftar.keterangan')}</span>
+              <span className="text-sm text-maroon-700">{t('register.description')}</span>
               <span className="ml-auto flex gap-2">
-                <Link to="/masuk" className="tombol-netral !py-1.5 text-xs">
-                  {t('sesi.masuk')}
+                <Link to="/login" className="btn-neutral !py-1.5 text-xs">
+                  {t('session.login')}
                 </Link>
-                <Link to="/daftar" className="tombol-utama !py-1.5 text-xs">
-                  {t('sesi.daftar')}
+                <Link to="/register" className="btn-primary !py-1.5 text-xs">
+                  {t('session.register')}
                 </Link>
               </span>
             </>
@@ -137,12 +126,12 @@ export default function Beranda() {
         </div>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <Link to="/laporan" className="kartu flex items-center justify-between gap-3 p-4 hover:shadow-naik">
-            <span className="font-semibold text-maroon-900">{t('nav.semua_laporan')}</span>
+          <Link to="/reports" className="card flex items-center justify-between gap-3 p-4 hover:shadow-naik">
+            <span className="font-semibold text-maroon-900">{t('nav.all_reports')}</span>
             <span className="shrink-0 font-bold text-bata-600">→</span>
           </Link>
-          <Link to="/peringkat" className="kartu flex items-center justify-between gap-3 p-4 hover:shadow-naik">
-            <span className="font-semibold text-maroon-900">🏆 {t('peringkat.lihat')}</span>
+          <Link to="/leaderboard" className="card flex items-center justify-between gap-3 p-4 hover:shadow-naik">
+            <span className="font-semibold text-maroon-900">🏆 {t('leaderboard.view')}</span>
             <span className="shrink-0 font-bold text-bata-600">→</span>
           </Link>
         </div>
@@ -150,73 +139,10 @@ export default function Beranda() {
         <section className="mt-8">
           <h2 className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-maroon-900">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-bata-500 text-lg text-white shadow-naik">🤖</span>
-            {t('tanya.judul')}
+            {t('ask.title')}
           </h2>
-          <PanelTanya rapat />
+          <AskPanel compact />
         </section>
-
-        <p className="mt-8 leading-relaxed text-maroon-700">{t('beranda.petunjuk')}</p>
-
-        <figure className="kartu mt-5 overflow-hidden">
-          <a href="/peta-lokasi-gedung.jpg" target="_blank" rel="noreferrer" className="block">
-            <img
-              src="/peta-lokasi-gedung.jpg"
-              alt={t('beranda.peta_alt')}
-              className="w-full"
-              loading="lazy"
-            />
-          </a>
-          <figcaption className="flex items-center justify-between gap-3 border-t border-krem-200 bg-krem-50 px-4 py-2.5 text-xs text-maroon-600">
-            <span>{t('beranda.peta_keterangan')}</span>
-            <span className="shrink-0 font-bold text-bata-600">{t('beranda.peta_perbesar')}</span>
-          </figcaption>
-        </figure>
-
-        <h2 id="pilih-lokasi" className="judul-bagian mt-8 scroll-mt-20">
-          {t('beranda.pilih')}
-        </h2>
-
-        {memuat ? (
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="kartu h-28 animate-pulse bg-krem-50" />
-            ))}
-          </div>
-        ) : !gedung.length ? (
-          <p className="kartu mt-3 p-8 text-center text-maroon-600">{t('beranda.kosong')}</p>
-        ) : (
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {gedung.map((g) => (
-              <section key={g.kode} className="kartu p-4 transition hover:shadow-naik">
-                <div className="flex items-center gap-3">
-                  {/* Lingkaran kode gedung meniru penanda pada poster peta kampus. */}
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-maroon-800 bg-bata-500 text-base font-extrabold text-white">
-                    {g.kode}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-bata-600">
-                      {t('umum.gedung', { kode: g.kode })}
-                    </p>
-                    <p className="truncate font-bold text-maroon-900">{g.nama}</p>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {g.lantai.map((l) => (
-                    <Link
-                      key={l}
-                      to={`/lapor/${g.kode}-${l}`}
-                      className="rounded-lg border border-krem-300 bg-krem-50 px-3 py-1.5 text-sm font-semibold text-maroon-700 transition hover:border-bata-400 hover:bg-bata-50 hover:text-bata-700"
-                    >
-                      {t('umum.lantai', { n: l })}
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-
       </main>
     </div>
   );

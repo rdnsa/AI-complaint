@@ -1,60 +1,61 @@
-import { rentangHariWIB, tanggalSah } from '../adapters/clock';
+import { wibDayRange, isValidDate } from '../adapters/clock';
 
 /**
- * The time filter shared by the report and work-report lists, so the
+ * The time filter shared by the report and work-log lists, so the
  * supervisor's "when" means the same thing on both tabs.
  *
  * Dates are WIB and inclusive at both ends; hours are WIB clock hours (0–23),
- * also inclusive, so `jam_dari=7&jam_sampai=12` covers 07:00 to 12:59.
+ * also inclusive, so `hour_from=7&hour_to=12` covers 07:00 to 12:59.
  */
-export interface FilterWaktu {
-  /** A single WIB day — kept for existing callers; `dari`/`sampai` supersede it. */
-  tanggal?: string;
-  dari?: string;
-  sampai?: string;
-  jam_dari?: number;
-  jam_sampai?: number;
+export interface TimeFilter {
+  /** A single WIB day — kept for existing callers; `from`/`to` supersede it. */
+  date?: string;
+  from?: string;
+  to?: string;
+  hour_from?: number;
+  hour_to?: number;
 }
 
-const jamSah = (j: number | undefined): j is number => j !== undefined && Number.isInteger(j) && j >= 0 && j <= 23;
+const isValidHour = (h: number | undefined): h is number =>
+  h !== undefined && Number.isInteger(h) && h >= 0 && h <= 23;
 
-export function susunFilterWaktu(kolom: string, f: FilterWaktu): { where: string[]; params: unknown[] } {
+export function buildTimeFilter(column: string, f: TimeFilter): { where: string[]; params: unknown[] } {
   const where: string[] = [];
   const params: unknown[] = [];
 
-  const dari = tanggalSah(f.dari) ? f.dari : tanggalSah(f.tanggal) ? f.tanggal : undefined;
-  const sampai = tanggalSah(f.sampai) ? f.sampai : tanggalSah(f.tanggal) ? f.tanggal : undefined;
-  if (dari) {
-    where.push(`${kolom} >= ?`);
-    params.push(rentangHariWIB(dari).mulai);
+  const from = isValidDate(f.from) ? f.from : isValidDate(f.date) ? f.date : undefined;
+  const to = isValidDate(f.to) ? f.to : isValidDate(f.date) ? f.date : undefined;
+  if (from) {
+    where.push(`${column} >= ?`);
+    params.push(wibDayRange(from).start);
   }
-  if (sampai) {
-    where.push(`${kolom} < ?`);
-    params.push(rentangHariWIB(sampai).selesai);
+  if (to) {
+    where.push(`${column} < ?`);
+    params.push(wibDayRange(to).end);
   }
 
   // The stored instant is UTC; shifting it by seven hours gives the WIB clock hour.
-  const jamWib = `CAST(strftime('%H', ${kolom}, '+7 hours') AS INTEGER)`;
-  if (jamSah(f.jam_dari)) {
-    where.push(`${jamWib} >= ?`);
-    params.push(f.jam_dari);
+  const wibHour = `CAST(strftime('%H', ${column}, '+7 hours') AS INTEGER)`;
+  if (isValidHour(f.hour_from)) {
+    where.push(`${wibHour} >= ?`);
+    params.push(f.hour_from);
   }
-  if (jamSah(f.jam_sampai)) {
-    where.push(`${jamWib} <= ?`);
-    params.push(f.jam_sampai);
+  if (isValidHour(f.hour_to)) {
+    where.push(`${wibHour} <= ?`);
+    params.push(f.hour_to);
   }
 
   return { where, params };
 }
 
 /** Reads the time filter from query-string values. */
-export function bacaFilterWaktu(q: Record<string, string | undefined>): FilterWaktu {
-  const jam = (v: string | undefined) => (v !== undefined && /^\d{1,2}$/.test(v) ? Number(v) : undefined);
+export function readTimeFilter(q: Record<string, string | undefined>): TimeFilter {
+  const hour = (v: string | undefined) => (v !== undefined && /^\d{1,2}$/.test(v) ? Number(v) : undefined);
   return {
-    tanggal: q.tanggal,
-    dari: q.dari,
-    sampai: q.sampai,
-    jam_dari: jam(q.jam_dari),
-    jam_sampai: jam(q.jam_sampai),
+    date: q.date,
+    from: q.from,
+    to: q.to,
+    hour_from: hour(q.hour_from),
+    hour_to: hour(q.hour_to),
   };
 }

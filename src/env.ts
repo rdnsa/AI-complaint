@@ -1,4 +1,4 @@
-import type { Peran } from './domain/types';
+import type { Role } from './domain/types';
 
 /**
  * Infrastructure bindings and configuration.
@@ -30,5 +30,5 @@ export interface Env {
 /** Shared Hono types: bindings plus the variables the auth middleware fills in. */
 export type AppEnv = {
   Bindings: Env;
-  Variables: { sesi: { id: string; nama: string; peran: Peran } };
+  Variables: { session: { id: string; name: string; role: Role } };
 };

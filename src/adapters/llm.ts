@@ -1,174 +1,177 @@
 import { z } from 'zod';
 import {
-  KATEGORI,
-  PRIORITAS,
-  type HasilBukti,
-  type Kategori,
-  type Prioritas,
+  CATEGORIES,
+  PRIORITIES,
+  type Category,
+  type Priority,
+  type ProofVerdict,
 } from '../domain/types';
 import type { Env } from '../env';
 
 /**
  * The contract for the model's output. The LLM occasionally invents a category
  * outside the list, or returns a string where an array was asked for, so every
- * field is scrubbed again in `coerceAnalisis()` before it reaches the database.
+ * field is scrubbed again in `coerceAnalysis()` before it reaches the database.
  */
-const AnalisisSchema = z.object({
-  kategori: z.array(z.string()).min(1),
-  prioritas: z.string(),
-  ringkasan: z.string().min(1),
-  rekomendasi: z.string().min(1),
+const AnalysisSchema = z.object({
+  categories: z.array(z.string()).min(1),
+  priority: z.string(),
+  summary: z.string().min(1),
+  recommendation: z.string().min(1),
 });
 
-export interface Analisis {
-  kategori: Kategori[];
-  prioritas: Prioritas;
-  ringkasan: string;
-  rekomendasi: string;
+export interface Analysis {
+  categories: Category[];
+  priority: Priority;
+  summary: string;
+  recommendation: string;
 }
 
 const SYSTEM_PROMPT = `Kamu adalah asisten petugas kebersihan (OB) kampus.
 Tugasmu membaca keluhan mahasiswa tentang toilet/WC kampus yang ditulis dengan bahasa sehari-hari,
 termasuk bahasa gaul dan singkatan, lalu mengubahnya menjadi tiket kerja yang terstruktur.
 
-KATEGORI yang boleh dipakai (pilih semua yang relevan, minimal satu):
-- "kebersihan"   : kotor, jorok, noda, sampah berserakan, lantai dekil, coretan
-- "perlengkapan" : sabun/tisu/pengharum habis, tidak ada gayung, tempat sampah tidak tersedia
-- "kerusakan"    : kloset mampet, keran/flush rusak, pintu/kunci/lampu rusak, kaca pecah
-- "bau"          : bau tidak sedap, pesing, bau menyengat
-- "genangan"     : lantai becek, air tergenang, air meluap, bocor
-- "lainnya"      : selain di atas
+KATEGORI yang boleh dipakai (pilih semua yang relevan, minimal satu). Tulis kodenya persis
+dalam bahasa Inggris, salah satu dari: cleanliness, supplies, damage, odor, flooding, other.
+- "cleanliness" : kotor, jorok, noda, sampah berserakan, lantai dekil, coretan
+- "supplies"    : sabun/tisu/pengharum habis, tidak ada gayung, tempat sampah tidak tersedia
+- "damage"      : kloset mampet, keran/flush rusak, pintu/kunci/lampu rusak, kaca pecah
+- "odor"        : bau tidak sedap, pesing, bau menyengat
+- "flooding"    : lantai becek, air tergenang, air meluap, bocor
+- "other"       : selain di atas
 
-ATURAN PRIORITAS (patuhi ketat):
-- "tinggi" : ada risiko keselamatan atau toilet praktis tidak bisa dipakai.
+ATURAN PRIORITAS (patuhi ketat). Tulis kodenya persis salah satu dari: high, medium, low.
+- "high"   : ada risiko keselamatan atau toilet praktis tidak bisa dipakai.
              Contoh: air meluap, kloset mampet, lantai licin/becek parah, listrik/lampu mati total,
              pintu tidak bisa dikunci, bau sangat menyengat, ada pecahan kaca, banyak masalah sekaligus.
-- "sedang" : mengganggu kenyamanan tetapi toilet masih bisa dipakai.
+- "medium" : mengganggu kenyamanan tetapi toilet masih bisa dipakai.
              Contoh: bau biasa, lantai kotor, sabun habis, tempat sampah penuh.
-- "rendah" : keluhan kecil atau bersifat antisipasi.
+- "low"    : keluhan kecil atau bersifat antisipasi.
              Contoh: tisu hampir habis, sedikit noda, cermin buram, saran perbaikan.
 
 ATURAN PENULISAN:
-- "ringkasan": satu kalimat netral maksimal 15 kata, tanpa kata kasar, memakai istilah baku.
-- "rekomendasi": instruksi kerja untuk petugas. Jika ada beberapa masalah, urutkan dari yang
-  paling berisiko membuat orang celaka lebih dulu, lalu sisanya. Maksimal 2 kalimat.
+- "summary": ringkasan, satu kalimat netral berbahasa Indonesia maksimal 15 kata, tanpa kata kasar,
+  memakai istilah baku.
+- "recommendation": rekomendasi berupa instruksi kerja untuk petugas, berbahasa Indonesia. Jika ada
+  beberapa masalah, urutkan dari yang paling berisiko membuat orang celaka lebih dulu, lalu sisanya.
+  Maksimal 2 kalimat.
 - Jangan mengarang masalah yang tidak disebut pelapor.
-- Jika teks tidak jelas atau bukan keluhan toilet, pakai kategori ["lainnya"], prioritas "rendah",
-  dan tulis apa adanya pada ringkasan.
+- Jika teks tidak jelas atau bukan keluhan toilet, pakai categories ["other"], priority "low",
+  dan tulis apa adanya pada summary.
 
-Jawab HANYA dengan objek JSON valid, tanpa penjelasan tambahan, dengan bentuk persis:
-{"kategori":["kebersihan"],"prioritas":"sedang","ringkasan":"...","rekomendasi":"..."}`;
+Jawab HANYA dengan objek JSON valid, tanpa penjelasan tambahan, dengan kunci bahasa Inggris persis seperti ini:
+{"categories":["cleanliness"],"priority":"medium","summary":"...","recommendation":"..."}`;
 
 /** Few-shot examples: they pin down the tone and how the priority rules are applied. */
-const FEW_SHOT: Array<{ user: string; assistant: Analisis }> = [
+const FEW_SHOT: Array<{ user: string; assistant: Analysis }> = [
   {
     user: 'WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.',
     assistant: {
-      kategori: ['bau', 'genangan', 'perlengkapan'],
-      prioritas: 'tinggi',
-      ringkasan: 'Toilet berbau menyengat, lantai tergenang air, dan sabun habis.',
-      rekomendasi:
+      categories: ['odor', 'flooding', 'supplies'],
+      priority: 'high',
+      summary: 'Toilet berbau menyengat, lantai tergenang air, dan sabun habis.',
+      recommendation:
         'Keringkan lantai lebih dulu karena berisiko membuat pengguna terpeleset. Setelah itu bersihkan sumber bau dan isi ulang sabun.',
     },
   },
   {
     user: 'tisunya tinggal dikit kayaknya besok abis',
     assistant: {
-      kategori: ['perlengkapan'],
-      prioritas: 'rendah',
-      ringkasan: 'Persediaan tisu menipis dan diperkirakan habis besok.',
-      rekomendasi: 'Siapkan stok tisu dan isi ulang pada jadwal pengecekan berikutnya.',
+      categories: ['supplies'],
+      priority: 'low',
+      summary: 'Persediaan tisu menipis dan diperkirakan habis besok.',
+      recommendation: 'Siapkan stok tisu dan isi ulang pada jadwal pengecekan berikutnya.',
     },
   },
   {
     user: 'Airnya nggenang parah, hampir ke luar toilet. kloset yg pojok mampet',
     assistant: {
-      kategori: ['genangan', 'kerusakan'],
-      prioritas: 'tinggi',
-      ringkasan: 'Kloset pojok mampet sehingga air tergenang hampir keluar dari toilet.',
-      rekomendasi:
+      categories: ['flooding', 'damage'],
+      priority: 'high',
+      summary: 'Kloset pojok mampet sehingga air tergenang hampir keluar dari toilet.',
+      recommendation:
         'Hentikan aliran air dan tangani kloset mampet segera sebelum air meluap ke koridor, lalu keringkan lantai.',
     },
   },
 ];
 
 /** Forces the model output into the enums the database recognises. */
-function coerceAnalisis(raw: z.infer<typeof AnalisisSchema>): Analisis {
-  const kategori = [
+function coerceAnalysis(raw: z.infer<typeof AnalysisSchema>): Analysis {
+  const categories = [
     ...new Set(
-      raw.kategori
+      raw.categories
         .map((k) => k.toLowerCase().trim())
-        .filter((k): k is Kategori => (KATEGORI as readonly string[]).includes(k)),
+        .filter((k): k is Category => (CATEGORIES as readonly string[]).includes(k)),
     ),
   ];
-  const p = raw.prioritas.toLowerCase().trim();
-  const prioritas = ((PRIORITAS as readonly string[]).includes(p) ? p : 'sedang') as Prioritas;
+  const p = raw.priority.toLowerCase().trim();
+  const priority = ((PRIORITIES as readonly string[]).includes(p) ? p : 'medium') as Priority;
 
   return {
-    kategori: kategori.length ? kategori : ['lainnya'],
-    prioritas,
-    ringkasan: raw.ringkasan.trim().slice(0, 300),
-    rekomendasi: raw.rekomendasi.trim().slice(0, 500),
+    categories: categories.length ? categories : ['other'],
+    priority,
+    summary: raw.summary.trim().slice(0, 300),
+    recommendation: raw.recommendation.trim().slice(0, 500),
   };
 }
 
 /** OpenAI-style content parts, so a message can carry an image next to text. */
-type BagianPesan =
+type MessagePart =
   | { type: 'text'; text: string }
   | { type: 'image_url'; image_url: { url: string; detail?: 'low' | 'high' | 'auto' } };
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string | BagianPesan[];
+  content: string | MessagePart[];
 }
 
 /** One tool the model may call, in the OpenAI/DeepSeek function-calling shape. */
-export interface DefinisiAlat {
+export interface ToolDefinition {
   name: string;
   description: string;
   parameters: Record<string, unknown>;
 }
 
-interface PanggilanAlat {
+interface ToolCall {
   id: string;
   type: 'function';
   function: { name: string; arguments: string };
 }
 
 /** A message in a tool-calling exchange: the two extra shapes the chat loop needs. */
-type PesanAlat =
+type ToolMessage =
   | ChatMessage
-  | { role: 'assistant'; content: string | null; tool_calls?: PanggilanAlat[] }
+  | { role: 'assistant'; content: string | null; tool_calls?: ToolCall[] }
   | { role: 'tool'; tool_call_id: string; content: string };
 
 /** Which model answers: the text model for complaints, the vision model for photos. */
-interface Tujuan {
+interface Target {
   baseUrl: string;
   apiKey: string;
   model: string;
 }
 
-const modelTeks = (env: Env): Tujuan => ({
+const textModel = (env: Env): Target => ({
   baseUrl: env.LLM_BASE_URL,
   apiKey: env.LLM_API_KEY,
   model: env.LLM_MODEL,
 });
 
-const modelVision = (env: Env): Tujuan => ({
+const visionModel = (env: Env): Target => ({
   baseUrl: env.VISION_BASE_URL,
   apiKey: env.VISION_API_KEY || env.LLM_API_KEY,
   model: env.VISION_MODEL,
 });
 
-async function chatJSON(tujuan: Tujuan, messages: ChatMessage[], maxTokens = 500): Promise<unknown> {
-  const res = await fetch(`${tujuan.baseUrl.replace(/\/$/, '')}/chat/completions`, {
+async function chatJSON(target: Target, messages: ChatMessage[], maxTokens = 500): Promise<unknown> {
+  const res = await fetch(`${target.baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      authorization: `Bearer ${tujuan.apiKey}`,
+      authorization: `Bearer ${target.apiKey}`,
     },
     body: JSON.stringify({
-      model: tujuan.model,
+      model: target.model,
       messages,
       // Low temperature: identical wording must yield an identical classification.
       temperature: 0.1,
@@ -197,27 +200,27 @@ async function chatJSON(tujuan: Tujuan, messages: ChatMessage[], maxTokens = 500
   }
 }
 
-export interface PemakaianToken {
+export interface TokenUsage {
   prompt: number;
-  jawaban: number;
+  completion: number;
   /** Prompt tokens served from DeepSeek's cache — billed at a fraction of the price. */
   cache_hit: number;
 }
 
-export interface JejakAlat {
-  nama: string;
-  argumen: Record<string, unknown>;
+export interface ToolTrace {
+  name: string;
+  arguments: Record<string, unknown>;
 }
 
-export interface JawabanAlat {
-  teks: string;
-  alat: JejakAlat[];
-  token: PemakaianToken;
+export interface ToolAnswer {
+  text: string;
+  tools: ToolTrace[];
+  tokens: TokenUsage;
 }
 
-interface ResponsAlat {
+interface ToolResponse {
   choices?: Array<{
-    message?: { content?: string | null; tool_calls?: PanggilanAlat[] };
+    message?: { content?: string | null; tool_calls?: ToolCall[] };
     finish_reason?: string;
   }>;
   usage?: {
@@ -231,49 +234,49 @@ interface ResponsAlat {
  * Feature #6: answer a free-form question by letting the model call tools.
  *
  * The model never sees the database. It sees only the tool definitions, and
- * each tool returns a small aggregate that `jalankan` computes on our side —
+ * each tool returns a small aggregate that `run` computes on our side —
  * that is what keeps a question at a few thousand tokens regardless of how
- * many reports exist. The loop is capped: after `maksPutaran` rounds the model
+ * many reports exist. The loop is capped: after `maxRounds` rounds the model
  * is forced to answer with whatever it has.
  */
-export async function chatDenganAlat(
+export async function chatWithTools(
   env: Env,
-  masukan: {
+  input: {
     system: string;
-    riwayat: Array<{ role: 'user' | 'assistant'; content: string }>;
-    pertanyaan: string;
-    alat: DefinisiAlat[];
-    jalankan: (nama: string, argumen: Record<string, unknown>) => Promise<unknown>;
-    maksPutaran?: number;
+    history: Array<{ role: 'user' | 'assistant'; content: string }>;
+    question: string;
+    tools: ToolDefinition[];
+    run: (name: string, args: Record<string, unknown>) => Promise<unknown>;
+    maxRounds?: number;
     maxTokens?: number;
   },
-): Promise<JawabanAlat> {
-  const tujuan = modelTeks(env);
-  const maksPutaran = masukan.maksPutaran ?? 4;
-  const messages: PesanAlat[] = [
-    { role: 'system', content: masukan.system },
-    ...masukan.riwayat,
-    { role: 'user', content: masukan.pertanyaan },
+): Promise<ToolAnswer> {
+  const target = textModel(env);
+  const maxRounds = input.maxRounds ?? 4;
+  const messages: ToolMessage[] = [
+    { role: 'system', content: input.system },
+    ...input.history,
+    { role: 'user', content: input.question },
   ];
-  const jejak: JejakAlat[] = [];
-  const token: PemakaianToken = { prompt: 0, jawaban: 0, cache_hit: 0 };
+  const trace: ToolTrace[] = [];
+  const tokens: TokenUsage = { prompt: 0, completion: 0, cache_hit: 0 };
 
-  for (let putaran = 0; ; putaran++) {
-    const terakhir = putaran >= maksPutaran;
-    const res = await fetch(`${tujuan.baseUrl.replace(/\/$/, '')}/chat/completions`, {
+  for (let round = 0; ; round++) {
+    const last = round >= maxRounds;
+    const res = await fetch(`${target.baseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        authorization: `Bearer ${tujuan.apiKey}`,
+        authorization: `Bearer ${target.apiKey}`,
       },
       body: JSON.stringify({
-        model: tujuan.model,
+        model: target.model,
         messages,
-        tools: masukan.alat.map((a) => ({ type: 'function', function: a })),
+        tools: input.tools.map((t) => ({ type: 'function', function: t })),
         // On the final round the model may no longer ask for data; it must answer.
-        tool_choice: terakhir ? 'none' : 'auto',
+        tool_choice: last ? 'none' : 'auto',
         temperature: 0.2,
-        max_tokens: masukan.maxTokens ?? 600,
+        max_tokens: input.maxTokens ?? 600,
       }),
       signal: AbortSignal.timeout(30_000),
     });
@@ -283,134 +286,148 @@ export async function chatDenganAlat(
       throw new Error(`LLM HTTP ${res.status}: ${body.slice(0, 300)}`);
     }
 
-    const data = (await res.json()) as ResponsAlat;
-    token.prompt += data.usage?.prompt_tokens ?? 0;
-    token.jawaban += data.usage?.completion_tokens ?? 0;
-    token.cache_hit += data.usage?.prompt_cache_hit_tokens ?? 0;
+    const data = (await res.json()) as ToolResponse;
+    tokens.prompt += data.usage?.prompt_tokens ?? 0;
+    tokens.completion += data.usage?.completion_tokens ?? 0;
+    tokens.cache_hit += data.usage?.prompt_cache_hit_tokens ?? 0;
 
-    const pesan = data.choices?.[0]?.message;
-    if (!pesan) throw new Error('LLM mengembalikan respons kosong');
+    const message = data.choices?.[0]?.message;
+    if (!message) throw new Error('LLM mengembalikan respons kosong');
 
-    const panggilan = pesan.tool_calls ?? [];
-    if (!panggilan.length || terakhir) {
-      const teks = (pesan.content ?? '').trim();
-      if (!teks) throw new Error('LLM tidak memberikan jawaban');
-      return { teks, alat: jejak, token };
+    const calls = message.tool_calls ?? [];
+    if (!calls.length || last) {
+      const text = (message.content ?? '').trim();
+      if (!text) throw new Error('LLM tidak memberikan jawaban');
+      return { text, tools: trace, tokens };
     }
 
-    messages.push({ role: 'assistant', content: pesan.content ?? null, tool_calls: panggilan });
-    for (const p of panggilan) {
-      let argumen: Record<string, unknown> = {};
+    messages.push({ role: 'assistant', content: message.content ?? null, tool_calls: calls });
+    for (const call of calls) {
+      let args: Record<string, unknown> = {};
       try {
-        argumen = JSON.parse(p.function.arguments || '{}') as Record<string, unknown>;
+        args = JSON.parse(call.function.arguments || '{}') as Record<string, unknown>;
       } catch {
         /* the model produced malformed arguments; run the tool with none */
       }
-      jejak.push({ nama: p.function.name, argumen });
+      trace.push({ name: call.function.name, arguments: args });
 
       // A failing tool is reported back to the model rather than aborting the
       // question: it can rephrase the call or answer from what it already has.
-      let hasil: unknown;
+      let result: unknown;
       try {
-        hasil = await masukan.jalankan(p.function.name, argumen);
+        result = await input.run(call.function.name, args);
       } catch (err) {
-        hasil = { error: err instanceof Error ? err.message : String(err) };
+        result = { error: err instanceof Error ? err.message : String(err) };
       }
-      messages.push({ role: 'tool', tool_call_id: p.id, content: JSON.stringify(hasil) });
+      messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) });
     }
   }
 }
 
 /** Features #1 and #2: classify the categories and set the priority of one report. */
-export async function analisaKeluhan(env: Env, teks: string, lokasi: string): Promise<Analisis> {
+export async function analyzeComplaint(
+  env: Env,
+  description: string,
+  location: string,
+): Promise<Analysis> {
   const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }];
-  for (const contoh of FEW_SHOT) {
-    messages.push({ role: 'user', content: contoh.user });
-    messages.push({ role: 'assistant', content: JSON.stringify(contoh.assistant) });
+  for (const example of FEW_SHOT) {
+    messages.push({ role: 'user', content: example.user });
+    messages.push({ role: 'assistant', content: JSON.stringify(example.assistant) });
   }
-  messages.push({ role: 'user', content: `Lokasi: ${lokasi}\nKeluhan: ${teks}` });
+  messages.push({ role: 'user', content: `Lokasi: ${location}\nKeluhan: ${description}` });
 
-  const raw = await chatJSON(modelTeks(env), messages);
-  return coerceAnalisis(AnalisisSchema.parse(raw));
+  const raw = await chatJSON(textModel(env), messages);
+  return coerceAnalysis(AnalysisSchema.parse(raw));
 }
 
-const RingkasanHarianSchema = z.object({
-  ringkasan: z.string().min(1),
-  sorotan: z.array(z.string()).default([]),
+const DailyDigestSchema = z.object({
+  summary: z.string().min(1),
+  highlights: z.array(z.string()).default([]),
 });
 
-export interface RingkasanHarian {
-  ringkasan: string;
-  sorotan: string[];
+export interface DailyDigest {
+  summary: string;
+  highlights: string[];
 }
 
 /** Feature #3: summarise a whole day of reports for the head of facilities. */
-export async function ringkasHarian(
+export async function summarizeDay(
   env: Env,
-  tanggal: string,
-  laporan: Array<{ lokasi: string; prioritas: string | null; ringkasan: string | null; teks: string }>,
-): Promise<RingkasanHarian> {
-  const daftar = laporan
-    .map((l, i) => `${i + 1}. [${l.prioritas ?? 'belum dianalisis'}] ${l.lokasi} - ${l.ringkasan ?? l.teks}`)
+  date: string,
+  reports: Array<{
+    location: string;
+    priority: string | null;
+    summary: string | null;
+    description: string;
+  }>,
+): Promise<DailyDigest> {
+  const list = reports
+    .map(
+      (r, i) =>
+        `${i + 1}. [${r.priority ?? 'belum dianalisis'}] ${r.location} - ${r.summary ?? r.description}`,
+    )
     .join('\n');
 
   const raw = await chatJSON(
-    modelTeks(env),
+    textModel(env),
     [
       {
         role: 'system',
         content: `Kamu menyusun laporan harian kondisi toilet kampus untuk kepala bagian sarana prasarana.
 Dari daftar keluhan hari itu, tentukan lokasi yang paling bermasalah dan pola masalah yang berulang.
+Prioritas pada daftar ditulis dengan kode bahasa Inggris: high = tinggi, medium = sedang, low = rendah.
 
-Jawab HANYA dengan JSON valid berbentuk:
-{"ringkasan":"paragraf 2-4 kalimat","sorotan":["poin singkat","poin singkat"]}
+Jawab HANYA dengan JSON valid dengan kunci bahasa Inggris persis seperti ini:
+{"summary":"paragraf 2-4 kalimat","highlights":["poin singkat","poin singkat"]}
 
-- "ringkasan": bahasa Indonesia baku, sebutkan angka konkret (jumlah laporan, lokasi terbanyak).
-- "sorotan": maksimal 4 poin tindakan yang paling mendesak, masing-masing maksimal 12 kata.
+- "summary": ringkasan dalam bahasa Indonesia baku, sebutkan angka konkret (jumlah laporan, lokasi terbanyak).
+- "highlights": sorotan, maksimal 4 poin tindakan yang paling mendesak dalam bahasa Indonesia,
+  masing-masing maksimal 12 kata.
 - Jangan mengarang data di luar daftar yang diberikan.`,
       },
       {
         role: 'user',
-        content: `Tanggal: ${tanggal}\nTotal laporan: ${laporan.length}\n\nDaftar keluhan:\n${daftar}`,
+        content: `Tanggal: ${date}\nTotal laporan: ${reports.length}\n\nDaftar keluhan:\n${list}`,
       },
     ],
     700,
   );
 
-  const parsed = RingkasanHarianSchema.parse(raw);
-  return { ringkasan: parsed.ringkasan.trim(), sorotan: parsed.sorotan.slice(0, 4) };
+  const parsed = DailyDigestSchema.parse(raw);
+  return { summary: parsed.summary.trim(), highlights: parsed.highlights.slice(0, 4) };
 }
 
 /**
  * The model sometimes answers "true"/"ya" as a string; both must read as true,
  * while `z.coerce.boolean()` would also turn the string "false" into true.
  */
-const boolLonggar = z.preprocess((v) => {
+const looseBool = z.preprocess((v) => {
   if (typeof v === 'string') return ['true', 'ya', 'yes', '1'].includes(v.trim().toLowerCase());
   return v;
 }, z.boolean());
 
-const PeriksaBuktiSchema = z.object({
-  toilet: boolLonggar,
-  bersih: boolLonggar,
-  keyakinan: z.coerce.number().min(0).max(1).optional(),
-  alasan: z.string().min(1),
+const ProofCheckSchema = z.object({
+  is_toilet: looseBool,
+  clean: looseBool,
+  confidence: z.coerce.number().min(0).max(1).optional(),
+  reason: z.string().min(1),
 });
 
-export interface PeriksaBukti {
-  hasil: HasilBukti;
-  alasan: string;
-  keyakinan: number | null;
+export interface ProofCheck {
+  verdict: ProofVerdict;
+  reason: string;
+  confidence: number | null;
 }
 
-const PROMPT_BUKTI = `Kamu adalah pengawas kebersihan toilet kampus. Petugas kebersihan mengunggah foto
+const PROOF_PROMPT = `Kamu adalah pengawas kebersihan toilet kampus. Petugas kebersihan mengunggah foto
 sebagai bukti bahwa sebuah keluhan sudah ditangani. Tugasmu menilai foto itu dengan jujur dan ketat.
 
 Jawab dua pertanyaan:
-1. "toilet": apakah foto ini benar-benar memperlihatkan bagian dalam toilet/kamar mandi/WC
+1. "is_toilet": apakah foto ini benar-benar memperlihatkan bagian dalam toilet/kamar mandi/WC
    (kloset, urinoir, wastafel, lantai kamar mandi, bilik)? Foto koridor, orang, layar, langit-langit,
    foto gelap/blur yang tidak bisa dinilai, atau objek lain → false.
-2. "bersih": apakah kondisi yang terlihat sudah layak pakai dan bersih?
+2. "clean": apakah kondisi yang terlihat sudah layak pakai dan bersih?
    TIDAK bersih bila terlihat: kotoran atau noda di kloset/lantai/dinding, sampah berserakan,
    tisu bekas di lantai, genangan air atau lantai basah merata, tempat sampah meluap, coretan,
    lumut/kerak tebal, atau bekas keluhan yang jelas belum ditangani.
@@ -419,25 +436,28 @@ Jawab dua pertanyaan:
 
 Gunakan keluhan asli sebagai konteks: bila keluhannya terlihat pada foto (mis. sampah, genangan),
 periksa apakah hal itu sudah tidak ada. Keluhan yang tidak bisa dilihat dari foto (bau, sabun habis)
-jangan dijadikan alasan menolak.
+jangan dijadikan alasan menolak. Kategori keluhan ditulis dengan kode bahasa Inggris
+(cleanliness = kebersihan, supplies = perlengkapan, damage = kerusakan, odor = bau,
+flooding = genangan, other = lainnya).
 
-Jika ragu antara bersih dan kotor, pilih "bersih": false. Jangan pernah mengarang detail yang tidak ada di foto.
+Jika ragu antara bersih dan kotor, pilih "clean": false. Jangan pernah mengarang detail yang tidak ada di foto.
 
-Jawab HANYA dengan objek JSON valid berbentuk persis:
-{"toilet":true,"bersih":false,"keyakinan":0.8,"alasan":"satu kalimat bahasa Indonesia, maksimal 25 kata, sebutkan apa yang terlihat"}`;
+Jawab HANYA dengan objek JSON valid dengan kunci bahasa Inggris persis seperti ini
+("confidence" = tingkat keyakinan 0..1, "reason" = alasan):
+{"is_toilet":true,"clean":false,"confidence":0.8,"reason":"satu kalimat bahasa Indonesia, maksimal 25 kata, sebutkan apa yang terlihat"}`;
 
 /**
  * Base64 without Node's Buffer. `btoa` wants a binary string, and building
  * that in one `String.fromCharCode(...bytes)` call overflows the stack on a
  * multi-megabyte photo, hence the chunking.
  */
-function keBase64(bytes: ArrayBuffer): string {
+function toBase64(bytes: ArrayBuffer): string {
   const u8 = new Uint8Array(bytes);
-  let biner = '';
+  let binary = '';
   for (let i = 0; i < u8.length; i += 0x8000) {
-    biner += String.fromCharCode(...u8.subarray(i, i + 0x8000));
+    binary += String.fromCharCode(...u8.subarray(i, i + 0x8000));
   }
-  return btoa(biner);
+  return btoa(binary);
 }
 
 /**
@@ -446,24 +466,24 @@ function keBase64(bytes: ArrayBuffer): string {
  * The photo travels inline as a data URL. The bucket is private and the Worker
  * is the only thing that can read it, so a public URL was never an option.
  */
-export async function periksaFotoBukti(
+export async function checkProofPhoto(
   env: Env,
-  foto: { bytes: ArrayBuffer; tipe: string },
-  konteks: { lokasi: string; keluhan: string; kategori: string[] },
-): Promise<PeriksaBukti> {
-  const dataUrl = `data:${foto.tipe};base64,${keBase64(foto.bytes)}`;
-  const kategori = konteks.kategori.length ? konteks.kategori.join(', ') : 'belum dianalisis';
+  photo: { bytes: ArrayBuffer; type: string },
+  context: { location: string; complaint: string; categories: string[] },
+): Promise<ProofCheck> {
+  const dataUrl = `data:${photo.type};base64,${toBase64(photo.bytes)}`;
+  const categories = context.categories.length ? context.categories.join(', ') : 'belum dianalisis';
 
   const raw = await chatJSON(
-    modelVision(env),
+    visionModel(env),
     [
-      { role: 'system', content: PROMPT_BUKTI },
+      { role: 'system', content: PROOF_PROMPT },
       {
         role: 'user',
         content: [
           {
             type: 'text',
-            text: `Lokasi: ${konteks.lokasi}\nKategori keluhan: ${kategori}\nKeluhan asli: ${konteks.keluhan}\n\nFoto bukti dari petugas:`,
+            text: `Lokasi: ${context.location}\nKategori keluhan: ${categories}\nKeluhan asli: ${context.complaint}\n\nFoto bukti dari petugas:`,
           },
           { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } },
         ],
@@ -474,11 +494,11 @@ export async function periksaFotoBukti(
     2000,
   );
 
-  const parsed = PeriksaBuktiSchema.parse(raw);
-  const hasil: HasilBukti = !parsed.toilet ? 'bukan_toilet' : parsed.bersih ? 'bersih' : 'kotor';
+  const parsed = ProofCheckSchema.parse(raw);
+  const verdict: ProofVerdict = !parsed.is_toilet ? 'not_toilet' : parsed.clean ? 'clean' : 'dirty';
   return {
-    hasil,
-    alasan: parsed.alasan.trim().slice(0, 300),
-    keyakinan: parsed.keyakinan ?? null,
+    verdict,
+    reason: parsed.reason.trim().slice(0, 300),
+    confidence: parsed.confidence ?? null,
   };
 }

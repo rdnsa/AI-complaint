@@ -1,95 +1,95 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, type AkunPengelola } from '../lib/api';
-import InputSandi from './InputSandi';
-import { useBahasa } from '../lib/i18n';
-import { useSesi } from '../lib/sesi';
+import { api, type ManagedAccount } from '../lib/api';
+import PasswordInput from './PasswordInput';
+import { useLanguage } from '../lib/i18n';
+import { useSession } from '../lib/session';
 
 /**
  * The supervisor maintains two lists here: the staff names that appear on the
  * floor-page dropdown (a name is all a cleaner needs), and the supervisor
  * accounts that sign in to this dashboard.
  */
-export default function PanelPengguna() {
-  const { t } = useBahasa();
-  const { sesi } = useSesi();
-  const [daftar, setDaftar] = useState<AkunPengelola[]>([]);
-  const [memuat, setMemuat] = useState(true);
-  const [galat, setGalat] = useState<string | null>(null);
-  const [sedangUbah, setSedangUbah] = useState<string | null>(null);
+export default function AccountsPanel() {
+  const { t } = useLanguage();
+  const { session } = useSession();
+  const [accounts, setAccounts] = useState<ManagedAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
 
-  const muat = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      setDaftar((await api.daftarPengguna()).data);
+      setAccounts((await api.users()).data);
     } finally {
-      setMemuat(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    muat();
-  }, [muat]);
+    load();
+  }, [load]);
 
   return (
     <div className="mt-6 space-y-4">
-      <FormTambah
-        onSelesai={muat}
-        onGalat={setGalat}
+      <AddForm
+        onDone={load}
+        onError={setError}
       />
 
-      {galat && (
-        <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800">{galat}</p>
+      {error && (
+        <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800">{error}</p>
       )}
 
-      {memuat && <p className="text-maroon-600">{t('umum.memuat')}</p>}
+      {loading && <p className="text-maroon-600">{t('common.loading')}</p>}
 
       <ul className="space-y-2">
-        {daftar.map((u) => (
-          <li key={u.id} className="kartu p-4">
+        {accounts.map((u) => (
+          <li key={u.id} className="card p-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-bold text-maroon-900">{u.nama}</span>
+              <span className="font-bold text-maroon-900">{u.name}</span>
               {u.username && (
                 <code className="rounded bg-krem-100 px-1.5 py-0.5 text-xs text-maroon-700">
                   {u.username}
                 </code>
               )}
               <span className="rounded-full bg-krem-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-maroon-600">
-                {u.peran === 'spv' ? 'SPV' : t('peran.petugas')}
+                {u.role === 'supervisor' ? 'SPV' : t('account.role_staff')}
               </span>
-              {!u.aktif && (
+              {!u.active && (
                 <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 ring-1 ring-red-200">
-                  {t('akun.nonaktif')}
+                  {t('account.inactive')}
                 </span>
               )}
               <div className="ml-auto flex gap-2">
                 <button
-                  onClick={() => setSedangUbah(sedangUbah === u.id ? null : u.id)}
-                  className="tombol-netral !py-1.5 text-xs"
+                  onClick={() => setEditing(editing === u.id ? null : u.id)}
+                  className="btn-neutral !py-1.5 text-xs"
                 >
-                  {sedangUbah === u.id ? t('akun.batal') : t('akun.ubah')}
+                  {editing === u.id ? t('account.cancel') : t('account.edit')}
                 </button>
-                {/* SPV yang sedang masuk tidak boleh mengunci dirinya sendiri. */}
-                {u.id !== sesi?.id && (
+                {/* The signed-in supervisor must not be able to lock themselves out. */}
+                {u.id !== session?.id && (
                   <button
                     onClick={async () => {
-                      await api.ubahPengguna(u.id, { aktif: !u.aktif }).catch(() => {});
-                      muat();
+                      await api.updateUser(u.id, { active: !u.active }).catch(() => {});
+                      load();
                     }}
-                    className="tombol-netral !py-1.5 text-xs"
+                    className="btn-neutral !py-1.5 text-xs"
                   >
-                    {u.aktif ? t('akun.nonaktifkan') : t('akun.aktifkan')}
+                    {u.active ? t('account.deactivate') : t('account.activate')}
                   </button>
                 )}
               </div>
             </div>
 
-            {sedangUbah === u.id && (
-              <FormUbah
-                akun={u}
-                onSelesai={() => {
-                  setSedangUbah(null);
-                  muat();
+            {editing === u.id && (
+              <EditForm
+                account={u}
+                onDone={() => {
+                  setEditing(null);
+                  load();
                 }}
-                onGalat={setGalat}
+                onError={setError}
               />
             )}
           </li>
@@ -99,58 +99,58 @@ export default function PanelPengguna() {
   );
 }
 
-function FormTambah({
-  onSelesai,
-  onGalat,
+function AddForm({
+  onDone,
+  onError,
 }: {
-  onSelesai: () => void;
-  onGalat: (p: string | null) => void;
+  onDone: () => void;
+  onError: (p: string | null) => void;
 }) {
-  const { t } = useBahasa();
-  const [peran, setPeran] = useState<'petugas' | 'spv'>('petugas');
+  const { t } = useLanguage();
+  const [role, setRole] = useState<'staff' | 'supervisor'>('staff');
   const [username, setUsername] = useState('');
-  const [nama, setNama] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [proses, setProses] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  async function kirim(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setProses(true);
-    onGalat(null);
+    setBusy(true);
+    onError(null);
     try {
-      await api.buatPengguna(
-        peran === 'petugas' ? { peran, nama } : { peran, username, nama, password },
+      await api.createUser(
+        role === 'staff' ? { role, name } : { role, username, name, password },
       );
       setUsername('');
-      setNama('');
+      setName('');
       setPassword('');
-      onSelesai();
+      onDone();
     } catch (err) {
-      onGalat(err instanceof Error ? err.message : 'Gagal menambah akun');
+      onError(err instanceof Error ? err.message : 'Gagal menambah akun');
     } finally {
-      setProses(false);
+      setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={kirim} className="kartu p-4">
+    <form onSubmit={submit} className="card p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h3 className="judul-bagian">{peran === 'petugas' ? t('akun.tambah') : t('akun.tambah_spv')}</h3>
+        <h3 className="section-title">{role === 'staff' ? t('account.add_staff') : t('account.add_supervisor')}</h3>
         <select
           className="input ml-auto !w-auto !py-1.5 text-sm"
-          value={peran}
-          onChange={(e) => setPeran(e.target.value as 'petugas' | 'spv')}
+          value={role}
+          onChange={(e) => setRole(e.target.value as 'staff' | 'supervisor')}
         >
-          <option value="petugas">{t('peran.petugas')}</option>
-          <option value="spv">SPV</option>
+          <option value="staff">{t('account.role_staff')}</option>
+          <option value="supervisor">SPV</option>
         </select>
       </div>
-      {peran === 'petugas' && <p className="mb-3 text-xs text-maroon-600">{t('akun.petugas_tanpa_login')}</p>}
-      <div className={`grid gap-3 ${peran === 'spv' ? 'sm:grid-cols-3' : ''}`}>
-        {peran === 'spv' && (
+      {role === 'staff' && <p className="mb-3 text-xs text-maroon-600">{t('account.staff_no_login')}</p>}
+      <div className={`grid gap-3 ${role === 'supervisor' ? 'sm:grid-cols-3' : ''}`}>
+        {role === 'supervisor' && (
           <input
             className="input"
-            placeholder={t('akun.username')}
+            placeholder={t('account.username')}
             autoCapitalize="none"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -159,13 +159,13 @@ function FormTambah({
         )}
         <input
           className="input"
-          placeholder={t('akun.nama')}
-          value={nama}
-          onChange={(e) => setNama(e.target.value)}
+          placeholder={t('account.name')}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           required
         />
-        {peran === 'spv' && (
-          <InputSandi
+        {role === 'supervisor' && (
+          <PasswordInput
             placeholder={t('login.password')}
             autoComplete="new-password"
             value={password}
@@ -174,67 +174,67 @@ function FormTambah({
           />
         )}
       </div>
-      <button type="submit" disabled={proses} className="tombol-utama mt-3 !py-2 text-sm">
-        {peran === 'petugas' ? t('akun.tambah') : t('akun.tambah_spv')}
+      <button type="submit" disabled={busy} className="btn-primary mt-3 !py-2 text-sm">
+        {role === 'staff' ? t('account.add_staff') : t('account.add_supervisor')}
       </button>
     </form>
   );
 }
 
-function FormUbah({
-  akun,
-  onSelesai,
-  onGalat,
+function EditForm({
+  account,
+  onDone,
+  onError,
 }: {
-  akun: AkunPengelola;
-  onSelesai: () => void;
-  onGalat: (p: string | null) => void;
+  account: ManagedAccount;
+  onDone: () => void;
+  onError: (p: string | null) => void;
 }) {
-  const { t } = useBahasa();
-  const [nama, setNama] = useState(akun.nama);
+  const { t } = useLanguage();
+  const [name, setName] = useState(account.name);
   const [password, setPassword] = useState('');
-  const [proses, setProses] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  async function kirim(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setProses(true);
-    onGalat(null);
+    setBusy(true);
+    onError(null);
     try {
-      await api.ubahPengguna(akun.id, {
-        nama: nama !== akun.nama ? nama : undefined,
+      await api.updateUser(account.id, {
+        name: name !== account.name ? name : undefined,
         // An empty password field means the existing password is kept.
         password: password ? password : undefined,
       });
-      onSelesai();
+      onDone();
     } catch (err) {
-      onGalat(err instanceof Error ? err.message : 'Gagal menyimpan');
+      onError(err instanceof Error ? err.message : 'Gagal menyimpan');
     } finally {
-      setProses(false);
+      setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={kirim} className="mt-3 border-t border-krem-200 pt-3">
-      <div className={`grid gap-3 ${akun.peran === 'spv' ? 'sm:grid-cols-2' : ''}`}>
+    <form onSubmit={submit} className="mt-3 border-t border-krem-200 pt-3">
+      <div className={`grid gap-3 ${account.role === 'supervisor' ? 'sm:grid-cols-2' : ''}`}>
         <div>
-          <label className="label">{t('akun.nama')}</label>
-          <input className="input" value={nama} onChange={(e) => setNama(e.target.value)} required />
+          <label className="label">{t('account.name')}</label>
+          <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         {/* Cleaning staff have no password to change. */}
-        {akun.peran === 'spv' && (
+        {account.role === 'supervisor' && (
         <div>
-          <label className="label">{t('akun.password_baru')}</label>
-          <InputSandi
+          <label className="label">{t('account.new_password')}</label>
+          <PasswordInput
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="mt-1 text-xs text-maroon-600">{t('akun.kosongkan_sandi')}</p>
+          <p className="mt-1 text-xs text-maroon-600">{t('account.password_blank_hint')}</p>
         </div>
         )}
       </div>
-      <button type="submit" disabled={proses} className="tombol-utama mt-3 !py-2 text-sm">
-        {t('akun.simpan')}
+      <button type="submit" disabled={busy} className="btn-primary mt-3 !py-2 text-sm">
+        {t('account.save')}
       </button>
     </form>
   );

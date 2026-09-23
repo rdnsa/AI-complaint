@@ -1,42 +1,42 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api, type Sesi } from './api';
+import { api, type Session } from './api';
 
 /**
  * The currently signed-in user.
  *
  * Loaded once at the root of the app so that individual pages do not each call
- * /api/auth/saya, and so signed-in state stays consistent across the interface.
+ * /api/auth/me, and so signed-in state stays consistent across the interface.
  */
-const Konteks = createContext<{
-  sesi: Sesi | null;
-  memuat: boolean;
-  pasang: (s: Sesi | null) => void;
-  keluar: () => Promise<void>;
+const Context = createContext<{
+  session: Session | null;
+  loading: boolean;
+  setSession: (s: Session | null) => void;
+  logout: () => Promise<void>;
 } | null>(null);
 
-export function PenyediaSesi({ children }: { children: React.ReactNode }) {
-  const [sesi, setSesi] = useState<Sesi | null>(null);
-  const [memuat, setMemuat] = useState(true);
+export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api
-      .saya()
-      .then(setSesi)
-      .catch(() => setSesi(null))
-      .finally(() => setMemuat(false));
+      .me()
+      .then(setSession)
+      .catch(() => setSession(null))
+      .finally(() => setLoading(false));
   }, []);
 
-  const keluar = useCallback(async () => {
-    await api.keluar().catch(() => {});
-    setSesi(null);
+  const logout = useCallback(async () => {
+    await api.logout().catch(() => {});
+    setSession(null);
   }, []);
 
-  const nilai = useMemo(() => ({ sesi, memuat, pasang: setSesi, keluar }), [sesi, memuat, keluar]);
-  return <Konteks.Provider value={nilai}>{children}</Konteks.Provider>;
+  const value = useMemo(() => ({ session, loading, setSession, logout }), [session, loading, logout]);
+  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 
-export function useSesi() {
-  const nilai = useContext(Konteks);
-  if (!nilai) throw new Error('useSesi harus dipakai di dalam PenyediaSesi');
-  return nilai;
+export function useSession() {
+  const value = useContext(Context);
+  if (!value) throw new Error('useSession must be used inside SessionProvider');
+  return value;
 }

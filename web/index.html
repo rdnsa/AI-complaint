@@ -7,10 +7,9 @@
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <title>Lapor WC Kampus</title>
     <script>
+      // Light is the default; dark only when chosen with the toggle (see lib/theme.tsx).
       try {
-        var t = localStorage.getItem('tema');
-        if (t === 'gelap' || (!t && matchMedia('(prefers-color-scheme: dark)').matches))
-          document.documentElement.classList.add('dark');
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
       } catch (e) {}
     </script>
   </head>

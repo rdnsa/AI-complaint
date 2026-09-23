@@ -1,19 +1,19 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { tanggalWIB } from './adapters/clock';
+import { wibDate } from './adapters/clock';
 import type { AppEnv, Env } from './env';
 import activityRoutes from './routes/activity';
+import askRoutes from './routes/ask';
 import authRoutes from './routes/auth';
 import leaderboardRoutes from './routes/leaderboard';
 import locationRoutes from './routes/locations';
-import pekerjaanRoutes from './routes/pekerjaan';
-import petugasRoutes from './routes/petugas';
 import reportRoutes from './routes/reports';
+import staffRoutes from './routes/staff';
 import summaryRoutes from './routes/summary';
-import tanyaRoutes from './routes/tanya';
 import uploadRoutes from './routes/uploads';
 import userRoutes from './routes/users';
-import { buatRingkasanHarian } from './services/summary-service';
+import workLogRoutes from './routes/work-logs';
+import { generateDailySummary } from './services/summary-service';
 
 /**
  * Composition root.
@@ -26,23 +26,24 @@ const app = new Hono<AppEnv>();
 
 app.use('*', logger());
 
-app.get('/api/health', (c) => c.json({ ok: true, waktu: new Date().toISOString() }));
+app.get('/api/health', (c) => c.json({ ok: true, time: new Date().toISOString() }));
 
 app.route('/api/auth', authRoutes);
-app.route('/api/lokasi', locationRoutes);
+app.route('/api/locations', locationRoutes);
 app.route('/api/reports', reportRoutes);
-app.route('/api/pekerjaan', pekerjaanRoutes);
-app.route('/api/petugas', petugasRoutes);
+app.route('/api/work-logs', workLogRoutes);
+app.route('/api/staff', staffRoutes);
 app.route('/api/uploads', uploadRoutes);
 app.route('/api/summary', summaryRoutes);
-app.route('/api/aktivitas', activityRoutes);
-app.route('/api/pengguna', userRoutes);
-app.route('/api/peringkat', leaderboardRoutes);
-app.route('/api/tanya', tanyaRoutes);
+app.route('/api/activity', activityRoutes);
+app.route('/api/users', userRoutes);
+app.route('/api/leaderboard', leaderboardRoutes);
+app.route('/api/ask', askRoutes);
 
 app.notFound(async (c) => {
   if (c.req.path.startsWith('/api/')) return c.json({ error: 'Endpoint tidak ditemukan' }, 404);
-  // Deep links such as /lapor/A-1 are served index.html; the React router takes it from there.
+  // Deep links such as /report/A-1 (and the old /lapor/A-1 printed on stickers)
+  // are served index.html; the React router takes it from there.
   return c.env.ASSETS.fetch(new Request(new URL('/index.html', c.req.url), c.req.raw));
 });
 
@@ -56,11 +57,11 @@ export default {
 
   /** Cron 10:00 UTC = 17:00 WIB: summarise the day's reports (feature #3). */
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
-    const tanggal = tanggalWIB();
+    const date = wibDate();
     ctx.waitUntil(
-      buatRingkasanHarian(env, tanggal)
-        .then((r) => console.log(`Ringkasan ${tanggal} tersimpan (${r.total_laporan} laporan)`))
-        .catch((e) => console.error(`Ringkasan ${tanggal} gagal:`, e)),
+      generateDailySummary(env, date)
+        .then((r) => console.log(`Summary for ${date} saved (${r.report_count} reports)`))
+        .catch((e) => console.error(`Summary for ${date} failed:`, e)),
     );
   },
 } satisfies ExportedHandler<Env>;

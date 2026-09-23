@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { tanggalWIB } from '../adapters/clock';
-import { chatDenganAlat, type DefinisiAlat, type JawabanAlat } from '../adapters/llm';
-import { KATEGORI, PRIORITAS, STATUS } from '../domain/types';
+import { wibDate } from '../adapters/clock';
+import { chatWithTools, type ToolAnswer, type ToolDefinition } from '../adapters/llm';
+import { CATEGORIES, PRIORITIES, STATUSES, TOILET_TYPES } from '../domain/types';
 import type { Env } from '../env';
-import * as analitik from '../repositories/analitik';
-import { KELOMPOK } from '../repositories/analitik';
-import * as ringkasan from '../repositories/summaries';
-import { catat } from './activity-service';
+import * as analytics from '../repositories/analytics';
+import { GROUPINGS } from '../repositories/analytics';
+import * as summaries from '../repositories/summaries';
+import { log } from './activity-service';
 
 /**
  * Feature #6: anyone asks a question in plain language, the model decides
@@ -17,186 +17,206 @@ import { catat } from './activity-service';
  * the same way the public report board hides them.
  */
 
-/** Questions per day, everyone together. Roughly 3.000 tokens each. */
-export const BATAS_HARIAN = 50;
+/** Questions per day, everyone together. Roughly 3,000 tokens each. */
+export const DAILY_LIMIT = 50;
 /** Questions per day from one anonymous address, so one visitor cannot spend the whole budget. */
-export const BATAS_PER_IP = 20;
+export const PER_IP_LIMIT = 20;
 
-export type Penanya =
-  | { jenis: 'staf'; nama: string }
-  | { jenis: 'pelapor'; nama: string; ip: string }
-  | { jenis: 'pengunjung'; ip: string };
+export type Asker =
+  | { kind: 'supervisor'; name: string }
+  | { kind: 'reporter'; name: string; ip: string }
+  | { kind: 'visitor'; ip: string };
+
+/** Actor recorded in the activity log for an anonymous asker. */
+const VISITOR = 'visitor';
 
 /** How much of the conversation travels with each question. */
-const MAKS_RIWAYAT = 6;
-const MAKS_PANJANG_PESAN = 500;
+const MAX_HISTORY = 6;
+const MAX_MESSAGE_LENGTH = 500;
 
-const PesanRiwayat = z.object({
-  peran: z.enum(['pengguna', 'asisten']),
-  teks: z.string().trim().min(1).max(2000),
+const HistoryMessage = z.object({
+  role: z.enum(['user', 'assistant']),
+  text: z.string().trim().min(1).max(2000),
 });
 
-export const PermintaanTanya = z.object({
-  pertanyaan: z.string().trim().min(3, 'Pertanyaan terlalu pendek').max(MAKS_PANJANG_PESAN),
-  riwayat: z.array(PesanRiwayat).max(20).default([]),
+export const AskRequest = z.object({
+  question: z.string().trim().min(3, 'Pertanyaan terlalu pendek').max(MAX_MESSAGE_LENGTH),
+  history: z.array(HistoryMessage).max(20).default([]),
 });
-export type PermintaanTanya = z.infer<typeof PermintaanTanya>;
+export type AskRequest = z.infer<typeof AskRequest>;
 
-type Kelompok = keyof typeof KELOMPOK;
-const SEMUA_KELOMPOK = Object.keys(KELOMPOK) as Kelompok[];
+type Grouping = keyof typeof GROUPINGS;
+const ALL_GROUPINGS = Object.keys(GROUPINGS) as Grouping[];
 /** The public never groups by staff member. */
-const KELOMPOK_PUBLIK = SEMUA_KELOMPOK.filter((k) => k !== 'petugas');
+const PUBLIC_GROUPINGS = ALL_GROUPINGS.filter((g) => g !== 'staff');
 
 /** The filter every tool accepts, described once so the definitions stay in step. */
-const PROPERTI_FILTER = {
-  sejak: {
+const FILTER_PROPERTIES = {
+  since: {
     type: 'string',
     description: 'Tanggal awal (inklusif) dalam format YYYY-MM-DD waktu WIB. Kosongkan untuk tanpa batas.',
   },
-  sampai: {
+  until: {
     type: 'string',
     description: 'Tanggal akhir (inklusif) dalam format YYYY-MM-DD waktu WIB.',
   },
-  gedung: { type: 'string', description: 'Kode gedung satu huruf, A sampai J.' },
-  kategori: { type: 'string', enum: [...KATEGORI] },
-  prioritas: { type: 'string', enum: [...PRIORITAS] },
-  status: { type: 'string', enum: [...STATUS] },
-  jenis: { type: 'string', enum: ['pria', 'wanita', 'disabilitas'] },
+  building: { type: 'string', description: 'Kode gedung satu huruf, A sampai J.' },
+  category: { type: 'string', enum: [...CATEGORIES] },
+  priority: { type: 'string', enum: [...PRIORITIES] },
+  status: { type: 'string', enum: [...STATUSES] },
+  type: {
+    type: 'string',
+    enum: [...TOILET_TYPES],
+    description: 'Jenis toilet: men = pria, women = wanita, accessible = disabilitas.',
+  },
 };
 
-const daftarAlat = (kelompok: Kelompok[]): DefinisiAlat[] => [
+const toolList = (groupings: Grouping[]): ToolDefinition[] => [
   {
-    name: 'hitung_laporan',
+    name: 'count_reports',
     description:
       'Menghitung jumlah laporan yang cocok dengan filter, dikelompokkan bila diminta. ' +
-      'Setiap baris berisi jumlah total, berapa yang sudah selesai, dan berapa yang berprioritas tinggi. ' +
+      'Setiap baris berisi jumlah total (count), berapa yang sudah selesai (resolved), dan berapa ' +
+      'yang berprioritas tinggi (high). ' +
       'Pakai ini untuk pertanyaan "berapa", "paling banyak", "tren per hari/minggu/bulan", "jam sibuk".',
     parameters: {
       type: 'object',
       properties: {
-        kelompok: {
+        group_by: {
           type: 'string',
-          enum: kelompok,
+          enum: groupings,
           description: 'Cara mengelompokkan. Kosongkan untuk total saja.',
         },
-        ...PROPERTI_FILTER,
+        ...FILTER_PROPERTIES,
       },
     },
   },
   {
-    name: 'waktu_penyelesaian',
+    name: 'resolution_time',
     description:
       'Rata-rata, tercepat, dan terlama waktu (dalam menit) dari laporan masuk sampai ditandai selesai. ' +
       'Hanya menghitung laporan yang sudah selesai. Pakai untuk pertanyaan tentang kecepatan atau kinerja petugas.',
     parameters: {
       type: 'object',
       properties: {
-        kelompok: {
+        group_by: {
           type: 'string',
-          enum: kelompok,
-          description: 'Misalnya "gedung" atau "prioritas". Kosongkan untuk angka keseluruhan.',
+          enum: groupings,
+          description: 'Misalnya "building" atau "priority". Kosongkan untuk angka keseluruhan.',
         },
-        ...PROPERTI_FILTER,
+        ...FILTER_PROPERTIES,
       },
     },
   },
   {
-    name: 'daftar_laporan',
+    name: 'list_reports',
     description:
       'Daftar laporan satu per satu (maksimal 15) dengan lokasi, status, prioritas, kategori, ringkasan, ' +
       'dan waktu. Pakai hanya bila penanya ingin melihat laporan konkret, bukan angka.',
     parameters: {
       type: 'object',
       properties: {
-        urut: { type: 'string', enum: ['terbaru', 'terlama'] },
+        order: {
+          type: 'string',
+          enum: ['newest', 'oldest'],
+          description: 'newest = terbaru dulu, oldest = terlama dulu.',
+        },
         limit: { type: 'integer', minimum: 1, maximum: 15 },
-        ...PROPERTI_FILTER,
+        ...FILTER_PROPERTIES,
       },
     },
   },
   {
-    name: 'ringkasan_harian',
+    name: 'daily_summary',
     description:
-      'Ringkasan naratif yang sudah tersimpan untuk satu tanggal, beserta poin sorotannya. ' +
+      'Ringkasan naratif yang sudah tersimpan untuk satu tanggal, beserta poin sorotannya (highlights). ' +
       'Pakai bila penanya bertanya "apa yang terjadi" pada hari tertentu.',
     parameters: {
       type: 'object',
-      properties: { tanggal: { type: 'string', description: 'YYYY-MM-DD waktu WIB.' } },
-      required: ['tanggal'],
+      properties: { date: { type: 'string', description: 'YYYY-MM-DD waktu WIB.' } },
+      required: ['date'],
     },
   },
 ];
 
 /** The model's arguments, checked before they reach a query. */
-const ArgFilter = z.object({
-  sejak: z.string().optional(),
-  sampai: z.string().optional(),
-  gedung: z.string().optional(),
-  kategori: z.string().optional(),
-  prioritas: z.string().optional(),
+const FilterArgs = z.object({
+  since: z.string().optional(),
+  until: z.string().optional(),
+  building: z.string().optional(),
+  category: z.string().optional(),
+  priority: z.string().optional(),
   status: z.string().optional(),
-  jenis: z.string().optional(),
+  type: z.string().optional(),
 });
-const ArgKelompok = ArgFilter.extend({
-  kelompok: z.enum(SEMUA_KELOMPOK as [Kelompok, ...Kelompok[]]).optional(),
+const GroupArgs = FilterArgs.extend({
+  group_by: z.enum(ALL_GROUPINGS as [Grouping, ...Grouping[]]).optional(),
 });
-const ArgDaftar = ArgFilter.extend({
-  urut: z.enum(['terbaru', 'terlama']).default('terbaru'),
+const ListArgs = FilterArgs.extend({
+  order: z.enum(['newest', 'oldest']).default('newest'),
   limit: z.coerce.number().int().default(10),
 });
-const ArgTanggal = z.object({ tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
+const DateArgs = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
 
-async function jalankanAlat(
+async function runTool(
   env: Env,
-  staf: boolean,
-  nama: string,
-  argumen: Record<string, unknown>,
+  isSupervisor: boolean,
+  name: string,
+  args: Record<string, unknown>,
 ): Promise<unknown> {
-  // The public tool list omits 'petugas', but the argument is checked again
+  // The public tool list omits 'staff', but the argument is checked again
   // here so a model that ignores the enum still cannot reach staff names.
-  const kelompokDari = (arg: Record<string, unknown>) => {
-    const { kelompok, ...filter } = ArgKelompok.parse(arg);
-    if (kelompok === 'petugas' && !staf) throw new Error('Data per petugas tidak tersedia untuk umum');
-    return { kelompok, filter };
+  const groupingFrom = (arg: Record<string, unknown>) => {
+    const { group_by, ...filter } = GroupArgs.parse(arg);
+    if (group_by === 'staff' && !isSupervisor) {
+      throw new Error('Data per petugas tidak tersedia untuk umum');
+    }
+    return { group_by, filter };
   };
 
-  switch (nama) {
-    case 'hitung_laporan': {
-      const { kelompok, filter } = kelompokDari(argumen);
-      return analitik.hitungLaporan(env, kelompok, filter);
+  switch (name) {
+    case 'count_reports': {
+      const { group_by, filter } = groupingFrom(args);
+      return analytics.countReports(env, group_by, filter);
     }
-    case 'waktu_penyelesaian': {
-      const { kelompok, filter } = kelompokDari(argumen);
-      return analitik.waktuPenyelesaian(env, kelompok, filter);
+    case 'resolution_time': {
+      const { group_by, filter } = groupingFrom(args);
+      return analytics.resolutionTime(env, group_by, filter);
     }
-    case 'daftar_laporan': {
-      const { urut, limit, ...filter } = ArgDaftar.parse(argumen);
-      return analitik.daftarLaporan(env, filter, urut, limit, staf);
+    case 'list_reports': {
+      const { order, limit, ...filter } = ListArgs.parse(args);
+      return analytics.listReports(env, filter, order, limit, isSupervisor);
     }
-    case 'ringkasan_harian': {
-      const { tanggal } = ArgTanggal.parse(argumen);
-      const baris = await ringkasan.cari(env, tanggal);
-      if (!baris) return { tanggal, ada: false, pesan: 'Belum ada ringkasan tersimpan untuk tanggal ini.' };
+    case 'daily_summary': {
+      const { date } = DateArgs.parse(args);
+      const row = await summaries.find(env, date);
+      if (!row) {
+        return { date, exists: false, message: 'Belum ada ringkasan tersimpan untuk tanggal ini.' };
+      }
       return {
-        tanggal,
-        total_laporan: baris.total_laporan,
-        ringkasan: baris.ringkasan,
-        sorotan: baris.sorotan ? (JSON.parse(baris.sorotan) as string[]) : [],
+        date,
+        report_count: row.report_count,
+        summary: row.summary,
+        highlights: row.highlights ? (JSON.parse(row.highlights) as string[]) : [],
       };
     }
     default:
-      throw new Error(`Alat tidak dikenal: ${nama}`);
+      throw new Error(`Alat tidak dikenal: ${name}`);
   }
 }
 
-function promptSistem(hariIni: string, staf: boolean): string {
-  const penanya = staf
+function systemPrompt(today: string, isSupervisor: boolean): string {
+  const asker = isSupervisor
     ? 'Penanya adalah SPV (supervisor) yang memantau laporan dan kerja petugas.'
     : 'Penanya adalah warga kampus (mahasiswa/dosen/tamu). Jangan menyebut nama petugas perorangan.';
   return `Kamu adalah asisten analisis data untuk sistem pelaporan toilet kampus UPI Tasikmalaya.
-${penanya}
-Hari ini: ${hariIni} (WIB). Gedung berkode A sampai J; setiap laporan punya kategori
-(${KATEGORI.join(', ')}), prioritas (${PRIORITAS.join(', ')}), dan status (${STATUS.join(', ')}).
+${asker}
+Hari ini: ${today} (WIB). Gedung berkode A sampai J; setiap laporan punya kategori
+(${CATEGORIES.join(', ')}), prioritas (${PRIORITIES.join(', ')}), dan status (${STATUSES.join(', ')}).
+Kode-kode itu berbahasa Inggris: pakai persis kode tersebut sebagai argumen alat, tetapi dalam jawaban
+terjemahkan ke bahasa penanya (mis. resolved = selesai, in_progress = diproses, new = baru,
+high = tinggi, medium = sedang, low = rendah, cleanliness = kebersihan, supplies = perlengkapan,
+damage = kerusakan, odor = bau, flooding = genangan, other = lainnya).
 
 Cara bekerja:
 - Jawab HANYA berdasarkan hasil alat. Jangan pernah menebak angka. Bila data tidak ada, katakan tidak ada.
@@ -209,59 +229,59 @@ Cara bekerja:
 - Kalau pertanyaan di luar data sistem ini, katakan bahwa kamu hanya bisa menjawab soal laporan toilet.`;
 }
 
-export interface HasilTanya extends JawabanAlat {
+export interface AskResult extends ToolAnswer {
   ms: number;
-  sisa_hari_ini: number;
+  remaining_today: number;
 }
 
-export class BatasTercapai extends Error {}
+export class LimitReached extends Error {}
 
-export async function tanya(env: Env, penanya: Penanya, permintaan: PermintaanTanya): Promise<HasilTanya> {
-  const hariIni = tanggalWIB();
-  const staf = penanya.jenis === 'staf';
+export async function ask(env: Env, asker: Asker, request: AskRequest): Promise<AskResult> {
+  const today = wibDate();
+  const isSupervisor = asker.kind === 'supervisor';
 
-  const terpakai = await analitik.jumlahTanyaHariIni(env, hariIni);
-  if (terpakai >= BATAS_HARIAN) {
-    throw new BatasTercapai(`Batas ${BATAS_HARIAN} pertanyaan per hari sudah tercapai.`);
+  const used = await analytics.questionsToday(env, today);
+  if (used >= DAILY_LIMIT) {
+    throw new LimitReached(`Batas ${DAILY_LIMIT} pertanyaan per hari sudah tercapai.`);
   }
-  if (!staf) {
-    const dariAlamatIni = await analitik.jumlahTanyaHariIni(env, hariIni, penanya.ip);
-    if (dariAlamatIni >= BATAS_PER_IP) {
-      throw new BatasTercapai(`Batas ${BATAS_PER_IP} pertanyaan per hari dari perangkat ini sudah tercapai.`);
+  if (!isSupervisor) {
+    const fromThisAddress = await analytics.questionsToday(env, today, asker.ip);
+    if (fromThisAddress >= PER_IP_LIMIT) {
+      throw new LimitReached(`Batas ${PER_IP_LIMIT} pertanyaan per hari dari perangkat ini sudah tercapai.`);
     }
   }
 
   // Only the tail of the conversation goes along, each turn trimmed, so the
   // cost of a question does not grow with the length of the chat.
-  const riwayat = permintaan.riwayat.slice(-MAKS_RIWAYAT).map((p) => ({
-    role: p.peran === 'pengguna' ? ('user' as const) : ('assistant' as const),
-    content: p.teks.slice(0, MAKS_PANJANG_PESAN),
+  const history = request.history.slice(-MAX_HISTORY).map((m) => ({
+    role: m.role,
+    content: m.text.slice(0, MAX_MESSAGE_LENGTH),
   }));
 
-  const mulai = Date.now();
-  const jawaban = await chatDenganAlat(env, {
-    system: promptSistem(hariIni, staf),
-    riwayat,
-    pertanyaan: permintaan.pertanyaan,
-    alat: daftarAlat(staf ? SEMUA_KELOMPOK : KELOMPOK_PUBLIK),
-    jalankan: (nama, argumen) => jalankanAlat(env, staf, nama, argumen),
+  const start = Date.now();
+  const answer = await chatWithTools(env, {
+    system: systemPrompt(today, isSupervisor),
+    history,
+    question: request.question,
+    tools: toolList(isSupervisor ? ALL_GROUPINGS : PUBLIC_GROUPINGS),
+    run: (name, args) => runTool(env, isSupervisor, name, args),
   });
-  const ms = Date.now() - mulai;
+  const ms = Date.now() - start;
 
-  await catat(env, {
-    aksi: 'tanya',
-    pelaku: penanya.jenis === 'pengunjung' ? 'pengunjung' : penanya.nama,
-    ringkas: `Tanya data: "${permintaan.pertanyaan.slice(0, 80)}"`,
-    rincian: {
-      pertanyaan: permintaan.pertanyaan,
-      alat: jawaban.alat,
-      token: jawaban.token,
+  await log(env, {
+    action: 'question',
+    actor: asker.kind === 'visitor' ? VISITOR : asker.name,
+    summary: `Tanya data: "${request.question.slice(0, 80)}"`,
+    details: {
+      question: request.question,
+      tools: answer.tools,
+      tokens: answer.tokens,
       model: env.LLM_MODEL,
       ms,
       // Hashed address, only kept for the per-visitor limit.
-      ...(staf ? {} : { ip: penanya.ip }),
+      ...(isSupervisor ? {} : { ip: asker.ip }),
     },
   });
 
-  return { ...jawaban, ms, sisa_hari_ini: BATAS_HARIAN - terpakai - 1 };
+  return { ...answer, ms, remaining_today: DAILY_LIMIT - used - 1 };
 }

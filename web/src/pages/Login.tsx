@@ -1,41 +1,41 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import InputSandi from '../components/InputSandi';
-import Kop from '../components/Kop';
+import PasswordInput from '../components/PasswordInput';
+import Header from '../components/Header';
 import { api } from '../lib/api';
-import { useBahasa } from '../lib/i18n';
-import { useSesi } from '../lib/sesi';
+import { useLanguage } from '../lib/i18n';
+import { useSession } from '../lib/session';
 
-export default function Masuk() {
-  const { t } = useBahasa();
-  const { pasang } = useSesi();
+export default function Login() {
+  const { t } = useLanguage();
+  const { setSession } = useSession();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [galat, setGalat] = useState<string | null>(null);
-  const [proses, setProses] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  async function kirim(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setProses(true);
-    setGalat(null);
+    setBusy(true);
+    setError(null);
     try {
-      const sesi = await api.masuk(username, password);
-      pasang(sesi);
+      const session = await api.login(username, password);
+      setSession(session);
       // The supervisor goes straight to the dashboard; reporters return to the landing page.
-      navigate(sesi.peran === 'spv' ? '/spv' : '/', { replace: true });
+      navigate(session.role === 'supervisor' ? '/supervisor' : '/', { replace: true });
     } catch (err) {
-      setGalat(err instanceof Error ? err.message : t('login.galat'));
-      setProses(false);
+      setError(err instanceof Error ? err.message : t('login.error'));
+      setBusy(false);
     }
   }
 
   return (
     <div className="min-h-screen">
-      <Kop judul={t('login.judul')} keterangan={t('login.keterangan')} ramping />
+      <Header title={t('login.title')} description={t('login.description')} compact />
       <main className="mx-auto max-w-sm px-4">
-        <form onSubmit={kirim} className="kartu mt-8 space-y-4 p-5">
+        <form onSubmit={submit} className="card mt-8 space-y-4 p-5">
           <div>
             <label htmlFor="u" className="label">
               {t('login.username')}
@@ -54,7 +54,7 @@ export default function Masuk() {
             <label htmlFor="p" className="label">
               {t('login.password')}
             </label>
-            <InputSandi
+            <PasswordInput
               id="p"
               autoComplete="current-password"
               value={password}
@@ -62,17 +62,17 @@ export default function Masuk() {
               required
             />
           </div>
-          {galat && <p className="text-sm font-medium text-red-700">{galat}</p>}
-          <button type="submit" disabled={proses} className="tombol-utama w-full py-3">
-            {proses ? t('login.memeriksa') : t('login.masuk')}
+          {error && <p className="text-sm font-medium text-red-700">{error}</p>}
+          <button type="submit" disabled={busy} className="btn-primary w-full py-3">
+            {busy ? t('login.checking') : t('login.submit')}
           </button>
         </form>
 
         <Link
-          to="/daftar"
+          to="/register"
           className="mx-auto mt-6 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
         >
-          {t('login.belum_punya')}
+          {t('login.no_account')}
         </Link>
       </main>
     </div>

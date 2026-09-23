@@ -1,21 +1,21 @@
-import { periksaFotoBukti } from '../adapters/llm';
-import { bacaFoto, FOLDER, hapusFoto } from '../adapters/storage';
+import { checkProofPhoto } from '../adapters/llm';
+import { readPhoto, FOLDER, deletePhoto } from '../adapters/storage';
 import {
-  bolehDiselesaikan,
+  canResolve,
   toDTO,
-  urlFoto,
-  type HasilBukti,
-  type Kategori,
+  photoUrl,
+  type Category,
+  type ProofVerdict,
+  type ProofVerification,
   type ReportDTO,
   type ReportRow,
-  type Status,
-  type VerifikasiBukti,
+  type ReportStatus,
 } from '../domain/types';
 import type { Env } from '../env';
-import * as lokasi from '../repositories/locations';
-import * as laporan from '../repositories/reports';
-import { catat, PELAPOR } from './activity-service';
-import { jalankanAnalisis } from './analysis-service';
+import * as locations from '../repositories/locations';
+import * as reports from '../repositories/reports';
+import { log, REPORTER } from './activity-service';
+import { runAnalysis } from './analysis-service';
 
 /**
  * The use cases around a report.
@@ -25,42 +25,42 @@ import { jalankanAnalisis } from './analysis-service';
  * job or an admin tool tomorrow.
  */
 
-export type HasilKirim =
-  | { jenis: 'ok'; id: string; toilet: string; duplikat: boolean }
-  | { jenis: 'lokasi-tidak-dikenal' };
+export type SubmitResult =
+  | { kind: 'ok'; id: string; toilet: string; duplicate: boolean }
+  | { kind: 'unknown-location' };
 
-export async function kirimLaporan(
+export async function submitReport(
   env: Env,
-  data: { toilet_id: string; teks: string; foto_key: string },
-  pelapor: { id: string; nama: string } | null,
-): Promise<HasilKirim> {
-  const namaToilet = await lokasi.namaToiletAktif(env, data.toilet_id);
-  if (!namaToilet) return { jenis: 'lokasi-tidak-dikenal' };
+  data: { toilet_id: string; description: string; photo_key: string },
+  reporter: { id: string; name: string } | null,
+): Promise<SubmitResult> {
+  const toiletName = await locations.activeToiletName(env, data.toilet_id);
+  if (!toiletName) return { kind: 'unknown-location' };
 
-  const kembar = await laporan.cariKembar(env, data.toilet_id, data.teks);
-  if (kembar) return { jenis: 'ok', id: kembar, toilet: namaToilet, duplikat: true };
+  const duplicate = await reports.findDuplicate(env, data.toilet_id, data.description);
+  if (duplicate) return { kind: 'ok', id: duplicate, toilet: toiletName, duplicate: true };
 
   const id = crypto.randomUUID();
-  await laporan.simpan(env, { id, ...data, pelapor_id: pelapor?.id ?? null });
+  await reports.insert(env, { id, ...data, reporter_id: reporter?.id ?? null });
 
-  await catat(env, {
-    aksi: 'lapor',
+  await log(env, {
+    action: 'report_created',
     report_id: id,
-    pelaku: pelapor?.nama ?? PELAPOR,
-    ringkas: `Laporan baru di ${namaToilet}`,
-    rincian: { toilet_id: data.toilet_id, teks: data.teks },
+    actor: reporter?.name ?? REPORTER,
+    summary: `Laporan baru di ${toiletName}`,
+    details: { toilet_id: data.toilet_id, description: data.description },
   });
 
-  return { jenis: 'ok', id, toilet: namaToilet, duplikat: false };
+  return { kind: 'ok', id, toilet: toiletName, duplicate: false };
 }
 
-export async function satuLaporan(env: Env, id: string): Promise<ReportDTO | null> {
-  const baris = await laporan.cariSatu(env, id);
-  return baris ? toDTO(baris) : null;
+export async function getReport(env: Env, id: string): Promise<ReportDTO | null> {
+  const row = await reports.findById(env, id);
+  return row ? toDTO(row) : null;
 }
 
-export async function laporanDashboard(env: Env, filter: laporan.FilterLaporan) {
-  return (await laporan.cariUntukDashboard(env, filter)).map(toDTO);
+export async function dashboardReports(env: Env, filter: reports.ReportFilter) {
+  return (await reports.findForDashboard(env, filter)).map(toDTO);
 }
 
 /**
@@ -68,26 +68,26 @@ export async function laporanDashboard(env: Env, filter: laporan.FilterLaporan) 
  * the AI summary and advice. The reporter's account and the AI internals are
  * left out, since this list is readable without signing in.
  */
-export async function laporanTerbuka(
+export async function openReports(
   env: Env,
-  filter: { gedung?: string; lantai?: number; limit?: number },
+  filter: { building?: string; floor?: number; limit?: number },
 ) {
-  return (await laporan.cariTerbuka(env, filter)).map((baris) => {
+  return (await reports.findOpen(env, filter)).map((row) => {
     const {
-      pelapor_id: _pelapor,
-      ai_error: _galat,
+      reporter_id: _reporter,
+      ai_error: _error,
       ai_model: _model,
       ai_ms: _ms,
-      bukti_ai_model: _bmodel,
-      bukti_ai_ms: _bms,
+      proof_model: _proofModel,
+      proof_ms: _proofMs,
       ...dto
-    } = toDTO(baris);
+    } = toDTO(row);
     return dto;
   });
 }
 
-export async function laporanMilikPelapor(env: Env, pelaporId: string) {
-  return (await laporan.cariMilikPelapor(env, pelaporId)).map(toDTO);
+export async function reporterReports(env: Env, reporterId: string) {
+  return (await reports.findByReporter(env, reporterId)).map(toDTO);
 }
 
 /**
@@ -95,45 +95,48 @@ export async function laporanMilikPelapor(env: Env, pelaporId: string) {
  * names; only the proof photo is exposed, because that is what makes the claim
  * "already handled" checkable by anyone.
  */
-export async function papanPublik(env: Env, filter: laporan.FilterLaporan) {
-  const { baris, jumlah } = await laporan.cariUntukPublik(env, filter);
+export async function publicBoard(env: Env, filter: reports.ReportFilter) {
+  const { rows, counts } = await reports.findForPublic(env, filter);
   return {
-    data: baris.map(({ foto_selesai_key, kategori, ...row }) => ({
+    data: rows.map(({ proof_photo_key, categories, ...row }) => ({
       ...row,
-      kategori: kategori ? (JSON.parse(kategori) as string[]) : [],
-      foto_selesai_url: urlFoto(foto_selesai_key),
+      categories: categories ? (JSON.parse(categories) as string[]) : [],
+      proof_photo_url: photoUrl(proof_photo_key),
     })),
-    jumlah,
+    counts,
   };
 }
 
-export type HasilUbahStatus =
-  | { jenis: 'ok'; status: Status; verifikasi: VerifikasiBukti | null }
-  | { jenis: 'tidak-ditemukan' }
-  | { jenis: 'foto-tidak-ditemukan' }
-  | { jenis: 'bukti-kurang' }
-  | { jenis: 'bukti-ditolak'; hasil: Exclude<HasilBukti, 'bersih'>; alasan: string }
-  | { jenis: 'verifikasi-gagal'; pesan: string };
+export type StatusChangeResult =
+  | { kind: 'ok'; status: ReportStatus; verification: ProofVerification | null }
+  | { kind: 'not-found' }
+  | { kind: 'photo-not-found' }
+  | { kind: 'proof-missing' }
+  | { kind: 'proof-rejected'; verdict: Exclude<ProofVerdict, 'clean'>; reason: string }
+  | { kind: 'verification-failed'; message: string };
 
-type BuktiTersimpan = { key: string; verifikasi: VerifikasiBukti } | null;
+type StoredProof = { key: string; verification: ProofVerification } | null;
 
 /** The proof already on the report, if it was ever verified. */
-function buktiLama(baris: ReportRow): BuktiTersimpan {
-  if (!baris.foto_selesai_key || !baris.bukti_ai_hasil) return null;
+function existingProof(row: ReportRow): StoredProof {
+  if (!row.proof_photo_key || !row.proof_verdict) return null;
   return {
-    key: baris.foto_selesai_key,
-    verifikasi: {
-      hasil: baris.bukti_ai_hasil,
-      alasan: baris.bukti_ai_alasan ?? '',
-      model: baris.bukti_ai_model ?? '',
-      ms: baris.bukti_ai_ms ?? 0,
+    key: row.proof_photo_key,
+    verification: {
+      verdict: row.proof_verdict,
+      reason: row.proof_reason ?? '',
+      model: row.proof_model ?? '',
+      ms: row.proof_ms ?? 0,
     },
   };
 }
 
-type HasilPeriksa =
-  | { jenis: 'diterima'; bukti: NonNullable<BuktiTersimpan> }
-  | Extract<HasilUbahStatus, { jenis: 'foto-tidak-ditemukan' | 'bukti-ditolak' | 'verifikasi-gagal' }>;
+type ProofCheckResult =
+  | { kind: 'accepted'; proof: NonNullable<StoredProof> }
+  | Extract<
+      StatusChangeResult,
+      { kind: 'photo-not-found' | 'proof-rejected' | 'verification-failed' }
+    >;
 
 /**
  * Runs the vision check on a freshly uploaded proof photo.
@@ -143,111 +146,111 @@ type HasilPeriksa =
  * of the checker itself is reported separately so staff know to retry rather
  * than to re-clean; the retry uploads a fresh copy, so that photo goes too.
  */
-async function periksaBuktiBaru(
+async function checkNewProof(
   env: Env,
-  baris: ReportRow,
+  row: ReportRow,
   key: string,
-  petugas: string,
-): Promise<HasilPeriksa> {
+  staffName: string,
+): Promise<ProofCheckResult> {
   // Only a photo uploaded as proof counts: closing is open to anyone who picks
   // a staff name, so a student's condition photo must not be reusable here.
-  const foto = key.startsWith(`${FOLDER.bukti}/`) ? await bacaFoto(env, key) : null;
-  if (!foto) return { jenis: 'foto-tidak-ditemukan' };
+  const photo = key.startsWith(`${FOLDER.proof}/`) ? await readPhoto(env, key) : null;
+  if (!photo) return { kind: 'photo-not-found' };
 
-  const mulai = Date.now();
-  let putusan;
+  const start = Date.now();
+  let check;
   try {
-    putusan = await periksaFotoBukti(env, foto, {
-      lokasi: baris.toilet_nama ?? baris.toilet_id,
-      keluhan: baris.teks,
-      kategori: baris.kategori ? (JSON.parse(baris.kategori) as Kategori[]) : [],
+    check = await checkProofPhoto(env, photo, {
+      location: row.toilet_name ?? row.toilet_id,
+      complaint: row.description,
+      categories: row.categories ? (JSON.parse(row.categories) as Category[]) : [],
     });
   } catch (err) {
-    const pesan = err instanceof Error ? err.message : String(err);
-    console.error(`Verifikasi bukti gagal untuk laporan ${baris.id}: ${pesan}`);
-    await hapusFoto(env, key);
-    await catat(env, {
-      aksi: 'verifikasi_gagal',
-      report_id: baris.id,
-      pelaku: petugas,
-      ringkas: `Pemeriksaan foto bukti gagal di ${baris.toilet_nama}`,
-      rincian: { error: pesan.slice(0, 300), model: env.VISION_MODEL },
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`Proof verification failed for report ${row.id}: ${message}`);
+    await deletePhoto(env, key);
+    await log(env, {
+      action: 'verification_failed',
+      report_id: row.id,
+      actor: staffName,
+      summary: `Pemeriksaan foto bukti gagal di ${row.toilet_name}`,
+      details: { error: message.slice(0, 300), model: env.VISION_MODEL },
     });
-    return { jenis: 'verifikasi-gagal', pesan };
+    return { kind: 'verification-failed', message };
   }
-  const ms = Date.now() - mulai;
+  const ms = Date.now() - start;
 
-  if (putusan.hasil !== 'bersih') {
-    await hapusFoto(env, key);
-    await catat(env, {
-      aksi: 'bukti_ditolak',
-      report_id: baris.id,
-      pelaku: petugas,
-      ringkas: `Foto bukti ditolak (${putusan.hasil}) di ${baris.toilet_nama}: ${putusan.alasan}`,
-      rincian: {
-        hasil: putusan.hasil,
-        alasan: putusan.alasan,
-        keyakinan: putusan.keyakinan,
+  if (check.verdict !== 'clean') {
+    await deletePhoto(env, key);
+    await log(env, {
+      action: 'proof_rejected',
+      report_id: row.id,
+      actor: staffName,
+      summary: `Foto bukti ditolak (${check.verdict}) di ${row.toilet_name}: ${check.reason}`,
+      details: {
+        verdict: check.verdict,
+        reason: check.reason,
+        confidence: check.confidence,
         model: env.VISION_MODEL,
         ms,
       },
     });
-    return { jenis: 'bukti-ditolak', hasil: putusan.hasil, alasan: putusan.alasan };
+    return { kind: 'proof-rejected', verdict: check.verdict, reason: check.reason };
   }
 
   return {
-    jenis: 'diterima',
-    bukti: {
+    kind: 'accepted',
+    proof: {
       key,
-      verifikasi: { hasil: 'bersih', alasan: putusan.alasan, model: env.VISION_MODEL, ms },
+      verification: { verdict: 'clean', reason: check.reason, model: env.VISION_MODEL, ms },
     },
   };
 }
 
-export async function ubahStatus(
+export async function changeStatus(
   env: Env,
   id: string,
-  status: Status,
-  petugas: string,
-  fotoBuktiBaru: string | null,
-): Promise<HasilUbahStatus> {
-  const sebelum = await laporan.cariSatu(env, id);
-  if (!sebelum) return { jenis: 'tidak-ditemukan' };
+  status: ReportStatus,
+  staffName: string,
+  newProofPhoto: string | null,
+): Promise<StatusChangeResult> {
+  const before = await reports.findById(env, id);
+  if (!before) return { kind: 'not-found' };
 
   // A new photo must pass the vision check before anything else changes.
-  let bukti = buktiLama(sebelum);
-  if (fotoBuktiBaru) {
-    const periksa = await periksaBuktiBaru(env, sebelum, fotoBuktiBaru, petugas);
-    if (periksa.jenis !== 'diterima') return periksa;
-    bukti = periksa.bukti;
+  let proof = existingProof(before);
+  if (newProofPhoto) {
+    const check = await checkNewProof(env, before, newProofPhoto, staffName);
+    if (check.kind !== 'accepted') return check;
+    proof = check.proof;
   }
 
-  if (!bolehDiselesaikan(status, bukti?.key ?? null, bukti?.verifikasi.hasil ?? null)) {
-    return { jenis: 'bukti-kurang' };
+  if (!canResolve(status, proof?.key ?? null, proof?.verification.verdict ?? null)) {
+    return { kind: 'proof-missing' };
   }
 
-  await laporan.ubahStatus(env, id, status, petugas, bukti);
+  await reports.updateStatus(env, id, status, staffName, proof);
 
-  await catat(env, {
-    aksi: 'status',
+  await log(env, {
+    action: 'status_changed',
     report_id: id,
-    pelaku: petugas,
-    ringkas: `Status ${sebelum.status} → ${status} di ${sebelum.toilet_nama}`,
-    rincian: {
-      dari: sebelum.status,
-      ke: status,
-      foto_bukti: bukti?.key ?? null,
-      verifikasi: bukti?.verifikasi ?? null,
+    actor: staffName,
+    summary: `Status ${before.status} → ${status} di ${before.toilet_name}`,
+    details: {
+      from: before.status,
+      to: status,
+      proof_photo: proof?.key ?? null,
+      verification: proof?.verification ?? null,
     },
   });
 
-  return { jenis: 'ok', status, verifikasi: bukti?.verifikasi ?? null };
+  return { kind: 'ok', status, verification: proof?.verification ?? null };
 }
 
-export async function mintaAnalisisUlang(env: Env, id: string): Promise<boolean> {
-  const ada = await laporan.cariSatu(env, id);
-  if (!ada) return false;
-  await laporan.tandaiMenungguAnalisis(env, id);
+export async function requestReanalysis(env: Env, id: string): Promise<boolean> {
+  const exists = await reports.findById(env, id);
+  if (!exists) return false;
+  await reports.markAnalysisPending(env, id);
   return true;
 }
 
@@ -256,30 +259,30 @@ export async function mintaAnalisisUlang(env: Env, id: string): Promise<boolean>
  * into the activity log first. That copy is what lets management inspect a
  * report that disappeared, along with who removed it.
  */
-export async function hapusLaporan(env: Env, id: string, petugas: string): Promise<boolean> {
-  const baris = await laporan.cariSatu(env, id);
-  if (!baris) return false;
+export async function deleteReport(env: Env, id: string, actor: string): Promise<boolean> {
+  const row = await reports.findById(env, id);
+  if (!row) return false;
 
-  await catat(env, {
-    aksi: 'hapus',
+  await log(env, {
+    action: 'report_deleted',
     report_id: id,
-    pelaku: petugas,
-    ringkas: `Menghapus laporan di ${baris.toilet_nama}`,
-    rincian: {
-      toilet_nama: baris.toilet_nama,
-      teks: baris.teks,
-      status: baris.status,
-      prioritas: baris.prioritas,
-      kategori: baris.kategori,
-      ringkasan: baris.ringkasan,
-      dibuat: baris.created_at,
-      ada_foto: Boolean(baris.foto_key),
+    actor,
+    summary: `Menghapus laporan di ${row.toilet_name}`,
+    details: {
+      toilet_name: row.toilet_name,
+      description: row.description,
+      status: row.status,
+      priority: row.priority,
+      categories: row.categories,
+      summary: row.summary,
+      created_at: row.created_at,
+      had_photo: Boolean(row.photo_key),
     },
   });
 
-  await laporan.hapus(env, id);
-  await hapusFoto(env, baris.foto_key, baris.foto_selesai_key);
+  await reports.remove(env, id);
+  await deletePhoto(env, row.photo_key, row.proof_photo_key);
   return true;
 }
 
-export { jalankanAnalisis };
+export { runAnalysis };

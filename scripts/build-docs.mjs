@@ -7,30 +7,36 @@
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-const KANDIDAT = [
+const CANDIDATES = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/Applications/Chromium.app/Contents/MacOS/Chromium',
   '/usr/bin/google-chrome',
   '/usr/bin/chromium',
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+  join(process.env.LOCALAPPDATA ?? '', 'Google/Chrome/Application/chrome.exe'),
+  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
 ];
 
-const chrome = KANDIDAT.find((p) => existsSync(p));
+const chrome = CANDIDATES.find((p) => existsSync(p));
 if (!chrome) {
   console.error('Chrome atau Chromium tidak ditemukan; PDF tidak dapat dibuat.');
   process.exit(1);
 }
 
-for (const nama of ['panduan-umum', 'dokumentasi-teknis']) {
-  const html = resolve(`docs/${nama}.html`);
-  const pdf = resolve(`docs/${nama}.pdf`);
+for (const name of ['panduan-umum', 'dokumentasi-teknis']) {
+  const html = resolve(`docs/${name}.html`);
+  const pdf = resolve(`docs/${name}.pdf`);
   execFileSync(chrome, [
     '--headless=new',
     '--disable-gpu',
     '--no-pdf-header-footer',
     `--print-to-pdf=${pdf}`,
-    `file://${html}`,
+    // A proper file URL: 'file://' + 'C:\\…' is not one on Windows.
+    pathToFileURL(html).href,
   ]);
-  console.log(`docs/${nama}.pdf`);
+  console.log(`docs/${name}.pdf`);
 }

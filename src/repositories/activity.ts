@@ -1,71 +1,71 @@
 import type { Env } from '../env';
 
-export type Aksi =
-  | 'lapor'
-  | 'analisis'
-  | 'analisis_gagal'
-  | 'status'
-  | 'hapus'
-  | 'masuk'
-  | 'ringkasan'
-  | 'pengguna'
-  | 'bukti_ditolak'
-  | 'verifikasi_gagal'
-  | 'tanya'
-  | 'kerja';
+export type ActivityAction =
+  | 'report_created'
+  | 'analysis'
+  | 'analysis_failed'
+  | 'status_changed'
+  | 'report_deleted'
+  | 'login'
+  | 'daily_summary'
+  | 'user_changed'
+  | 'proof_rejected'
+  | 'verification_failed'
+  | 'question'
+  | 'work_logged';
 
-export const AKSI: Aksi[] = [
-  'lapor',
-  'analisis',
-  'analisis_gagal',
-  'status',
-  'hapus',
-  'masuk',
-  'ringkasan',
-  'pengguna',
-  'bukti_ditolak',
-  'verifikasi_gagal',
-  'tanya',
-  'kerja',
+export const ACTIVITY_ACTIONS: ActivityAction[] = [
+  'report_created',
+  'analysis',
+  'analysis_failed',
+  'status_changed',
+  'report_deleted',
+  'login',
+  'daily_summary',
+  'user_changed',
+  'proof_rejected',
+  'verification_failed',
+  'question',
+  'work_logged',
 ];
 
-export interface BarisAktivitas {
+export interface ActivityRow {
   id: number;
-  waktu: string;
-  aksi: Aksi;
+  created_at: string;
+  action: ActivityAction;
   report_id: string | null;
-  pelaku: string;
-  ringkas: string;
-  rincian: string | null;
+  actor: string;
+  summary: string;
+  details: string | null;
 }
 
-export async function simpan(
+export async function insert(
   env: Env,
   data: {
-    aksi: Aksi;
+    action: ActivityAction;
     report_id: string | null;
-    pelaku: string;
-    ringkas: string;
-    rincian: string | null;
+    actor: string;
+    summary: string;
+    details: string | null;
   },
 ): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO aktivitas (aksi, report_id, pelaku, ringkas, rincian) VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO activity_log (action, report_id, actor, summary, details) VALUES (?, ?, ?, ?, ?)`,
   )
-    .bind(data.aksi, data.report_id, data.pelaku, data.ringkas, data.rincian)
+    .bind(data.action, data.report_id, data.actor, data.summary, data.details)
     .run();
 }
 
-export async function cari(
+export async function find(
   env: Env,
-  filter: { aksi?: string; report_id?: string; limit?: number },
-): Promise<BarisAktivitas[]> {
+  filter: { action?: string; report_id?: string; limit?: number },
+): Promise<ActivityRow[]> {
   const where: string[] = [];
   const params: unknown[] = [];
 
-  if (filter.aksi && (AKSI as string[]).includes(filter.aksi)) {
-    where.push('aksi = ?');
-    params.push(filter.aksi);
+  if (filter.action && (ACTIVITY_ACTIONS as string[]).includes(filter.action)) {
+    where.push('action = ?');
+    params.push(filter.action);
   }
   if (filter.report_id) {
     where.push('report_id = ?');
@@ -73,13 +73,13 @@ export async function cari(
   }
 
   const rows = await env.DB.prepare(
-    `SELECT id, waktu, aksi, report_id, pelaku, ringkas, rincian
-       FROM aktivitas
+    `SELECT id, created_at, action, report_id, actor, summary, details
+       FROM activity_log
        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      ORDER BY waktu DESC, id DESC
+      ORDER BY created_at DESC, id DESC
       LIMIT ?`,
   )
     .bind(...params, filter.limit ?? 100)
-    .all<BarisAktivitas>();
+    .all<ActivityRow>();
   return rows.results;
 }

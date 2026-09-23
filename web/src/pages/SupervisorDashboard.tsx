@@ -1,111 +1,113 @@
 import { useCallback, useEffect, useState } from 'react';
-import Kop from '../components/Kop';
-import PanelAktivitas from '../components/PanelAktivitas';
-import PanelGrafik from '../components/PanelGrafik';
-import PanelPekerjaan from '../components/PanelPekerjaan';
-import PanelPengguna from '../components/PanelPengguna';
-import PanelTanya from '../components/PanelTanya';
-import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
+import Header from '../components/Header';
+import ActivityPanel from '../components/ActivityPanel';
+import ChartsPanel from '../components/ChartsPanel';
+import WorkLogPanel from '../components/WorkLogPanel';
+import AccountsPanel from '../components/AccountsPanel';
+import AskPanel from '../components/AskPanel';
+import QrCodesPanel from '../components/QrCodesPanel';
+import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges';
 import { useNavigate } from 'react-router-dom';
-import { api, type Laporan, type Ringkasan, type Sesi, type Statistik } from '../lib/api';
-import FilterWaktu, { WAKTU_KOSONG, type NilaiWaktu } from '../components/FilterWaktu';
-import { useBahasa, useFormatWaktu, useWaktuRelatif } from '../lib/i18n';
-import { useSesi } from '../lib/sesi';
+import { api, type DailyStats, type DailySummary, type Report, type Session } from '../lib/api';
+import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from '../components/TimeFilter';
+import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
+import { useSession } from '../lib/session';
 
-export default function Dashboard() {
-  const { t } = useBahasa();
-  const { sesi, memuat } = useSesi();
+export default function SupervisorDashboard() {
+  const { t } = useLanguage();
+  const { session, loading } = useSession();
   const navigate = useNavigate();
 
   // The dashboard is for monitoring, and only the supervisor monitors.
-  const bolehMasuk = sesi?.peran === 'spv' ? sesi : null;
+  const allowed = session?.role === 'supervisor' ? session : null;
 
   useEffect(() => {
     // Anyone else is sent to sign in; the sign-in page decides where they go.
-    if (!memuat && !bolehMasuk) navigate('/masuk', { replace: true });
-  }, [memuat, bolehMasuk, navigate]);
+    if (!loading && !allowed) navigate('/login', { replace: true });
+  }, [loading, allowed, navigate]);
 
-  if (!bolehMasuk) {
+  if (!allowed) {
     return (
       <div className="min-h-screen">
-        <Kop judul={t('dash.judul')} ramping />
-        <p className="p-10 text-center text-maroon-600">{t('umum.memuat')}</p>
+        <Header title={t('dashboard.title')} compact />
+        <p className="p-10 text-center text-maroon-600">{t('common.loading')}</p>
       </div>
     );
   }
 
-  return <Papan sesi={bolehMasuk} />;
+  return <Board session={allowed} />;
 }
 
-function Papan({ sesi }: { sesi: Sesi }) {
-  const { t } = useBahasa();
-  const { keluar } = useSesi();
+function Board({ session }: { session: Session }) {
+  const { t } = useLanguage();
+  const { logout } = useSession();
   const navigate = useNavigate();
-  const [laporan, setLaporan] = useState<Laporan[]>([]);
-  const [statistik, setStatistik] = useState<Statistik | null>(null);
-  const [ringkasan, setRingkasan] = useState<Ringkasan | null>(null);
-  const [filter, setFilter] = useState({ status: '', prioritas: '' });
-  const [waktu, setWaktu] = useState<NilaiWaktu>(WAKTU_KOSONG);
-  const [memuat, setMemuat] = useState(true);
-  const [menyusun, setMenyusun] = useState(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [stats, setStats] = useState<DailyStats | null>(null);
+  const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [filter, setFilter] = useState({ status: '', priority: '' });
+  const [time, setTime] = useState<TimeRange>(EMPTY_TIME_RANGE);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [tab, setTab] = useState<
-    'laporan' | 'pekerjaan' | 'grafik' | 'aktivitas' | 'tanya' | 'pengguna'
-  >('laporan');
-  const tabs = ['laporan', 'pekerjaan', 'grafik', 'aktivitas', 'tanya', 'pengguna'] as const;
+    'reports' | 'work_logs' | 'charts' | 'activity' | 'ask' | 'accounts' | 'qr_codes'
+  >('reports');
+  const tabs = ['reports', 'work_logs', 'charts', 'activity', 'ask', 'accounts', 'qr_codes'] as const;
 
-  const muat = useCallback(async () => {
-    const [l, s, r] = await Promise.all([
+  const load = useCallback(async () => {
+    const [r, s, sum] = await Promise.all([
       // A time filter can reach far back, so allow the full page the server permits.
-      api.daftarLaporan({ ...filter, ...waktu, limit: '200' }),
-      api.statistik().catch(() => null),
-      api.ringkasan().catch(() => null),
+      api.reports({ ...filter, ...time, limit: '200' }),
+      api.stats().catch(() => null),
+      api.summary().catch(() => null),
     ]);
-    setLaporan(l.data);
-    setStatistik(s);
-    setRingkasan(r);
-    setMemuat(false);
-  }, [filter, waktu]);
+    setReports(r.data);
+    setStats(s);
+    setSummary(sum);
+    setLoading(false);
+  }, [filter, time]);
 
   useEffect(() => {
-    muat();
+    load();
     // The dashboard lives on the wall of the staff room, so it refreshes itself.
-    const timer = setInterval(muat, 30_000);
+    const timer = setInterval(load, 30_000);
     return () => clearInterval(timer);
-  }, [muat]);
+  }, [load]);
 
-  async function hapus(id: string) {
-    setLaporan((prev) => prev.filter((l) => l.id !== id));
-    await api.hapusLaporan(id).catch(() => {});
-    muat();
+  async function remove(id: string) {
+    setReports((prev) => prev.filter((r) => r.id !== id));
+    await api.deleteReport(id).catch(() => {});
+    load();
   }
 
   return (
     <div className="min-h-screen pb-16">
-      <Kop
-        judul={t('dash.judul')}
-        keterangan={t('dash.sebagai', { nama: `${sesi.nama} · SPV` })}
-        ramping
-        kanan={
+      <Header
+        title={t('dashboard.title')}
+        description={t('dashboard.signed_in_as', { name: `${session.name} · SPV` })}
+        compact
+        right={
           <button
             onClick={async () => {
-              await keluar();
-              navigate('/masuk', { replace: true });
+              await logout();
+              navigate('/login', { replace: true });
             }}
             className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25"
           >
-            {t('dash.keluar')}
+            {t('dashboard.logout')}
           </button>
         }
       />
 
       <main className="mx-auto max-w-5xl px-4">
-        <nav className="mt-5 flex gap-1 rounded-xl bg-permukaan p-1 ring-1 ring-krem-200">
+        {/* Seven tabs do not fit one phone row: a three-column grid there, a single row from md up. */}
+        <nav className="mt-5 grid grid-cols-3 gap-1 rounded-xl bg-permukaan p-1 ring-1 ring-krem-200 md:flex">
           {tabs.map((k) => (
             <button
               key={k}
               onClick={() => setTab(k)}
               aria-pressed={tab === k}
-              className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold transition ${
+              className={`rounded-lg px-2 py-2 text-xs font-bold leading-tight transition sm:text-sm md:flex-1 md:px-3 ${
                 tab === k ? 'bg-maroon-800 text-permukaan' : 'text-maroon-700 hover:bg-krem-50'
               }`}
             >
@@ -114,71 +116,72 @@ function Papan({ sesi }: { sesi: Sesi }) {
           ))}
         </nav>
 
-        {tab === 'pekerjaan' && <PanelPekerjaan />}
-        {tab === 'grafik' && <PanelGrafik />}
-        {tab === 'aktivitas' && <PanelAktivitas />}
-        {tab === 'tanya' && <PanelTanya />}
-        {tab === 'pengguna' && <PanelPengguna />}
+        {tab === 'work_logs' && <WorkLogPanel />}
+        {tab === 'charts' && <ChartsPanel />}
+        {tab === 'activity' && <ActivityPanel />}
+        {tab === 'ask' && <AskPanel />}
+        {tab === 'accounts' && <AccountsPanel />}
+        {tab === 'qr_codes' && <QrCodesPanel />}
 
-        {tab === 'laporan' && (
+        {tab === 'reports' && (
           <>
-        {statistik && (
+        {stats && (
           <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Kartu label={t('dash.stat_total')} nilai={statistik.hari_ini.total ?? 0} />
-            <Kartu label={t('dash.stat_tinggi')} nilai={statistik.hari_ini.tinggi ?? 0} nada="merah" />
-            <Kartu label={t('dash.stat_belum')} nilai={statistik.belum_selesai} nada="kuning" />
-            <Kartu label={t('dash.stat_gagal')} nilai={statistik.hari_ini.ai_gagal ?? 0} />
+            <StatCard label={t('dashboard.stat_total')} value={stats.today.total ?? 0} />
+            <StatCard label={t('dashboard.stat_high')} value={stats.today.high ?? 0} tone="red" />
+            <StatCard label={t('dashboard.stat_unresolved')} value={stats.unresolved} tone="amber" />
+            <StatCard label={t('dashboard.stat_ai_failed')} value={stats.today.ai_failed ?? 0} />
           </div>
         )}
 
-        <section className="kartu mt-4 overflow-hidden">
+        <section className="card mt-4 overflow-hidden">
           <div className="flex items-center justify-between gap-3 border-b border-krem-200 bg-krem-50 px-4 py-3">
-            <h2 className="judul-bagian">{t('dash.ringkasan')}</h2>
+            <h2 className="section-title">{t('dashboard.summary')}</h2>
             <button
-              className="tombol-netral !px-3 !py-1.5 text-xs"
-              disabled={menyusun}
+              className="btn-neutral !px-3 !py-1.5 text-xs"
+              disabled={generating}
               onClick={async () => {
-                setMenyusun(true);
+                setGenerating(true);
                 try {
-                  setRingkasan(await api.buatRingkasan());
+                  setSummary(await api.generateSummary());
                 } catch {
                   /* leave the previous summary on screen */
                 } finally {
-                  setMenyusun(false);
+                  setGenerating(false);
                 }
               }}
             >
-              {menyusun ? t('dash.menyusun') : t('dash.buat_ulang')}
+              {generating ? t('dashboard.generating') : t('dashboard.regenerate')}
             </button>
           </div>
 
           <div className="p-4">
-            {ringkasan?.ada ? (
+            {summary?.exists ? (
               <>
-                <p className="leading-relaxed text-maroon-900">{ringkasan.ringkasan}</p>
-                {!!ringkasan.sorotan?.length && (
+                <p className="leading-relaxed text-maroon-900">{summary.summary}</p>
+                {!!summary.highlights?.length && (
                   <ul className="mt-3 space-y-1.5">
-                    {ringkasan.sorotan.map((s) => (
-                      <li key={s} className="flex gap-2 text-sm text-maroon-700">
+                    {summary.highlights.map((h) => (
+                      <li key={h} className="flex gap-2 text-sm text-maroon-700">
                         <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-bata-500" />
-                        {s}
+                        {h}
                       </li>
                     ))}
                   </ul>
                 )}
               </>
             ) : (
-              <p className="text-sm text-maroon-600">{t('dash.ringkasan_kosong')}</p>
+              <p className="text-sm text-maroon-600">{t('dashboard.summary_empty')}</p>
             )}
 
-            {!!statistik?.lokasi_teratas.length && (
+            {!!stats?.top_locations.length && (
               <div className="mt-4 border-t border-krem-200 pt-3">
-                <p className="judul-bagian">{t('dash.lokasi_teratas')}</p>
+                <p className="section-title">{t('dashboard.top_locations')}</p>
                 <ul className="mt-2 space-y-1 text-sm">
-                  {statistik.lokasi_teratas.map((l) => (
-                    <li key={l.lokasi} className="flex justify-between gap-3">
-                      <span className="truncate text-maroon-700">{l.lokasi}</span>
-                      <span className="font-bold text-maroon-900">{l.jumlah}</span>
+                  {stats.top_locations.map((l) => (
+                    <li key={l.location} className="flex justify-between gap-3">
+                      <span className="truncate text-maroon-700">{l.location}</span>
+                      <span className="font-bold text-maroon-900">{l.count}</span>
                     </li>
                   ))}
                 </ul>
@@ -193,39 +196,39 @@ function Papan({ sesi }: { sesi: Sesi }) {
             value={filter.status}
             onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))}
           >
-            <option value="">{t('dash.semua_status')}</option>
-            <option value="baru">{t('status.baru')}</option>
-            <option value="diproses">{t('status.diproses')}</option>
-            <option value="selesai">{t('status.selesai')}</option>
+            <option value="">{t('dashboard.all_statuses')}</option>
+            <option value="new">{t('status.new')}</option>
+            <option value="in_progress">{t('status.in_progress')}</option>
+            <option value="resolved">{t('status.resolved')}</option>
           </select>
           <select
             className="input !w-auto !py-2"
-            value={filter.prioritas}
-            onChange={(e) => setFilter((f) => ({ ...f, prioritas: e.target.value }))}
+            value={filter.priority}
+            onChange={(e) => setFilter((f) => ({ ...f, priority: e.target.value }))}
           >
-            <option value="">{t('dash.semua_prioritas')}</option>
-            <option value="tinggi">{t('pilih.tinggi')}</option>
-            <option value="sedang">{t('pilih.sedang')}</option>
-            <option value="rendah">{t('pilih.rendah')}</option>
+            <option value="">{t('dashboard.all_priorities')}</option>
+            <option value="high">{t('priority_short.high')}</option>
+            <option value="medium">{t('priority_short.medium')}</option>
+            <option value="low">{t('priority_short.low')}</option>
           </select>
         </div>
 
-        <FilterWaktu nilai={waktu} onUbah={setWaktu} />
+        <TimeFilter value={time} onChange={setTime} />
 
         <div className="mt-4 space-y-3">
-          {!memuat && (
-            <p className="text-xs text-maroon-600">{t('waktu.jumlah', { n: laporan.length })}</p>
+          {!loading && (
+            <p className="text-xs text-maroon-600">{t('time.count', { n: reports.length })}</p>
           )}
-          {memuat && <p className="text-maroon-600">{t('dash.memuat_laporan')}</p>}
-          {!memuat && !laporan.length && (
-            <p className="kartu p-10 text-center text-maroon-600">{t('dash.kosong')}</p>
+          {loading && <p className="text-maroon-600">{t('dashboard.loading_reports')}</p>}
+          {!loading && !reports.length && (
+            <p className="card p-10 text-center text-maroon-600">{t('dashboard.empty')}</p>
           )}
-          {laporan.map((l) => (
-            <BarisLaporan
-              key={l.id}
-              laporan={l}
-              onSegarkan={muat}
-              onHapus={hapus}
+          {reports.map((r) => (
+            <ReportRow
+              key={r.id}
+              report={r}
+              onRefresh={load}
+              onDelete={remove}
             />
           ))}
         </div>
@@ -236,104 +239,104 @@ function Papan({ sesi }: { sesi: Sesi }) {
   );
 }
 
-function Kartu({ label, nilai, nada }: { label: string; nilai: number; nada?: 'merah' | 'kuning' }) {
-  const warna =
-    nada === 'merah' && nilai > 0
+function StatCard({ label, value, tone }: { label: string; value: number; tone?: 'red' | 'amber' }) {
+  const color =
+    tone === 'red' && value > 0
       ? 'text-red-700'
-      : nada === 'kuning' && nilai > 0
+      : tone === 'amber' && value > 0
         ? 'text-amber-700'
         : 'text-maroon-900';
   return (
-    <div className="kartu p-4">
+    <div className="card p-4">
       <p className="text-[11px] font-bold uppercase tracking-wider text-maroon-600">{label}</p>
-      <p className={`mt-1 text-3xl font-extrabold tracking-tight ${warna}`}>{nilai}</p>
+      <p className={`mt-1 text-3xl font-extrabold tracking-tight ${color}`}>{value}</p>
     </div>
   );
 }
 
-function BarisLaporan({
-  laporan: l,
-  onSegarkan,
-  onHapus,
+function ReportRow({
+  report: r,
+  onRefresh,
+  onDelete,
 }: {
-  laporan: Laporan;
-  onSegarkan: () => void;
-  onHapus: (id: string) => void;
+  report: Report;
+  onRefresh: () => void;
+  onDelete: (id: string) => void;
 }) {
-  const { t } = useBahasa();
-  const waktuRelatif = useWaktuRelatif();
-  const formatWaktu = useFormatWaktu();
+  const { t } = useLanguage();
+  const relativeTime = useRelativeTime();
+  const formatTime = useFormatTime();
 
   // The left edge marks the priority, readable from across the room.
-  const tepi =
-    l.prioritas === 'tinggi'
+  const edge =
+    r.priority === 'high'
       ? 'border-l-4 border-l-red-500'
-      : l.prioritas === 'sedang'
+      : r.priority === 'medium'
         ? 'border-l-4 border-l-amber-400'
         : 'border-l-4 border-l-emerald-400';
 
   return (
-    <article className={`kartu p-4 ${tepi}`}>
+    <article className={`card p-4 ${edge}`}>
       <div className="flex flex-wrap items-center gap-2">
-        <LencanaPrioritas nilai={l.prioritas} />
-        <LencanaStatus nilai={l.status} />
-        {l.kategori.map((k) => (
-          <LencanaKategori key={k} nilai={k} />
+        <PriorityBadge value={r.priority} />
+        <StatusBadge value={r.status} />
+        {r.categories.map((c) => (
+          <CategoryBadge key={c} value={c} />
         ))}
-        <span className="ml-auto text-xs text-maroon-600">{waktuRelatif(l.created_at)}</span>
+        <span className="ml-auto text-xs text-maroon-600">{relativeTime(r.created_at)}</span>
       </div>
 
       {/* The exact moments, in campus time: when the report came in and when it was closed. */}
       <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-maroon-700">
         <div className="flex gap-1">
-          <dt className="font-semibold">📥 {t('waktu.masuk')}:</dt>
-          <dd>{formatWaktu(l.created_at)}</dd>
+          <dt className="font-semibold">📥 {t('time.received')}:</dt>
+          <dd>{formatTime(r.created_at)}</dd>
         </div>
-        {l.selesai_at && (
+        {r.resolved_at && (
           <div className="flex gap-1">
-            <dt className="font-semibold text-emerald-700">✅ {t('waktu.selesai')}:</dt>
-            <dd>{formatWaktu(l.selesai_at)}</dd>
+            <dt className="font-semibold text-emerald-700">✅ {t('time.resolved')}:</dt>
+            <dd>{formatTime(r.resolved_at)}</dd>
           </div>
         )}
       </dl>
 
-      <p className="mt-2.5 font-bold text-maroon-900">{l.toilet_nama}</p>
-      <p className="mt-1 text-maroon-800">{l.ringkasan ?? l.teks}</p>
+      <p className="mt-2.5 font-bold text-maroon-900">{r.toilet_name}</p>
+      <p className="mt-1 text-maroon-800">{r.summary ?? r.description}</p>
 
-      {l.ringkasan && (
+      {r.summary && (
         <p className="mt-1 text-sm italic text-maroon-600">
-          {t('dash.laporan_asli')}: “{l.teks}”
+          {t('dashboard.original_report')}: “{r.description}”
         </p>
       )}
 
-      {l.rekomendasi && (
+      {r.recommendation && (
         <p className="mt-2.5 rounded-xl border-l-4 border-bata-400 bg-krem-50 p-3 text-sm text-maroon-700">
-          <span className="font-bold">{t('dash.tindakan')} </span>
-          {l.rekomendasi}
+          <span className="font-bold">{t('dashboard.action')} </span>
+          {r.recommendation}
         </p>
       )}
 
       <div className="mt-3 flex flex-wrap gap-3">
-        {l.foto_url && (
-          <a href={l.foto_url} target="_blank" rel="noreferrer">
-            <img src={l.foto_url} alt="" className="max-h-44 rounded-xl" />
+        {r.photo_url && (
+          <a href={r.photo_url} target="_blank" rel="noreferrer">
+            <img src={r.photo_url} alt="" className="max-h-44 rounded-xl" />
           </a>
         )}
-        {l.foto_selesai_url && (
+        {r.proof_photo_url && (
           <figure className="m-0">
-            <a href={l.foto_selesai_url} target="_blank" rel="noreferrer">
+            <a href={r.proof_photo_url} target="_blank" rel="noreferrer">
               <img
-                src={l.foto_selesai_url}
+                src={r.proof_photo_url}
                 alt=""
                 className="max-h-44 rounded-xl ring-2 ring-emerald-400"
               />
             </a>
             <figcaption className="mt-1 text-xs font-bold text-emerald-700">
-              ✓ {t('dash.bukti')}
-              {l.bukti_ai_hasil === 'bersih' && <> · {t('dash.bukti_terverifikasi')}</>}
+              ✓ {t('dashboard.proof')}
+              {r.proof_verdict === 'clean' && <> · {t('dashboard.proof_verified')}</>}
             </figcaption>
-            {l.bukti_ai_alasan && (
-              <p className="mt-0.5 max-w-xs text-xs italic text-maroon-600">{l.bukti_ai_alasan}</p>
+            {r.proof_reason && (
+              <p className="mt-0.5 max-w-xs text-xs italic text-maroon-600">{r.proof_reason}</p>
             )}
           </figure>
         )}
@@ -342,29 +345,29 @@ function BarisLaporan({
       {/* Resolving is the cleaners' job, done on the floor page with a live photo;
           the supervisor watches it here and only moderates. */}
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {l.ai_status === 'gagal' && (
+        {r.ai_status === 'failed' && (
           <button
             onClick={async () => {
-              await api.analisaUlang(l.id).catch(() => {});
-              setTimeout(onSegarkan, 3000);
+              await api.reanalyze(r.id).catch(() => {});
+              setTimeout(onRefresh, 3000);
             }}
-            className="tombol-netral !py-1.5 text-xs"
+            className="btn-neutral !py-1.5 text-xs"
           >
-            {t('dash.analisa_ulang')}
+            {t('dashboard.reanalyze')}
           </button>
         )}
-        {/* Daftar laporan terbuka untuk umum, jadi spam dan isi tak pantas
-            harus bisa disingkirkan — dan hanya SPV yang boleh melakukannya. */}
+        {/* The report list is open to the public, so spam and inappropriate content
+            must be removable — and only the supervisor may do it. */}
         <button
           onClick={() => {
-            if (confirm(t('dash.hapus_konfirmasi'))) onHapus(l.id);
+            if (confirm(t('dashboard.delete_confirm'))) onDelete(r.id);
           }}
-          className="tombol !py-1.5 text-xs text-red-700 hover:bg-red-50"
+          className="btn !py-1.5 text-xs text-red-700 hover:bg-red-50"
         >
-          {t('dash.hapus')}
+          {t('dashboard.delete')}
         </button>
-        {l.petugas && (
-          <span className="text-xs text-maroon-600">{t('dash.ditangani', { nama: l.petugas })}</span>
+        {r.staff_name && (
+          <span className="text-xs text-maroon-600">{t('dashboard.handled_by', { name: r.staff_name })}</span>
         )}
       </div>
     </article>

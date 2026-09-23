@@ -1,22 +1,22 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { sign, verify } from 'hono/jwt';
-import type { Peran } from '../domain/types';
+import type { Role } from '../domain/types';
 import type { AppEnv } from '../env';
 
-const COOKIE = 'sesi';
+const COOKIE = 'session';
 const ALG = 'HS256';
-const DURASI_DETIK = 60 * 60 * 12; // 12 jam, cukup untuk satu shift
+const DURATION_SECONDS = 60 * 60 * 12; // 12 hours, enough for one shift
 
-export interface Sesi {
+export interface Session {
   id: string;
-  nama: string;
-  peran: Peran;
+  name: string;
+  role: Role;
 }
 
-export async function buatSesi(c: Context<AppEnv>, sesi: Sesi): Promise<void> {
+export async function createSession(c: Context<AppEnv>, session: Session): Promise<void> {
   const token = await sign(
-    { ...sesi, exp: Math.floor(Date.now() / 1000) + DURASI_DETIK },
+    { ...session, exp: Math.floor(Date.now() / 1000) + DURATION_SECONDS },
     c.env.AUTH_SECRET,
     ALG,
   );
@@ -25,22 +25,24 @@ export async function buatSesi(c: Context<AppEnv>, sesi: Sesi): Promise<void> {
     secure: new URL(c.req.url).protocol === 'https:',
     sameSite: 'Lax',
     path: '/',
-    maxAge: DURASI_DETIK,
+    maxAge: DURATION_SECONDS,
   });
 }
 
-export function hapusSesi(c: Context<AppEnv>): void {
+export function clearSession(c: Context<AppEnv>): void {
   deleteCookie(c, COOKIE, { path: '/' });
 }
 
-export async function sesiSaatIni(c: Context<AppEnv>): Promise<Sesi | null> {
+export async function currentSession(c: Context<AppEnv>): Promise<Session | null> {
   const token = getCookie(c, COOKIE);
   if (!token) return null;
   try {
-    const isi = (await verify(token, c.env.AUTH_SECRET, ALG)) as unknown as Sesi;
-    return isi.id && isi.peran ? { id: isi.id, nama: isi.nama, peran: isi.peran } : null;
+    const payload = (await verify(token, c.env.AUTH_SECRET, ALG)) as unknown as Session;
+    return payload.id && payload.role
+      ? { id: payload.id, name: payload.name, role: payload.role }
+      : null;
   } catch {
-    return null; // token kedaluwarsa atau tanda tangan tidak cocok
+    return null; // token expired or signature mismatch
   }
 }
 
@@ -51,19 +53,19 @@ export async function sesiSaatIni(c: Context<AppEnv>): Promise<Sesi | null> {
  * roles it accepts, so the authority required is readable at the point where
  * the route is defined.
  */
-export function wajibPeran(...boleh: Peran[]): MiddlewareHandler<AppEnv> {
+export function requireRole(...allowed: Role[]): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
-    const sesi = await sesiSaatIni(c);
-    if (!sesi) return c.json({ error: 'Silakan masuk terlebih dahulu.' }, 401);
-    if (!boleh.includes(sesi.peran)) return c.json({ error: 'Akses ditolak.' }, 403);
-    c.set('sesi', sesi);
+    const session = await currentSession(c);
+    if (!session) return c.json({ error: 'Silakan masuk terlebih dahulu.' }, 401);
+    if (!allowed.includes(session.role)) return c.json({ error: 'Akses ditolak.' }, 403);
+    c.set('session', session);
     await next();
   };
 }
 
 /**
  * Only the supervisor signs in to manage anything. Cleaning staff never hold a
- * session: they pick their name on the floor page instead (see `petugas_id`
- * in the report and work-report routes).
+ * session: they pick their name on the floor page instead (see `staff_id`
+ * in the report and work-log routes).
  */
-export const wajibSpv = wajibPeran('spv');
+export const requireSupervisor = requireRole('supervisor');

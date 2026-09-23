@@ -1,13 +1,13 @@
-import { rentangHariWIB } from '../adapters/clock';
+import { wibDayRange } from '../adapters/clock';
 import type { Env } from '../env';
 import {
-  PRIORITAS,
-  STATUS,
+  PRIORITIES,
+  STATUSES,
+  type ProofVerification,
   type ReportRow,
-  type Status,
-  type VerifikasiBukti,
+  type ReportStatus,
 } from '../domain/types';
-import { susunFilterWaktu, type FilterWaktu } from './waktu';
+import { buildTimeFilter, type TimeFilter } from './time-filter';
 
 /**
  * Every SQL statement about reports lives here.
@@ -16,56 +16,56 @@ import { susunFilterWaktu, type FilterWaktu } from './waktu';
  * database would mean rewriting this file alone.
  */
 
-const KOLOM = `r.*, t.nama AS toilet_nama, t.gedung_kode, t.gedung_nama, t.lantai, t.jenis`;
-const DARI = `FROM reports r JOIN toilet_info t ON t.id = r.toilet_id`;
+const COLUMNS = `r.*, t.name AS toilet_name, t.building_code, t.building_name, t.floor, t.type`;
+const FROM = `FROM reports r JOIN toilet_info t ON t.id = r.toilet_id`;
 
-export interface FilterLaporan extends FilterWaktu {
+export interface ReportFilter extends TimeFilter {
   status?: string;
-  prioritas?: string;
+  priority?: string;
   toilet_id?: string;
-  gedung?: string;
+  building?: string;
   limit?: number;
 }
 
 /** Builds the shared WHERE clause, so list queries cannot drift apart. */
-function susunFilter(f: FilterLaporan): { klausa: string; params: unknown[] } {
+function buildFilter(f: ReportFilter): { clause: string; params: unknown[] } {
   const where: string[] = [];
   const params: unknown[] = [];
 
-  if (f.status && (STATUS as readonly string[]).includes(f.status)) {
+  if (f.status && (STATUSES as readonly string[]).includes(f.status)) {
     where.push('r.status = ?');
     params.push(f.status);
   }
-  if (f.prioritas && (PRIORITAS as readonly string[]).includes(f.prioritas)) {
-    where.push('r.prioritas = ?');
-    params.push(f.prioritas);
+  if (f.priority && (PRIORITIES as readonly string[]).includes(f.priority)) {
+    where.push('r.priority = ?');
+    params.push(f.priority);
   }
   if (f.toilet_id) {
     where.push('r.toilet_id = ?');
     params.push(f.toilet_id);
   }
-  if (f.gedung) {
-    where.push('t.gedung_kode = ?');
-    params.push(f.gedung.toUpperCase());
+  if (f.building) {
+    where.push('t.building_code = ?');
+    params.push(f.building.toUpperCase());
   }
-  const waktu = susunFilterWaktu('r.created_at', f);
-  where.push(...waktu.where);
-  params.push(...waktu.params);
+  const time = buildTimeFilter('r.created_at', f);
+  where.push(...time.where);
+  params.push(...time.params);
 
-  return { klausa: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
+  return { clause: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
 }
 
-export async function cariSatu(env: Env, id: string): Promise<ReportRow | null> {
-  return env.DB.prepare(`SELECT ${KOLOM} ${DARI} WHERE r.id = ?`).bind(id).first<ReportRow>();
+export async function findById(env: Env, id: string): Promise<ReportRow | null> {
+  return env.DB.prepare(`SELECT ${COLUMNS} ${FROM} WHERE r.id = ?`).bind(id).first<ReportRow>();
 }
 
-export async function cariUntukDashboard(env: Env, f: FilterLaporan): Promise<ReportRow[]> {
-  const { klausa, params } = susunFilter(f);
+export async function findForDashboard(env: Env, f: ReportFilter): Promise<ReportRow[]> {
+  const { clause, params } = buildFilter(f);
   const rows = await env.DB.prepare(
-    `SELECT ${KOLOM} ${DARI} ${klausa}
+    `SELECT ${COLUMNS} ${FROM} ${clause}
       ORDER BY
-        CASE r.status WHEN 'baru' THEN 0 WHEN 'diproses' THEN 1 ELSE 2 END,
-        CASE r.prioritas WHEN 'tinggi' THEN 0 WHEN 'sedang' THEN 1 WHEN 'rendah' THEN 2 ELSE 3 END,
+        CASE r.status WHEN 'new' THEN 0 WHEN 'in_progress' THEN 1 ELSE 2 END,
+        CASE r.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END,
         r.created_at DESC
       LIMIT ?`,
   )
@@ -74,45 +74,45 @@ export async function cariUntukDashboard(env: Env, f: FilterLaporan): Promise<Re
   return rows.results;
 }
 
-export interface BarisPublik {
+export interface PublicRow {
   id: string;
-  status: Status;
-  prioritas: string | null;
-  kategori: string | null;
-  ringkasan: string | null;
+  status: ReportStatus;
+  priority: string | null;
+  categories: string | null;
+  summary: string | null;
   ai_status: string;
   created_at: string;
-  selesai_at: string | null;
-  foto_selesai_key: string | null;
-  toilet_nama: string;
-  gedung_kode: string;
-  lantai: number;
+  resolved_at: string | null;
+  proof_photo_key: string | null;
+  toilet_name: string;
+  building_code: string;
+  floor: number;
 }
 
-export async function cariUntukPublik(
+export async function findForPublic(
   env: Env,
-  f: FilterLaporan,
-): Promise<{ baris: BarisPublik[]; jumlah: { total: number; selesai: number | null } }> {
-  const { klausa, params } = susunFilter(f);
-  const [daftar, jumlah] = await env.DB.batch<Record<string, unknown>>([
+  f: ReportFilter,
+): Promise<{ rows: PublicRow[]; counts: { total: number; resolved: number | null } }> {
+  const { clause, params } = buildFilter(f);
+  const [list, counts] = await env.DB.batch<Record<string, unknown>>([
     env.DB.prepare(
-      `SELECT r.id, r.status, r.prioritas, r.kategori, r.ringkasan, r.ai_status,
-              r.created_at, r.selesai_at, r.foto_selesai_key,
-              t.nama AS toilet_nama, t.gedung_kode, t.lantai
-         ${DARI} ${klausa}
+      `SELECT r.id, r.status, r.priority, r.categories, r.summary, r.ai_status,
+              r.created_at, r.resolved_at, r.proof_photo_key,
+              t.name AS toilet_name, t.building_code, t.floor
+         ${FROM} ${clause}
         ORDER BY
-          CASE r.status WHEN 'baru' THEN 0 WHEN 'diproses' THEN 1 ELSE 2 END,
+          CASE r.status WHEN 'new' THEN 0 WHEN 'in_progress' THEN 1 ELSE 2 END,
           r.created_at DESC
         LIMIT ?`,
     ).bind(...params, f.limit ?? 100),
-    env.DB.prepare(`SELECT COUNT(*) AS total, SUM(status = 'selesai') AS selesai FROM reports`),
+    env.DB.prepare(`SELECT COUNT(*) AS total, SUM(status = 'resolved') AS resolved FROM reports`),
   ]);
 
   return {
-    baris: daftar.results as unknown as BarisPublik[],
-    jumlah: (jumlah.results[0] as { total: number; selesai: number | null }) ?? {
+    rows: list.results as unknown as PublicRow[],
+    counts: (counts.results[0] as { total: number; resolved: number | null }) ?? {
       total: 0,
-      selesai: 0,
+      resolved: 0,
     },
   };
 }
@@ -121,24 +121,24 @@ export async function cariUntukPublik(
  * Reports still waiting for staff, for the staff pages. Optionally one floor:
  * the floor QR leads staff to exactly the complaints they can fix there.
  */
-export async function cariTerbuka(
+export async function findOpen(
   env: Env,
-  f: { gedung?: string; lantai?: number; limit?: number },
+  f: { building?: string; floor?: number; limit?: number },
 ): Promise<ReportRow[]> {
-  const where = [`r.status <> 'selesai'`];
+  const where = [`r.status <> 'resolved'`];
   const params: unknown[] = [];
-  if (f.gedung) {
-    where.push('t.gedung_kode = ?');
-    params.push(f.gedung.toUpperCase());
+  if (f.building) {
+    where.push('t.building_code = ?');
+    params.push(f.building.toUpperCase());
   }
-  if (f.lantai !== undefined) {
-    where.push('t.lantai = ?');
-    params.push(f.lantai);
+  if (f.floor !== undefined) {
+    where.push('t.floor = ?');
+    params.push(f.floor);
   }
   const rows = await env.DB.prepare(
-    `SELECT ${KOLOM} ${DARI} WHERE ${where.join(' AND ')}
+    `SELECT ${COLUMNS} ${FROM} WHERE ${where.join(' AND ')}
       ORDER BY
-        CASE r.prioritas WHEN 'tinggi' THEN 0 WHEN 'sedang' THEN 1 WHEN 'rendah' THEN 2 ELSE 3 END,
+        CASE r.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END,
         r.created_at
       LIMIT ?`,
   )
@@ -148,11 +148,11 @@ export async function cariTerbuka(
 }
 
 /** The reports filed by one account, for the "My reports" list. */
-export async function cariMilikPelapor(env: Env, pelaporId: string): Promise<ReportRow[]> {
+export async function findByReporter(env: Env, reporterId: string): Promise<ReportRow[]> {
   const rows = await env.DB.prepare(
-    `SELECT ${KOLOM} ${DARI} WHERE r.pelapor_id = ? ORDER BY r.created_at DESC LIMIT 50`,
+    `SELECT ${COLUMNS} ${FROM} WHERE r.reporter_id = ? ORDER BY r.created_at DESC LIMIT 50`,
   )
-    .bind(pelaporId)
+    .bind(reporterId)
     .all<ReportRow>();
   return rows.results;
 }
@@ -161,137 +161,154 @@ export async function cariMilikPelapor(env: Env, pelaporId: string): Promise<Rep
  * An identical complaint for the same toilet within two minutes is almost
  * certainly a double-tapped send button, not two different people.
  */
-export async function cariKembar(env: Env, toiletId: string, teks: string): Promise<string | null> {
+export async function findDuplicate(
+  env: Env,
+  toiletId: string,
+  description: string,
+): Promise<string | null> {
   const row = await env.DB.prepare(
     `SELECT id FROM reports
-      WHERE toilet_id = ? AND teks = ? AND created_at > datetime('now', '-2 minutes')
+      WHERE toilet_id = ? AND description = ? AND created_at > datetime('now', '-2 minutes')
       LIMIT 1`,
   )
-    .bind(toiletId, teks)
+    .bind(toiletId, description)
     .first<{ id: string }>();
   return row?.id ?? null;
 }
 
-export async function simpan(
+export async function insert(
   env: Env,
-  data: { id: string; toilet_id: string; teks: string; foto_key: string; pelapor_id: string | null },
+  data: {
+    id: string;
+    toilet_id: string;
+    description: string;
+    photo_key: string;
+    reporter_id: string | null;
+  },
 ): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO reports (id, toilet_id, teks, foto_key, pelapor_id) VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO reports (id, toilet_id, description, photo_key, reporter_id) VALUES (?, ?, ?, ?, ?)`,
   )
-    .bind(data.id, data.toilet_id, data.teks, data.foto_key, data.pelapor_id)
+    .bind(data.id, data.toilet_id, data.description, data.photo_key, data.reporter_id)
     .run();
 }
 
 /** The proof photo and its verdict are written together: one never exists without the other. */
-export async function ubahStatus(
+export async function updateStatus(
   env: Env,
   id: string,
-  status: Status,
-  petugas: string,
-  bukti: { key: string; verifikasi: VerifikasiBukti } | null,
+  status: ReportStatus,
+  staffName: string,
+  proof: { key: string; verification: ProofVerification } | null,
 ): Promise<void> {
   await env.DB.prepare(
     `UPDATE reports
-        SET status = ?, petugas = ?,
-            foto_selesai_key = ?, bukti_ai_hasil = ?, bukti_ai_alasan = ?,
-            bukti_ai_model = ?, bukti_ai_ms = ?,
-            selesai_at = CASE WHEN ? = 'selesai' THEN datetime('now') ELSE NULL END,
+        SET status = ?, staff_name = ?,
+            proof_photo_key = ?, proof_verdict = ?, proof_reason = ?,
+            proof_model = ?, proof_ms = ?,
+            resolved_at = CASE WHEN ? = 'resolved' THEN datetime('now') ELSE NULL END,
             updated_at = datetime('now')
       WHERE id = ?`,
   )
     .bind(
       status,
-      petugas,
-      bukti?.key ?? null,
-      bukti?.verifikasi.hasil ?? null,
-      bukti?.verifikasi.alasan ?? null,
-      bukti?.verifikasi.model ?? null,
-      bukti?.verifikasi.ms ?? null,
+      staffName,
+      proof?.key ?? null,
+      proof?.verification.verdict ?? null,
+      proof?.verification.reason ?? null,
+      proof?.verification.model ?? null,
+      proof?.verification.ms ?? null,
       status,
       id,
     )
     .run();
 }
 
-export async function tandaiMenungguAnalisis(env: Env, id: string): Promise<void> {
+export async function markAnalysisPending(env: Env, id: string): Promise<void> {
   await env.DB.prepare(`UPDATE reports SET ai_status = 'pending', ai_error = NULL WHERE id = ?`)
     .bind(id)
     .run();
 }
 
-export async function simpanHasilAnalisis(
+export async function saveAnalysis(
   env: Env,
   id: string,
-  hasil: {
-    kategori: string[];
-    prioritas: string;
-    ringkasan: string;
-    rekomendasi: string;
+  result: {
+    categories: string[];
+    priority: string;
+    summary: string;
+    recommendation: string;
     model: string;
     ms: number;
   },
 ): Promise<void> {
   await env.DB.prepare(
     `UPDATE reports
-        SET ai_status = 'ok', kategori = ?, prioritas = ?, ringkasan = ?,
-            rekomendasi = ?, ai_error = NULL, ai_model = ?, ai_ms = ?,
+        SET ai_status = 'ok', categories = ?, priority = ?, summary = ?,
+            recommendation = ?, ai_error = NULL, ai_model = ?, ai_ms = ?,
             updated_at = datetime('now')
       WHERE id = ?`,
   )
     .bind(
-      JSON.stringify(hasil.kategori),
-      hasil.prioritas,
-      hasil.ringkasan,
-      hasil.rekomendasi,
-      hasil.model,
-      hasil.ms,
+      JSON.stringify(result.categories),
+      result.priority,
+      result.summary,
+      result.recommendation,
+      result.model,
+      result.ms,
       id,
     )
     .run();
 }
 
-export async function simpanGagalAnalisis(
+export async function saveAnalysisFailure(
   env: Env,
   id: string,
-  pesan: string,
+  message: string,
   ms: number,
 ): Promise<void> {
   await env.DB.prepare(
     `UPDATE reports
-        SET ai_status = 'gagal', ai_error = ?, ai_ms = ?, updated_at = datetime('now')
+        SET ai_status = 'failed', ai_error = ?, ai_ms = ?, updated_at = datetime('now')
       WHERE id = ?`,
   )
-    .bind(pesan.slice(0, 500), ms, id)
+    .bind(message.slice(0, 500), ms, id)
     .run();
 }
 
-export async function hapus(env: Env, id: string): Promise<void> {
+export async function remove(env: Env, id: string): Promise<void> {
   await env.DB.prepare(`DELETE FROM reports WHERE id = ?`).bind(id).run();
 }
 
 /** The bare text and location an analysis needs, without loading the whole row. */
-export async function ambilUntukAnalisis(
+export async function getForAnalysis(
   env: Env,
   id: string,
-): Promise<{ teks: string; lokasi: string } | null> {
+): Promise<{ description: string; location: string } | null> {
   return env.DB.prepare(
-    `SELECT r.teks, t.nama AS lokasi ${DARI} WHERE r.id = ?`,
+    `SELECT r.description, t.name AS location ${FROM} WHERE r.id = ?`,
   )
     .bind(id)
-    .first<{ teks: string; lokasi: string }>();
+    .first<{ description: string; location: string }>();
 }
 
-export async function laporanPadaTanggal(
+export async function reportsOnDate(
   env: Env,
-  tanggal: string,
-): Promise<Array<{ lokasi: string; prioritas: string | null; ringkasan: string | null; teks: string }>> {
-  const { mulai, selesai } = rentangHariWIB(tanggal);
+  date: string,
+): Promise<
+  Array<{ location: string; priority: string | null; summary: string | null; description: string }>
+> {
+  const { start, end } = wibDayRange(date);
   const rows = await env.DB.prepare(
-    `SELECT t.nama AS lokasi, r.prioritas, r.ringkasan, r.teks
-       ${DARI} WHERE r.created_at >= ? AND r.created_at < ? ORDER BY r.created_at`,
+    `SELECT t.name AS location, r.priority, r.summary, r.description
+       ${FROM} WHERE r.created_at >= ? AND r.created_at < ? ORDER BY r.created_at`,
   )
-    .bind(mulai, selesai)
-    .all<{ lokasi: string; prioritas: string | null; ringkasan: string | null; teks: string }>();
+    .bind(start, end)
+    .all<{
+      location: string;
+      priority: string | null;
+      summary: string | null;
+      description: string;
+    }>();
   return rows.results;
 }

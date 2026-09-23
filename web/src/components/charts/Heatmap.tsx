@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { langkahSekuensial, SEKUENSIAL, TINTA, tintaDiAtas } from './warna';
+import { INK, inkOn, SEQUENTIAL, sequentialStep } from './colors';
 
-export interface SelPanas {
-  baris: string;
-  kolom: string;
-  nilai: number;
+export interface HeatmapCell {
+  row: string;
+  column: string;
+  value: number;
 }
 
 /**
@@ -15,26 +15,26 @@ export interface SelPanas {
  * source of one particular problem. Zero keeps the empty surface rather than
  * the palest step, so "none" and "few" never look alike.
  */
-export default function PetaPanas({
+export default function Heatmap({
   data,
-  baris,
-  kolom,
-  labelKolom,
-  labelSedikit,
-  labelBanyak,
+  rows,
+  columns,
+  columnLabel,
+  fewerLabel,
+  moreLabel,
 }: {
-  data: SelPanas[];
-  baris: string[];
-  kolom: string[];
-  labelKolom?: (k: string) => string;
-  labelSedikit: string;
-  labelBanyak: string;
+  data: HeatmapCell[];
+  rows: string[];
+  columns: string[];
+  columnLabel?: (c: string) => string;
+  fewerLabel: string;
+  moreLabel: string;
 }) {
-  const [sorot, setSorot] = useState<SelPanas | null>(null);
+  const [hovered, setHovered] = useState<HeatmapCell | null>(null);
 
-  const peta = new Map(data.map((d) => [`${d.baris}|${d.kolom}`, d.nilai]));
-  const maks = Math.max(1, ...data.map((d) => d.nilai));
-  const nilai = (b: string, k: string) => peta.get(`${b}|${k}`) ?? 0;
+  const cells = new Map(data.map((d) => [`${d.row}|${d.column}`, d.value]));
+  const max = Math.max(1, ...data.map((d) => d.value));
+  const valueAt = (r: string, c: string) => cells.get(`${r}|${c}`) ?? 0;
 
   return (
     <figure className="m-0">
@@ -43,37 +43,37 @@ export default function PetaPanas({
           <thead>
             <tr>
               <th />
-              {kolom.map((k) => (
+              {columns.map((c) => (
                 <th
-                  key={k}
+                  key={c}
                   className="pb-1 text-center font-semibold capitalize"
-                  style={{ color: TINTA.sekunder }}
+                  style={{ color: INK.secondary }}
                 >
-                  {labelKolom ? labelKolom(k) : k}
+                  {columnLabel ? columnLabel(c) : c}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {baris.map((b) => (
-              <tr key={b}>
+            {rows.map((r) => (
+              <tr key={r}>
                 <th
                   className="whitespace-nowrap pr-2 text-right font-semibold"
-                  style={{ color: TINTA.sekunder }}
+                  style={{ color: INK.secondary }}
                 >
-                  {b}
+                  {r}
                 </th>
-                {kolom.map((k) => {
-                  const n = nilai(b, k);
+                {columns.map((c) => {
+                  const n = valueAt(r, c);
                   return (
                     <td
-                      key={k}
-                      onMouseEnter={() => setSorot({ baris: b, kolom: k, nilai: n })}
-                      onMouseLeave={() => setSorot(null)}
+                      key={c}
+                      onMouseEnter={() => setHovered({ row: r, column: c, value: n })}
+                      onMouseLeave={() => setHovered(null)}
                       className="h-9 rounded-md border border-krem-200 text-center font-bold tabular-nums"
                       style={{
-                        background: langkahSekuensial(n, maks),
-                        color: n ? tintaDiAtas(n, maks) : TINTA.redup,
+                        background: sequentialStep(n, max),
+                        color: n ? inkOn(n, max) : INK.muted,
                       }}
                     >
                       {n || ''}
@@ -86,17 +86,17 @@ export default function PetaPanas({
         </table>
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-[10px]" style={{ color: TINTA.redup }}>
-        <span>{labelSedikit}</span>
+      <div className="mt-3 flex items-center gap-2 text-[10px]" style={{ color: INK.muted }}>
+        <span>{fewerLabel}</span>
         <span className="flex gap-0.5">
-          {SEKUENSIAL.map((c) => (
+          {SEQUENTIAL.map((c) => (
             <span key={c} className="h-3 w-5 rounded-sm border border-krem-200" style={{ background: c }} />
           ))}
         </span>
-        <span>{labelBanyak}</span>
-        {sorot && (
-          <span className="ml-auto font-bold" style={{ color: TINTA.utama }}>
-            {sorot.baris} · {sorot.kolom}: {sorot.nilai}
+        <span>{moreLabel}</span>
+        {hovered && (
+          <span className="ml-auto font-bold" style={{ color: INK.primary }}>
+            {hovered.row} · {hovered.column}: {hovered.value}
           </span>
         )}
       </div>

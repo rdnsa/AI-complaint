@@ -1,20 +1,20 @@
-import Kop from '../components/Kop';
-import PilihLokasi from '../components/PilihLokasi';
-import { useBahasa } from '../lib/i18n';
+import Header from '../components/Header';
+import LocationPicker from '../components/LocationPicker';
+import { useLanguage } from '../lib/i18n';
 
 /**
  * The student starting point when no QR is at hand: pick the building and
- * floor, then report. `?sebagai=mahasiswa` keeps a phone that once picked a
- * staff name on the complaint form, since the choice here was explicit.
+ * floor, then report. `?as=student` keeps a phone that once picked a staff
+ * name on the complaint form, since the choice here was explicit.
  */
-export default function MahasiswaBeranda() {
-  const { t } = useBahasa();
+export default function StudentHome() {
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen pb-16">
-      <Kop judul={t('peran.mahasiswa')} keterangan={t('peran.mahasiswa_isi')} ramping />
+      <Header title={t('role.student')} description={t('role.student_body')} compact />
       <main className="mx-auto max-w-5xl px-4">
-        <PilihLokasi tujuan={(kode, lantai) => `/lapor/${kode}-${lantai}?sebagai=mahasiswa`} />
+        <LocationPicker target={(code, floor) => `/report/${code}-${floor}?as=student`} />
       </main>
     </div>
   );

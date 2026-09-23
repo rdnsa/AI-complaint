@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, type PetugasPilihan } from './api';
+import { api, type StaffOption } from './api';
 
-const PENYIMPANAN = 'petugas-terpilih';
+const STORAGE_KEY = 'selected-staff';
 
 /** The staff id remembered on this phone, or '' when none was chosen. */
-export function bacaTersimpan(): string {
+export function readStoredStaff(): string {
   try {
-    return localStorage.getItem(PENYIMPANAN) ?? '';
+    return localStorage.getItem(STORAGE_KEY) ?? '';
   } catch {
     return '';
   }
@@ -20,29 +20,29 @@ export function bacaTersimpan(): string {
  * server checks the id against the active staff list on every action, and a
  * name the supervisor has since removed simply falls back to "not chosen".
  */
-export function usePetugasTerpilih() {
-  const [daftar, setDaftar] = useState<PetugasPilihan[]>([]);
-  const [id, setId] = useState(bacaTersimpan);
-  const [memuat, setMemuat] = useState(true);
+export function useSelectedStaff() {
+  const [staffList, setStaffList] = useState<StaffOption[]>([]);
+  const [id, setId] = useState(readStoredStaff);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api
-      .daftarPetugas()
-      .then((r) => setDaftar(r.data))
-      .catch(() => setDaftar([]))
-      .finally(() => setMemuat(false));
+      .staffList()
+      .then((r) => setStaffList(r.data))
+      .catch(() => setStaffList([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const pilih = useCallback((baru: string) => {
-    setId(baru);
+  const select = useCallback((next: string) => {
+    setId(next);
     try {
-      if (baru) localStorage.setItem(PENYIMPANAN, baru);
-      else localStorage.removeItem(PENYIMPANAN);
+      if (next) localStorage.setItem(STORAGE_KEY, next);
+      else localStorage.removeItem(STORAGE_KEY);
     } catch {
       /* the choice still holds for this visit */
     }
   }, []);
 
-  const terpilih = daftar.find((p) => p.id === id) ?? null;
-  return { daftar, terpilih, pilih, memuat };
+  const selected = staffList.find((p) => p.id === id) ?? null;
+  return { staffList, selected, select, loading };
 }

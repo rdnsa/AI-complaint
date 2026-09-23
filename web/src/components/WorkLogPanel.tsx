@@ -1,113 +1,113 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api, type Pekerjaan, type PetugasPilihan } from '../lib/api';
-import { useBahasa, useFormatWaktu, useWaktuRelatif } from '../lib/i18n';
-import FilterWaktu, { WAKTU_KOSONG, type NilaiWaktu } from './FilterWaktu';
+import { api, type StaffOption, type WorkLog } from '../lib/api';
+import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
+import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from './TimeFilter';
 
 /**
  * The supervisor's view of the staff work log: which toilets have been
  * cleaned, by whom, with the AI-checked photo — for everyone, or one person.
  */
-export default function PanelPekerjaan() {
-  const { t } = useBahasa();
-  const waktuRelatif = useWaktuRelatif();
-  const [data, setData] = useState<Pekerjaan[]>([]);
-  const [memuat, setMemuat] = useState(true);
-  const [petugas, setPetugas] = useState<PetugasPilihan[]>([]);
-  const [petugasId, setPetugasId] = useState('');
-  const [waktu, setWaktu] = useState<NilaiWaktu>(WAKTU_KOSONG);
-  const formatWaktu = useFormatWaktu();
+export default function WorkLogPanel() {
+  const { t } = useLanguage();
+  const relativeTime = useRelativeTime();
+  const [data, setData] = useState<WorkLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [staffList, setStaffList] = useState<StaffOption[]>([]);
+  const [staffId, setStaffId] = useState('');
+  const [time, setTime] = useState<TimeRange>(EMPTY_TIME_RANGE);
+  const formatTime = useFormatTime();
 
-  const muat = useCallback(async () => {
+  const load = useCallback(async () => {
     try {
-      setData((await api.daftarPekerjaan({ petugas_id: petugasId, ...waktu, limit: '200' })).data);
+      setData((await api.workLogs({ staff_id: staffId, ...time, limit: '200' })).data);
     } catch {
       setData([]);
     } finally {
-      setMemuat(false);
+      setLoading(false);
     }
-  }, [petugasId, waktu]);
+  }, [staffId, time]);
 
   useEffect(() => {
-    muat();
-  }, [muat]);
+    load();
+  }, [load]);
 
   useEffect(() => {
     api
-      .daftarPetugas()
-      .then((r) => setPetugas(r.data))
-      .catch(() => setPetugas([]));
+      .staffList()
+      .then((r) => setStaffList(r.data))
+      .catch(() => setStaffList([]));
   }, []);
 
   // How many toilets each person has on record in the loaded list, busiest first.
-  const perPetugas = useMemo(() => {
-    const hitung = new Map<string, number>();
-    for (const p of data) hitung.set(p.petugas, (hitung.get(p.petugas) ?? 0) + 1);
-    return [...hitung].sort((a, b) => b[1] - a[1]);
+  const perStaff = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const w of data) counts.set(w.staff_name, (counts.get(w.staff_name) ?? 0) + 1);
+    return [...counts].sort((a, b) => b[1] - a[1]);
   }, [data]);
 
   return (
     <div className="mt-6">
       <p className="rounded-xl bg-permukaan px-4 py-3 text-sm leading-relaxed text-maroon-700 ring-1 ring-krem-200">
-        {t('kerja.keterangan')}
+        {t('work.description')}
       </p>
 
       <select
         className="input mt-4 !w-auto !py-2"
-        value={petugasId}
-        onChange={(e) => setPetugasId(e.target.value)}
+        value={staffId}
+        onChange={(e) => setStaffId(e.target.value)}
       >
-        <option value="">{t('kerja.semua_petugas')}</option>
-        {petugas.map((p) => (
+        <option value="">{t('work.all_staff')}</option>
+        {staffList.map((p) => (
           <option key={p.id} value={p.id}>
-            {p.nama}
+            {p.name}
           </option>
         ))}
       </select>
 
-      <FilterWaktu nilai={waktu} onUbah={setWaktu} />
+      <TimeFilter value={time} onChange={setTime} />
 
-      {!memuat && <p className="mt-3 text-xs text-maroon-600">{t('waktu.jumlah', { n: data.length })}</p>}
+      {!loading && <p className="mt-3 text-xs text-maroon-600">{t('time.count', { n: data.length })}</p>}
 
-      {!petugasId && perPetugas.length > 1 && (
+      {!staffId && perStaff.length > 1 && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {perPetugas.map(([nama, jumlah]) => (
+          {perStaff.map(([name, count]) => (
             <span
-              key={nama}
+              key={name}
               className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-200"
             >
-              {nama}: {jumlah}
+              {name}: {count}
             </span>
           ))}
         </div>
       )}
 
       <div className="mt-4 space-y-3">
-        {memuat && <p className="text-maroon-600">{t('umum.memuat')}</p>}
-        {!memuat && !data.length && (
-          <p className="kartu p-10 text-center text-maroon-600">{t('kerja.kosong')}</p>
+        {loading && <p className="text-maroon-600">{t('common.loading')}</p>}
+        {!loading && !data.length && (
+          <p className="card p-10 text-center text-maroon-600">{t('work.empty')}</p>
         )}
-        {data.map((p) => (
-          <article key={p.id} className="kartu border-l-4 border-l-emerald-400 p-4">
+        {data.map((w) => (
+          <article key={w.id} className="card border-l-4 border-l-emerald-400 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-inset ring-emerald-200">
-                ✓ {t('dash.bukti_terverifikasi')}
+                ✓ {t('dashboard.proof_verified')}
               </span>
-              <span className="text-sm font-semibold text-maroon-900">{p.petugas}</span>
-              <span className="ml-auto text-xs text-maroon-600">{waktuRelatif(p.created_at)}</span>
+              <span className="text-sm font-semibold text-maroon-900">{w.staff_name}</span>
+              <span className="ml-auto text-xs text-maroon-600">{relativeTime(w.created_at)}</span>
             </div>
             <p className="mt-1.5 text-xs text-maroon-700">
-              <span className="font-semibold">🧹 {t('waktu.dibersihkan')}:</span> {formatWaktu(p.created_at)}
+              <span className="font-semibold">🧹 {t('time.cleaned')}:</span> {formatTime(w.created_at)}
             </p>
-            <p className="mt-2 font-bold text-maroon-900">{p.toilet_nama}</p>
-            <p className="mt-1 text-maroon-800">{p.teks}</p>
-            {p.foto_url && (
+            <p className="mt-2 font-bold text-maroon-900">{w.toilet_name}</p>
+            <p className="mt-1 text-maroon-800">{w.description}</p>
+            {w.photo_url && (
               <figure className="m-0 mt-3">
-                <a href={p.foto_url} target="_blank" rel="noreferrer">
-                  <img src={p.foto_url} alt="" className="max-h-44 rounded-xl ring-2 ring-emerald-400" />
+                <a href={w.photo_url} target="_blank" rel="noreferrer">
+                  <img src={w.photo_url} alt="" className="max-h-44 rounded-xl ring-2 ring-emerald-400" />
                 </a>
-                {p.bukti_ai_alasan && (
+                {w.proof_reason && (
                   <figcaption className="mt-1 max-w-xs text-xs italic text-maroon-600">
-                    {p.bukti_ai_alasan}
+                    {w.proof_reason}
                   </figcaption>
                 )}
               </figure>

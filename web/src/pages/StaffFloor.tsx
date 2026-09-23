@@ -1,36 +1,38 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import Kamera from '../components/Kamera';
-import Kop from '../components/Kop';
-import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
-import PilihPetugas from '../components/PilihPetugas';
-import SaklarPeran from '../components/SaklarPeran';
+import Camera from '../components/Camera';
+import Header from '../components/Header';
+import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges';
+import StaffPicker from '../components/StaffPicker';
+import RoleSwitch from '../components/RoleSwitch';
 import {
   api,
   ApiError,
-  type HasilBukti,
-  type Jenis,
-  type Laporan,
-  type Lokasi,
-  type PetugasPilihan,
+  type Floor,
+  type ProofVerdict,
+  type Report,
+  type StaffOption,
+  type ToiletType,
 } from '../lib/api';
-import { useBahasa, useWaktuRelatif } from '../lib/i18n';
-import { usePetugasTerpilih } from '../lib/petugas';
+import { useLanguage, useRelativeTime } from '../lib/i18n';
+import { useSelectedStaff } from '../lib/staff';
 
-const IKON: Record<Jenis, string> = { pria: '♂', wanita: '♀', disabilitas: '♿' };
+const ICONS: Record<ToiletType, string> = { men: '♂', women: '♀', accessible: '♿' };
 
-type Penolakan = { hasil: HasilBukti | null; alasan: string | null };
+type Rejection = { verdict: ProofVerdict | null; reason: string | null };
 
 /** The vision verdict carried by a 422, or a plain failure otherwise. */
-function penolakanDari(err: unknown): Penolakan {
+function rejectionFrom(err: unknown): Rejection {
   if (err instanceof ApiError && err.status === 422) {
     return {
-      hasil: (err.data.hasil as HasilBukti | undefined) ?? 'kotor',
-      alasan: (err.data.alasan as string | undefined) ?? null,
+      verdict: (err.data.verdict as ProofVerdict | undefined) ?? 'dirty',
+      reason: (err.data.reason as string | undefined) ?? null,
     };
   }
-  return { hasil: null, alasan: err instanceof Error ? err.message : null };
+  return { verdict: null, reason: err instanceof Error ? err.message : null };
 }
+
+type Stage = 'idle' | 'uploading' | 'checking';
 
 /**
  * The staff side of a floor QR: no sign-in, just "who are you?" and then the
@@ -38,57 +40,57 @@ function penolakanDari(err: unknown): Penolakan {
  * here, and record the toilets cleaned on the regular round. Every photo comes
  * from the live camera and is judged by the vision model before it counts.
  */
-export default function PetugasLantai() {
-  const { lokasiId = '' } = useParams();
-  const { t } = useBahasa();
-  const { daftar, terpilih, pilih, memuat: memuatPetugas } = usePetugasTerpilih();
+export default function StaffFloor() {
+  const { floorId = '' } = useParams();
+  const { t } = useLanguage();
+  const { staffList, selected, select, loading: loadingStaff } = useSelectedStaff();
 
-  const [lokasi, setLokasi] = useState<Lokasi | null>(null);
-  const [memuat, setMemuat] = useState(true);
-  const [terbuka, setTerbuka] = useState<Laporan[]>([]);
-  const [tab, setTab] = useState<'laporan' | 'kerja' | null>(null);
+  const [floor, setFloor] = useState<Floor | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState<Report[]>([]);
+  const [tab, setTab] = useState<'reports' | 'work' | null>(null);
 
-  const muatTerbuka = useCallback(async (l: Lokasi) => {
+  const loadOpen = useCallback(async (f: Floor) => {
     const r = await api
-      .laporanTerbuka({ gedung: l.gedung_kode, lantai: l.lantai })
-      .catch(() => ({ data: [] as Laporan[] }));
-    setTerbuka(r.data);
+      .openReports({ building: f.building_code, floor: f.floor })
+      .catch(() => ({ data: [] as Report[] }));
+    setOpen(r.data);
     return r.data;
   }, []);
 
   useEffect(() => {
     api
-      .lokasi(lokasiId)
-      .then(async (l) => {
-        setLokasi(l);
+      .floor(floorId)
+      .then(async (f) => {
+        setFloor(f);
         // Open on the student reports when some are waiting here; otherwise on the round.
-        const data = await muatTerbuka(l);
-        setTab((sekarang) => sekarang ?? (data.length ? 'laporan' : 'kerja'));
+        const data = await loadOpen(f);
+        setTab((current) => current ?? (data.length ? 'reports' : 'work'));
       })
-      .catch(() => setLokasi(null))
-      .finally(() => setMemuat(false));
-  }, [lokasiId, muatTerbuka]);
+      .catch(() => setFloor(null))
+      .finally(() => setLoading(false));
+  }, [floorId, loadOpen]);
 
-  if (memuat || memuatPetugas) {
+  if (loading || loadingStaff) {
     return (
       <div className="min-h-screen">
-        <Kop judul={t('petugas.judul')} ramping />
-        <p className="p-10 text-center text-maroon-600">{t('umum.memuat')}</p>
+        <Header title={t('staff.title')} compact />
+        <p className="p-10 text-center text-maroon-600">{t('common.loading')}</p>
       </div>
     );
   }
 
-  if (!lokasi) {
+  if (!floor) {
     return (
       <div className="min-h-screen">
-        <Kop judul={t('lapor.tidak_dikenal')} ramping />
+        <Header title={t('report.unknown_location')} compact />
         <div className="mx-auto max-w-lg px-4 py-14 text-center">
-          <p className="text-maroon-700">{t('lapor.tidak_dikenal_isi')}</p>
+          <p className="text-maroon-700">{t('report.unknown_location_body')}</p>
           <p className="mt-2">
-            <code className="rounded-lg bg-krem-200 px-2 py-1 text-sm text-maroon-800">{lokasiId}</code>
+            <code className="rounded-lg bg-krem-200 px-2 py-1 text-sm text-maroon-800">{floorId}</code>
           </p>
-          <Link to="/petugas" className="tombol-utama mt-6">
-            {t('lapor.pilih_manual')}
+          <Link to="/staff" className="btn-primary mt-6">
+            {t('report.choose_manually')}
           </Link>
         </div>
       </div>
@@ -97,74 +99,74 @@ export default function PetugasLantai() {
 
   return (
     <div className="min-h-screen pb-16">
-      <Kop
-        judul={t('umum.gedung', { kode: lokasi.gedung_kode })}
-        keterangan={lokasi.gedung_nama}
-        ramping
+      <Header
+        title={t('common.building', { code: floor.building_code })}
+        description={floor.building_name}
+        compact
       />
 
       <main className="mx-auto max-w-lg px-4">
-        <SaklarPeran lokasiId={lokasiId} aktif="petugas" />
+        <RoleSwitch floorId={floorId} active="staff" />
 
         <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-maroon-900">
-          {t('umum.lantai', { n: lokasi.lantai })}
+          {t('common.floor', { n: floor.floor })}
         </h2>
 
         <div className="mt-4">
-          <PilihPetugas daftar={daftar} terpilih={terpilih} onPilih={pilih} />
+          <StaffPicker staffList={staffList} selected={selected} onSelect={select} />
         </div>
 
-        {terpilih && (
+        {selected && (
           <>
             <nav className="mt-5 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setTab('laporan')}
-                aria-pressed={tab === 'laporan'}
-                className={tab === 'laporan' ? 'pilihan-hidup !py-3' : 'pilihan-mati !py-3'}
+                onClick={() => setTab('reports')}
+                aria-pressed={tab === 'reports'}
+                className={tab === 'reports' ? 'choice-on !py-3' : 'choice-off !py-3'}
               >
                 <span aria-hidden className="text-xl leading-none">
                   📋
                 </span>
                 <span>
-                  {t('petugas.tab_laporan')}
-                  {!!terbuka.length && (
+                  {t('staff.tab_reports')}
+                  {!!open.length && (
                     <span className="ml-1.5 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">
-                      {terbuka.length}
+                      {open.length}
                     </span>
                   )}
                 </span>
               </button>
               <button
                 type="button"
-                onClick={() => setTab('kerja')}
-                aria-pressed={tab === 'kerja'}
-                className={tab === 'kerja' ? 'pilihan-hidup !py-3' : 'pilihan-mati !py-3'}
+                onClick={() => setTab('work')}
+                aria-pressed={tab === 'work'}
+                className={tab === 'work' ? 'choice-on !py-3' : 'choice-off !py-3'}
               >
                 <span aria-hidden className="text-xl leading-none">
                   🧹
                 </span>
-                {t('petugas.tab_kerja')}
+                {t('staff.tab_work')}
               </button>
             </nav>
 
-            {tab === 'laporan' && (
+            {tab === 'reports' && (
               <section className="mt-4 space-y-3">
-                {!terbuka.length && (
-                  <p className="kartu p-8 text-center text-maroon-700">{t('petugas.tidak_ada_laporan')}</p>
+                {!open.length && (
+                  <p className="card p-8 text-center text-maroon-700">{t('staff.no_reports')}</p>
                 )}
-                {terbuka.map((l) => (
-                  <KartuTugas
-                    key={l.id}
-                    laporan={l}
-                    petugas={terpilih}
-                    onBerubah={() => muatTerbuka(lokasi)}
+                {open.map((r) => (
+                  <TaskCard
+                    key={r.id}
+                    report={r}
+                    staff={selected}
+                    onChanged={() => loadOpen(floor)}
                   />
                 ))}
               </section>
             )}
 
-            {tab === 'kerja' && <FormPekerjaan lokasi={lokasi} petugas={terpilih} />}
+            {tab === 'work' && <WorkLogForm floor={floor} staff={selected} />}
           </>
         )}
       </main>
@@ -173,137 +175,137 @@ export default function PetugasLantai() {
 }
 
 /** One student report the staff member can take on and close with a proof photo. */
-function KartuTugas({
-  laporan: l,
-  petugas,
-  onBerubah,
+function TaskCard({
+  report: r,
+  staff,
+  onChanged,
 }: {
-  laporan: Laporan;
-  petugas: PetugasPilihan;
-  onBerubah: () => void;
+  report: Report;
+  staff: StaffOption;
+  onChanged: () => void;
 }) {
-  const { t } = useBahasa();
-  const waktuRelatif = useWaktuRelatif();
-  const [kamera, setKamera] = useState(false);
-  const [tahap, setTahap] = useState<'diam' | 'mengunggah' | 'memeriksa'>('diam');
-  const [penolakan, setPenolakan] = useState<Penolakan | null>(null);
-  const [selesai, setSelesai] = useState(false);
+  const { t } = useLanguage();
+  const relativeTime = useRelativeTime();
+  const [camera, setCamera] = useState(false);
+  const [stage, setStage] = useState<Stage>('idle');
+  const [rejection, setRejection] = useState<Rejection | null>(null);
+  const [done, setDone] = useState(false);
 
-  async function kerjakan() {
-    await api.ubahStatus(l.id, 'diproses', { petugas_id: petugas.id }).catch(() => {});
-    onBerubah();
+  async function startWork() {
+    await api.updateStatus(r.id, 'in_progress', { staff_id: staff.id }).catch(() => {});
+    onChanged();
   }
 
-  async function selesaikan(foto: File) {
-    setPenolakan(null);
-    setTahap('mengunggah');
+  async function resolve(photo: File) {
+    setRejection(null);
+    setStage('uploading');
     try {
-      const { key } = await api.unggahFoto(foto, 'bukti');
-      setTahap('memeriksa');
-      await api.ubahStatus(l.id, 'selesai', { petugas_id: petugas.id, foto_selesai_key: key });
-      setSelesai(true);
+      const { key } = await api.uploadPhoto(photo, 'proof');
+      setStage('checking');
+      await api.updateStatus(r.id, 'resolved', { staff_id: staff.id, proof_photo_key: key });
+      setDone(true);
       // Leave the success visible for a moment before the card drops off the list.
-      setTimeout(onBerubah, 2500);
+      setTimeout(onChanged, 2500);
     } catch (err) {
-      setPenolakan(penolakanDari(err));
+      setRejection(rejectionFrom(err));
     } finally {
-      setTahap('diam');
+      setStage('idle');
     }
   }
 
-  const tepi =
-    l.prioritas === 'tinggi'
+  const edge =
+    r.priority === 'high'
       ? 'border-l-4 border-l-red-500'
-      : l.prioritas === 'sedang'
+      : r.priority === 'medium'
         ? 'border-l-4 border-l-amber-400'
         : 'border-l-4 border-l-emerald-400';
 
-  if (selesai) {
+  if (done) {
     return (
-      <article className="kartu border-l-4 border-l-emerald-500 bg-emerald-50 p-4 text-emerald-900">
-        <p className="font-bold">✅ {t('petugas.laporan_selesai')}</p>
-        <p className="mt-0.5 text-sm">{l.toilet_nama}</p>
+      <article className="card border-l-4 border-l-emerald-500 bg-emerald-50 p-4 text-emerald-900">
+        <p className="font-bold">✅ {t('staff.report_resolved')}</p>
+        <p className="mt-0.5 text-sm">{r.toilet_name}</p>
       </article>
     );
   }
 
-  const sibuk = tahap !== 'diam';
+  const busy = stage !== 'idle';
 
   return (
-    <article className={`kartu p-4 ${tepi}`}>
+    <article className={`card p-4 ${edge}`}>
       <div className="flex flex-wrap items-center gap-2">
-        <LencanaPrioritas nilai={l.prioritas} />
-        <LencanaStatus nilai={l.status} />
-        {l.kategori.map((k) => (
-          <LencanaKategori key={k} nilai={k} />
+        <PriorityBadge value={r.priority} />
+        <StatusBadge value={r.status} />
+        {r.categories.map((c) => (
+          <CategoryBadge key={c} value={c} />
         ))}
-        <span className="ml-auto text-xs text-maroon-600">{waktuRelatif(l.created_at)}</span>
+        <span className="ml-auto text-xs text-maroon-600">{relativeTime(r.created_at)}</span>
       </div>
 
-      <p className="mt-2.5 font-bold text-maroon-900">{l.toilet_nama}</p>
-      <p className="mt-1 text-maroon-800">{l.ringkasan ?? l.teks}</p>
-      {l.ringkasan && (
+      <p className="mt-2.5 font-bold text-maroon-900">{r.toilet_name}</p>
+      <p className="mt-1 text-maroon-800">{r.summary ?? r.description}</p>
+      {r.summary && (
         <p className="mt-1 text-sm italic text-maroon-600">
-          {t('dash.laporan_asli')}: “{l.teks}”
+          {t('dashboard.original_report')}: “{r.description}”
         </p>
       )}
-      {l.rekomendasi && (
+      {r.recommendation && (
         <p className="mt-2.5 rounded-xl border-l-4 border-bata-400 bg-krem-50 p-3 text-sm text-maroon-700">
-          <span className="font-bold">{t('dash.tindakan')} </span>
-          {l.rekomendasi}
+          <span className="font-bold">{t('dashboard.action')} </span>
+          {r.recommendation}
         </p>
       )}
-      {l.foto_url && (
-        <a href={l.foto_url} target="_blank" rel="noreferrer" className="mt-3 block">
-          <img src={l.foto_url} alt="" className="max-h-56 rounded-xl" />
+      {r.photo_url && (
+        <a href={r.photo_url} target="_blank" rel="noreferrer" className="mt-3 block">
+          <img src={r.photo_url} alt="" className="max-h-56 rounded-xl" />
         </a>
       )}
 
-      {penolakan && <KotakPenolakan penolakan={penolakan} />}
+      {rejection && <RejectionBox rejection={rejection} />}
 
-      <Kamera buka={kamera} onTutup={() => setKamera(false)} onAmbil={selesaikan} />
+      <Camera open={camera} onClose={() => setCamera(false)} onCapture={resolve} />
       <div className="mt-3 flex flex-col gap-2">
         <button
           type="button"
-          onClick={() => setKamera(true)}
-          disabled={sibuk}
-          className="tombol-utama w-full py-3 text-base"
+          onClick={() => setCamera(true)}
+          disabled={busy}
+          className="btn-primary w-full py-3 text-base"
         >
-          {tahap === 'mengunggah'
-            ? t('dash.mengunggah')
-            : tahap === 'memeriksa'
-              ? t('dash.memeriksa')
-              : `📷 ${t('petugas.selesaikan')}`}
+          {stage === 'uploading'
+            ? t('dashboard.uploading')
+            : stage === 'checking'
+              ? t('dashboard.checking')
+              : `📷 ${t('staff.resolve')}`}
         </button>
-        {l.status === 'baru' && (
-          <button type="button" onClick={kerjakan} disabled={sibuk} className="tombol-netral w-full py-2.5">
-            {t('petugas.kerjakan')}
+        {r.status === 'new' && (
+          <button type="button" onClick={startWork} disabled={busy} className="btn-neutral w-full py-2.5">
+            {t('staff.start_work')}
           </button>
         )}
-        {l.status === 'diproses' && l.petugas && (
-          <p className="text-center text-xs text-maroon-600">{t('dash.ditangani', { nama: l.petugas })}</p>
+        {r.status === 'in_progress' && r.staff_name && (
+          <p className="text-center text-xs text-maroon-600">{t('dashboard.handled_by', { name: r.staff_name })}</p>
         )}
       </div>
     </article>
   );
 }
 
-function KotakPenolakan({ penolakan }: { penolakan: Penolakan }) {
-  const { t } = useBahasa();
+function RejectionBox({ rejection }: { rejection: Rejection }) {
+  const { t } = useLanguage();
   return (
     <div role="alert" className="mt-3 rounded-xl border-l-4 border-red-400 bg-red-50/70 p-3 text-sm text-red-900">
-      <p className="font-bold">{penolakan.hasil ? t('dash.bukti_ditolak') : t('dash.verifikasi_gagal')}</p>
-      {penolakan.hasil && (
+      <p className="font-bold">{rejection.verdict ? t('dashboard.proof_rejected') : t('dashboard.verification_failed')}</p>
+      {rejection.verdict && (
         <p className="mt-0.5">
-          {penolakan.hasil === 'bukan_toilet'
-            ? t('dash.bukti_ditolak_bukan_toilet')
-            : t('dash.bukti_ditolak_kotor')}
+          {rejection.verdict === 'not_toilet'
+            ? t('dashboard.proof_rejected_not_toilet')
+            : t('dashboard.proof_rejected_dirty')}
         </p>
       )}
-      {penolakan.alasan && (
+      {rejection.reason && (
         <p className="mt-1 text-xs italic text-red-800">
-          {penolakan.hasil ? `${t('dash.alasan_ai')}: ` : ''}
-          {penolakan.alasan}
+          {rejection.verdict ? `${t('dashboard.ai_reason')}: ` : ''}
+          {rejection.reason}
         </p>
       )}
     </div>
@@ -311,123 +313,123 @@ function KotakPenolakan({ penolakan }: { penolakan: Penolakan }) {
 }
 
 /** The regular round: "I cleaned this toilet", with a photo of the result. */
-function FormPekerjaan({ lokasi, petugas }: { lokasi: Lokasi; petugas: PetugasPilihan }) {
-  const { t } = useBahasa();
-  const [toiletId, setToiletId] = useState(lokasi.toilets.length === 1 ? lokasi.toilets[0].id : '');
-  const [teks, setTeks] = useState('');
-  const [foto, setFoto] = useState<File | null>(null);
-  const [pratinjau, setPratinjau] = useState<string | null>(null);
-  const [kamera, setKamera] = useState(false);
-  const [tahap, setTahap] = useState<'diam' | 'mengunggah' | 'memeriksa'>('diam');
-  const [galat, setGalat] = useState<string | null>(null);
-  const [penolakan, setPenolakan] = useState<Penolakan | null>(null);
-  const [terkirim, setTerkirim] = useState<{ toilet: string; alasan: string | null } | null>(null);
+function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
+  const { t } = useLanguage();
+  const [toiletId, setToiletId] = useState(floor.toilets.length === 1 ? floor.toilets[0].id : '');
+  const [description, setDescription] = useState('');
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [camera, setCamera] = useState(false);
+  const [stage, setStage] = useState<Stage>('idle');
+  const [error, setError] = useState<string | null>(null);
+  const [rejection, setRejection] = useState<Rejection | null>(null);
+  const [submitted, setSubmitted] = useState<{ toilet: string; reason: string | null } | null>(null);
 
   useEffect(() => {
-    if (!foto) return setPratinjau(null);
-    const url = URL.createObjectURL(foto);
-    setPratinjau(url);
+    if (!photo) return setPreview(null);
+    const url = URL.createObjectURL(photo);
+    setPreview(url);
     return () => URL.revokeObjectURL(url);
-  }, [foto]);
+  }, [photo]);
 
-  async function kirim(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (teks.trim().length < 5) return setGalat(t('kerja.galat_pendek'));
-    if (!foto) return setGalat(t('kerja.foto_alasan'));
+    if (description.trim().length < 5) return setError(t('work.error_too_short'));
+    if (!photo) return setError(t('work.photo_reason'));
 
-    setGalat(null);
-    setPenolakan(null);
-    setTahap('mengunggah');
+    setError(null);
+    setRejection(null);
+    setStage('uploading');
     try {
-      const foto_key = (await api.unggahFoto(foto, 'kerja')).key;
-      setTahap('memeriksa');
-      const hasil = await api.kirimPekerjaan({
-        petugas_id: petugas.id,
+      const photo_key = (await api.uploadPhoto(photo, 'work')).key;
+      setStage('checking');
+      const result = await api.createWorkLog({
+        staff_id: staff.id,
         toilet_id: toiletId,
-        teks: teks.trim(),
-        foto_key,
+        description: description.trim(),
+        photo_key,
       });
-      setTerkirim({ toilet: hasil.toilet, alasan: hasil.verifikasi?.alasan ?? null });
+      setSubmitted({ toilet: result.toilet, reason: result.verification?.reason ?? null });
     } catch (err) {
       // A rejected or unchecked photo has already been deleted server-side; take a new one.
-      if (err instanceof ApiError && (err.status === 422 || err.status >= 500)) setFoto(null);
-      if (err instanceof ApiError && err.status === 422) setPenolakan(penolakanDari(err));
-      else setGalat(err instanceof Error ? err.message : t('kerja.galat_kirim'));
+      if (err instanceof ApiError && (err.status === 422 || err.status >= 500)) setPhoto(null);
+      if (err instanceof ApiError && err.status === 422) setRejection(rejectionFrom(err));
+      else setError(err instanceof Error ? err.message : t('work.error_submit'));
     } finally {
-      setTahap('diam');
+      setStage('idle');
     }
   }
 
-  function ulangi() {
-    setTerkirim(null);
-    setTeks('');
-    setFoto(null);
-    if (lokasi.toilets.length > 1) setToiletId('');
+  function reset() {
+    setSubmitted(null);
+    setDescription('');
+    setPhoto(null);
+    if (floor.toilets.length > 1) setToiletId('');
   }
 
-  if (terkirim) {
+  if (submitted) {
     return (
-      <section className="kartu mt-4 p-6 text-center">
+      <section className="card mt-4 p-6 text-center">
         <p className="text-5xl" aria-hidden>
           ✅
         </p>
-        <h3 className="mt-3 text-xl font-extrabold tracking-tight text-maroon-900">{t('kerja.terkirim')}</h3>
-        <p className="mt-1 text-maroon-700">{terkirim.toilet}</p>
-        {terkirim.alasan && (
+        <h3 className="mt-3 text-xl font-extrabold tracking-tight text-maroon-900">{t('work.submitted')}</h3>
+        <p className="mt-1 text-maroon-700">{submitted.toilet}</p>
+        {submitted.reason && (
           <p className="mt-2 text-sm italic text-maroon-600">
-            {t('dash.alasan_ai')}: {terkirim.alasan}
+            {t('dashboard.ai_reason')}: {submitted.reason}
           </p>
         )}
-        <button type="button" onClick={ulangi} className="tombol-utama mt-6 w-full py-3">
-          {t('kerja.lapor_lagi')}
+        <button type="button" onClick={reset} className="btn-primary mt-6 w-full py-3">
+          {t('work.report_another')}
         </button>
       </section>
     );
   }
 
-  const sibuk = tahap !== 'diam';
+  const busy = stage !== 'idle';
 
   return (
-    <form onSubmit={kirim} className="mt-4 space-y-5">
+    <form onSubmit={submit} className="mt-4 space-y-5">
       <div>
-        <span className="label">{t('kerja.pilih_jenis')}</span>
+        <span className="label">{t('work.choose_toilet')}</span>
         <div className="flex gap-2">
-          {lokasi.toilets.map((wc) => (
+          {floor.toilets.map((wc) => (
             <button
               key={wc.id}
               type="button"
               onClick={() => setToiletId(wc.id)}
               aria-pressed={toiletId === wc.id}
-              className={toiletId === wc.id ? 'pilihan-hidup' : 'pilihan-mati'}
+              className={toiletId === wc.id ? 'choice-on' : 'choice-off'}
             >
               <span aria-hidden className="text-xl leading-none">
-                {IKON[wc.jenis]}
+                {ICONS[wc.type]}
               </span>
-              {t(`jenis.${wc.jenis}`)}
+              {t(`toilet_type.${wc.type}`)}
             </button>
           ))}
         </div>
       </div>
 
       <div>
-        <label htmlFor="teks" className="label">
-          {t('kerja.label_teks')}
+        <label htmlFor="description" className="label">
+          {t('work.description_label')}
         </label>
         <textarea
-          id="teks"
+          id="description"
           className="input min-h-[110px] resize-y"
-          placeholder={t('kerja.placeholder')}
-          value={teks}
-          onChange={(e) => setTeks(e.target.value)}
+          placeholder={t('work.placeholder')}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           maxLength={1000}
         />
         {/* Ready-made sentences: a tap is easier than typing for most staff. */}
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {([t('kerja.contoh1'), t('kerja.contoh2'), t('kerja.contoh3')] as const).map((c) => (
+          {([t('work.example1'), t('work.example2'), t('work.example3')] as const).map((c) => (
             <button
               key={c}
               type="button"
-              onClick={() => setTeks(c)}
+              onClick={() => setDescription(c)}
               className="rounded-full border border-krem-200 bg-permukaan px-3 py-1.5 text-sm text-maroon-700 transition hover:border-bata-300 hover:text-bata-700"
             >
               {c}
@@ -437,57 +439,57 @@ function FormPekerjaan({ lokasi, petugas }: { lokasi: Lokasi; petugas: PetugasPi
       </div>
 
       <div>
-        <span className="label">{t('kerja.foto')}</span>
-        <p className="-mt-1 mb-2 text-xs leading-relaxed text-maroon-600">{t('kerja.foto_alasan')}</p>
-        <Kamera
-          buka={kamera}
-          onTutup={() => setKamera(false)}
-          onAmbil={(f) => {
-            setGalat(null);
-            setPenolakan(null);
-            setFoto(f);
+        <span className="label">{t('work.photo')}</span>
+        <p className="-mt-1 mb-2 text-xs leading-relaxed text-maroon-600">{t('work.photo_reason')}</p>
+        <Camera
+          open={camera}
+          onClose={() => setCamera(false)}
+          onCapture={(f) => {
+            setError(null);
+            setRejection(null);
+            setPhoto(f);
           }}
         />
-        {pratinjau ? (
+        {preview ? (
           <div className="relative overflow-hidden rounded-xl">
-            <img src={pratinjau} alt="" className="w-full" />
+            <img src={preview} alt="" className="w-full" />
             <button
               type="button"
-              onClick={() => setFoto(null)}
-              disabled={sibuk}
+              onClick={() => setPhoto(null)}
+              disabled={busy}
               className="absolute right-2 top-2 rounded-lg bg-tetap-maroon/75 px-3 py-1.5 text-sm font-semibold text-white"
             >
-              {t('lapor.hapus_foto')}
+              {t('report.remove_photo')}
             </button>
           </div>
         ) : (
           <button
             type="button"
-            onClick={() => setKamera(true)}
-            className="tombol-netral w-full border-dashed py-3.5"
+            onClick={() => setCamera(true)}
+            className="btn-neutral w-full border-dashed py-3.5"
           >
-            📷 {t('lapor.ambil_foto')}
+            📷 {t('report.take_photo')}
           </button>
         )}
       </div>
 
-      {penolakan && <KotakPenolakan penolakan={penolakan} />}
-      {galat && (
+      {rejection && <RejectionBox rejection={rejection} />}
+      {error && (
         <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800" role="alert">
-          {galat}
+          {error}
         </p>
       )}
 
       <button
         type="submit"
-        disabled={sibuk || !toiletId || !foto}
-        className="tombol-utama w-full py-3.5 text-base"
+        disabled={busy || !toiletId || !photo}
+        className="btn-primary w-full py-3.5 text-base"
       >
-        {tahap === 'mengunggah'
-          ? t('dash.mengunggah')
-          : tahap === 'memeriksa'
-            ? t('dash.memeriksa')
-            : t('kerja.kirim')}
+        {stage === 'uploading'
+          ? t('dashboard.uploading')
+          : stage === 'checking'
+            ? t('dashboard.checking')
+            : t('work.submit')}
       </button>
     </form>
   );

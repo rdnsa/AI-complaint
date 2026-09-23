@@ -1,101 +1,101 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import Kamera from '../components/Kamera';
-import Kop from '../components/Kop';
-import SaklarPeran from '../components/SaklarPeran';
-import { api, type Jenis, type Lokasi } from '../lib/api';
-import { useBahasa } from '../lib/i18n';
-import { bacaTersimpan } from '../lib/petugas';
-import { useSesi } from '../lib/sesi';
+import Camera from '../components/Camera';
+import Header from '../components/Header';
+import RoleSwitch from '../components/RoleSwitch';
+import { api, type Floor, type ToiletType } from '../lib/api';
+import { useLanguage } from '../lib/i18n';
+import { readStoredStaff } from '../lib/staff';
+import { useSession } from '../lib/session';
 
-const IKON: Record<Jenis, string> = { pria: '♂', wanita: '♀', disabilitas: '♿' };
+const ICONS: Record<ToiletType, string> = { men: '♂', women: '♀', accessible: '♿' };
 
-export default function Lapor() {
-  const { lokasiId = '' } = useParams();
-  const [cari] = useSearchParams();
+export default function ReportForm() {
+  const { floorId = '' } = useParams();
+  const [search] = useSearchParams();
   // A phone that has picked a staff name belongs to a cleaner: the door QR
-  // opens their page directly. `?sebagai=mahasiswa` (the switch) opts out.
-  if (cari.get('sebagai') !== 'mahasiswa' && bacaTersimpan()) {
-    return <Navigate to={`/petugas/${lokasiId}`} replace />;
+  // opens their page directly. `?as=student` (the switch) opts out.
+  if (search.get('as') !== 'student' && readStoredStaff()) {
+    return <Navigate to={`/staff/${floorId}`} replace />;
   }
-  return <FormMahasiswa lokasiId={lokasiId} />;
+  return <StudentForm floorId={floorId} />;
 }
 
-function FormMahasiswa({ lokasiId }: { lokasiId: string }) {
+function StudentForm({ floorId }: { floorId: string }) {
   const navigate = useNavigate();
-  const { t } = useBahasa();
-  const { sesi } = useSesi();
+  const { t } = useLanguage();
+  const { session } = useSession();
 
-  const [lokasi, setLokasi] = useState<Lokasi | null>(null);
-  const [memuat, setMemuat] = useState(true);
+  const [floor, setFloor] = useState<Floor | null>(null);
+  const [loading, setLoading] = useState(true);
   const [toiletId, setToiletId] = useState<string>('');
-  const [teks, setTeks] = useState('');
-  const [foto, setFoto] = useState<File | null>(null);
-  const [pratinjau, setPratinjau] = useState<string | null>(null);
-  const [mengirim, setMengirim] = useState(false);
-  const [galat, setGalat] = useState<string | null>(null);
-  const [kamera, setKamera] = useState(false);
+  const [description, setDescription] = useState('');
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [camera, setCamera] = useState(false);
 
   useEffect(() => {
     api
-      .lokasi(lokasiId)
-      .then((l) => {
-        setLokasi(l);
+      .floor(floorId)
+      .then((f) => {
+        setFloor(f);
         // When a floor has only one toilet, there is nothing to choose.
-        if (l.toilets.length === 1) setToiletId(l.toilets[0].id);
+        if (f.toilets.length === 1) setToiletId(f.toilets[0].id);
       })
-      .catch(() => setLokasi(null))
-      .finally(() => setMemuat(false));
-  }, [lokasiId]);
+      .catch(() => setFloor(null))
+      .finally(() => setLoading(false));
+  }, [floorId]);
 
   // The preview is an object URL; released when the photo changes so memory is not leaked.
   useEffect(() => {
-    if (!foto) return setPratinjau(null);
-    const url = URL.createObjectURL(foto);
-    setPratinjau(url);
+    if (!photo) return setPreview(null);
+    const url = URL.createObjectURL(photo);
+    setPreview(url);
     return () => URL.revokeObjectURL(url);
-  }, [foto]);
+  }, [photo]);
 
-  async function kirim(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (teks.trim().length < 5) return setGalat(t('lapor.galat_pendek'));
-    if (!foto) return setGalat(t('lapor.foto_alasan'));
+    if (description.trim().length < 5) return setError(t('report.error_too_short'));
+    if (!photo) return setError(t('report.photo_reason'));
 
-    setMengirim(true);
-    setGalat(null);
+    setSubmitting(true);
+    setError(null);
     try {
   // The photo is uploaded first, so the report is stored with a reference that already exists.
-      const foto_key = (await api.unggahFoto(foto)).key;
-      const hasil = await api.kirimLaporan({ toilet_id: toiletId, teks: teks.trim(), foto_key });
-      navigate(`/laporan/${hasil.id}`, { replace: true });
+      const photo_key = (await api.uploadPhoto(photo)).key;
+      const result = await api.submitReport({ toilet_id: toiletId, description: description.trim(), photo_key });
+      navigate(`/reports/${result.id}`, { replace: true });
     } catch (err) {
-      setGalat(err instanceof Error ? err.message : t('lapor.galat_kirim'));
-      setMengirim(false);
+      setError(err instanceof Error ? err.message : t('report.error_submit'));
+      setSubmitting(false);
     }
   }
 
-  if (memuat) {
+  if (loading) {
     return (
       <div className="min-h-screen">
-        <Kop judul={t('app.judul')} ramping />
-        <p className="p-10 text-center text-maroon-600">{t('umum.memuat')}</p>
+        <Header title={t('app.title')} compact />
+        <p className="p-10 text-center text-maroon-600">{t('common.loading')}</p>
       </div>
     );
   }
 
-  if (!lokasi) {
+  if (!floor) {
     return (
       <div className="min-h-screen">
-        <Kop judul={t('lapor.tidak_dikenal')} ramping />
+        <Header title={t('report.unknown_location')} compact />
         <div className="mx-auto max-w-lg px-4 py-14 text-center">
-          <p className="text-maroon-700">{t('lapor.tidak_dikenal_isi')}</p>
+          <p className="text-maroon-700">{t('report.unknown_location_body')}</p>
           <p className="mt-2">
             <code className="rounded-lg bg-krem-200 px-2 py-1 text-sm text-maroon-800">
-              {lokasiId}
+              {floorId}
             </code>
           </p>
-          <Link to="/" className="tombol-utama mt-6">
-            {t('lapor.pilih_manual')}
+          <Link to="/student" className="btn-primary mt-6">
+            {t('report.choose_manually')}
           </Link>
         </div>
       </div>
@@ -104,75 +104,75 @@ function FormMahasiswa({ lokasiId }: { lokasiId: string }) {
 
   return (
     <div className="min-h-screen pb-36">
-      <Kop
-        judul={t('umum.gedung', { kode: lokasi.gedung_kode })}
-        keterangan={lokasi.gedung_nama}
-        ramping
+      <Header
+        title={t('common.building', { code: floor.building_code })}
+        description={floor.building_name}
+        compact
       />
 
       <main className="mx-auto max-w-lg px-4">
-        <SaklarPeran lokasiId={lokasiId} aktif="mahasiswa" />
+        <RoleSwitch floorId={floorId} active="student" />
 
         <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-maroon-900">
-          {t('umum.lantai', { n: lokasi.lantai })}
+          {t('common.floor', { n: floor.floor })}
         </h2>
 
         <div className="mt-4">
-          <span className="label">{t('lapor.pilih_jenis')}</span>
+          <span className="label">{t('report.choose_toilet')}</span>
           <div className="flex gap-2">
-            {lokasi.toilets.map((wc) => (
+            {floor.toilets.map((wc) => (
               <button
                 key={wc.id}
                 type="button"
                 onClick={() => setToiletId(wc.id)}
                 aria-pressed={toiletId === wc.id}
-                className={toiletId === wc.id ? 'pilihan-hidup' : 'pilihan-mati'}
+                className={toiletId === wc.id ? 'choice-on' : 'choice-off'}
               >
                 <span aria-hidden className="text-xl leading-none">
-                  {IKON[wc.jenis]}
+                  {ICONS[wc.type]}
                 </span>
-                {t(`jenis.${wc.jenis}`)}
+                {t(`toilet_type.${wc.type}`)}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Melapor tanpa akun tetap boleh; keterangan ini hanya menjelaskan
-            konsekuensinya terhadap papan peringkat. */}
+        {/* Reporting without an account is still allowed; this note only explains
+            what that means for the leaderboard. */}
         <p className="mt-5 rounded-xl bg-krem-50 px-3.5 py-2.5 text-sm text-maroon-700 ring-1 ring-krem-200">
-          {sesi?.peran === 'pelapor' ? (
-            t('sesi.sebagai', { nama: sesi.nama })
+          {session?.role === 'reporter' ? (
+            t('session.reporting_as', { name: session.name })
           ) : (
             <>
-              {t('sesi.anonim_info')}{' '}
-              <Link to="/masuk" className="font-semibold text-bata-600 underline underline-offset-2">
-                {t('sesi.masuk')}
+              {t('session.anonymous_info')}{' '}
+              <Link to="/login" className="font-semibold text-bata-600 underline underline-offset-2">
+                {t('session.login')}
               </Link>
             </>
           )}
         </p>
 
-        <p className="mt-4 leading-relaxed text-maroon-700">{t('lapor.ajakan')}</p>
+        <p className="mt-4 leading-relaxed text-maroon-700">{t('report.prompt')}</p>
 
-        <form onSubmit={kirim} className="mt-5 space-y-5">
+        <form onSubmit={submit} className="mt-5 space-y-5">
           <div>
-            <label htmlFor="teks" className="label">
-              {t('lapor.label_teks')}
+            <label htmlFor="description" className="label">
+              {t('report.description_label')}
             </label>
             <textarea
-              id="teks"
+              id="description"
               className="input min-h-[140px] resize-y"
-              placeholder={t('lapor.placeholder')}
-              value={teks}
-              onChange={(e) => setTeks(e.target.value)}
+              placeholder={t('report.placeholder')}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               maxLength={1000}
             />
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {([t('lapor.contoh1'), t('lapor.contoh2'), t('lapor.contoh3')] as const).map((c) => (
+              {([t('report.example1'), t('report.example2'), t('report.example3')] as const).map((c) => (
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setTeks(c)}
+                  onClick={() => setDescription(c)}
                   className="rounded-full border border-krem-200 bg-permukaan px-3 py-1 text-xs text-maroon-600 transition hover:border-bata-300 hover:text-bata-700"
                 >
                   {c.length > 36 ? `${c.slice(0, 36)}…` : c}
@@ -182,55 +182,55 @@ function FormMahasiswa({ lokasiId }: { lokasiId: string }) {
           </div>
 
           <div>
-            <span className="label">{t('lapor.foto')}</span>
+            <span className="label">{t('report.photo')}</span>
             <p className="-mt-1 mb-2 text-xs leading-relaxed text-maroon-600">
-              {t('lapor.foto_alasan')}
+              {t('report.photo_reason')}
             </p>
-            {/* Kamera langsung, bukan pemilih berkas: foto dari galeri tidak bisa dipakai. */}
-            <Kamera
-              buka={kamera}
-              onTutup={() => setKamera(false)}
-              onAmbil={(f) => {
-                setGalat(null);
-                setFoto(f);
+            {/* The live camera, not a file picker: a photo from the gallery cannot be used. */}
+            <Camera
+              open={camera}
+              onClose={() => setCamera(false)}
+              onCapture={(f) => {
+                setError(null);
+                setPhoto(f);
               }}
             />
-            {pratinjau ? (
+            {preview ? (
               <div className="relative overflow-hidden rounded-xl">
-                <img src={pratinjau} alt="" className="w-full" />
+                <img src={preview} alt="" className="w-full" />
                 <button
                   type="button"
-                  onClick={() => setFoto(null)}
+                  onClick={() => setPhoto(null)}
                   className="absolute right-2 top-2 rounded-lg bg-tetap-maroon/75 px-3 py-1.5 text-sm font-semibold text-white"
                 >
-                  {t('lapor.hapus_foto')}
+                  {t('report.remove_photo')}
                 </button>
               </div>
             ) : (
               <button
                 type="button"
-                onClick={() => setKamera(true)}
-                className="tombol-netral w-full border-dashed py-3.5"
+                onClick={() => setCamera(true)}
+                className="btn-neutral w-full border-dashed py-3.5"
               >
-                📷 {t('lapor.ambil_foto')}
+                📷 {t('report.take_photo')}
               </button>
             )}
           </div>
 
-          {galat && (
+          {error && (
             <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800" role="alert">
-              {galat}
+              {error}
             </p>
           )}
 
-          <div className="fixed inset-x-0 bottom-0 border-t border-krem-200 bg-white/95 p-4 backdrop-blur">
+          <div className="fixed inset-x-0 bottom-0 border-t border-krem-200 bg-permukaan/95 p-4 backdrop-blur">
             <div className="mx-auto max-w-lg">
               <button
                 type="submit"
-                disabled={mengirim || !toiletId || !foto}
-                className="tombol-utama w-full py-3.5 text-base"
+                disabled={submitting || !toiletId || !photo}
+                className="btn-primary w-full py-3.5 text-base"
               >
-                {mengirim ? t('lapor.mengirim') : t('lapor.kirim')}
+                {submitting ? t('report.submitting') : t('report.submit')}
               </button>
             </div>
           </div>

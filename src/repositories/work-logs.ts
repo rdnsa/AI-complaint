@@ -1,96 +1,96 @@
-import type { PekerjaanRow, VerifikasiBukti } from '../domain/types';
+import type { ProofVerification, WorkLogRow } from '../domain/types';
 import type { Env } from '../env';
-import { susunFilterWaktu, type FilterWaktu } from './waktu';
+import { buildTimeFilter, type TimeFilter } from './time-filter';
 
-/** Every SQL statement about staff work reports lives here. */
+/** Every SQL statement about staff work logs lives here. */
 
-const KOLOM = `p.*, t.nama AS toilet_nama, t.gedung_kode, t.gedung_nama, t.lantai, t.jenis`;
-const DARI = `FROM pekerjaan p JOIN toilet_info t ON t.id = p.toilet_id`;
+const COLUMNS = `w.*, t.name AS toilet_name, t.building_code, t.building_name, t.floor, t.type`;
+const FROM = `FROM work_logs w JOIN toilet_info t ON t.id = w.toilet_id`;
 
-export interface FilterPekerjaan extends FilterWaktu {
-  petugas_id?: string;
+export interface WorkLogFilter extends TimeFilter {
+  staff_id?: string;
   toilet_id?: string;
-  gedung?: string;
+  building?: string;
   limit?: number;
 }
 
-export async function cari(env: Env, f: FilterPekerjaan): Promise<PekerjaanRow[]> {
+export async function find(env: Env, f: WorkLogFilter): Promise<WorkLogRow[]> {
   const where: string[] = [];
   const params: unknown[] = [];
 
-  if (f.petugas_id) {
-    where.push('p.petugas_id = ?');
-    params.push(f.petugas_id);
+  if (f.staff_id) {
+    where.push('w.staff_id = ?');
+    params.push(f.staff_id);
   }
   if (f.toilet_id) {
-    where.push('p.toilet_id = ?');
+    where.push('w.toilet_id = ?');
     params.push(f.toilet_id);
   }
-  if (f.gedung) {
-    where.push('t.gedung_kode = ?');
-    params.push(f.gedung.toUpperCase());
+  if (f.building) {
+    where.push('t.building_code = ?');
+    params.push(f.building.toUpperCase());
   }
-  const waktu = susunFilterWaktu('p.created_at', f);
-  where.push(...waktu.where);
-  params.push(...waktu.params);
+  const time = buildTimeFilter('w.created_at', f);
+  where.push(...time.where);
+  params.push(...time.params);
 
   const rows = await env.DB.prepare(
-    `SELECT ${KOLOM} ${DARI}
+    `SELECT ${COLUMNS} ${FROM}
        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      ORDER BY p.created_at DESC
+      ORDER BY w.created_at DESC
       LIMIT ?`,
   )
     .bind(...params, f.limit ?? 100)
-    .all<PekerjaanRow>();
+    .all<WorkLogRow>();
   return rows.results;
 }
 
 /** Same guard as for student reports: the same text twice within two minutes is a double tap. */
-export async function cariKembar(
+export async function findDuplicate(
   env: Env,
-  petugasId: string,
+  staffId: string,
   toiletId: string,
-  teks: string,
+  description: string,
 ): Promise<string | null> {
   const row = await env.DB.prepare(
-    `SELECT id FROM pekerjaan
-      WHERE petugas_id = ? AND toilet_id = ? AND teks = ? AND created_at > datetime('now', '-2 minutes')
+    `SELECT id FROM work_logs
+      WHERE staff_id = ? AND toilet_id = ? AND description = ? AND created_at > datetime('now', '-2 minutes')
       LIMIT 1`,
   )
-    .bind(petugasId, toiletId, teks)
+    .bind(staffId, toiletId, description)
     .first<{ id: string }>();
   return row?.id ?? null;
 }
 
-export async function simpan(
+export async function insert(
   env: Env,
   data: {
     id: string;
     toilet_id: string;
-    petugas_id: string;
-    petugas: string;
-    teks: string;
-    foto_key: string;
-    verifikasi: VerifikasiBukti;
+    staff_id: string;
+    staff_name: string;
+    description: string;
+    photo_key: string;
+    verification: ProofVerification;
   },
 ): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO pekerjaan
-       (id, toilet_id, petugas_id, petugas, teks, foto_key,
-        bukti_ai_hasil, bukti_ai_alasan, bukti_ai_model, bukti_ai_ms)
+    `INSERT INTO work_logs
+       (id, toilet_id, staff_id, staff_name, description, photo_key,
+        proof_verdict, proof_reason, proof_model, proof_ms)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       data.id,
       data.toilet_id,
-      data.petugas_id,
-      data.petugas,
-      data.teks,
-      data.foto_key,
-      data.verifikasi.hasil,
-      data.verifikasi.alasan,
-      data.verifikasi.model,
-      data.verifikasi.ms,
+      data.staff_id,
+      data.staff_name,
+      data.description,
+      data.photo_key,
+      data.verification.verdict,
+      data.verification.reason,
+      data.verification.model,
+      data.verification.ms,
     )
     .run();
 }

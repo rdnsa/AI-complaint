@@ -1,5 +1,5 @@
 import Sparkline from './Sparkline';
-import { TINTA } from './warna';
+import { INK } from './colors';
 
 /**
  * A headline number with its recent shape and its direction of travel.
@@ -8,53 +8,53 @@ import { TINTA } from './warna';
  * previous 14 days" says whether things are getting better or worse. When there
  * is no comparable previous period the delta is omitted rather than faked.
  */
-export default function KartuKPI({
+export default function KpiCard({
   label,
-  nilai,
-  satuan,
-  deret,
-  warna,
-  perubahan,
-  keterangan,
-  arahBaik = 'turun',
+  value,
+  unit,
+  series,
+  color,
+  change,
+  note,
+  goodDirection = 'down',
 }: {
   label: string;
-  nilai: string | number;
-  satuan?: string;
-  deret?: number[];
-  warna: string;
-  perubahan?: number | null;
-  keterangan?: string;
-  arahBaik?: 'naik' | 'turun';
+  value: string | number;
+  unit?: string;
+  series?: number[];
+  color: string;
+  change?: number | null;
+  note?: string;
+  goodDirection?: 'up' | 'down';
 }) {
-  const naik = (perubahan ?? 0) > 0;
-  const baik = arahBaik === 'naik' ? naik : !naik;
-  const warnaDelta = perubahan === 0 ? 'text-maroon-600' : baik ? 'text-emerald-700' : 'text-red-700';
+  const up = (change ?? 0) > 0;
+  const good = goodDirection === 'up' ? up : !up;
+  const deltaColor = change === 0 ? 'text-maroon-600' : good ? 'text-emerald-700' : 'text-red-700';
 
   return (
-    <div className="kartu flex flex-col p-4">
+    <div className="card flex flex-col p-4">
       <p className="text-[11px] font-bold uppercase tracking-wider text-maroon-600">{label}</p>
 
       <div className="mt-1 flex items-baseline gap-1.5">
-        <span className="text-3xl font-extrabold tracking-tight" style={{ color: TINTA.utama }}>
-          {nilai}
+        <span className="text-3xl font-extrabold tracking-tight" style={{ color: INK.primary }}>
+          {value}
         </span>
-        {satuan && <span className="text-sm font-semibold text-maroon-600">{satuan}</span>}
+        {unit && <span className="text-sm font-semibold text-maroon-600">{unit}</span>}
       </div>
 
-      {perubahan !== null && perubahan !== undefined && (
-        <p className={`mt-0.5 text-xs font-bold ${warnaDelta}`}>
-          {naik ? '▲' : perubahan === 0 ? '■' : '▼'} {Math.abs(perubahan)}%
-          {keterangan && <span className="font-medium text-maroon-600"> {keterangan}</span>}
+      {change !== null && change !== undefined && (
+        <p className={`mt-0.5 text-xs font-bold ${deltaColor}`}>
+          {up ? '▲' : change === 0 ? '■' : '▼'} {Math.abs(change)}%
+          {note && <span className="font-medium text-maroon-600"> {note}</span>}
         </p>
       )}
-      {(perubahan === null || perubahan === undefined) && keterangan && (
-        <p className="mt-0.5 text-xs text-maroon-600">{keterangan}</p>
+      {(change === null || change === undefined) && note && (
+        <p className="mt-0.5 text-xs text-maroon-600">{note}</p>
       )}
 
-      {deret && deret.length > 1 && (
+      {series && series.length > 1 && (
         <div className="mt-auto pt-3">
-          <Sparkline data={deret} warna={warna} />
+          <Sparkline data={series} color={color} />
         </div>
       )}
     </div>

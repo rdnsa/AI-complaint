@@ -3,49 +3,47 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 /**
  * Light or dark theme.
  *
- * The choice is stored per browser; a visitor who has never chosen follows the
- * operating system. The `dark` class on <html> is what the palette variables in
- * index.css react to, so switching costs no re-render of individual components.
+ * Light is the default for everyone; dark is only used once a visitor picks
+ * it with the toggle, and that choice is stored per browser. The `dark` class
+ * on <html> is what the palette variables in index.css react to, so switching
+ * costs no re-render of individual components.
  */
-const PENYIMPANAN = 'tema';
+const STORAGE_KEY = 'theme';
 
-function gelapAwal(): boolean {
+function initialDark(): boolean {
   try {
-    const tersimpan = localStorage.getItem(PENYIMPANAN);
-    if (tersimpan === 'gelap') return true;
-    if (tersimpan === 'terang') return false;
+    return localStorage.getItem(STORAGE_KEY) === 'dark';
   } catch {
-    /* localStorage may be blocked; fall back to the system setting */
+    return false; // localStorage may be blocked; stay on the light default
   }
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 }
 
-const Konteks = createContext<{ gelap: boolean; ubah: (gelap: boolean) => void } | null>(null);
+const Context = createContext<{ dark: boolean; setDark: (dark: boolean) => void } | null>(null);
 
-export function PenyediaTema({ children }: { children: React.ReactNode }) {
-  const [gelap, setGelap] = useState<boolean>(gelapAwal);
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [dark, setDarkState] = useState<boolean>(initialDark);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', gelap);
+    document.documentElement.classList.toggle('dark', dark);
     // The browser chrome on phones follows the header colour either way.
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#4A1D16');
-  }, [gelap]);
+  }, [dark]);
 
-  const ubah = useCallback((g: boolean) => {
-    setGelap(g);
+  const setDark = useCallback((d: boolean) => {
+    setDarkState(d);
     try {
-      localStorage.setItem(PENYIMPANAN, g ? 'gelap' : 'terang');
+      localStorage.setItem(STORAGE_KEY, d ? 'dark' : 'light');
     } catch {
       /* ignore when storage is unavailable */
     }
   }, []);
 
-  const nilai = useMemo(() => ({ gelap, ubah }), [gelap, ubah]);
-  return <Konteks.Provider value={nilai}>{children}</Konteks.Provider>;
+  const value = useMemo(() => ({ dark, setDark }), [dark, setDark]);
+  return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 
-export function useTema() {
-  const nilai = useContext(Konteks);
-  if (!nilai) throw new Error('useTema harus dipakai di dalam PenyediaTema');
-  return nilai;
+export function useTheme() {
+  const value = useContext(Context);
+  if (!value) throw new Error('useTheme must be used inside ThemeProvider');
+  return value;
 }

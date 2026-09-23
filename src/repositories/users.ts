@@ -1,102 +1,99 @@
 import type { Env } from '../env';
-import type { Peran } from '../domain/types';
+import type { Role } from '../domain/types';
 
 /** Cleaning staff have no username or password: they never sign in. */
-export interface BarisPengguna {
+export interface UserRow {
   id: string;
   username: string | null;
-  nama: string;
-  peran: Peran;
-  sandi_hash: string | null;
-  sandi_salt: string | null;
-  aktif: number;
+  name: string;
+  role: Role;
+  password_hash: string | null;
+  password_salt: string | null;
+  active: number;
 }
 
-export type AkunPengelola = Omit<BarisPengguna, 'sandi_hash' | 'sandi_salt'> & {
+export type ManagedAccount = Omit<UserRow, 'password_hash' | 'password_salt'> & {
   created_at: string;
 };
 
-export async function cariDenganUsername(
-  env: Env,
-  username: string,
-): Promise<BarisPengguna | null> {
-  return env.DB.prepare(`SELECT * FROM pengguna WHERE username = ?`)
+export async function findByUsername(env: Env, username: string): Promise<UserRow | null> {
+  return env.DB.prepare(`SELECT * FROM users WHERE username = ?`)
     .bind(username)
-    .first<BarisPengguna>();
+    .first<UserRow>();
 }
 
-export async function usernameDipakai(env: Env, username: string): Promise<boolean> {
-  const row = await env.DB.prepare(`SELECT id FROM pengguna WHERE username = ?`)
+export async function usernameTaken(env: Env, username: string): Promise<boolean> {
+  const row = await env.DB.prepare(`SELECT id FROM users WHERE username = ?`)
     .bind(username)
     .first();
   return Boolean(row);
 }
 
-export async function cariRingkas(
+export async function findBrief(
   env: Env,
   id: string,
-): Promise<{ id: string; nama: string; username: string | null; peran: Peran } | null> {
-  return env.DB.prepare(`SELECT id, nama, username, peran FROM pengguna WHERE id = ?`)
+): Promise<{ id: string; name: string; username: string | null; role: Role } | null> {
+  return env.DB.prepare(`SELECT id, name, username, role FROM users WHERE id = ?`)
     .bind(id)
-    .first<{ id: string; nama: string; username: string | null; peran: Peran }>();
+    .first<{ id: string; name: string; username: string | null; role: Role }>();
 }
 
 /** Supervisors and staff. Reporter accounts are excluded: there may be thousands. */
-export async function daftarPengelola(env: Env): Promise<AkunPengelola[]> {
+export async function listManaged(env: Env): Promise<ManagedAccount[]> {
   const rows = await env.DB.prepare(
-    `SELECT id, username, nama, peran, aktif, created_at
-       FROM pengguna WHERE peran IN ('spv', 'petugas')
-      ORDER BY peran DESC, nama`,
-  ).all<AkunPengelola>();
+    `SELECT id, username, name, role, active, created_at
+       FROM users WHERE role IN ('supervisor', 'staff')
+      ORDER BY CASE role WHEN 'supervisor' THEN 0 ELSE 1 END, name`,
+  ).all<ManagedAccount>();
   return rows.results;
 }
 
 /** The names on the staff dropdown. */
-export async function petugasAktif(env: Env): Promise<Array<{ id: string; nama: string }>> {
+export async function activeStaff(env: Env): Promise<Array<{ id: string; name: string }>> {
   const rows = await env.DB.prepare(
-    `SELECT id, nama FROM pengguna WHERE peran = 'petugas' AND aktif = 1 ORDER BY nama`,
-  ).all<{ id: string; nama: string }>();
+    `SELECT id, name FROM users WHERE role = 'staff' AND active = 1 ORDER BY name`,
+  ).all<{ id: string; name: string }>();
   return rows.results;
 }
 
 /** One active staff member, so a name picked on the dropdown can be trusted to exist. */
-export async function cariPetugasAktif(
+export async function findActiveStaff(
   env: Env,
   id: string,
-): Promise<{ id: string; nama: string } | null> {
+): Promise<{ id: string; name: string } | null> {
   return env.DB.prepare(
-    `SELECT id, nama FROM pengguna WHERE id = ? AND peran = 'petugas' AND aktif = 1`,
+    `SELECT id, name FROM users WHERE id = ? AND role = 'staff' AND active = 1`,
   )
     .bind(id)
-    .first<{ id: string; nama: string }>();
+    .first<{ id: string; name: string }>();
 }
 
-export async function simpan(
+export async function insert(
   env: Env,
   data: {
     id: string;
     username: string | null;
-    nama: string;
-    peran: Peran;
-    sandi_hash: string | null;
-    sandi_salt: string | null;
+    name: string;
+    role: Role;
+    password_hash: string | null;
+    password_salt: string | null;
   },
 ): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO pengguna (id, username, nama, peran, sandi_hash, sandi_salt)
+    `INSERT INTO users (id, username, name, role, password_hash, password_salt)
      VALUES (?, ?, ?, ?, ?, ?)`,
   )
-    .bind(data.id, data.username, data.nama, data.peran, data.sandi_hash, data.sandi_salt)
+    .bind(data.id, data.username, data.name, data.role, data.password_hash, data.password_salt)
     .run();
 }
 
-export async function perbarui(
+export async function update(
   env: Env,
   id: string,
   set: string[],
   params: unknown[],
 ): Promise<void> {
-  await env.DB.prepare(`UPDATE pengguna SET ${set.join(', ')} WHERE id = ?`)
+  await env.DB.prepare(`UPDATE users SET ${set.join(', ')} WHERE id = ?`)
     .bind(...params, id)
     .run();
 }

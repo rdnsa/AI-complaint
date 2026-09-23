@@ -1,191 +1,200 @@
-/** Only 'spv' and 'pelapor' ever sign in; 'petugas' is a name on the dropdown. */
-export type Peran = 'spv' | 'petugas' | 'pelapor';
+/** Only 'supervisor' and 'reporter' ever sign in; 'staff' is a name on the dropdown. */
+export type Role = 'supervisor' | 'staff' | 'reporter';
 
-export interface Sesi {
+export interface Session {
   id: string;
-  nama: string;
-  peran: Peran;
+  name: string;
+  role: Role;
 }
 
-export interface AkunPengelola {
+export interface ManagedAccount {
   id: string;
   /** Null for cleaning staff, who never sign in. */
   username: string | null;
-  nama: string;
-  peran: Peran;
-  aktif: number;
+  name: string;
+  role: Role;
+  active: number;
   created_at: string;
 }
 
-export interface BarisPeringkat {
+export interface LeaderboardRow {
   id: string;
-  nama: string;
-  laporan: number;
-  selesai: number | null;
+  name: string;
+  reports: number;
+  resolved: number | null;
 }
 
-export type Prioritas = 'rendah' | 'sedang' | 'tinggi';
-export type StatusLaporan = 'baru' | 'diproses' | 'selesai';
+export type Priority = 'low' | 'medium' | 'high';
+export type ReportStatus = 'new' | 'in_progress' | 'resolved';
 
-export type Jenis = 'pria' | 'wanita' | 'disabilitas';
-export type HasilBukti = 'bersih' | 'kotor' | 'bukan_toilet';
+export type ToiletType = 'men' | 'women' | 'accessible';
+export type ProofVerdict = 'clean' | 'dirty' | 'not_toilet';
+export type Category = 'cleanliness' | 'supplies' | 'damage' | 'odor' | 'flooding' | 'other';
 
-export interface Gedung {
-  kode: string;
-  nama: string;
-  lantai: number[];
+export interface Building {
+  code: string;
+  name: string;
+  floors: number[];
 }
 
 /** One floor of one building — this is what a QR code stands for. */
-export interface Lokasi {
-  gedung_kode: string;
-  gedung_nama: string;
-  lantai: number;
-  toilets: Array<{ id: string; jenis: Jenis }>;
+export interface Floor {
+  building_code: string;
+  building_name: string;
+  floor: number;
+  toilets: Array<{ id: string; type: ToiletType }>;
 }
 
-export interface Laporan {
+export interface Report {
   id: string;
   toilet_id: string;
-  toilet_nama: string;
-  gedung_kode: string;
-  gedung_nama: string;
-  lantai: number;
-  jenis: Jenis;
-  teks: string;
-  foto_url: string | null;
-  foto_selesai_url: string | null;
-  /** The vision model's verdict on the proof photo; only 'bersih' ever gets stored. */
-  bukti_ai_hasil: HasilBukti | null;
-  bukti_ai_alasan: string | null;
-  status: StatusLaporan;
-  petugas: string | null;
-  selesai_at: string | null;
-  ai_status: 'pending' | 'ok' | 'gagal';
-  kategori: string[];
-  prioritas: Prioritas | null;
-  ringkasan: string | null;
-  rekomendasi: string | null;
+  toilet_name: string;
+  building_code: string;
+  building_name: string;
+  floor: number;
+  type: ToiletType;
+  description: string;
+  photo_url: string | null;
+  proof_photo_url: string | null;
+  /** The vision model's verdict on the proof photo; only 'clean' ever gets stored. */
+  proof_verdict: ProofVerdict | null;
+  proof_reason: string | null;
+  status: ReportStatus;
+  staff_name: string | null;
+  resolved_at: string | null;
+  ai_status: 'pending' | 'ok' | 'failed';
+  categories: Category[];
+  priority: Priority | null;
+  summary: string | null;
+  recommendation: string | null;
   ai_ms: number | null;
   created_at: string;
 }
 
 /** One name on the staff dropdown. */
-export interface PetugasPilihan {
+export interface StaffOption {
   id: string;
-  nama: string;
+  name: string;
 }
 
 /** A staff work report: which toilet was cleaned, by whom, with an AI-checked photo. */
-export interface Pekerjaan {
+export interface WorkLog {
   id: string;
   toilet_id: string;
-  toilet_nama: string;
-  gedung_kode: string;
-  gedung_nama: string;
-  lantai: number;
-  jenis: Jenis;
-  petugas_id: string;
-  petugas: string;
-  teks: string;
-  foto_url: string | null;
-  bukti_ai_hasil: HasilBukti;
-  bukti_ai_alasan: string | null;
+  toilet_name: string;
+  building_code: string;
+  building_name: string;
+  floor: number;
+  type: ToiletType;
+  staff_id: string;
+  staff_name: string;
+  description: string;
+  photo_url: string | null;
+  proof_verdict: ProofVerdict;
+  proof_reason: string | null;
   created_at: string;
 }
 
 /** A report on the public board: no raw text, no photo, no staff name. */
-export interface LaporanPublik {
+export interface PublicReport {
   id: string;
-  status: StatusLaporan;
-  prioritas: Prioritas | null;
-  kategori: string[];
-  ringkasan: string | null;
-  ai_status: 'pending' | 'ok' | 'gagal';
-  toilet_nama: string;
-  gedung_kode: string;
-  lantai: number;
+  status: ReportStatus;
+  priority: Priority | null;
+  categories: Category[];
+  summary: string | null;
+  ai_status: 'pending' | 'ok' | 'failed';
+  toilet_name: string;
+  building_code: string;
+  floor: number;
   created_at: string;
-  selesai_at: string | null;
-  foto_selesai_url: string | null;
+  resolved_at: string | null;
+  proof_photo_url: string | null;
 }
 
 /** The numbers behind the dashboard charts. */
-export interface DataGrafik {
-  harian: Array<{ tanggal: string; total: number; selesai: number }>;
-  harianPrioritas: Array<{ tanggal: string; tinggi: number; sedang: number; rendah: number }>;
-  kategori: Array<{ kategori: string; jumlah: number }>;
-  prioritas: Array<{ prioritas: string; jumlah: number }>;
-  gedung: Array<{ gedung_kode: string; gedung_nama: string; jumlah: number }>;
-  penyelesaian: { jumlah: number; menit: number | null };
-  jamHari: Array<{ hari: number; jam: number; jumlah: number }>;
-  matriks: Array<{ gedung_kode: string; kategori: string; jumlah: number }>;
-  waktuPrioritas: Array<{ prioritas: string; jumlah: number; menit: number | null }>;
-  tren: {
-    hari: number;
-    laporan: number;
-    laporan_lalu: number;
-    perubahan: number | null;
-    selesai: number;
-    tinggi: number;
+export interface ChartData {
+  daily: Array<{ date: string; total: number; resolved: number }>;
+  dailyByPriority: Array<{ date: string; high: number; medium: number; low: number }>;
+  categories: Array<{ category: string; count: number }>;
+  priorities: Array<{ priority: string; count: number }>;
+  buildings: Array<{ building_code: string; building_name: string; count: number }>;
+  resolution: { count: number; minutes: number | null };
+  hourByDay: Array<{ day: number; hour: number; count: number }>;
+  matrix: Array<{ building_code: string; category: string; count: number }>;
+  resolutionByPriority: Array<{ priority: string; count: number; minutes: number | null }>;
+  trend: {
+    days: number;
+    reports: number;
+    previous_reports: number;
+    change: number | null;
+    resolved: number;
+    high: number;
   };
 }
 
-export interface Aktivitas {
+export type ActivityAction =
+  | 'report_created'
+  | 'analysis'
+  | 'analysis_failed'
+  | 'status_changed'
+  | 'report_deleted'
+  | 'login'
+  | 'daily_summary'
+  | 'user_changed'
+  | 'proof_rejected'
+  | 'verification_failed'
+  | 'question'
+  | 'work_logged';
+
+export interface ActivityEntry {
   id: number;
-  waktu: string;
-  aksi:
-    | 'lapor'
-    | 'analisis'
-    | 'analisis_gagal'
-    | 'status'
-    | 'hapus'
-    | 'masuk'
-    | 'ringkasan'
-    | 'pengguna'
-    | 'bukti_ditolak'
-    | 'verifikasi_gagal'
-    | 'tanya'
-    | 'kerja';
+  created_at: string;
+  action: ActivityAction;
   report_id: string | null;
-  pelaku: string;
-  ringkas: string;
-  rincian: Record<string, unknown> | null;
+  actor: string;
+  summary: string;
+  details: Record<string, unknown> | null;
 }
 
-export interface Statistik {
-  tanggal: string;
-  hari_ini: {
+export interface DailyStats {
+  date: string;
+  today: {
     total: number;
-    tinggi: number | null;
-    sedang: number | null;
-    rendah: number | null;
-    ai_gagal: number | null;
+    high: number | null;
+    medium: number | null;
+    low: number | null;
+    ai_failed: number | null;
   };
-  belum_selesai: number;
-  lokasi_teratas: Array<{ lokasi: string; jumlah: number }>;
+  unresolved: number;
+  top_locations: Array<{ location: string; count: number }>;
 }
 
-export interface Ringkasan {
-  ada: boolean;
-  tanggal: string;
-  total_laporan?: number;
-  ringkasan?: string;
-  sorotan?: string[];
+export interface DailySummary {
+  exists: boolean;
+  date: string;
+  report_count?: number;
+  summary?: string;
+  highlights?: string[];
 }
 
 /** One turn of the admin question-answering chat. */
-export interface PesanTanya {
-  peran: 'pengguna' | 'asisten';
-  teks: string;
+export interface AskMessage {
+  role: 'user' | 'assistant';
+  text: string;
 }
 
-export interface JawabanTanya {
-  teks: string;
-  alat: Array<{ nama: string; argumen: Record<string, unknown> }>;
-  token: { prompt: number; jawaban: number; cache_hit: number };
+export interface AskAnswer {
+  text: string;
+  tools: Array<{ name: string; arguments: Record<string, unknown> }>;
+  tokens: { prompt: number; completion: number; cache_hit: number };
   ms: number;
-  sisa_hari_ini: number;
+  remaining_today: number;
+}
+
+/** The vision check's verdict on a proof or work photo. */
+export interface Verification {
+  verdict: ProofVerdict;
+  reason: string;
 }
 
 export class ApiError extends Error {
@@ -206,127 +215,125 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const { error, ...sisa } = data as { error?: string } & Record<string, unknown>;
-    throw new ApiError(error ?? 'Gagal menghubungi server', res.status, sisa);
+    const { error, ...rest } = data as { error?: string } & Record<string, unknown>;
+    throw new ApiError(error ?? 'Gagal menghubungi server', res.status, rest);
   }
   return data as T;
 }
 
 export const api = {
-  daftarGedung: () => req<{ data: Gedung[] }>('/api/lokasi'),
-  lokasi: (id: string) => req<Lokasi>(`/api/lokasi/${encodeURIComponent(id)}`),
+  locations: () => req<{ data: Building[] }>('/api/locations'),
+  floor: (id: string) => req<Floor>(`/api/locations/${encodeURIComponent(id)}`),
 
-  kirimLaporan: (body: { toilet_id: string; teks: string; foto_key?: string | null }) =>
-    req<{ id: string; toilet: string; duplikat: boolean }>('/api/reports', {
+  submitReport: (body: { toilet_id: string; description: string; photo_key?: string | null }) =>
+    req<{ id: string; toilet: string; duplicate: boolean }>('/api/reports', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
 
-  laporan: (id: string) => req<Laporan>(`/api/reports/${id}`),
+  report: (id: string) => req<Report>(`/api/reports/${id}`),
 
   /** The public report board — no sign-in required. */
-  laporanPublik: (filter: Record<string, string>) => {
+  publicReports: (filter: Record<string, string>) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
-    return req<{ data: LaporanPublik[]; jumlah: { total: number; selesai: number | null } }>(
-      `/api/reports/publik?${q}`,
+    return req<{ data: PublicReport[]; counts: { total: number; resolved: number | null } }>(
+      `/api/reports/public?${q}`,
     );
   },
 
   /** The signed-in reporter's own reports. */
-  laporanSaya: () => req<{ data: Laporan[] }>('/api/reports/saya'),
+  myReports: () => req<{ data: Report[] }>('/api/reports/mine'),
 
   /**
-   * `jenis` separates the reporter's condition photo, the staff proof photo,
+   * `kind` separates the reporter's condition photo, the staff proof photo,
    * and the photo on a staff work report.
    */
-  unggahFoto: (file: File, jenis: 'laporan' | 'bukti' | 'kerja' = 'laporan') => {
+  uploadPhoto: (file: File, kind: 'report' | 'proof' | 'work' = 'report') => {
     const fd = new FormData();
     fd.append('file', file);
-    return req<{ key: string; url: string }>(`/api/uploads?jenis=${jenis}`, {
+    return req<{ key: string; url: string }>(`/api/uploads?kind=${kind}`, {
       method: 'POST',
       body: fd,
     });
   },
 
   // --- accounts ---
-  masuk: (username: string, password: string) =>
-    req<Sesi>('/api/auth/masuk', { method: 'POST', body: JSON.stringify({ username, password }) }),
-  daftar: (username: string, nama: string, password: string) =>
-    req<Sesi>('/api/auth/daftar', {
+  login: (username: string, password: string) =>
+    req<Session>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  register: (username: string, name: string, password: string) =>
+    req<Session>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username, nama, password }),
+      body: JSON.stringify({ username, name, password }),
     }),
-  keluar: () => req<{ ok: boolean }>('/api/auth/keluar', { method: 'POST' }),
-  saya: () => req<Sesi>('/api/auth/saya'),
+  logout: () => req<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
+  me: () => req<Session>('/api/auth/me'),
 
   // --- supervisor only ---
-  daftarPengguna: () => req<{ data: AkunPengelola[] }>('/api/pengguna'),
+  users: () => req<{ data: ManagedAccount[] }>('/api/users'),
   /** A staff member is a name only; another supervisor needs credentials. */
-  buatPengguna: (
+  createUser: (
     body:
-      | { peran: 'petugas'; nama: string }
-      | { peran: 'spv'; username: string; nama: string; password: string },
-  ) => req<AkunPengelola>('/api/pengguna', { method: 'POST', body: JSON.stringify(body) }),
-  ubahPengguna: (id: string, body: { nama?: string; password?: string; aktif?: boolean }) =>
-    req<{ ok: boolean }>(`/api/pengguna/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+      | { role: 'staff'; name: string }
+      | { role: 'supervisor'; username: string; name: string; password: string },
+  ) => req<ManagedAccount>('/api/users', { method: 'POST', body: JSON.stringify(body) }),
+  updateUser: (id: string, body: { name?: string; password?: string; active?: boolean }) =>
+    req<{ ok: boolean }>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 
-  peringkat: () =>
-    req<{ data: BarisPeringkat[]; saya: { peringkat: number; laporan: number } | null }>(
-      '/api/peringkat',
-    ),
+  leaderboard: () =>
+    req<{ data: LeaderboardRow[]; me: { rank: number; reports: number } | null }>('/api/leaderboard'),
 
-  daftarLaporan: (filter: Record<string, string>) => {
+  reports: (filter: Record<string, string>) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
-    return req<{ data: Laporan[] }>(`/api/reports?${q}`);
+    return req<{ data: Report[] }>(`/api/reports?${q}`);
   },
   // --- cleaning staff (no sign-in: they send the id picked on the dropdown) ---
-  daftarPetugas: () => req<{ data: PetugasPilihan[] }>('/api/petugas'),
-  /** Reports still waiting for staff; `gedung` + `lantai` narrow it to one floor. */
-  laporanTerbuka: (filter: { gedung?: string; lantai?: number } = {}) => {
+  staffList: () => req<{ data: StaffOption[] }>('/api/staff'),
+  /** Reports still waiting for staff; `building` + `floor` narrow it to one floor. */
+  openReports: (filter: { building?: string; floor?: number } = {}) => {
     const q = new URLSearchParams();
-    if (filter.gedung) q.set('gedung', filter.gedung);
-    if (filter.lantai !== undefined) q.set('lantai', String(filter.lantai));
-    return req<{ data: Laporan[] }>(`/api/reports/terbuka?${q}`);
+    if (filter.building) q.set('building', filter.building);
+    if (filter.floor !== undefined) q.set('floor', String(filter.floor));
+    return req<{ data: Report[] }>(`/api/reports/open?${q}`);
   },
   /** Closing with a photo takes a few seconds: the server runs the vision check first. */
-  ubahStatus: (
+  updateStatus: (
     id: string,
-    status: StatusLaporan,
-    extra: { petugas_id?: string; foto_selesai_key?: string } = {},
+    status: ReportStatus,
+    extra: { staff_id?: string; proof_photo_key?: string } = {},
   ) =>
-    req<{ ok: boolean; status: StatusLaporan; verifikasi: { hasil: HasilBukti; alasan: string } | null }>(`/api/reports/${id}`, {
+    req<{ ok: boolean; status: ReportStatus; verification: Verification | null }>(`/api/reports/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ status, ...extra }),
     }),
   /** Takes a few seconds: the server runs the vision check before storing it. */
-  kirimPekerjaan: (body: { petugas_id: string; toilet_id: string; teks: string; foto_key: string }) =>
+  createWorkLog: (body: { staff_id: string; toilet_id: string; description: string; photo_key: string }) =>
     req<{
       id: string;
       toilet: string;
-      duplikat: boolean;
-      verifikasi: { hasil: HasilBukti; alasan: string } | null;
-    }>('/api/pekerjaan', { method: 'POST', body: JSON.stringify(body) }),
-  /** Supervisor only: the work log, optionally filtered by `petugas_id`. */
-  daftarPekerjaan: (filter: Record<string, string> = {}) => {
+      duplicate: boolean;
+      verification: Verification | null;
+    }>('/api/work-logs', { method: 'POST', body: JSON.stringify(body) }),
+  /** Supervisor only: the work log, optionally filtered by `staff_id`. */
+  workLogs: (filter: Record<string, string> = {}) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
-    return req<{ data: Pekerjaan[] }>(`/api/pekerjaan?${q}`);
+    return req<{ data: WorkLog[] }>(`/api/work-logs?${q}`);
   },
 
-  analisaUlang: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/analisa-ulang`, { method: 'POST' }),
-  hapusLaporan: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
+  reanalyze: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reanalyze`, { method: 'POST' }),
+  deleteReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 
-  grafik: () => req<DataGrafik>('/api/summary/grafik'),
-  aktivitas: (filter: Record<string, string> = {}) => {
+  charts: () => req<ChartData>('/api/summary/charts'),
+  activity: (filter: Record<string, string> = {}) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
-    return req<{ data: Aktivitas[] }>(`/api/aktivitas?${q}`);
+    return req<{ data: ActivityEntry[] }>(`/api/activity?${q}`);
   },
 
-  statistik: (tanggal?: string) => req<Statistik>(`/api/summary/stats${tanggal ? `?tanggal=${tanggal}` : ''}`),
-  ringkasan: (tanggal?: string) => req<Ringkasan>(`/api/summary${tanggal ? `?tanggal=${tanggal}` : ''}`),
-  /** Admin only. `riwayat` carries the recent turns so follow-up questions make sense. */
-  tanya: (pertanyaan: string, riwayat: PesanTanya[]) =>
-    req<JawabanTanya>('/api/tanya', { method: 'POST', body: JSON.stringify({ pertanyaan, riwayat }) }),
+  stats: (date?: string) => req<DailyStats>(`/api/summary/stats${date ? `?date=${date}` : ''}`),
+  summary: (date?: string) => req<DailySummary>(`/api/summary${date ? `?date=${date}` : ''}`),
+  /** Admin only. `history` carries the recent turns so follow-up questions make sense. */
+  ask: (question: string, history: AskMessage[]) =>
+    req<AskAnswer>('/api/ask', { method: 'POST', body: JSON.stringify({ question, history }) }),
 
-  buatRingkasan: (tanggal?: string) =>
-    req<Ringkasan>(`/api/summary/generate${tanggal ? `?tanggal=${tanggal}` : ''}`, { method: 'POST' }),
+  generateSummary: (date?: string) =>
+    req<DailySummary>(`/api/summary/generate${date ? `?date=${date}` : ''}`, { method: 'POST' }),
 };
