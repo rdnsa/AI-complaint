@@ -53,7 +53,25 @@ export default function Beranda() {
 
   return (
     <div className="min-h-screen pb-16">
-      <Kop judul={t('app.judul')} keterangan={t('app.subjudul')} />
+      <Kop
+        judul={t('app.judul')}
+        keterangan={t('app.subjudul')}
+        kanan={
+          // The supervisor's way in sits at the top, next to language and theme.
+          // On a phone the label shrinks to "SPV" so the header stays on one line.
+          <Link
+            to={sesi?.peran === 'spv' ? '/spv' : '/masuk'}
+            aria-label={sesi?.peran === 'spv' ? t('nav.ke_dashboard_spv') : t('nav.petugas')}
+            className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25"
+          >
+            <span aria-hidden>👔</span>
+            <span className="sm:hidden">SPV</span>
+            <span className="hidden sm:inline">
+              {sesi?.peran === 'spv' ? t('nav.ke_dashboard_spv') : t('nav.petugas')}
+            </span>
+          </Link>
+        }
+      />
 
       <main className="mx-auto max-w-5xl px-4">
         {!!laporanSaya.length && (
@@ -199,12 +217,6 @@ export default function Beranda() {
           </div>
         )}
 
-        <Link
-          to={sesi?.peran === 'spv' ? '/spv' : '/masuk'}
-          className="mx-auto mt-10 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
-        >
-          {sesi?.peran === 'spv' ? t('nav.ke_dashboard_spv') : t('nav.petugas')}
-        </Link>
       </main>
     </div>
   );
