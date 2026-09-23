@@ -334,6 +334,22 @@ const ID = {
   'waktu.menit': '{n} menit lalu',
   'waktu.jam': '{n} jam lalu',
   'waktu.hari': '{n} hari lalu',
+  'waktu.filter': 'Waktu',
+  'waktu.semua': 'Semua',
+  'waktu.hari_ini': 'Hari ini',
+  'waktu.kemarin': 'Kemarin',
+  'waktu.7_hari': '7 hari',
+  'waktu.30_hari': '30 hari',
+  'waktu.atur': 'Pilih tanggal…',
+  'waktu.reset': 'Hapus filter waktu',
+  'waktu.dari_tanggal': 'Dari tanggal',
+  'waktu.sampai_tanggal': 'Sampai tanggal',
+  'waktu.dari_jam': 'Dari jam',
+  'waktu.sampai_jam': 'Sampai jam',
+  'waktu.jumlah': '{n} data ditampilkan',
+  'waktu.masuk': 'Masuk',
+  'waktu.selesai': 'Selesai',
+  'waktu.dibersihkan': 'Dibersihkan',
 } as const;
 
 type Kunci = keyof typeof ID;
@@ -662,6 +678,22 @@ const EN: Record<Kunci, string> = {
   'waktu.menit': '{n} min ago',
   'waktu.jam': '{n} h ago',
   'waktu.hari': '{n} d ago',
+  'waktu.filter': 'Time',
+  'waktu.semua': 'All',
+  'waktu.hari_ini': 'Today',
+  'waktu.kemarin': 'Yesterday',
+  'waktu.7_hari': '7 days',
+  'waktu.30_hari': '30 days',
+  'waktu.atur': 'Pick dates…',
+  'waktu.reset': 'Clear time filter',
+  'waktu.dari_tanggal': 'From date',
+  'waktu.sampai_tanggal': 'To date',
+  'waktu.dari_jam': 'From hour',
+  'waktu.sampai_jam': 'To hour',
+  'waktu.jumlah': '{n} shown',
+  'waktu.masuk': 'Received',
+  'waktu.selesai': 'Resolved',
+  'waktu.dibersihkan': 'Cleaned',
 };
 
 const KAMUS: Record<Bahasa, Record<Kunci, string>> = { id: ID, en: EN };
@@ -730,4 +762,33 @@ export function useWaktuRelatif() {
     },
     [t],
   );
+}
+
+/**
+ * A full WIB timestamp in the active language, e.g. "Sel, 23 Sep 2026 · 14.05".
+ * Always shown in campus time, whatever time zone the viewing device is in.
+ */
+export function useFormatWaktu() {
+  const { bahasa } = useBahasa();
+  return useMemo(() => {
+    const locale = bahasa === 'id' ? 'id-ID' : 'en-GB';
+    const hari = new Intl.DateTimeFormat(locale, {
+      timeZone: 'Asia/Jakarta',
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    const jam = new Intl.DateTimeFormat(locale, {
+      timeZone: 'Asia/Jakarta',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return (iso: string) => {
+      // created_at from D1 is 'YYYY-MM-DD HH:MM:SS' in UTC.
+      const waktu = new Date(iso.includes('T') ? iso : `${iso.replace(' ', 'T')}Z`);
+      return `${hari.format(waktu)} · ${jam.format(waktu)} WIB`;
+    };
+  }, [bahasa]);
 }

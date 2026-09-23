@@ -14,6 +14,13 @@ export function tanggalWIB(now: Date = new Date()): string {
   return new Date(now.getTime() + WIB_OFFSET_MS).toISOString().slice(0, 10);
 }
 
+const POLA_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Whether a string is a 'YYYY-MM-DD' date, so it is safe to turn into a range. */
+export function tanggalSah(nilai: string | undefined): nilai is string {
+  return Boolean(nilai && POLA_TANGGAL.test(nilai) && !Number.isNaN(Date.parse(nilai)));
+}
+
 /** Start and end of a WIB date, expressed as UTC strings for D1 queries. */
 export function rentangHariWIB(tanggal: string): { mulai: string; selesai: string } {
   const mulaiMs = Date.parse(`${tanggal}T00:00:00Z`) - WIB_OFFSET_MS;

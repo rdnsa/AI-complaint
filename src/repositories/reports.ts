@@ -7,6 +7,7 @@ import {
   type Status,
   type VerifikasiBukti,
 } from '../domain/types';
+import { susunFilterWaktu, type FilterWaktu } from './waktu';
 
 /**
  * Every SQL statement about reports lives here.
@@ -18,12 +19,11 @@ import {
 const KOLOM = `r.*, t.nama AS toilet_nama, t.gedung_kode, t.gedung_nama, t.lantai, t.jenis`;
 const DARI = `FROM reports r JOIN toilet_info t ON t.id = r.toilet_id`;
 
-export interface FilterLaporan {
+export interface FilterLaporan extends FilterWaktu {
   status?: string;
   prioritas?: string;
   toilet_id?: string;
   gedung?: string;
-  tanggal?: string;
   limit?: number;
 }
 
@@ -48,11 +48,9 @@ function susunFilter(f: FilterLaporan): { klausa: string; params: unknown[] } {
     where.push('t.gedung_kode = ?');
     params.push(f.gedung.toUpperCase());
   }
-  if (f.tanggal) {
-    const { mulai, selesai } = rentangHariWIB(f.tanggal);
-    where.push('r.created_at >= ? AND r.created_at < ?');
-    params.push(mulai, selesai);
-  }
+  const waktu = susunFilterWaktu('r.created_at', f);
+  where.push(...waktu.where);
+  params.push(...waktu.params);
 
   return { klausa: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
 }

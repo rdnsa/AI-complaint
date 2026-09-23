@@ -8,7 +8,8 @@ import PanelTanya from '../components/PanelTanya';
 import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
 import { useNavigate } from 'react-router-dom';
 import { api, type Laporan, type Ringkasan, type Sesi, type Statistik } from '../lib/api';
-import { useBahasa, useWaktuRelatif } from '../lib/i18n';
+import FilterWaktu, { WAKTU_KOSONG, type NilaiWaktu } from '../components/FilterWaktu';
+import { useBahasa, useFormatWaktu, useWaktuRelatif } from '../lib/i18n';
 import { useSesi } from '../lib/sesi';
 
 export default function Dashboard() {
@@ -44,6 +45,7 @@ function Papan({ sesi }: { sesi: Sesi }) {
   const [statistik, setStatistik] = useState<Statistik | null>(null);
   const [ringkasan, setRingkasan] = useState<Ringkasan | null>(null);
   const [filter, setFilter] = useState({ status: '', prioritas: '' });
+  const [waktu, setWaktu] = useState<NilaiWaktu>(WAKTU_KOSONG);
   const [memuat, setMemuat] = useState(true);
   const [menyusun, setMenyusun] = useState(false);
   const [tab, setTab] = useState<
@@ -53,7 +55,8 @@ function Papan({ sesi }: { sesi: Sesi }) {
 
   const muat = useCallback(async () => {
     const [l, s, r] = await Promise.all([
-      api.daftarLaporan(filter),
+      // A time filter can reach far back, so allow the full page the server permits.
+      api.daftarLaporan({ ...filter, ...waktu, limit: '200' }),
       api.statistik().catch(() => null),
       api.ringkasan().catch(() => null),
     ]);
@@ -61,7 +64,7 @@ function Papan({ sesi }: { sesi: Sesi }) {
     setStatistik(s);
     setRingkasan(r);
     setMemuat(false);
-  }, [filter]);
+  }, [filter, waktu]);
 
   useEffect(() => {
     muat();
@@ -207,7 +210,12 @@ function Papan({ sesi }: { sesi: Sesi }) {
           </select>
         </div>
 
+        <FilterWaktu nilai={waktu} onUbah={setWaktu} />
+
         <div className="mt-4 space-y-3">
+          {!memuat && (
+            <p className="text-xs text-maroon-600">{t('waktu.jumlah', { n: laporan.length })}</p>
+          )}
           {memuat && <p className="text-maroon-600">{t('dash.memuat_laporan')}</p>}
           {!memuat && !laporan.length && (
             <p className="kartu p-10 text-center text-maroon-600">{t('dash.kosong')}</p>
@@ -254,6 +262,7 @@ function BarisLaporan({
 }) {
   const { t } = useBahasa();
   const waktuRelatif = useWaktuRelatif();
+  const formatWaktu = useFormatWaktu();
 
   // The left edge marks the priority, readable from across the room.
   const tepi =
@@ -273,6 +282,20 @@ function BarisLaporan({
         ))}
         <span className="ml-auto text-xs text-maroon-600">{waktuRelatif(l.created_at)}</span>
       </div>
+
+      {/* The exact moments, in campus time: when the report came in and when it was closed. */}
+      <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-maroon-700">
+        <div className="flex gap-1">
+          <dt className="font-semibold">📥 {t('waktu.masuk')}:</dt>
+          <dd>{formatWaktu(l.created_at)}</dd>
+        </div>
+        {l.selesai_at && (
+          <div className="flex gap-1">
+            <dt className="font-semibold text-emerald-700">✅ {t('waktu.selesai')}:</dt>
+            <dd>{formatWaktu(l.selesai_at)}</dd>
+          </div>
+        )}
+      </dl>
 
       <p className="mt-2.5 font-bold text-maroon-900">{l.toilet_nama}</p>
       <p className="mt-1 text-maroon-800">{l.ringkasan ?? l.teks}</p>

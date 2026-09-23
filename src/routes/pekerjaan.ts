@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { wajibSpv } from '../adapters/session';
 import type { AppEnv } from '../env';
+import { bacaFilterWaktu } from '../repositories/waktu';
 import * as pekerjaan from '../services/pekerjaan-service';
 import * as akun from '../services/user-service';
 
@@ -68,16 +69,19 @@ app.post('/', async (c) => {
   }
 });
 
-/** Supervisor: the work log of every staff member, optionally one of them. */
+/**
+ * Supervisor: the work log of every staff member, optionally one of them,
+ * with the same time filter as the report list.
+ */
 app.get('/', wajibSpv, async (c) => {
-  const { petugas_id, toilet_id, gedung, tanggal } = c.req.query();
+  const q = c.req.query();
   return c.json({
     data: await pekerjaan.daftarPekerjaan(c.env, {
-      petugas_id,
-      toilet_id,
-      gedung,
-      tanggal,
-      limit: angka(c.req.query('limit'), 100, 200),
+      petugas_id: q.petugas_id,
+      toilet_id: q.toilet_id,
+      gedung: q.gedung,
+      ...bacaFilterWaktu(q),
+      limit: angka(q.limit, 100, 200),
     }),
   });
 });

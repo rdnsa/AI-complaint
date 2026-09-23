@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { sesiSaatIni, wajibSpv } from '../adapters/session';
 import { STATUS } from '../domain/types';
 import type { AppEnv } from '../env';
+import { bacaFilterWaktu } from '../repositories/waktu';
 import * as laporan from '../services/report-service';
 import * as akun from '../services/user-service';
 
@@ -96,17 +97,20 @@ app.get('/:id', async (c) => {
   return dto ? c.json(dto) : c.json({ error: 'Laporan tidak ditemukan' }, 404);
 });
 
-/** Staff: the dashboard list, with filters. */
+/**
+ * Supervisor: the dashboard list, with filters. Time: `dari`/`sampai` (WIB
+ * dates, inclusive) and `jam_dari`/`jam_sampai` (WIB hours 0–23, inclusive).
+ */
 app.get('/', wajibSpv, async (c) => {
-  const { status, prioritas, toilet_id, gedung, tanggal } = c.req.query();
+  const q = c.req.query();
   return c.json({
     data: await laporan.laporanDashboard(c.env, {
-      status,
-      prioritas,
-      toilet_id,
-      gedung,
-      tanggal,
-      limit: angka(c.req.query('limit'), 100, 200),
+      status: q.status,
+      prioritas: q.prioritas,
+      toilet_id: q.toilet_id,
+      gedung: q.gedung,
+      ...bacaFilterWaktu(q),
+      limit: angka(q.limit, 100, 200),
     }),
   });
 });

@@ -1,17 +1,16 @@
-import { rentangHariWIB } from '../adapters/clock';
 import type { PekerjaanRow, VerifikasiBukti } from '../domain/types';
 import type { Env } from '../env';
+import { susunFilterWaktu, type FilterWaktu } from './waktu';
 
 /** Every SQL statement about staff work reports lives here. */
 
 const KOLOM = `p.*, t.nama AS toilet_nama, t.gedung_kode, t.gedung_nama, t.lantai, t.jenis`;
 const DARI = `FROM pekerjaan p JOIN toilet_info t ON t.id = p.toilet_id`;
 
-export interface FilterPekerjaan {
+export interface FilterPekerjaan extends FilterWaktu {
   petugas_id?: string;
   toilet_id?: string;
   gedung?: string;
-  tanggal?: string;
   limit?: number;
 }
 
@@ -31,11 +30,9 @@ export async function cari(env: Env, f: FilterPekerjaan): Promise<PekerjaanRow[]
     where.push('t.gedung_kode = ?');
     params.push(f.gedung.toUpperCase());
   }
-  if (f.tanggal) {
-    const { mulai, selesai } = rentangHariWIB(f.tanggal);
-    where.push('p.created_at >= ? AND p.created_at < ?');
-    params.push(mulai, selesai);
-  }
+  const waktu = susunFilterWaktu('p.created_at', f);
+  where.push(...waktu.where);
+  params.push(...waktu.params);
 
   const rows = await env.DB.prepare(
     `SELECT ${KOLOM} ${DARI}

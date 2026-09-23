@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, type Pekerjaan, type PetugasPilihan } from '../lib/api';
-import { useBahasa, useWaktuRelatif } from '../lib/i18n';
+import { useBahasa, useFormatWaktu, useWaktuRelatif } from '../lib/i18n';
+import FilterWaktu, { WAKTU_KOSONG, type NilaiWaktu } from './FilterWaktu';
 
 /**
  * The supervisor's view of the staff work log: which toilets have been
@@ -13,16 +14,18 @@ export default function PanelPekerjaan() {
   const [memuat, setMemuat] = useState(true);
   const [petugas, setPetugas] = useState<PetugasPilihan[]>([]);
   const [petugasId, setPetugasId] = useState('');
+  const [waktu, setWaktu] = useState<NilaiWaktu>(WAKTU_KOSONG);
+  const formatWaktu = useFormatWaktu();
 
   const muat = useCallback(async () => {
     try {
-      setData((await api.daftarPekerjaan({ petugas_id: petugasId, limit: '200' })).data);
+      setData((await api.daftarPekerjaan({ petugas_id: petugasId, ...waktu, limit: '200' })).data);
     } catch {
       setData([]);
     } finally {
       setMemuat(false);
     }
-  }, [petugasId]);
+  }, [petugasId, waktu]);
 
   useEffect(() => {
     muat();
@@ -61,6 +64,10 @@ export default function PanelPekerjaan() {
         ))}
       </select>
 
+      <FilterWaktu nilai={waktu} onUbah={setWaktu} />
+
+      {!memuat && <p className="mt-3 text-xs text-maroon-600">{t('waktu.jumlah', { n: data.length })}</p>}
+
       {!petugasId && perPetugas.length > 1 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {perPetugas.map(([nama, jumlah]) => (
@@ -88,7 +95,10 @@ export default function PanelPekerjaan() {
               <span className="text-sm font-semibold text-maroon-900">{p.petugas}</span>
               <span className="ml-auto text-xs text-maroon-600">{waktuRelatif(p.created_at)}</span>
             </div>
-            <p className="mt-2.5 font-bold text-maroon-900">{p.toilet_nama}</p>
+            <p className="mt-1.5 text-xs text-maroon-700">
+              <span className="font-semibold">🧹 {t('waktu.dibersihkan')}:</span> {formatWaktu(p.created_at)}
+            </p>
+            <p className="mt-2 font-bold text-maroon-900">{p.toilet_nama}</p>
             <p className="mt-1 text-maroon-800">{p.teks}</p>
             {p.foto_url && (
               <figure className="m-0 mt-3">
