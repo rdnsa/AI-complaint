@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { sesiSaatIni, wajibPetugas } from '../adapters/session';
+import { sesiSaatIni, wajibSpv } from '../adapters/session';
 import { STATUS } from '../domain/types';
 import type { AppEnv } from '../env';
 import * as laporan from '../services/report-service';
+import * as akun from '../services/user-service';
 
 /**
  * HTTP layer for reports: parse, validate, delegate, format.
@@ -66,6 +67,22 @@ app.get('/publik', async (c) => {
   );
 });
 
+/**
+ * Public: the reports staff still have to handle, optionally for one floor
+ * (`?gedung=A&lantai=1`). Staff do not sign in, so this cannot require a session.
+ */
+app.get('/terbuka', async (c) => {
+  const { gedung, lantai } = c.req.query();
+  const nomorLantai = lantai !== undefined && /^\d{1,2}$/.test(lantai) ? Number(lantai) : undefined;
+  return c.json({
+    data: await laporan.laporanTerbuka(c.env, {
+      gedung: gedung && /^[A-Za-z]$/.test(gedung) ? gedung : undefined,
+      lantai: nomorLantai,
+      limit: angka(c.req.query('limit'), 100, 200),
+    }),
+  });
+});
+
 /** Reporter: the reports filed under their own account. */
 app.get('/saya', async (c) => {
   const sesi = await sesiSaatIni(c);
@@ -80,7 +97,7 @@ app.get('/:id', async (c) => {
 });
 
 /** Staff: the dashboard list, with filters. */
-app.get('/', wajibPetugas, async (c) => {
+app.get('/', wajibSpv, async (c) => {
   const { status, prioritas, toilet_id, gedung, tanggal } = c.req.query();
   return c.json({
     data: await laporan.laporanDashboard(c.env, {
@@ -97,23 +114,39 @@ app.get('/', wajibPetugas, async (c) => {
 const UbahStatusSchema = z.object({
   status: z.enum(STATUS),
   foto_selesai_key: z.string().max(200).nullish(),
+  petugas_id: z.string().max(64).nullish(),
 });
 
 /**
  * Staff: mark a report as being worked on, or as resolved.
  *
- * Closing needs a proof photo, and the photo is judged by the vision model
- * before the status changes — a photo of a dirty toilet is refused.
+ * Staff do not sign in; they send the `petugas_id` picked on the dropdown,
+ * which must belong to an active staff member. A signed-in supervisor may act
+ * under their own name instead. Closing needs a proof photo, and the photo is
+ * judged by the vision model before the status changes — a photo of a dirty
+ * toilet is refused.
  */
-app.patch('/:id', wajibPetugas, async (c) => {
+app.patch('/:id', async (c) => {
   const parsed = UbahStatusSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'Status tidak valid' }, 400);
+
+  const sesi = await sesiSaatIni(c);
+  let pelaku: string;
+  if (parsed.data.petugas_id) {
+    const petugas = await akun.cariPetugasAktif(c.env, parsed.data.petugas_id);
+    if (!petugas) return c.json({ error: 'Nama petugas tidak dikenal. Pilih ulang namamu.' }, 400);
+    pelaku = petugas.nama;
+  } else if (sesi?.peran === 'spv') {
+    pelaku = sesi.nama;
+  } else {
+    return c.json({ error: 'Pilih namamu dulu' }, 400);
+  }
 
   const hasil = await laporan.ubahStatus(
     c.env,
     c.req.param('id'),
     parsed.data.status,
-    c.get('sesi').nama,
+    pelaku,
     parsed.data.foto_selesai_key ?? null,
   );
 
@@ -145,7 +178,7 @@ app.patch('/:id', wajibPetugas, async (c) => {
 });
 
 /** Staff: retry the analysis of a report the LLM failed on. */
-app.post('/:id/analisa-ulang', wajibPetugas, async (c) => {
+app.post('/:id/analisa-ulang', wajibSpv, async (c) => {
   const id = c.req.param('id');
   if (!(await laporan.mintaAnalisisUlang(c.env, id))) {
     return c.json({ error: 'Laporan tidak ditemukan' }, 404);
@@ -155,7 +188,7 @@ app.post('/:id/analisa-ulang', wajibPetugas, async (c) => {
 });
 
 /** Staff: delete a report permanently, keeping a copy in the activity log. */
-app.delete('/:id', wajibPetugas, async (c) => {
+app.delete('/:id', wajibSpv, async (c) => {
   const terhapus = await laporan.hapusLaporan(c.env, c.req.param('id'), c.get('sesi').nama);
   return terhapus ? c.json({ ok: true }) : c.json({ error: 'Laporan tidak ditemukan' }, 404);
 });

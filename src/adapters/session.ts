@@ -61,6 +61,9 @@ export function wajibPeran(...boleh: Peran[]): MiddlewareHandler<AppEnv> {
   };
 }
 
-/** Staff and admins both work on reports. */
-export const wajibPetugas = wajibPeran('admin', 'petugas');
-export const wajibAdmin = wajibPeran('admin');
+/**
+ * Only the supervisor signs in to manage anything. Cleaning staff never hold a
+ * session: they pick their name on the floor page instead (see `petugas_id`
+ * in the report and work-report routes).
+ */
+export const wajibSpv = wajibPeran('spv');

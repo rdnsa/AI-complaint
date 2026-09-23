@@ -29,7 +29,8 @@ app.post('/', async (c) => {
   }
   if (file.size > MAKS_BYTE) return c.json({ error: 'Ukuran foto maksimal 5 MB' }, 413);
 
-  const jenis: JenisFoto = c.req.query('jenis') === 'bukti' ? 'bukti' : 'laporan';
+  const diminta = c.req.query('jenis');
+  const jenis: JenisFoto = diminta === 'bukti' || diminta === 'kerja' ? diminta : 'laporan';
   const key = await simpanFoto(c.env, file, jenis);
 
   return c.json({ key, url: urlFoto(key) }, 201);

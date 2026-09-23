@@ -1,14 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import Kamera from '../components/Kamera';
 import Kop from '../components/Kop';
+import SaklarPeran from '../components/SaklarPeran';
 import { api, type Jenis, type Lokasi } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
+import { bacaTersimpan } from '../lib/petugas';
 import { useSesi } from '../lib/sesi';
 
 const IKON: Record<Jenis, string> = { pria: '♂', wanita: '♀', disabilitas: '♿' };
 
 export default function Lapor() {
   const { lokasiId = '' } = useParams();
+  const [cari] = useSearchParams();
+  // A phone that has picked a staff name belongs to a cleaner: the door QR
+  // opens their page directly. `?sebagai=mahasiswa` (the switch) opts out.
+  if (cari.get('sebagai') !== 'mahasiswa' && bacaTersimpan()) {
+    return <Navigate to={`/petugas/${lokasiId}`} replace />;
+  }
+  return <FormMahasiswa lokasiId={lokasiId} />;
+}
+
+function FormMahasiswa({ lokasiId }: { lokasiId: string }) {
   const navigate = useNavigate();
   const { t } = useBahasa();
   const { sesi } = useSesi();
@@ -21,7 +34,7 @@ export default function Lapor() {
   const [pratinjau, setPratinjau] = useState<string | null>(null);
   const [mengirim, setMengirim] = useState(false);
   const [galat, setGalat] = useState<string | null>(null);
-  const inputFoto = useRef<HTMLInputElement>(null);
+  const [kamera, setKamera] = useState(false);
 
   useEffect(() => {
     api
@@ -98,6 +111,8 @@ export default function Lapor() {
       />
 
       <main className="mx-auto max-w-lg px-4">
+        <SaklarPeran lokasiId={lokasiId} aktif="mahasiswa" />
+
         <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-maroon-900">
           {t('umum.lantai', { n: lokasi.lantai })}
         </h2>
@@ -171,15 +186,11 @@ export default function Lapor() {
             <p className="-mt-1 mb-2 text-xs leading-relaxed text-maroon-600">
               {t('lapor.foto_alasan')}
             </p>
-            <input
-              ref={inputFoto}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              capture="environment"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0] ?? null;
-                if (f && f.size > 5 * 1024 * 1024) return setGalat(t('lapor.galat_foto'));
+            {/* Kamera langsung, bukan pemilih berkas: foto dari galeri tidak bisa dipakai. */}
+            <Kamera
+              buka={kamera}
+              onTutup={() => setKamera(false)}
+              onAmbil={(f) => {
                 setGalat(null);
                 setFoto(f);
               }}
@@ -189,10 +200,7 @@ export default function Lapor() {
                 <img src={pratinjau} alt="" className="w-full" />
                 <button
                   type="button"
-                  onClick={() => {
-                    setFoto(null);
-                    if (inputFoto.current) inputFoto.current.value = '';
-                  }}
+                  onClick={() => setFoto(null)}
                   className="absolute right-2 top-2 rounded-lg bg-tetap-maroon/75 px-3 py-1.5 text-sm font-semibold text-white"
                 >
                   {t('lapor.hapus_foto')}
@@ -201,7 +209,7 @@ export default function Lapor() {
             ) : (
               <button
                 type="button"
-                onClick={() => inputFoto.current?.click()}
+                onClick={() => setKamera(true)}
                 className="tombol-netral w-full border-dashed py-3.5"
               >
                 📷 {t('lapor.ambil_foto')}

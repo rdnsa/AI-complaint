@@ -1,4 +1,5 @@
-export type Peran = 'admin' | 'petugas' | 'pelapor';
+/** Only 'spv' and 'pelapor' ever sign in; 'petugas' is a name on the dropdown. */
+export type Peran = 'spv' | 'petugas' | 'pelapor';
 
 export interface Sesi {
   id: string;
@@ -8,7 +9,8 @@ export interface Sesi {
 
 export interface AkunPengelola {
   id: string;
-  username: string;
+  /** Null for cleaning staff, who never sign in. */
+  username: string | null;
   nama: string;
   peran: Peran;
   aktif: number;
@@ -68,6 +70,30 @@ export interface Laporan {
   created_at: string;
 }
 
+/** One name on the staff dropdown. */
+export interface PetugasPilihan {
+  id: string;
+  nama: string;
+}
+
+/** A staff work report: which toilet was cleaned, by whom, with an AI-checked photo. */
+export interface Pekerjaan {
+  id: string;
+  toilet_id: string;
+  toilet_nama: string;
+  gedung_kode: string;
+  gedung_nama: string;
+  lantai: number;
+  jenis: Jenis;
+  petugas_id: string;
+  petugas: string;
+  teks: string;
+  foto_url: string | null;
+  bukti_ai_hasil: HasilBukti;
+  bukti_ai_alasan: string | null;
+  created_at: string;
+}
+
 /** A report on the public board: no raw text, no photo, no staff name. */
 export interface LaporanPublik {
   id: string;
@@ -119,7 +145,8 @@ export interface Aktivitas {
     | 'pengguna'
     | 'bukti_ditolak'
     | 'verifikasi_gagal'
-    | 'tanya';
+    | 'tanya'
+    | 'kerja';
   report_id: string | null;
   pelaku: string;
   ringkas: string;
@@ -208,8 +235,11 @@ export const api = {
   /** The signed-in reporter's own reports. */
   laporanSaya: () => req<{ data: Laporan[] }>('/api/reports/saya'),
 
-  /** `jenis` separates the reporter's condition photo from the staff proof photo. */
-  unggahFoto: (file: File, jenis: 'laporan' | 'bukti' = 'laporan') => {
+  /**
+   * `jenis` separates the reporter's condition photo, the staff proof photo,
+   * and the photo on a staff work report.
+   */
+  unggahFoto: (file: File, jenis: 'laporan' | 'bukti' | 'kerja' = 'laporan') => {
     const fd = new FormData();
     fd.append('file', file);
     return req<{ key: string; url: string }>(`/api/uploads?jenis=${jenis}`, {
@@ -229,10 +259,14 @@ export const api = {
   keluar: () => req<{ ok: boolean }>('/api/auth/keluar', { method: 'POST' }),
   saya: () => req<Sesi>('/api/auth/saya'),
 
-  // --- admin only ---
+  // --- supervisor only ---
   daftarPengguna: () => req<{ data: AkunPengelola[] }>('/api/pengguna'),
-  buatPengguna: (body: { username: string; nama: string; password: string }) =>
-    req<AkunPengelola>('/api/pengguna', { method: 'POST', body: JSON.stringify(body) }),
+  /** A staff member is a name only; another supervisor needs credentials. */
+  buatPengguna: (
+    body:
+      | { peran: 'petugas'; nama: string }
+      | { peran: 'spv'; username: string; nama: string; password: string },
+  ) => req<AkunPengelola>('/api/pengguna', { method: 'POST', body: JSON.stringify(body) }),
   ubahPengguna: (id: string, body: { nama?: string; password?: string; aktif?: boolean }) =>
     req<{ ok: boolean }>(`/api/pengguna/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 
@@ -245,12 +279,39 @@ export const api = {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: Laporan[] }>(`/api/reports?${q}`);
   },
+  // --- cleaning staff (no sign-in: they send the id picked on the dropdown) ---
+  daftarPetugas: () => req<{ data: PetugasPilihan[] }>('/api/petugas'),
+  /** Reports still waiting for staff; `gedung` + `lantai` narrow it to one floor. */
+  laporanTerbuka: (filter: { gedung?: string; lantai?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (filter.gedung) q.set('gedung', filter.gedung);
+    if (filter.lantai !== undefined) q.set('lantai', String(filter.lantai));
+    return req<{ data: Laporan[] }>(`/api/reports/terbuka?${q}`);
+  },
   /** Closing with a photo takes a few seconds: the server runs the vision check first. */
-  ubahStatus: (id: string, status: StatusLaporan, foto_selesai_key?: string) =>
+  ubahStatus: (
+    id: string,
+    status: StatusLaporan,
+    extra: { petugas_id?: string; foto_selesai_key?: string } = {},
+  ) =>
     req<{ ok: boolean; status: StatusLaporan; verifikasi: { hasil: HasilBukti; alasan: string } | null }>(`/api/reports/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ status, foto_selesai_key }),
+      body: JSON.stringify({ status, ...extra }),
     }),
+  /** Takes a few seconds: the server runs the vision check before storing it. */
+  kirimPekerjaan: (body: { petugas_id: string; toilet_id: string; teks: string; foto_key: string }) =>
+    req<{
+      id: string;
+      toilet: string;
+      duplikat: boolean;
+      verifikasi: { hasil: HasilBukti; alasan: string } | null;
+    }>('/api/pekerjaan', { method: 'POST', body: JSON.stringify(body) }),
+  /** Supervisor only: the work log, optionally filtered by `petugas_id`. */
+  daftarPekerjaan: (filter: Record<string, string> = {}) => {
+    const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
+    return req<{ data: Pekerjaan[] }>(`/api/pekerjaan?${q}`);
+  },
+
   analisaUlang: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/analisa-ulang`, { method: 'POST' }),
   hapusLaporan: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 

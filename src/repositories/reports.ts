@@ -119,6 +119,36 @@ export async function cariUntukPublik(
   };
 }
 
+/**
+ * Reports still waiting for staff, for the staff pages. Optionally one floor:
+ * the floor QR leads staff to exactly the complaints they can fix there.
+ */
+export async function cariTerbuka(
+  env: Env,
+  f: { gedung?: string; lantai?: number; limit?: number },
+): Promise<ReportRow[]> {
+  const where = [`r.status <> 'selesai'`];
+  const params: unknown[] = [];
+  if (f.gedung) {
+    where.push('t.gedung_kode = ?');
+    params.push(f.gedung.toUpperCase());
+  }
+  if (f.lantai !== undefined) {
+    where.push('t.lantai = ?');
+    params.push(f.lantai);
+  }
+  const rows = await env.DB.prepare(
+    `SELECT ${KOLOM} ${DARI} WHERE ${where.join(' AND ')}
+      ORDER BY
+        CASE r.prioritas WHEN 'tinggi' THEN 0 WHEN 'sedang' THEN 1 WHEN 'rendah' THEN 2 ELSE 3 END,
+        r.created_at
+      LIMIT ?`,
+  )
+    .bind(...params, f.limit ?? 100)
+    .all<ReportRow>();
+  return rows.results;
+}
+
 /** The reports filed by one account, for the "My reports" list. */
 export async function cariMilikPelapor(env: Env, pelaporId: string): Promise<ReportRow[]> {
   const rows = await env.DB.prepare(

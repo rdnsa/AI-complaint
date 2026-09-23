@@ -4,6 +4,7 @@ import { useBahasa, useWaktuRelatif } from '../lib/i18n';
 
 const AKSI = [
   'lapor',
+  'kerja',
   'status',
   'bukti_ditolak',
   'hapus',
@@ -17,6 +18,7 @@ const AKSI = [
 
 const WARNA: Record<string, string> = {
   lapor: 'bg-bata-50 text-bata-700 ring-bata-200',
+  kerja: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
   status: 'bg-toska-500/10 text-toska-600 ring-toska-400/40',
   hapus: 'bg-red-50 text-red-800 ring-red-200',
   analisis: 'bg-krem-100 text-maroon-700 ring-krem-300',

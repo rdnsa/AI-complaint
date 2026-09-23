@@ -6,7 +6,7 @@
  * a Worker.
  */
 
-export const PERAN = ['admin', 'petugas', 'pelapor'] as const;
+export const PERAN = ['spv', 'petugas', 'pelapor'] as const;
 export type Peran = (typeof PERAN)[number];
 
 export const KATEGORI = [
@@ -91,6 +91,34 @@ export function toDTO(row: ReportRow): ReportDTO {
     foto_url: urlFoto(foto_key),
     foto_selesai_url: urlFoto(foto_selesai_key),
   };
+}
+
+/** A staff work report ("I cleaned this toilet"), joined with its location. */
+export interface PekerjaanRow {
+  id: string;
+  toilet_id: string;
+  petugas_id: string;
+  petugas: string;
+  teks: string;
+  foto_key: string;
+  bukti_ai_hasil: HasilBukti;
+  bukti_ai_alasan: string | null;
+  bukti_ai_model: string | null;
+  bukti_ai_ms: number | null;
+  created_at: string;
+  toilet_nama?: string;
+  gedung_kode?: string;
+  gedung_nama?: string;
+  lantai?: number;
+  jenis?: string;
+}
+
+export interface PekerjaanDTO extends Omit<PekerjaanRow, 'foto_key'> {
+  foto_url: string | null;
+}
+
+export function pekerjaanKeDTO({ foto_key, ...rest }: PekerjaanRow): PekerjaanDTO {
+  return { ...rest, foto_url: urlFoto(foto_key) };
 }
 
 /**

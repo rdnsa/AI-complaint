@@ -23,8 +23,8 @@ export default function Masuk() {
     try {
       const sesi = await api.masuk(username, password);
       pasang(sesi);
-      // Managers go straight to the dashboard; reporters return to the landing page.
-      navigate(sesi.peran === 'pelapor' ? '/' : '/petugas', { replace: true });
+      // The supervisor goes straight to the dashboard; reporters return to the landing page.
+      navigate(sesi.peran === 'spv' ? '/spv' : '/', { replace: true });
     } catch (err) {
       setGalat(err instanceof Error ? err.message : t('login.galat'));
       setProses(false);

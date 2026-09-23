@@ -3,11 +3,12 @@ import type { Env } from '../env';
 /**
  * Photo storage on R2.
  *
- * Two kinds of photo share one bucket, separated by prefix: 'laporan' for the
+ * Three kinds of photo share one bucket, separated by prefix: 'laporan' for the
  * condition photo from a reporter, 'bukti' for the proof-of-completion photo
- * from staff. Only these two prefixes may ever be read back.
+ * from staff, 'kerja' for the photo on a staff work report. Only these
+ * prefixes may ever be read back.
  */
-export const FOLDER = { laporan: 'laporan', bukti: 'bukti' } as const;
+export const FOLDER = { laporan: 'laporan', bukti: 'bukti', kerja: 'kerja' } as const;
 export type JenisFoto = keyof typeof FOLDER;
 
 export const MAKS_BYTE = 5 * 1024 * 1024; // enough for a phone photo after browser compression

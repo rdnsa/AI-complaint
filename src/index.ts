@@ -6,6 +6,8 @@ import activityRoutes from './routes/activity';
 import authRoutes from './routes/auth';
 import leaderboardRoutes from './routes/leaderboard';
 import locationRoutes from './routes/locations';
+import pekerjaanRoutes from './routes/pekerjaan';
+import petugasRoutes from './routes/petugas';
 import reportRoutes from './routes/reports';
 import summaryRoutes from './routes/summary';
 import tanyaRoutes from './routes/tanya';
@@ -29,6 +31,8 @@ app.get('/api/health', (c) => c.json({ ok: true, waktu: new Date().toISOString()
 app.route('/api/auth', authRoutes);
 app.route('/api/lokasi', locationRoutes);
 app.route('/api/reports', reportRoutes);
+app.route('/api/pekerjaan', pekerjaanRoutes);
+app.route('/api/petugas', petugasRoutes);
 app.route('/api/uploads', uploadRoutes);
 app.route('/api/summary', summaryRoutes);
 app.route('/api/aktivitas', activityRoutes);

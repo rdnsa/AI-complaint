@@ -12,7 +12,7 @@ import { catat } from './activity-service';
  * Feature #6: anyone asks a question in plain language, the model decides
  * which aggregate to fetch, and answers from that aggregate alone.
  *
- * Two audiences share the feature. Staff (admin, petugas) may ask about
+ * Two audiences share the feature. The supervisor (SPV) may ask about
  * individual staff members; the public gets the same data minus staff names,
  * the same way the public report board hides them.
  */
@@ -191,7 +191,7 @@ async function jalankanAlat(
 
 function promptSistem(hariIni: string, staf: boolean): string {
   const penanya = staf
-    ? 'Penanya adalah petugas atau admin pengelola sistem.'
+    ? 'Penanya adalah SPV (supervisor) yang memantau laporan dan kerja petugas.'
     : 'Penanya adalah warga kampus (mahasiswa/dosen/tamu). Jangan menyebut nama petugas perorangan.';
   return `Kamu adalah asisten analisis data untuk sistem pelaporan toilet kampus UPI Tasikmalaya.
 ${penanya}

@@ -4,7 +4,11 @@ import InputSandi from './InputSandi';
 import { useBahasa } from '../lib/i18n';
 import { useSesi } from '../lib/sesi';
 
-/** Staff account management — visible and usable by admins only. */
+/**
+ * The supervisor maintains two lists here: the staff names that appear on the
+ * floor-page dropdown (a name is all a cleaner needs), and the supervisor
+ * accounts that sign in to this dashboard.
+ */
 export default function PanelPengguna() {
   const { t } = useBahasa();
   const { sesi } = useSesi();
@@ -43,11 +47,13 @@ export default function PanelPengguna() {
           <li key={u.id} className="kartu p-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-bold text-maroon-900">{u.nama}</span>
-              <code className="rounded bg-krem-100 px-1.5 py-0.5 text-xs text-maroon-700">
-                {u.username}
-              </code>
+              {u.username && (
+                <code className="rounded bg-krem-100 px-1.5 py-0.5 text-xs text-maroon-700">
+                  {u.username}
+                </code>
+              )}
               <span className="rounded-full bg-krem-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-maroon-600">
-                {u.peran}
+                {u.peran === 'spv' ? 'SPV' : t('peran.petugas')}
               </span>
               {!u.aktif && (
                 <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 ring-1 ring-red-200">
@@ -61,7 +67,7 @@ export default function PanelPengguna() {
                 >
                   {sedangUbah === u.id ? t('akun.batal') : t('akun.ubah')}
                 </button>
-                {/* Admin yang sedang masuk tidak boleh mengunci dirinya sendiri. */}
+                {/* SPV yang sedang masuk tidak boleh mengunci dirinya sendiri. */}
                 {u.id !== sesi?.id && (
                   <button
                     onClick={async () => {
@@ -101,6 +107,7 @@ function FormTambah({
   onGalat: (p: string | null) => void;
 }) {
   const { t } = useBahasa();
+  const [peran, setPeran] = useState<'petugas' | 'spv'>('petugas');
   const [username, setUsername] = useState('');
   const [nama, setNama] = useState('');
   const [password, setPassword] = useState('');
@@ -111,7 +118,9 @@ function FormTambah({
     setProses(true);
     onGalat(null);
     try {
-      await api.buatPengguna({ username, nama, password });
+      await api.buatPengguna(
+        peran === 'petugas' ? { peran, nama } : { peran, username, nama, password },
+      );
       setUsername('');
       setNama('');
       setPassword('');
@@ -125,16 +134,29 @@ function FormTambah({
 
   return (
     <form onSubmit={kirim} className="kartu p-4">
-      <h3 className="judul-bagian mb-3">{t('akun.tambah')}</h3>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <input
-          className="input"
-          placeholder={t('akun.username')}
-          autoCapitalize="none"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h3 className="judul-bagian">{peran === 'petugas' ? t('akun.tambah') : t('akun.tambah_spv')}</h3>
+        <select
+          className="input ml-auto !w-auto !py-1.5 text-sm"
+          value={peran}
+          onChange={(e) => setPeran(e.target.value as 'petugas' | 'spv')}
+        >
+          <option value="petugas">{t('peran.petugas')}</option>
+          <option value="spv">SPV</option>
+        </select>
+      </div>
+      {peran === 'petugas' && <p className="mb-3 text-xs text-maroon-600">{t('akun.petugas_tanpa_login')}</p>}
+      <div className={`grid gap-3 ${peran === 'spv' ? 'sm:grid-cols-3' : ''}`}>
+        {peran === 'spv' && (
+          <input
+            className="input"
+            placeholder={t('akun.username')}
+            autoCapitalize="none"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        )}
         <input
           className="input"
           placeholder={t('akun.nama')}
@@ -142,16 +164,18 @@ function FormTambah({
           onChange={(e) => setNama(e.target.value)}
           required
         />
-        <InputSandi
-          placeholder={t('login.password')}
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        {peran === 'spv' && (
+          <InputSandi
+            placeholder={t('login.password')}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        )}
       </div>
       <button type="submit" disabled={proses} className="tombol-utama mt-3 !py-2 text-sm">
-        {t('akun.tambah')}
+        {peran === 'petugas' ? t('akun.tambah') : t('akun.tambah_spv')}
       </button>
     </form>
   );
@@ -191,11 +215,13 @@ function FormUbah({
 
   return (
     <form onSubmit={kirim} className="mt-3 border-t border-krem-200 pt-3">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={`grid gap-3 ${akun.peran === 'spv' ? 'sm:grid-cols-2' : ''}`}>
         <div>
           <label className="label">{t('akun.nama')}</label>
           <input className="input" value={nama} onChange={(e) => setNama(e.target.value)} required />
         </div>
+        {/* Cleaning staff have no password to change. */}
+        {akun.peran === 'spv' && (
         <div>
           <label className="label">{t('akun.password_baru')}</label>
           <InputSandi
@@ -205,6 +231,7 @@ function FormUbah({
           />
           <p className="mt-1 text-xs text-maroon-600">{t('akun.kosongkan_sandi')}</p>
         </div>
+        )}
       </div>
       <button type="submit" disabled={proses} className="tombol-utama mt-3 !py-2 text-sm">
         {t('akun.simpan')}

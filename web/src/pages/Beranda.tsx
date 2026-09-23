@@ -67,7 +67,30 @@ export default function Beranda() {
           </section>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-permukaan px-4 py-3 ring-1 ring-krem-200">
+        {/* Tiga pihak, tiga pintu. Mahasiswa dan petugas tidak perlu login. */}
+        <section className="mt-6 grid gap-3 sm:grid-cols-2">
+          <a href="#pilih-lokasi" className="kartu flex items-center gap-3 p-4 hover:shadow-naik">
+            <span aria-hidden className="text-3xl">
+              🎓
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-extrabold text-maroon-900">{t('peran.mahasiswa')}</span>
+              <span className="block text-sm text-maroon-700">{t('peran.mahasiswa_isi')}</span>
+            </span>
+          </a>
+          <Link to="/petugas" className="kartu flex items-center gap-3 p-4 hover:shadow-naik">
+            <span aria-hidden className="text-3xl">
+              🧹
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-extrabold text-maroon-900">{t('peran.petugas')}</span>
+              <span className="block text-sm text-maroon-700">{t('peran.petugas_isi')}</span>
+            </span>
+            <span className="shrink-0 font-bold text-bata-600">→</span>
+          </Link>
+        </section>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-permukaan px-4 py-3 ring-1 ring-krem-200">
           {sesi ? (
             <>
               <span className="font-semibold text-maroon-900">
@@ -131,7 +154,9 @@ export default function Beranda() {
           </figcaption>
         </figure>
 
-        <h2 className="judul-bagian mt-8">{t('beranda.pilih')}</h2>
+        <h2 id="pilih-lokasi" className="judul-bagian mt-8 scroll-mt-20">
+          {t('beranda.pilih')}
+        </h2>
 
         {memuat ? (
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -175,10 +200,10 @@ export default function Beranda() {
         )}
 
         <Link
-          to="/petugas"
+          to={sesi?.peran === 'spv' ? '/spv' : '/masuk'}
           className="mx-auto mt-10 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
         >
-          {t('nav.petugas')}
+          {sesi?.peran === 'spv' ? t('nav.ke_dashboard_spv') : t('nav.petugas')}
         </Link>
       </main>
     </div>

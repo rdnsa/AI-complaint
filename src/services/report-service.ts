@@ -1,5 +1,5 @@
 import { periksaFotoBukti } from '../adapters/llm';
-import { bacaFoto, hapusFoto } from '../adapters/storage';
+import { bacaFoto, FOLDER, hapusFoto } from '../adapters/storage';
 import {
   bolehDiselesaikan,
   toDTO,
@@ -61,6 +61,29 @@ export async function satuLaporan(env: Env, id: string): Promise<ReportDTO | nul
 
 export async function laporanDashboard(env: Env, filter: laporan.FilterLaporan) {
   return (await laporan.cariUntukDashboard(env, filter)).map(toDTO);
+}
+
+/**
+ * What staff need to fix a complaint: the student's text and condition photo,
+ * the AI summary and advice. The reporter's account and the AI internals are
+ * left out, since this list is readable without signing in.
+ */
+export async function laporanTerbuka(
+  env: Env,
+  filter: { gedung?: string; lantai?: number; limit?: number },
+) {
+  return (await laporan.cariTerbuka(env, filter)).map((baris) => {
+    const {
+      pelapor_id: _pelapor,
+      ai_error: _galat,
+      ai_model: _model,
+      ai_ms: _ms,
+      bukti_ai_model: _bmodel,
+      bukti_ai_ms: _bms,
+      ...dto
+    } = toDTO(baris);
+    return dto;
+  });
 }
 
 export async function laporanMilikPelapor(env: Env, pelaporId: string) {
@@ -126,7 +149,9 @@ async function periksaBuktiBaru(
   key: string,
   petugas: string,
 ): Promise<HasilPeriksa> {
-  const foto = await bacaFoto(env, key);
+  // Only a photo uploaded as proof counts: closing is open to anyone who picks
+  // a staff name, so a student's condition photo must not be reusable here.
+  const foto = key.startsWith(`${FOLDER.bukti}/`) ? await bacaFoto(env, key) : null;
   if (!foto) return { jenis: 'foto-tidak-ditemukan' };
 
   const mulai = Date.now();

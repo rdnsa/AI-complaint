@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { tanggalWIB } from '../adapters/clock';
-import { wajibPetugas } from '../adapters/session';
+import { wajibSpv } from '../adapters/session';
 import type { AppEnv } from '../env';
 import * as ringkasan from '../services/summary-service';
 
@@ -15,27 +15,27 @@ function tanggalDari(c: { req: { query: (k: string) => string | undefined } }): 
 }
 
 /** The counters for the summary cards at the top of the dashboard. */
-app.get('/stats', wajibPetugas, async (c) => {
+app.get('/stats', wajibSpv, async (c) => {
   const tanggal = tanggalDari(c);
   if (!tanggal) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
   return c.json(await ringkasan.statistikHarian(c.env, tanggal));
 });
 
 /** The numbers behind the dashboard charts. */
-app.get('/grafik', wajibPetugas, async (c) => {
+app.get('/grafik', wajibSpv, async (c) => {
   const hari = Math.min(Number(c.req.query('hari') ?? 14) || 14, 90);
   return c.json(await ringkasan.dataGrafik(c.env, hari));
 });
 
 /** The stored summary for one date (default: today). */
-app.get('/', wajibPetugas, async (c) => {
+app.get('/', wajibSpv, async (c) => {
   const tanggal = tanggalDari(c);
   if (!tanggal) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
   return c.json(await ringkasan.ringkasanTersimpan(c.env, tanggal));
 });
 
 /** Write the summary right now, without waiting for the afternoon cron. */
-app.post('/generate', wajibPetugas, async (c) => {
+app.post('/generate', wajibSpv, async (c) => {
   const tanggal = tanggalDari(c);
   if (!tanggal) return c.json({ error: 'Format tanggal harus YYYY-MM-DD' }, 400);
   try {
