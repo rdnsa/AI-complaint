@@ -17,6 +17,7 @@ import {
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSelectedStaff } from '../lib/staff';
 import { CameraGlyph, CheckGlyph, DoneMark, ReportsMark, StaffMark, ToiletTypeGlyph } from '../components/Marks';
+import ZoomableImage from '../components/ZoomableImage';
 
 
 type Rejection = { verdict: ProofVerdict | null; reason: string | null };
@@ -255,9 +256,12 @@ function TaskCard({
         </p>
       )}
       {r.photo_url && (
-        <a href={r.photo_url} target="_blank" rel="noreferrer" className="mt-3 block">
-          <img src={r.photo_url} alt="" className="max-h-56 rounded-xl" />
-        </a>
+        <ZoomableImage
+          src={r.photo_url}
+          caption={`${t('photo.report')} · ${r.toilet_name}`}
+          frameClassName="mt-3"
+          className="max-h-56"
+        />
       )}
 
       {rejection && <RejectionBox rejection={rejection} />}

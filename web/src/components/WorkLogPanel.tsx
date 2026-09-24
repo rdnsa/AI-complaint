@@ -3,6 +3,7 @@ import { api, type StaffOption, type WorkLog } from '../lib/api';
 import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from './TimeFilter';
 import { CheckGlyph, DropGlyph } from './Marks';
+import ZoomableImage from './ZoomableImage';
 
 /**
  * The supervisor's view of the staff work log: which toilets have been
@@ -105,9 +106,12 @@ export default function WorkLogPanel() {
             <p className="mt-1 text-maroon-800">{w.description}</p>
             {w.photo_url && (
               <figure className="m-0 mt-3">
-                <a href={w.photo_url} target="_blank" rel="noreferrer">
-                  <img src={w.photo_url} alt="" className="max-h-44 rounded-xl ring-2 ring-emerald-400" />
-                </a>
+                <ZoomableImage
+                  src={w.photo_url}
+                  caption={`${t('dashboard.proof')} · ${w.toilet_name}`}
+                  frameClassName="ring-2 ring-emerald-400"
+                  className="max-h-44"
+                />
                 {w.proof_reason && (
                   <figcaption className="mt-1 max-w-xs text-xs italic text-maroon-600">
                     {w.proof_reason}

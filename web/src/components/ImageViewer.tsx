@@ -17,11 +17,12 @@ type Point = { x: number; y: number };
 const START: View = { s: 1, x: 0, y: 0 };
 
 /**
- * The campus map, full screen, on the same page. Pinch, scroll or double-tap to
- * zoom; drag to move around. Opening the JPEG in a new tab lost the page and,
+ * A picture (the campus map, a report photo, a proof photo) full screen, on
+ * the same page. Pinch, scroll or double-tap to zoom; drag to move around.
+ * Opening the file in a new tab lost the page and,
  * on a phone, often the way back to it.
  */
-export default function MapViewer({
+export default function ImageViewer({
   src,
   alt,
   caption,
@@ -170,8 +171,8 @@ export default function MapViewer({
           ref={closeButton}
           type="button"
           onClick={onClose}
-          aria-label={t('home.map_close')}
-          title={t('home.map_close')}
+          aria-label={t('viewer.close')}
+          title={t('viewer.close')}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 transition hover:bg-white/20"
         >
           <CloseGlyph className="h-5 w-5" />
@@ -208,7 +209,7 @@ export default function MapViewer({
             type="button"
             onClick={() => zoomFromCentre(1 / 1.6)}
             disabled={!zoomed}
-            aria-label={t('home.map_zoom_out')}
+            aria-label={t('viewer.zoom_out')}
             className="grid h-9 w-9 place-items-center rounded-full transition hover:bg-white/15 disabled:opacity-35"
           >
             <MinusGlyph />
@@ -220,13 +221,13 @@ export default function MapViewer({
             type="button"
             onClick={() => zoomFromCentre(1.6)}
             disabled={view.s >= MAX_SCALE}
-            aria-label={t('home.map_zoom_in')}
+            aria-label={t('viewer.zoom_in')}
             className="grid h-9 w-9 place-items-center rounded-full transition hover:bg-white/15 disabled:opacity-35"
           >
             <PlusGlyph />
           </button>
         </div>
-        <p className="text-center text-xs text-white/60">{t('home.map_hint')}</p>
+        <p className="text-center text-xs text-white/60">{t('viewer.hint')}</p>
       </div>
     </div>,
     document.body,

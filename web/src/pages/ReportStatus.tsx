@@ -7,6 +7,7 @@ import { api, type Report } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { CheckGlyph } from '../components/Marks';
+import ZoomableImage from '../components/ZoomableImage';
 
 /**
  * Confirmation page for the reporter. The report is stored instantly while the
@@ -77,7 +78,12 @@ export default function ReportStatus() {
               <p className="text-sm font-semibold text-bata-600">{report.toilet_name}</p>
               <p className="mt-1.5 whitespace-pre-wrap text-maroon-900">{report.description}</p>
               {report.photo_url && (
-                <img src={report.photo_url} alt="" className="mt-3 w-full rounded-xl" />
+                <ZoomableImage
+                  src={report.photo_url}
+                  caption={`${t('photo.report')} · ${report.toilet_name}`}
+                  frameClassName="mt-3 w-full"
+                  className="w-full"
+                />
               )}
             </div>
 

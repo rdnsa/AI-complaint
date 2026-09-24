@@ -11,6 +11,7 @@ import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from '../components/Time
 import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { CheckGlyph, InboxGlyph, SupervisorMark } from '../components/Marks';
+import ZoomableImage from '../components/ZoomableImage';
 
 export default function SupervisorDashboard() {
   const { t } = useLanguage();
@@ -323,19 +324,20 @@ function ReportRow({
 
       <div className="mt-3 flex flex-wrap gap-3">
         {r.photo_url && (
-          <a href={r.photo_url} target="_blank" rel="noreferrer">
-            <img src={r.photo_url} alt="" className="max-h-44 rounded-xl" />
-          </a>
+          <ZoomableImage
+            src={r.photo_url}
+            caption={`${t('photo.report')} · ${r.toilet_name}`}
+            className="max-h-44"
+          />
         )}
         {r.proof_photo_url && (
           <figure className="m-0">
-            <a href={r.proof_photo_url} target="_blank" rel="noreferrer">
-              <img
-                src={r.proof_photo_url}
-                alt=""
-                className="max-h-44 rounded-xl ring-2 ring-emerald-400"
-              />
-            </a>
+            <ZoomableImage
+              src={r.proof_photo_url}
+              caption={`${t('dashboard.proof')} · ${r.toilet_name}`}
+              frameClassName="ring-2 ring-emerald-400"
+              className="max-h-44"
+            />
             <figcaption className="mt-1 flex items-center gap-1 text-xs font-bold text-emerald-700">
               <CheckGlyph className="h-3.5 w-3.5" />
               {t('dashboard.proof')}

@@ -4,6 +4,7 @@ import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges'
 import { api, type PublicReport } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { CheckGlyph, ReportsMark } from '../components/Marks';
+import ZoomableImage from '../components/ZoomableImage';
 
 /**
  * The public report board.
@@ -110,13 +111,13 @@ export default function PublicReports() {
                 {/* The staff proof photo is shown openly: this is what lets anyone
                     check the claim that a report "has been handled". */}
                 {r.proof_photo_url && (
-                  <a href={r.proof_photo_url} target="_blank" rel="noreferrer" className="mt-3 block w-fit">
-                    <img
-                      src={r.proof_photo_url}
-                      alt={t('dashboard.proof')}
-                      className="max-h-48 rounded-xl ring-2 ring-emerald-400"
-                    />
-                  </a>
+                  <ZoomableImage
+                    src={r.proof_photo_url}
+                    alt={t('dashboard.proof')}
+                    caption={`${t('dashboard.proof')} · ${r.toilet_name}`}
+                    frameClassName="mt-3 ring-2 ring-emerald-400"
+                    className="max-h-48"
+                  />
                 )}
 
                 {r.resolved_at && (

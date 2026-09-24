@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, type Building } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
-import MapViewer from './MapViewer';
+import ImageViewer from './ImageViewer';
 import { ZoomGlyph } from './Marks';
 
 const MAP_SRC = '/peta-lokasi-gedung.jpg';
@@ -59,7 +59,7 @@ export default function LocationPicker({ target }: { target: (code: string, floo
       </figure>
 
       {mapOpen && (
-        <MapViewer
+        <ImageViewer
           src={MAP_SRC}
           alt={t('home.map_alt')}
           caption={t('home.map_caption')}
