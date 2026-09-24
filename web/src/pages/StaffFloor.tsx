@@ -16,8 +16,8 @@ import {
 } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSelectedStaff } from '../lib/staff';
+import { CameraGlyph, CheckGlyph, DoneMark, ReportsMark, StaffMark, ToiletTypeGlyph } from '../components/Marks';
 
-const ICONS: Record<ToiletType, string> = { men: '♂', women: '♀', accessible: '♿' };
 
 type Rejection = { verdict: ProofVerdict | null; reason: string | null };
 
@@ -125,9 +125,7 @@ export default function StaffFloor() {
                 aria-pressed={tab === 'reports'}
                 className={tab === 'reports' ? 'choice-on !py-3' : 'choice-off !py-3'}
               >
-                <span aria-hidden className="text-xl leading-none">
-                  📋
-                </span>
+                <ReportsMark size="h-8 w-8 rounded-lg" />
                 <span>
                   {t('staff.tab_reports')}
                   {!!open.length && (
@@ -143,9 +141,7 @@ export default function StaffFloor() {
                 aria-pressed={tab === 'work'}
                 className={tab === 'work' ? 'choice-on !py-3' : 'choice-off !py-3'}
               >
-                <span aria-hidden className="text-xl leading-none">
-                  🧹
-                </span>
+                <StaffMark size="h-8 w-8 rounded-lg" />
                 {t('staff.tab_work')}
               </button>
             </nav>
@@ -223,7 +219,10 @@ function TaskCard({
   if (done) {
     return (
       <article className="card border-l-4 border-l-emerald-500 bg-emerald-50 p-4 text-emerald-900">
-        <p className="font-bold">✅ {t('staff.report_resolved')}</p>
+        <p className="flex items-center gap-1.5 font-bold">
+          <CheckGlyph />
+          {t('staff.report_resolved')}
+        </p>
         <p className="mt-0.5 text-sm">{r.toilet_name}</p>
       </article>
     );
@@ -275,7 +274,12 @@ function TaskCard({
             ? t('dashboard.uploading')
             : stage === 'checking'
               ? t('dashboard.checking')
-              : `📷 ${t('staff.resolve')}`}
+              : (
+                <>
+                  <CameraGlyph className="h-5 w-5" />
+                  {t('staff.resolve')}
+                </>
+              )}
         </button>
         {r.status === 'new' && (
           <button type="button" onClick={startWork} disabled={busy} className="btn-neutral w-full py-2.5">
@@ -370,9 +374,7 @@ function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
   if (submitted) {
     return (
       <section className="card mt-4 p-6 text-center">
-        <p className="text-5xl" aria-hidden>
-          ✅
-        </p>
+        <DoneMark className="mx-auto" />
         <h3 className="mt-3 text-xl font-extrabold tracking-tight text-maroon-900">{t('work.submitted')}</h3>
         <p className="mt-1 text-maroon-700">{submitted.toilet}</p>
         {submitted.reason && (
@@ -402,9 +404,7 @@ function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
               aria-pressed={toiletId === wc.id}
               className={toiletId === wc.id ? 'choice-on' : 'choice-off'}
             >
-              <span aria-hidden className="text-xl leading-none">
-                {ICONS[wc.type]}
-              </span>
+              <ToiletTypeGlyph type={wc.type} />
               {t(`toilet_type.${wc.type}`)}
             </button>
           ))}
@@ -468,7 +468,8 @@ function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
             onClick={() => setCamera(true)}
             className="btn-neutral w-full border-dashed py-3.5"
           >
-            📷 {t('report.take_photo')}
+            <CameraGlyph className="h-5 w-5" />
+            {t('report.take_photo')}
           </button>
         )}
       </div>

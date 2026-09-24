@@ -10,6 +10,7 @@ import { api, type DailyStats, type DailySummary, type Report, type Session } fr
 import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from '../components/TimeFilter';
 import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSession } from '../lib/session';
+import { CheckGlyph, InboxGlyph, SupervisorMark } from '../components/Marks';
 
 export default function SupervisorDashboard() {
   const { t } = useLanguage();
@@ -85,6 +86,7 @@ function Board({ session }: { session: Session }) {
         title={t('dashboard.title')}
         description={t('dashboard.signed_in_as', { name: `${session.name} · SPV` })}
         compact
+        mark={<SupervisorMark />}
         right={
           <button
             onClick={async () => {
@@ -286,12 +288,18 @@ function ReportRow({
       {/* The exact moments, in campus time: when the report came in and when it was closed. */}
       <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-maroon-700">
         <div className="flex gap-1">
-          <dt className="font-semibold">📥 {t('time.received')}:</dt>
+          <dt className="flex items-center gap-1 font-semibold">
+            <InboxGlyph className="h-3.5 w-3.5" />
+            {t('time.received')}:
+          </dt>
           <dd>{formatTime(r.created_at)}</dd>
         </div>
         {r.resolved_at && (
           <div className="flex gap-1">
-            <dt className="font-semibold text-emerald-700">✅ {t('time.resolved')}:</dt>
+            <dt className="flex items-center gap-1 font-semibold text-emerald-700">
+              <CheckGlyph className="h-3.5 w-3.5" />
+              {t('time.resolved')}:
+            </dt>
             <dd>{formatTime(r.resolved_at)}</dd>
           </div>
         )}
@@ -328,8 +336,9 @@ function ReportRow({
                 className="max-h-44 rounded-xl ring-2 ring-emerald-400"
               />
             </a>
-            <figcaption className="mt-1 text-xs font-bold text-emerald-700">
-              ✓ {t('dashboard.proof')}
+            <figcaption className="mt-1 flex items-center gap-1 text-xs font-bold text-emerald-700">
+              <CheckGlyph className="h-3.5 w-3.5" />
+              {t('dashboard.proof')}
               {r.proof_verdict === 'clean' && <> · {t('dashboard.proof_verified')}</>}
             </figcaption>
             {r.proof_reason && (

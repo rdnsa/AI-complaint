@@ -1,6 +1,7 @@
 import { StatusBadge } from './Badges';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import type { Report } from '../lib/api';
+import { CheckGlyph } from './Marks';
 
 /**
  * Three-step timeline: received → in progress → resolved.
@@ -48,7 +49,7 @@ export default function Tracker({ report }: { report: Report }) {
                       : 'bg-permukaan text-krem-300 ring-krem-200'
                   }`}
                 >
-                  {reached ? '✓' : i + 1}
+                  {reached ? <CheckGlyph className="h-3.5 w-3.5" /> : i + 1}
                 </span>
                 {!last && (
                   <span className={`w-0.5 flex-1 ${i < stage ? 'bg-bata-400' : 'bg-krem-200'}`} />

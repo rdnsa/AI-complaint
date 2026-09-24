@@ -39,6 +39,10 @@ const ID = {
   'home.map_caption': 'Peta lokasi gedung — Jln. Dadaha No. 18, Kota Tasikmalaya',
   'home.map_alt': 'Peta lokasi gedung UPI Kampus Tasikmalaya',
   'home.map_enlarge': 'Ketuk untuk perbesar',
+  'home.map_close': 'Tutup peta',
+  'home.map_zoom_in': 'Perbesar',
+  'home.map_zoom_out': 'Perkecil',
+  'home.map_hint': 'Cubit, gulir, atau ketuk dua kali untuk zoom · seret untuk menggeser',
   'home.choose_location': 'Pilih gedung dan lantai',
   'home.empty': 'Daftar lokasi belum tersedia. Coba muat ulang halaman ini.',
 
@@ -131,7 +135,12 @@ const ID = {
   'leaderboard.no_reports_yet': 'Kamu belum mengirim laporan atas nama akun ini.',
 
   'tab.accounts': 'Petugas & SPV',
-  'ask.title': 'Chatbot AI — tanya data laporan',
+  'home.section_roles': 'Pilih peran',
+  'home.section_ai': 'Tanya AI',
+  'home.section_qr': 'Stiker QR',
+  'ask.title': 'Chatbot AI',
+  'ask.tagline': 'Tanya data laporan dalam bahasa sehari-hari',
+  'ask.try': 'Coba tanyakan',
   'ask.ai_label': 'Jawaban Chatbot AI',
   'ask.description':
     'Chatbot ini dijawab oleh kecerdasan buatan (AI). Tanyakan apa saja tentang data laporan dalam bahasa sehari-hari — AI hanya melihat angka agregat dari basis data, bukan isi laporan mentah, jadi jawabannya selalu berdasar data yang ada.',
@@ -305,14 +314,14 @@ const ID = {
   'staff.list_empty': 'Belum ada nama petugas. Minta SPV menambahkannya.',
   'staff.tab_reports': 'Laporan mahasiswa',
   'staff.tab_work': 'Sudah saya bersihkan',
-  'staff.no_reports': 'Tidak ada laporan mahasiswa di lantai ini. 👍',
+  'staff.no_reports': 'Tidak ada laporan mahasiswa di lantai ini.',
   'staff.report_resolved': 'Laporan selesai. Terima kasih!',
   'staff.resolve': 'Sudah beres — foto buktinya',
   'staff.start_work': 'Saya kerjakan sekarang',
   'staff.qr_hint':
     'Paling mudah: scan QR di pintu toilet, lalu tekan "Saya petugas". HP ini akan mengingat namamu.',
   'staff.waiting': 'Laporan yang menunggu',
-  'staff.all_done': 'Semua laporan sudah selesai. 👍',
+  'staff.all_done': 'Semua laporan sudah selesai.',
   'staff.open': 'Buka',
 
   'camera.title': 'Kamera',
@@ -397,6 +406,10 @@ const EN: Record<Key, string> = {
   'home.map_caption': 'Building map — Jln. Dadaha No. 18, Tasikmalaya',
   'home.map_alt': 'Building location map of UPI Tasikmalaya Campus',
   'home.map_enlarge': 'Tap to enlarge',
+  'home.map_close': 'Close map',
+  'home.map_zoom_in': 'Zoom in',
+  'home.map_zoom_out': 'Zoom out',
+  'home.map_hint': 'Pinch, scroll or double-tap to zoom · drag to move around',
   'home.choose_location': 'Choose building and floor',
   'home.empty': 'No locations available yet. Try reloading this page.',
 
@@ -489,7 +502,12 @@ const EN: Record<Key, string> = {
   'leaderboard.no_reports_yet': 'You have not filed any report under this account yet.',
 
   'tab.accounts': 'Staff & Supervisors',
-  'ask.title': 'AI Chatbot — ask about the reports',
+  'home.section_roles': 'Choose your role',
+  'home.section_ai': 'Ask the AI',
+  'home.section_qr': 'QR stickers',
+  'ask.title': 'AI Chatbot',
+  'ask.tagline': 'Ask about the report data in plain language',
+  'ask.try': 'Try asking',
   'ask.ai_label': 'AI Chatbot answer',
   'ask.description':
     'This chatbot is answered by artificial intelligence (AI). Ask anything about the report data in plain language — the AI only sees aggregates fetched from the database, never raw complaint text, so every answer is grounded in the data.',
@@ -663,14 +681,14 @@ const EN: Record<Key, string> = {
   'staff.list_empty': 'No staff names yet. Ask the supervisor to add them.',
   'staff.tab_reports': 'Student reports',
   'staff.tab_work': 'I cleaned it',
-  'staff.no_reports': 'No student reports on this floor. 👍',
+  'staff.no_reports': 'No student reports on this floor.',
   'staff.report_resolved': 'Report done. Thank you!',
   'staff.resolve': 'Fixed — take the proof photo',
   'staff.start_work': "I'm on it now",
   'staff.qr_hint':
     'Easiest: scan the QR on the toilet door, then tap "I\'m cleaning staff". This phone will remember your name.',
   'staff.waiting': 'Reports waiting',
-  'staff.all_done': 'Every report is done. 👍',
+  'staff.all_done': 'Every report is done.',
   'staff.open': 'Open',
 
   'camera.title': 'Camera',

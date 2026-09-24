@@ -119,6 +119,8 @@ export default function ChartsPanel() {
           data={heat}
           rows={[0, 1, 2, 3, 4, 5, 6].map((d) => t(`weekday.${d}` as 'weekday.0'))}
           columns={HOUR_BUCKETS.map((h) => `${String(h).padStart(2, '0')}.00`)}
+          // "00" rather than "00.00" in the header, so eight columns fit a phone; the hover readout keeps the full time.
+          columnLabel={(c) => c.slice(0, 2)}
           fewerLabel={t('charts.fewer')}
           moreLabel={t('charts.more')}
         />
@@ -140,6 +142,7 @@ export default function ChartsPanel() {
               const label = t(`category.${c}` as 'category.other');
               return label.startsWith('category.') ? c : label;
             }}
+            verticalLabels
             fewerLabel={t('charts.fewer')}
             moreLabel={t('charts.more')}
           />

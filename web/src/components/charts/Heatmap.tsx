@@ -20,6 +20,7 @@ export default function Heatmap({
   rows,
   columns,
   columnLabel,
+  verticalLabels = false,
   fewerLabel,
   moreLabel,
 }: {
@@ -27,6 +28,11 @@ export default function Heatmap({
   rows: string[];
   columns: string[];
   columnLabel?: (c: string) => string;
+  /**
+   * Long column names (categories) stand on end on a phone, so every column
+   * keeps a thumb-sized cell instead of the matrix scrolling out of view.
+   */
+  verticalLabels?: boolean;
   fewerLabel: string;
   moreLabel: string;
 }) {
@@ -39,17 +45,34 @@ export default function Heatmap({
   return (
     <figure className="m-0">
       <div className="overflow-x-auto">
-        <table className="w-full border-separate border-spacing-[2px] text-xs">
+        {/* Fixed layout: the columns share the width equally and never push the card wider. */}
+        <table className="w-full table-fixed border-separate border-spacing-[2px] text-xs">
+          <colgroup>
+            <col className="w-9 sm:w-12" />
+            {columns.map((c) => (
+              <col key={c} />
+            ))}
+          </colgroup>
           <thead>
             <tr>
               <th />
               {columns.map((c) => (
                 <th
                   key={c}
-                  className="pb-1 text-center font-semibold capitalize"
+                  className={`pb-1 align-bottom font-semibold capitalize max-sm:text-[11px] ${
+                    verticalLabels ? 'max-sm:h-24 sm:text-center' : 'text-center'
+                  }`}
                   style={{ color: INK.secondary }}
                 >
-                  {columnLabel ? columnLabel(c) : c}
+                  {verticalLabels ? (
+                    <span className="inline-block max-sm:rotate-180 max-sm:[writing-mode:vertical-rl]">
+                      {columnLabel ? columnLabel(c) : c}
+                    </span>
+                  ) : columnLabel ? (
+                    columnLabel(c)
+                  ) : (
+                    c
+                  )}
                 </th>
               ))}
             </tr>
@@ -58,7 +81,7 @@ export default function Heatmap({
             {rows.map((r) => (
               <tr key={r}>
                 <th
-                  className="whitespace-nowrap pr-2 text-right font-semibold"
+                  className="truncate pr-1.5 text-right font-semibold"
                   style={{ color: INK.secondary }}
                 >
                   {r}

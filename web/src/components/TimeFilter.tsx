@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../lib/i18n';
+import { ClockGlyph } from './Marks';
 
 /** The query values the report and work-report lists understand. WIB, inclusive. */
 export interface TimeRange {
@@ -61,8 +62,9 @@ export default function TimeFilter({
   return (
     <div className="card mt-4 space-y-3 p-3">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-xs font-bold uppercase tracking-wider text-maroon-600">
-          🕒 {t('time.filter')}
+        <span className="mr-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-maroon-600">
+          <ClockGlyph className="h-3.5 w-3.5" />
+          {t('time.filter')}
         </span>
         {(['all', 'today', 'yesterday', '7_days', '30_days', 'custom'] as const).map((p) => (
           <button
@@ -70,7 +72,7 @@ export default function TimeFilter({
             type="button"
             onClick={() => choosePreset(p)}
             aria-pressed={preset === p}
-            className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 transition ${
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition ${
               preset === p
                 ? 'bg-maroon-800 text-permukaan ring-maroon-800'
                 : 'bg-permukaan text-maroon-700 ring-krem-300 hover:bg-krem-50'

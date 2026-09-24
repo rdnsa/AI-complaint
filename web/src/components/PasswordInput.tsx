@@ -1,5 +1,6 @@
 import { useState, type InputHTMLAttributes } from 'react';
 import { useLanguage } from '../lib/i18n';
+import { EyeGlyph } from './Marks';
 
 /**
  * A password field with a show/hide button, so a typo can be seen instead of
@@ -22,7 +23,7 @@ export default function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputE
         tabIndex={-1}
         className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-xl text-base text-maroon-600 transition hover:text-bata-600"
       >
-        <span aria-hidden>{visible ? '🙈' : '👁️'}</span>
+        <EyeGlyph off={visible} className="h-5 w-5" />
       </button>
     </div>
   );

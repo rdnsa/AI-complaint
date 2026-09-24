@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, type StaffOption, type WorkLog } from '../lib/api';
 import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from './TimeFilter';
+import { CheckGlyph, DropGlyph } from './Marks';
 
 /**
  * The supervisor's view of the staff work log: which toilets have been
@@ -89,14 +90,16 @@ export default function WorkLogPanel() {
         {data.map((w) => (
           <article key={w.id} className="card border-l-4 border-l-emerald-400 p-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-inset ring-emerald-200">
-                ✓ {t('dashboard.proof_verified')}
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                <CheckGlyph className="h-3.5 w-3.5" />
+                {t('dashboard.proof_verified')}
               </span>
               <span className="text-sm font-semibold text-maroon-900">{w.staff_name}</span>
               <span className="ml-auto text-xs text-maroon-600">{relativeTime(w.created_at)}</span>
             </div>
-            <p className="mt-1.5 text-xs text-maroon-700">
-              <span className="font-semibold">🧹 {t('time.cleaned')}:</span> {formatTime(w.created_at)}
+            <p className="mt-1.5 flex items-center gap-1 text-xs text-maroon-700">
+              <DropGlyph className="h-3.5 w-3.5" />
+              <span className="font-semibold">{t('time.cleaned')}:</span> {formatTime(w.created_at)}
             </p>
             <p className="mt-2 font-bold text-maroon-900">{w.toilet_name}</p>
             <p className="mt-1 text-maroon-800">{w.description}</p>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage, type Language } from '../lib/i18n';
 import { useTheme } from '../lib/theme';
+import { ArrowGlyph } from './Marks';
 
 const OPTIONS: Array<{ code: Language; label: string }> = [
   { code: 'id', label: 'ID' },
@@ -21,7 +22,7 @@ function LanguageButton({ small = false }: { small?: boolean }) {
           key={p.code}
           onClick={() => setLanguage(p.code)}
           aria-pressed={language === p.code}
-          className={`rounded-full font-bold transition ${small ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs'} ${
+          className={`rounded-full font-bold transition ${small ? 'px-2 py-1 text-[10px]' : 'min-h-8 px-3 text-xs'} ${
             language === p.code ? 'bg-white text-tetap-maroon' : 'text-white/80 hover:text-white'
           }`}
         >
@@ -57,7 +58,29 @@ function ThemeButton({ small = false }: { small?: boolean }) {
           dark ? shift : 'translate-x-0'
         }`}
       >
-        {dark ? '🌙' : '☀️'}
+        {/* Drawn rather than emoji, so the knob looks the same on every phone. */}
+        <svg viewBox="0 0 20 20" className="h-[62%] w-[62%]">
+          {dark ? (
+            <path d="M16.5 12.4A7 7 0 1 1 7.6 3.5a5.6 5.6 0 0 0 8.9 8.9Z" fill="currentColor" />
+          ) : (
+            <>
+              <circle cx="10" cy="10" r="3.8" className="fill-bata-500" />
+              {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+                <line
+                  key={a}
+                  x1="10"
+                  y1="2.2"
+                  x2="10"
+                  y2="3.8"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  transform={`rotate(${a} 10 10)`}
+                />
+              ))}
+            </>
+          )}
+        </svg>
       </span>
     </button>
   );
@@ -78,7 +101,7 @@ function BackButton({ round = false }: { round?: boolean }) {
         aria-label={t('nav.back')}
         className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/15 text-sm text-white ring-1 ring-white/25 transition hover:bg-white/25"
       >
-        ←
+        <ArrowGlyph className="h-4 w-4 rotate-180" />
       </button>
     );
   }
@@ -86,9 +109,9 @@ function BackButton({ round = false }: { round?: boolean }) {
   return (
     <button
       onClick={goBack}
-      className="-ml-1 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-tetap-krem transition hover:bg-white/10 hover:text-white"
+      className="-ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-tetap-krem transition hover:bg-white/10 hover:text-white"
     >
-      <span aria-hidden>←</span>
+      <ArrowGlyph className="h-4 w-4 rotate-180" />
       {t('nav.back')}
     </button>
   );
@@ -106,11 +129,14 @@ export default function Header({
   description,
   compact = false,
   right,
+  mark,
 }: {
   title: string;
   description?: string;
   compact?: boolean;
   right?: React.ReactNode;
+  /** The page's brand mark (see Marks.tsx), set beside the title. */
+  mark?: React.ReactNode;
 }) {
   const { t } = useLanguage();
   const { pathname } = useLocation();
@@ -131,11 +157,12 @@ export default function Header({
         <div className={`mx-auto max-w-5xl px-4 ${compact ? 'py-4' : 'py-7'}`}>
           <div className="flex items-center justify-between gap-3">
             <Link to="/" className="flex items-center gap-2.5">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/95 text-base font-extrabold tracking-tight text-tetap-maroon">
-                UPI
+              {/* The emblem's lower half is black, so it always sits on a white disc. */}
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white p-1 shadow-sm ring-1 ring-black/5">
+                <img src="/logo-upi.svg" alt="" className="h-full w-full" />
               </span>
               {/* With an extra button on the right (e.g. sign out), a narrow phone
-                  has no room for the name as well; the UPI badge alone carries it. */}
+                  has no room for the name as well; the emblem alone carries it. */}
               <span
                 className={`text-[10px] font-semibold uppercase leading-tight tracking-[0.1em] text-tetap-krem sm:text-[11px] ${
                   right ? 'hidden min-[440px]:inline' : ''
@@ -159,16 +186,19 @@ export default function Header({
             </div>
           )}
 
-          <h1
-            className={`font-extrabold tracking-tight ${onHome ? 'mt-4' : 'mt-1.5'} ${
-              compact ? 'text-xl' : 'text-2xl sm:text-3xl'
-            }`}
-          >
-            {title}
-          </h1>
-          {description && (
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-tetap-krem">{description}</p>
-          )}
+          <div className={`flex items-center gap-3.5 ${onHome ? 'mt-4' : 'mt-1.5'}`}>
+            {mark}
+            <div className="min-w-0">
+              <h1 className={`font-extrabold tracking-tight ${compact ? 'text-xl' : 'text-2xl sm:text-3xl'}`}>
+                {title}
+              </h1>
+              {description && (
+                <p className={`${mark ? 'mt-0.5' : 'mt-1.5'} max-w-xl text-sm leading-relaxed text-tetap-krem`}>
+                  {description}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
         {/* Orange-to-teal accent line, quoting the colours of the campus map poster. */}
         <div className="h-1 bg-gradient-to-r from-bata-500 via-bata-400 to-toska-500" />
@@ -183,9 +213,10 @@ export default function Header({
           {!onHome && <BackButton round />}
           <Link
             to="/"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-[10px] font-extrabold text-tetap-maroon"
+            aria-label={t('nav.home')}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white p-0.5"
           >
-            UPI
+            <img src="/logo-upi.svg" alt="" className="h-full w-full" />
           </Link>
           <span className="truncate px-1 text-sm font-bold">{title}</span>
           <LanguageButton small />

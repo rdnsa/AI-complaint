@@ -7,6 +7,7 @@ import StaffPicker from '../components/StaffPicker';
 import { api, type Report } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSelectedStaff } from '../lib/staff';
+import { ArrowGlyph, StaffMark } from '../components/Marks';
 
 /**
  * The staff starting point when no QR is at hand: every report still waiting,
@@ -30,7 +31,7 @@ export default function StaffHome() {
 
   return (
     <div className="min-h-screen pb-16">
-      <Header title={t('staff.title')} description={t('staff.description')} compact />
+      <Header title={t('staff.title')} description={t('staff.description')} compact mark={<StaffMark />} />
 
       {/* Phone: one column. Desktop: "who are you" beside the waiting list,
           then the full-width location picker, matching the student page. */}
@@ -59,7 +60,7 @@ export default function StaffHome() {
             <Link
               key={r.id}
               to={`/staff/${r.building_code}-${r.floor}`}
-              className="card flex items-center gap-3 p-3 hover:shadow-naik"
+              className="card group flex items-center gap-3 p-3 hover:shadow-naik"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -70,7 +71,10 @@ export default function StaffHome() {
                 <p className="mt-1 truncate text-sm font-semibold text-maroon-900">{r.toilet_name}</p>
                 <p className="truncate text-sm text-maroon-700">{r.summary ?? r.description}</p>
               </div>
-              <span className="shrink-0 text-sm font-bold text-bata-600">{t('staff.open')} →</span>
+              <span className="flex shrink-0 items-center gap-1 text-sm font-bold text-bata-600">
+                {t('staff.open')}
+                <ArrowGlyph className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </span>
             </Link>
           ))}
         </div>

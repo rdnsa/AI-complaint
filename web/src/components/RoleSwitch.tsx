@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../lib/i18n';
+import { StaffMark, StudentMark } from './Marks';
 
 /**
  * The first choice on a floor page: student or cleaning staff.
@@ -28,7 +29,8 @@ export default function RoleSwitch({
         aria-current={active === 'student' ? 'page' : undefined}
         className={classes(active === 'student')}
       >
-        <span aria-hidden>🎓</span> {t('role.student')}
+        <StudentMark size="h-6 w-6 rounded-md" />
+        {t('role.student')}
       </Link>
       <Link
         to={`/staff/${floorId}`}
@@ -36,7 +38,8 @@ export default function RoleSwitch({
         aria-current={active === 'staff' ? 'page' : undefined}
         className={classes(active === 'staff')}
       >
-        <span aria-hidden>🧹</span> {t('role.staff')}
+        <StaffMark size="h-6 w-6 rounded-md" />
+        {t('role.staff')}
       </Link>
     </nav>
   );

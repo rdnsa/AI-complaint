@@ -7,8 +7,8 @@ import { api, type Floor, type ToiletType } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
 import { readStoredStaff } from '../lib/staff';
 import { useSession } from '../lib/session';
+import { CameraGlyph, ToiletTypeGlyph } from '../components/Marks';
 
-const ICONS: Record<ToiletType, string> = { men: '♂', women: '♀', accessible: '♿' };
 
 export default function ReportForm() {
   const { floorId = '' } = useParams();
@@ -128,9 +128,7 @@ function StudentForm({ floorId }: { floorId: string }) {
                 aria-pressed={toiletId === wc.id}
                 className={toiletId === wc.id ? 'choice-on' : 'choice-off'}
               >
-                <span aria-hidden className="text-xl leading-none">
-                  {ICONS[wc.type]}
-                </span>
+                <ToiletTypeGlyph type={wc.type} />
                 {t(`toilet_type.${wc.type}`)}
               </button>
             ))}
@@ -173,7 +171,7 @@ function StudentForm({ floorId }: { floorId: string }) {
                   key={c}
                   type="button"
                   onClick={() => setDescription(c)}
-                  className="rounded-full border border-krem-200 bg-permukaan px-3 py-1 text-xs text-maroon-600 transition hover:border-bata-300 hover:text-bata-700"
+                  className="rounded-full border border-krem-200 bg-permukaan px-3 py-1.5 text-xs text-maroon-600 transition hover:border-bata-300 hover:text-bata-700"
                 >
                   {c.length > 36 ? `${c.slice(0, 36)}…` : c}
                 </button>
@@ -212,7 +210,8 @@ function StudentForm({ floorId }: { floorId: string }) {
                 onClick={() => setCamera(true)}
                 className="btn-neutral w-full border-dashed py-3.5"
               >
-                📷 {t('report.take_photo')}
+                <CameraGlyph className="h-5 w-5" />
+                {t('report.take_photo')}
               </button>
             )}
           </div>

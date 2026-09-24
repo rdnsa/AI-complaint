@@ -70,7 +70,7 @@ export default function Login() {
 
         <Link
           to="/register"
-          className="mx-auto mt-6 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
+          className="mx-auto mt-4 block w-fit px-2 py-2.5 text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
         >
           {t('login.no_account')}
         </Link>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError, type AskMessage } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
+import { ChatGlyph } from './Marks';
 import { useSession } from '../lib/session';
 
 type Bubble = AskMessage;
@@ -63,24 +64,26 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="mt-6">
-      <p className="rounded-xl bg-permukaan px-4 py-3 text-sm leading-relaxed text-maroon-700 ring-1 ring-krem-200">
-        {t('ask.description')}
-      </p>
+    // Compact is the landing-page variant: the surrounding panel already supplies the spacing.
+    <div className={compact ? '' : 'mt-6'}>
+      <p className="max-w-2xl text-sm leading-relaxed text-maroon-700">{t('ask.description')}</p>
 
       {!conversation.length && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {examples.map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => send(t(k))}
-              disabled={busy}
-              className="btn-neutral !px-3 !py-1.5 text-xs"
-            >
-              {t(k)}
-            </button>
-          ))}
+        <div className="mt-5">
+          <p className="section-title">{t('ask.try')}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {examples.map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => send(t(k))}
+                disabled={busy}
+                className="rounded-2xl border border-krem-300 bg-permukaan px-3.5 py-2 text-left text-xs font-semibold text-maroon-700 transition hover:border-bata-400 hover:bg-bata-50 hover:text-bata-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {t(k)}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -97,7 +100,10 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
             ) : (
               <div key={i} className="flex justify-start">
                 <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-krem-50 px-4 py-2.5 text-sm text-maroon-900 ring-1 ring-krem-200">
-                  <p className="mb-1 text-[11px] font-extrabold uppercase tracking-wider text-bata-600">🤖 {t('ask.ai_label')}</p>
+                  <p className="mb-1 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-bata-600">
+                    <ChatGlyph className="h-3.5 w-3.5" />
+                    {t('ask.ai_label')}
+                  </p>
                   <p className="whitespace-pre-line leading-relaxed">{b.text}</p>
                 </div>
               </div>

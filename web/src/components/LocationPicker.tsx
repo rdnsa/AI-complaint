@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, type Building } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
+import MapViewer from './MapViewer';
+import { ZoomGlyph } from './Marks';
+
+const MAP_SRC = '/peta-lokasi-gedung.jpg';
 
 /**
  * The campus map and the building/floor picker, for when there is no QR at
@@ -12,6 +16,7 @@ export default function LocationPicker({ target }: { target: (code: string, floo
   const { t } = useLanguage();
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mapOpen, setMapOpen] = useState(false);
 
   useEffect(() => {
     api
@@ -27,19 +32,40 @@ export default function LocationPicker({ target }: { target: (code: string, floo
 
       {/* Full width on a phone; capped on desktop so the map does not push the picker off-screen. */}
       <figure className="card mx-auto mt-4 max-w-3xl overflow-hidden">
-        <a href="/peta-lokasi-gedung.jpg" target="_blank" rel="noreferrer" className="block">
+        <button
+          type="button"
+          onClick={() => setMapOpen(true)}
+          aria-label={`${t('home.map_alt')} — ${t('home.map_enlarge')}`}
+          className="group block w-full cursor-zoom-in overflow-hidden"
+        >
           <img
-            src="/peta-lokasi-gedung.jpg"
-            alt={t('home.map_alt')}
-            className="w-full"
+            src={MAP_SRC}
+            alt=""
+            className="w-full transition-transform duration-300 group-hover:scale-[1.015]"
             loading="lazy"
           />
-        </a>
+        </button>
         <figcaption className="flex items-center justify-between gap-3 border-t border-krem-200 bg-krem-50 px-4 py-2.5 text-xs text-maroon-600">
           <span>{t('home.map_caption')}</span>
-          <span className="shrink-0 font-bold text-bata-600">{t('home.map_enlarge')}</span>
+          <button
+            type="button"
+            onClick={() => setMapOpen(true)}
+            className="-my-2 flex shrink-0 items-center gap-1.5 py-2 font-bold text-bata-600 hover:text-bata-700"
+          >
+            <ZoomGlyph className="h-3.5 w-3.5" />
+            {t('home.map_enlarge')}
+          </button>
         </figcaption>
       </figure>
+
+      {mapOpen && (
+        <MapViewer
+          src={MAP_SRC}
+          alt={t('home.map_alt')}
+          caption={t('home.map_caption')}
+          onClose={() => setMapOpen(false)}
+        />
+      )}
 
       <h2 className="section-title mt-8">{t('home.choose_location')}</h2>
 

@@ -3,8 +3,7 @@ import Header from '../components/Header';
 import { api, type LeaderboardRow } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
 import { useSession } from '../lib/session';
-
-const MEDALS = ['🥇', '🥈', '🥉'];
+import { PodiumMark, RankMark } from '../components/Marks';
 
 export default function Leaderboard() {
   const { t } = useLanguage();
@@ -26,7 +25,11 @@ export default function Leaderboard() {
 
   return (
     <div className="min-h-screen pb-16">
-      <Header title={t('leaderboard.title')} description={t('leaderboard.description')} />
+      <Header
+        title={t('leaderboard.title')}
+        description={t('leaderboard.description')}
+        mark={<PodiumMark size="h-12 w-12 rounded-[14px]" />}
+      />
 
       <main className="mx-auto max-w-2xl px-4">
         {session?.role === 'reporter' && me && (
@@ -52,13 +55,8 @@ export default function Leaderboard() {
                   isMe ? 'ring-2 ring-bata-400' : ''
                 }`}
               >
-                <span
-                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-extrabold ${
-                    i < 3 ? 'bg-bata-50 text-lg' : 'bg-krem-100 text-maroon-700'
-                  }`}
-                >
-                  {MEDALS[i] ?? i + 1}
-                </span>
+                <RankMark rank={i + 1} />
+                <span className="sr-only">#{i + 1}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-maroon-900">{u.name}</p>
                   <p className="text-xs text-maroon-600">

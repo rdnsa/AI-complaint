@@ -1,5 +1,6 @@
 import type { StaffOption } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
+import { PersonGlyph } from './Marks';
 
 /**
  * "Who are you?" for cleaning staff: one large dropdown instead of a sign-in.
@@ -26,9 +27,10 @@ export default function StaffPicker({
           too; the theme-following maroon ink would vanish on it in dark mode. */}
       <label
         htmlFor="staff-picker"
-        className={`block text-base font-bold ${selected ? 'text-emerald-950' : 'text-amber-950'}`}
+        className={`flex items-center gap-2 text-base font-bold ${selected ? 'text-emerald-950' : 'text-amber-950'}`}
       >
-        👤 {t('staff.who_are_you')}
+        <PersonGlyph className="h-5 w-5" />
+        {t('staff.who_are_you')}
       </label>
       <select
         id="staff-picker"

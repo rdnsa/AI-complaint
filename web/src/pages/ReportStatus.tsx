@@ -6,6 +6,7 @@ import { CategoryBadge, PriorityBadge } from '../components/Badges';
 import { api, type Report } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
 import { useSession } from '../lib/session';
+import { CheckGlyph } from '../components/Marks';
 
 /**
  * Confirmation page for the reporter. The report is stored instantly while the
@@ -61,8 +62,8 @@ export default function ReportStatus() {
         {report && (
           <>
             <div className="mt-6 flex items-start gap-3 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-200">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-base font-bold text-white">
-                ✓
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-white">
+                <CheckGlyph className="h-[18px] w-[18px]" />
               </span>
               <div>
                 <p className="font-bold text-emerald-900">{t('status.success')}</p>
@@ -124,7 +125,7 @@ export default function ReportStatus() {
 
         <Link
           to="/"
-          className="mx-auto mt-6 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
+          className="mx-auto mt-4 block w-fit px-2 py-2.5 text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
         >
           {t('nav.home')}
         </Link>

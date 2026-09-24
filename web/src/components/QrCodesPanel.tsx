@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import { useEffect, useMemo, useState } from 'react';
 import { api, type Building } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
+import { DownloadGlyph, PrintGlyph } from './Marks';
 
 /** One sticker: one QR code per floor of one building. */
 interface Sticker {
@@ -98,7 +99,8 @@ export default function QrCodesPanel() {
           disabled={!shown.length}
           className="btn-primary ml-auto !py-2 text-sm"
         >
-          🖨️ {t('qr.print')}
+          <PrintGlyph />
+          {t('qr.print')}
         </button>
       </div>
 
@@ -135,7 +137,8 @@ export default function QrCodesPanel() {
               onClick={() => downloadPng(s)}
               className="btn-neutral mt-3 !px-3 !py-1.5 text-xs print:hidden"
             >
-              ⬇️ {t('qr.download_png')}
+              <DownloadGlyph className="h-3.5 w-3.5" />
+              {t('qr.download_png')}
             </button>
           </article>
         ))}

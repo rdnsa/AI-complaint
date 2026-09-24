@@ -1,5 +1,6 @@
 import Sparkline from './Sparkline';
 import { INK } from './colors';
+import { TrendGlyph } from '../Marks';
 
 /**
  * A headline number with its recent shape and its direction of travel.
@@ -43,8 +44,9 @@ export default function KpiCard({
       </div>
 
       {change !== null && change !== undefined && (
-        <p className={`mt-0.5 text-xs font-bold ${deltaColor}`}>
-          {up ? '▲' : change === 0 ? '■' : '▼'} {Math.abs(change)}%
+        <p className={`mt-0.5 flex items-center gap-0.5 text-xs font-bold ${deltaColor}`}>
+          <TrendGlyph direction={change === 0 ? 'flat' : up ? 'up' : 'down'} />
+          {Math.abs(change)}%
           {note && <span className="font-medium text-maroon-600"> {note}</span>}
         </p>
       )}
