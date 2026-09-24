@@ -53,7 +53,7 @@ export default function AccountsPanel() {
                 </code>
               )}
               <span className="rounded-full bg-krem-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-maroon-600">
-                {u.role === 'supervisor' ? 'SPV' : t('account.role_staff')}
+                {u.role === 'supervisor' ? t('account.role_supervisor') : t('account.role_staff')}
               </span>
               {!u.active && (
                 <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 ring-1 ring-red-200">
@@ -142,7 +142,7 @@ function AddForm({
           onChange={(e) => setRole(e.target.value as 'staff' | 'supervisor')}
         >
           <option value="staff">{t('account.role_staff')}</option>
-          <option value="supervisor">SPV</option>
+          <option value="supervisor">{t('account.role_supervisor')}</option>
         </select>
       </div>
       {role === 'staff' && <p className="mb-3 text-xs text-maroon-600">{t('account.staff_no_login')}</p>}

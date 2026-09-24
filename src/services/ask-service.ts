@@ -207,7 +207,7 @@ async function runTool(
 
 function systemPrompt(today: string, isSupervisor: boolean): string {
   const asker = isSupervisor
-    ? 'Penanya adalah SPV (supervisor) yang memantau laporan dan kerja petugas.'
+    ? 'Penanya adalah supervisor yang memantau laporan dan kerja petugas.'
     : 'Penanya adalah warga kampus (mahasiswa/dosen/tamu). Jangan menyebut nama petugas perorangan.';
   return `Kamu adalah asisten analisis data untuk sistem pelaporan toilet kampus UPI Tasikmalaya.
 ${asker}

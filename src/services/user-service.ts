@@ -36,7 +36,7 @@ export async function login(env: Env, username: string, password: string): Promi
     await log(env, {
       action: 'login',
       actor: account.name,
-      summary: `${account.name} (SPV) masuk ke dashboard`,
+      summary: `${account.name} (supervisor) masuk ke dashboard`,
     });
   }
   return { kind: 'ok', identity };
@@ -98,7 +98,7 @@ export async function addSupervisor(
     await log(env, {
       action: 'user_changed',
       actor: supervisor,
-      summary: `Menambah akun SPV ${data.name} (${data.username})`,
+      summary: `Menambah akun supervisor ${data.name} (${data.username})`,
     });
   }
   return result;

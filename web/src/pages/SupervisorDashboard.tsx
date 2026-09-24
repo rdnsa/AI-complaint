@@ -85,7 +85,7 @@ function Board({ session }: { session: Session }) {
     <div className="min-h-screen pb-16">
       <Header
         title={t('dashboard.title')}
-        description={t('dashboard.signed_in_as', { name: `${session.name} · SPV` })}
+        description={t('dashboard.signed_in_as', { name: `${session.name} · ${t('account.role_supervisor')}` })}
         compact
         mark={<SupervisorMark />}
         right={

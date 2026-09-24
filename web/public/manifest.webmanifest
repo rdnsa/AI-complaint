@@ -20,6 +20,6 @@
   "shortcuts": [
     { "name": "Lapor sebagai mahasiswa", "short_name": "Lapor", "url": "/student", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
     { "name": "Halaman petugas kebersihan", "short_name": "Petugas", "url": "/staff", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Dashboard SPV", "short_name": "SPV", "url": "/supervisor", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Dashboard Supervisor", "short_name": "Supervisor", "url": "/supervisor", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
   ]
 }
