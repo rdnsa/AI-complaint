@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2010" height="1110" viewBox="0 0 2010 1110" font-family="Arial, Helvetica, sans-serif" fill="#222">
+<defs><marker id="a5B9BD5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5B9BD5"/></marker><marker id="a8E6CD1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8E6CD1"/></marker><marker id="aE3A36B" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#E3A36B"/></marker><marker id="a5FB35F" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5FB35F"/></marker><marker id="a555555" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555555"/></marker><marker id="aC9665F" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#C9665F"/></marker></defs>
+<rect x="1" y="1" width="2008" height="1108" rx="6" fill="#fff" stroke="#DADADA"/>
+<text x="75.0" y="38.55" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="central"><tspan x="75.0" dy="0">Pengguna</tspan><tspan x="75.0" dy="16.900000000000002">Toilet</tspan></text>
+<line x1="1" y1="170" x2="2009" y2="170" stroke="#DADADA"/>
+<text x="75.0" y="207.1" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="central"><tspan x="75.0" dy="0">Sistem</tspan><tspan x="75.0" dy="16.900000000000002">AI Complaint</tspan><tspan x="75.0" dy="16.900000000000002">(LLM)</tspan></text>
+<line x1="1" y1="500" x2="2009" y2="500" stroke="#DADADA"/>
+<text x="75.0" y="538.55" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="central"><tspan x="75.0" dy="0">Petugas</tspan><tspan x="75.0" dy="16.900000000000002">Kebersihan</tspan></text>
+<line x1="1" y1="720" x2="2009" y2="720" stroke="#DADADA"/>
+<text x="75.0" y="760.0" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="central"><tspan x="75.0" dy="0">Supervisor</tspan></text>
+<line x1="1" y1="950" x2="2009" y2="950" stroke="#DADADA"/>
+<text x="75.0" y="990.0" font-size="13" font-weight="bold" text-anchor="middle" dominant-baseline="central"><tspan x="75.0" dy="0">Sarpras</tspan></text>
+<line x1="150" y1="1" x2="150" y2="1109" stroke="#DADADA"/>
+<path d="M269,85 L337.0,85" fill="none" stroke="#5B9BD5" stroke-width="1.8" marker-end="url(#a5B9BD5)"/>
+<path d="M483.0,85 L507.0,85" fill="none" stroke="#5B9BD5" stroke-width="1.8" marker-end="url(#a5B9BD5)"/>
+<path d="M653.0,85 L677.0,85" fill="none" stroke="#5B9BD5" stroke-width="1.8" marker-end="url(#a5B9BD5)"/>
+<path d="M750,118.0 L750,207.0" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<path d="M1843.0,85 L1911,85" fill="none" stroke="#5B9BD5" stroke-width="1.8" marker-end="url(#a5B9BD5)"/>
+<path d="M823.0,240 L847.0,240" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<path d="M993.0,240 L1017.0,240" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<path d="M1090,273.0 L1090,552.0" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<path d="M949,585 L1017.0,585" fill="none" stroke="#5B9BD5" stroke-width="1.8" marker-end="url(#a5B9BD5)"/>
+<path d="M1163.0,585 L1187.0,585" fill="none" stroke="#5B9BD5" stroke-width="1.8" marker-end="url(#a5B9BD5)"/>
+<path d="M1333.0,585 L1357.0,585" fill="none" stroke="#5B9BD5" stroke-width="1.8" marker-end="url(#a5B9BD5)"/>
+<path d="M1430,552.0 L1430,378.0" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<path d="M1503.0,345 L1556,345" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<path d="M1644,345 L1726,345" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<text x="1685" y="333.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1685" dy="0">Ya</tspan></text>
+<path d="M1600,383 L1600,700 L1260,700 L1260,618.0" fill="none" stroke="#C9665F" stroke-width="1.8" marker-end="url(#aC9665F)"/>
+<text x="1430" y="688.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1430" dy="0">Tidak – foto ditolak, bersihkan &amp; foto ulang</tspan></text>
+<path d="M1770,307 L1770,273.0" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<text x="1800" y="290.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1800" dy="0">Laporan</tspan></text>
+<path d="M1770,207.0 L1770,118.0" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<path d="M1770,383 L1770,417.0" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<text x="1796" y="397.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1796" dy="0">Rutin</tspan></text>
+<path d="M1843.0,450 L1911,450" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<path d="M439,450 L507.0,450" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<path d="M580,483.0 L580,757.0" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<path d="M653.0,790 L677.0,790" fill="none" stroke="#E3A36B" stroke-width="1.8" marker-end="url(#aE3A36B)"/>
+<path d="M823.0,790 L847.0,790" fill="none" stroke="#E3A36B" stroke-width="1.8" marker-end="url(#aE3A36B)"/>
+<path d="M993.0,790 L1017.0,790" fill="none" stroke="#E3A36B" stroke-width="1.8" marker-end="url(#aE3A36B)"/>
+<path d="M1090,757.0 L1090,618.0" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<text x="1110" y="687.5" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1110" dy="0">tugas</tspan></text>
+<path d="M1119,885 L1187.0,885" fill="none" stroke="#E3A36B" stroke-width="1.8" marker-end="url(#aE3A36B)"/>
+<path d="M1260,918.0 L1260,997.0" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<path d="M1187.0,1030 L1163.0,1030" fill="none" stroke="#5FB35F" stroke-width="1.8" marker-end="url(#a5FB35F)"/>
+<path d="M1017.0,1030 L949,1030" fill="none" stroke="#5FB35F" stroke-width="1.8" marker-end="url(#a5FB35F)"/>
+<circle cx="240" cy="85" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
+<text x="240" y="85.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="240" dy="0">MULAI</tspan></text>
+<rect x="337.0" y="52.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
+<text x="410" y="78.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="410" dy="0">Menemukan kondisi</tspan><tspan x="410" dy="13.65">kamar mandi kotor</tspan></text>
+<rect x="507.0" y="52.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
+<text x="580" y="78.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="580" dy="0">Scan QR code</tspan><tspan x="580" dy="13.65">di lantai gedung</tspan></text>
+<rect x="677.0" y="52.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
+<text x="750" y="71.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="750" dy="0">Pilih toilet, tulis</tspan><tspan x="750" dy="13.65">keluhan &amp; ambil foto</tspan><tspan x="750" dy="13.65">(kamera langsung)</tspan></text>
+<rect x="1697.0" y="52.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
+<text x="1770" y="71.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1770" dy="0">Memantau halaman</tspan><tspan x="1770" dy="13.65">status laporan:</tspan><tspan x="1770" dy="13.65">Selesai ditangani</tspan></text>
+<circle cx="1940" cy="85" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
+<text x="1940" y="85.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1940" dy="0">Selesai</tspan></text>
+<rect x="677.0" y="207.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="750" y="233.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="750" dy="0">Menyimpan laporan</tspan><tspan x="750" dy="13.65">&amp; foto kondisi</tspan></text>
+<rect x="847.0" y="207.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="920" y="226.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="920" dy="0">LLM: klasifikasi</tspan><tspan x="920" dy="13.65">kategori, prioritas,</tspan><tspan x="920" dy="13.65">ringkasan &amp; rekomendasi</tspan></text>
+<rect x="1017.0" y="207.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="1090" y="226.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1090" dy="0">Tiket tampil di dasbor</tspan><tspan x="1090" dy="13.65">&amp; papan laporan</tspan><tspan x="1090" dy="13.65">publik</tspan></text>
+<rect x="1697.0" y="207.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="1770" y="226.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1770" dy="0">Status laporan →</tspan><tspan x="1770" dy="13.65">Selesai, tercatat di</tspan><tspan x="1770" dy="13.65">log aktivitas</tspan></text>
+<rect x="1357.0" y="312.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="1430" y="338.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1430" dy="0">Vision AI memeriksa</tspan><tspan x="1430" dy="13.65">foto bukti</tspan></text>
+<polygon points="1600,307 1644,345 1600,383 1556,345" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
+<text x="1600" y="338.5" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1600" dy="0">Toilet &amp;</tspan><tspan x="1600" dy="13.0">bersih?</tspan></text>
+<polygon points="1770,307 1814,345 1770,383 1726,345" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
+<text x="1770" y="338.5" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1770" dy="0">Jenis</tspan><tspan x="1770" dy="13.0">pekerjaan?</tspan></text>
+<circle cx="410" cy="450" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
+<circle cx="410" cy="450" r="23" fill="none" stroke="#C9665F" stroke-width="1.2"/>
+<text x="410" y="443.825" font-size="9.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="410" dy="0">17:00</tspan><tspan x="410" dy="12.35">WIB</tspan></text>
+<rect x="507.0" y="417.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="580" y="443.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="580" dy="0">LLM membuat</tspan><tspan x="580" dy="13.65">ringkasan harian</tspan></text>
+<rect x="1697.0" y="417.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="1770" y="443.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1770" dy="0">Tercatat di work log</tspan><tspan x="1770" dy="13.65">&amp; log aktivitas</tspan></text>
+<circle cx="1940" cy="450" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
+<text x="1940" y="450.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1940" dy="0">Selesai</tspan></text>
+<circle cx="920" cy="585" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
+<text x="920" y="585.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="920" dy="0">MULAI</tspan></text>
+<rect x="1017.0" y="552.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
+<text x="1090" y="571.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1090" dy="0">Scan QR lantai,</tspan><tspan x="1090" dy="13.65">pilih nama &amp;</tspan><tspan x="1090" dy="13.65">pilih toilet</tspan></text>
+<rect x="1187.0" y="552.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
+<text x="1260" y="571.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1260" dy="0">Membersihkan toilet</tspan><tspan x="1260" dy="13.65">(tiket laporan /</tspan><tspan x="1260" dy="13.65">rutin harian)</tspan></text>
+<rect x="1357.0" y="552.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
+<text x="1430" y="571.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1430" dy="0">Mengambil foto</tspan><tspan x="1430" dy="13.65">bukti (kamera</tspan><tspan x="1430" dy="13.65">langsung)</tspan></text>
+<rect x="507.0" y="757.0" width="146" height="66" rx="4" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
+<text x="580" y="783.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="580" dy="0">Menerima ringkasan</tspan><tspan x="580" dy="13.65">harian AI</tspan></text>
+<rect x="677.0" y="757.0" width="146" height="66" rx="4" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
+<text x="750" y="776.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="750" dy="0">Memantau dasbor:</tspan><tspan x="750" dy="13.65">tiket, work log,</tspan><tspan x="750" dy="13.65">grafik &amp; log aktivitas</tspan></text>
+<rect x="847.0" y="757.0" width="146" height="66" rx="4" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
+<text x="920" y="783.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="920" dy="0">Keliling / inspeksi</tspan><tspan x="920" dy="13.65">lapangan</tspan></text>
+<rect x="1017.0" y="757.0" width="146" height="66" rx="4" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
+<text x="1090" y="783.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1090" dy="0">Menugaskan petugas</tspan><tspan x="1090" dy="13.65">secara langsung</tspan></text>
+<circle cx="1090" cy="885" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
+<circle cx="1090" cy="885" r="23" fill="none" stroke="#C9665F" stroke-width="1.2"/>
+<text x="1090" y="878.825" font-size="9.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1090" dy="0">Akhir</tspan><tspan x="1090" dy="12.35">bulan</tspan></text>
+<rect x="1187.0" y="852.0" width="146" height="66" rx="4" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
+<text x="1260" y="871.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1260" dy="0">Menyerahkan rekap</tspan><tspan x="1260" dy="13.65">bulanan terverifikasi</tspan><tspan x="1260" dy="13.65">ke Sarpras</tspan></text>
+<rect x="1187.0" y="997.0" width="146" height="66" rx="4" fill="#A9E3A9" stroke="#5FB35F" stroke-width="1.5"/>
+<text x="1260" y="1023.175" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1260" dy="0">Menerima rekap</tspan><tspan x="1260" dy="13.65">bulanan &amp; bukti foto</tspan></text>
+<rect x="1017.0" y="997.0" width="146" height="66" rx="4" fill="#A9E3A9" stroke="#5FB35F" stroke-width="1.5"/>
+<text x="1090" y="1016.35" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1090" dy="0">Evaluasi kinerja</tspan><tspan x="1090" dy="13.65">petugas berbasis</tspan><tspan x="1090" dy="13.65">data</tspan></text>
+<circle cx="920" cy="1030" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
+<text x="920" y="1030.0" font-size="10" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="920" dy="0">Selesai</tspan></text>
+</svg>
