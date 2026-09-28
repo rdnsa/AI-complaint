@@ -164,9 +164,9 @@ export default function ImageViewer({
   const zoomed = view.s > MIN_SCALE;
 
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={alt} className="fixed inset-0 z-[60] flex flex-col bg-[#1a0f0c]">
+    <div role="dialog" aria-modal="true" aria-label={alt} className="fixed inset-0 z-[60] flex flex-col bg-black">
       <div className="flex items-center gap-3 px-4 py-3">
-        <p className="min-w-0 flex-1 truncate text-sm font-semibold text-tetap-krem">{caption}</p>
+        <p className="min-w-0 flex-1 truncate text-sm font-semibold text-tetap-mist">{caption}</p>
         <button
           ref={closeButton}
           type="button"

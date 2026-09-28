@@ -4,6 +4,7 @@ import { api, type LeaderboardRow } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { PodiumMark, RankMark } from '../components/Marks';
+import { Reveal } from '../lib/motion';
 
 export default function Leaderboard() {
   const { t } = useLanguage();
@@ -33,43 +34,43 @@ export default function Leaderboard() {
 
       <main className="mx-auto max-w-2xl px-4">
         {session?.role === 'reporter' && me && (
-          <p className="mt-6 rounded-xl bg-bata-50 px-4 py-3 text-sm font-semibold text-bata-700 ring-1 ring-bata-200">
+          <p className="mt-6 rounded-nav bg-accent-50 px-5 py-4 text-body-sm font-semibold text-accent-700">
             {me.reports
               ? t('leaderboard.my_position', { rank: me.rank, reports: me.reports })
               : t('leaderboard.no_reports_yet')}
           </p>
         )}
 
-        {loading && <p className="mt-6 text-maroon-600">{t('common.loading')}</p>}
+        {loading && <p className="mt-6 text-ink-600">{t('common.loading')}</p>}
         {!loading && !data.length && (
-          <p className="card mt-6 p-10 text-center text-maroon-600">{t('leaderboard.empty')}</p>
+          <p className="card mt-6 p-10 text-center text-ink-600">{t('leaderboard.empty')}</p>
         )}
 
-        <ol className="mt-4 space-y-2">
+        <Reveal as="ol" stagger className="mt-4 space-y-2">
           {data.map((u, i) => {
             const isMe = session?.id === u.id;
             return (
               <li
                 key={u.id}
                 className={`card flex items-center gap-3 p-3.5 ${
-                  isMe ? 'ring-2 ring-bata-400' : ''
+                  isMe ? 'ring-2 ring-accent-400' : ''
                 }`}
               >
                 <RankMark rank={i + 1} />
                 <span className="sr-only">#{i + 1}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-maroon-900">{u.name}</p>
-                  <p className="text-xs text-maroon-600">
+                  <p className="truncate font-bold text-ink-900">{u.name}</p>
+                  <p className="text-xs text-ink-600">
                     {t('leaderboard.resolved', { n: u.resolved ?? 0 })}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm font-bold text-bata-600">
+                <span className="shrink-0 text-sm font-bold text-accent-600">
                   {t('leaderboard.reports', { n: u.reports })}
                 </span>
               </li>
             );
           })}
-        </ol>
+        </Reveal>
       </main>
     </div>
   );

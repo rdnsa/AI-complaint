@@ -3,12 +3,16 @@
 /**
  * Every palette colour reads an RGB triplet from a CSS variable declared in
  * web/src/index.css, where `:root` holds the light values and `.dark` the dark
- * ones. Components keep using `bg-krem-50` or `text-maroon-900` as before; the
- * theme switch changes what those names resolve to.
+ * ones. Components use `bg-mist-100` or `text-ink-900`; the theme switch
+ * changes what those names resolve to.
+ *
+ * The palette follows design.md (an Apple-style product page): a white gallery
+ * canvas, Studio Mist bands, near-black Ink type, and one blue kept for links
+ * and compact action pills.
  */
-const v = (nama) => `rgb(var(--${nama}) / <alpha-value>)`;
-const skala = (nama, langkah) =>
-  Object.fromEntries(langkah.map((l) => [l, v(`${nama}-${l}`)]));
+const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+const scale = (name, steps) =>
+  Object.fromEntries(steps.map((s) => [s, v(`${name}-${s}`)]));
 
 export default {
   content: ['./web/index.html', './web/src/**/*.{ts,tsx}'],
@@ -16,33 +20,49 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Palet diambil dari poster "Peta Lokasi Gedung" UPI Kampus Tasikmalaya:
-        // maroon tua untuk teks dan header, oranye bata untuk aksi, krem sebagai latar.
-        maroon: skala('maroon', [50, 100, 200, 600, 700, 800, 900]),
-        bata: skala('bata', [50, 100, 200, 300, 400, 500, 600, 700]),
-        krem: skala('krem', [50, 100, 200, 300]),
-        // Card and input surface: white in the light theme, deep brown in the dark one.
-        permukaan: v('permukaan'),
-        toska: {
-          400: '#3CBFB9',
-          500: '#1FA8A3',
-          600: '#178C88',
-        },
-        // Colours that must not follow the theme: the header stays maroon in both.
+        // Ink: 900 headlines and body, 700 strong secondary, 600 Slate secondary copy,
+        // 200 hairlines and placeholders, 50–100 the palest tints.
+        ink: scale('ink', [50, 100, 200, 600, 700, 800, 900]),
+        // Accent blue: 500 Pricing Blue for filled pills, 600 Apple Blue for links.
+        accent: scale('accent', [50, 100, 200, 300, 400, 500, 600, 700]),
+        // Grounds: 50 Paper Frost, 100 Studio Mist, 200 Control Gray, 300 Hairline Silver.
+        mist: scale('mist', [50, 100, 200, 300]),
+        // Card and input surface: Gallery White in the light theme.
+        surface: v('surface'),
+        // Launch Orange, only for small bare status text such as "new".
+        launch: v('launch'),
+        // Colours that must not follow the theme (brand marks, photo overlays).
         tetap: {
-          maroon: '#4A1D16',
-          krem: '#E4C0B7',
+          ink: '#1d1d1f',
+          mist: '#f5f5f7',
         },
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        // SF Pro where the platform has it; Inter is the published substitute.
+        sans: ['"SF Pro Text"', '-apple-system', 'BlinkMacSystemFont', 'Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        display: ['"SF Pro Display"', '-apple-system', 'BlinkMacSystemFont', 'Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+      },
+      fontSize: {
+        // Type scale from design.md: [size, { lineHeight, letterSpacing }].
+        nav: ['12px', { lineHeight: '1.33', letterSpacing: '-0.12px' }],
+        'body-sm': ['14px', { lineHeight: '1.29', letterSpacing: '-0.224px' }],
+        body: ['17px', { lineHeight: '1.47', letterSpacing: '-0.374px' }],
+        'nav-title': ['19px', { lineHeight: '1.21', letterSpacing: '0.228px' }],
+        kicker: ['21px', { lineHeight: '1', letterSpacing: '0.231px' }],
+        'feature-sm': ['28px', { lineHeight: '1.14', letterSpacing: '0.196px' }],
+        feature: ['40px', { lineHeight: '1.1', letterSpacing: '0px' }],
+        hero: ['80px', { lineHeight: '1.05', letterSpacing: '-1.2px' }],
+      },
+      borderRadius: {
+        card: '28px',
+        nav: '20px',
       },
       boxShadow: {
-        kartu: '0 1px 2px rgba(0,0,0,.04), 0 4px 16px -6px rgba(0,0,0,.12)',
-        naik: '0 8px 28px -10px rgba(0,0,0,.3)',
+        // The only elevation mark in the system: a 1px ring, never a cast shadow.
+        subtle: 'rgb(230, 230, 232) 0px 0px 0px 1px',
       },
-      backgroundImage: {
-        'maroon-lembut': 'linear-gradient(135deg, #4A1D16 0%, #6B2A1E 55%, #8A3A22 100%)',
+      spacing: {
+        section: '90px',
       },
     },
   },

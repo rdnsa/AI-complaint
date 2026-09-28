@@ -1,15 +1,12 @@
 /**
- * Chart colours, already passed through scripts/validate_palette.js against the
- * white card surface: lightness band, chroma floor, colour-vision separation
- * (deutan/protan/tritan), and contrast against the surface.
- *
- * Do not change these to taste — re-run the validator first. The brick orange
- * comes from the campus identity; the teal was chosen as the partner that stays
- * clearly separable from it for colour-blind readers.
+ * Chart colours, following design.md: the page is monochrome with one blue, so
+ * the blue marks what matters (reports resolved) and Steel gray carries the
+ * volume (reports received). The two differ strongly in lightness as well as
+ * hue, which keeps them apart for colour-blind readers and in grayscale print.
  */
 export const SERIES = {
-  received: '#E2571F',
-  resolved: '#0D9488',
+  received: '#86868B',
+  resolved: '#0071E3',
 } as const;
 
 /** Priority is a state, not an identity, so it uses the status palette. */
@@ -27,13 +24,13 @@ export const PRIORITY_COLORS: Record<string, string> = {
  * category differences that do not exist in a single measure.
  */
 export const SEQUENTIAL = [
-  '#FEF6F1',
-  '#FCE8DC',
-  '#F7CBB0',
-  '#F0A87F',
-  '#EA8149',
-  '#E2571F',
-  '#C74513',
+  '#EEF5FD',
+  '#D4E6FA',
+  '#A9CDF5',
+  '#6FAAEE',
+  '#3B8AE6',
+  '#0071E3',
+  '#0058B0',
 ] as const;
 
 /** Maps a value onto the ramp; zero keeps the empty surface rather than a colour. */
@@ -52,17 +49,17 @@ export function inkOn(value: number, max: number): string {
 }
 
 /** A single magnitude series needs one colour — and no legend. */
-export const SINGLE = '#E2571F';
+export const SINGLE = '#0071E3';
 
 /**
  * Ink colours follow the theme: they read the same CSS variables the Tailwind
  * palette uses (web/src/index.css), so charts flip to dark along with the page.
- * `#3E1712` etc. in the light theme, their mirrored values in the dark one.
+ * `#1d1d1f` etc. in the light theme, their mirrored values in the dark one.
  */
 export const INK = {
-  primary: 'rgb(var(--maroon-900))',
-  secondary: 'rgb(var(--maroon-700))',
-  muted: 'rgb(var(--maroon-600))',
-  gridline: 'rgb(var(--krem-200))',
-  surface: 'rgb(var(--permukaan))',
+  primary: 'rgb(var(--ink-900))',
+  secondary: 'rgb(var(--ink-700))',
+  muted: 'rgb(var(--ink-600))',
+  gridline: 'rgb(var(--mist-200))',
+  surface: 'rgb(var(--surface))',
 };

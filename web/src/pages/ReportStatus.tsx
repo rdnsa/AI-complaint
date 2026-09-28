@@ -58,11 +58,11 @@ export default function ReportStatus() {
 
       <main className="mx-auto max-w-lg px-4">
         {error && <p className="mt-8 text-center text-red-700">{error}</p>}
-        {!report && !error && <p className="mt-10 text-center text-maroon-600">{t('common.loading')}</p>}
+        {!report && !error && <p className="mt-10 text-center text-ink-600">{t('common.loading')}</p>}
 
         {report && (
           <>
-            <div className="mt-6 flex items-start gap-3 rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-200">
+            <div className="mt-6 flex items-start gap-3 rounded-card bg-emerald-50 p-6">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-white">
                 <CheckGlyph className="h-[18px] w-[18px]" />
               </span>
@@ -75,8 +75,8 @@ export default function ReportStatus() {
             </div>
 
             <div className="card mt-4 p-4">
-              <p className="text-sm font-semibold text-bata-600">{report.toilet_name}</p>
-              <p className="mt-1.5 whitespace-pre-wrap text-maroon-900">{report.description}</p>
+              <p className="text-sm font-semibold text-accent-600">{report.toilet_name}</p>
+              <p className="mt-1.5 whitespace-pre-wrap text-ink-900">{report.description}</p>
               {report.photo_url && (
                 <ZoomableImage
                   src={report.photo_url}
@@ -94,14 +94,14 @@ export default function ReportStatus() {
 
               {report.ai_status === 'pending' && (
                 <div className="mt-3 space-y-2">
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-krem-200" />
-                  <div className="h-4 w-full animate-pulse rounded bg-krem-200" />
-                  <p className="pt-1 text-sm text-maroon-600">{t('status.analysing')}</p>
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-mist-200" />
+                  <div className="h-4 w-full animate-pulse rounded bg-mist-200" />
+                  <p className="pt-1 text-sm text-ink-600">{t('status.analysing')}</p>
                 </div>
               )}
 
               {report.ai_status === 'failed' && (
-                <p className="mt-3 text-sm leading-relaxed text-maroon-600">{t('status.analysis_failed')}</p>
+                <p className="mt-3 text-sm leading-relaxed text-ink-600">{t('status.analysis_failed')}</p>
               )}
 
               {report.ai_status === 'ok' && (
@@ -112,8 +112,8 @@ export default function ReportStatus() {
                       <CategoryBadge key={c} value={c} />
                     ))}
                   </div>
-                  <p className="text-maroon-900">{report.summary}</p>
-                  <div className="rounded-xl border-l-4 border-bata-400 bg-krem-50 p-3 text-sm text-maroon-700">
+                  <p className="text-ink-900">{report.summary}</p>
+                  <div className="rounded-nav bg-mist-100 px-4 py-3 text-body-sm text-ink-700">
                     <span className="font-bold">{t('status.action')} </span>
                     {report.recommendation}
                   </div>
@@ -124,14 +124,14 @@ export default function ReportStatus() {
         )}
 
         {report && (
-          <p className="mt-4 text-center text-xs leading-relaxed text-maroon-600">
+          <p className="mt-4 text-center text-xs leading-relaxed text-ink-600">
             {session?.role === 'reporter' ? t('status.saved_account') : t('status.saved_hint')}
           </p>
         )}
 
         <Link
           to="/"
-          className="mx-auto mt-4 block w-fit px-2 py-2.5 text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
+          className="mx-auto mt-4 block w-fit px-2 py-2.5 text-sm font-semibold text-ink-600 underline decoration-mist-300 underline-offset-4 hover:text-accent-600"
         >
           {t('nav.home')}
         </Link>

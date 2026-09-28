@@ -17,17 +17,17 @@ const ACTIONS = [
 ] as const;
 
 const COLORS: Record<string, string> = {
-  report_created: 'bg-bata-50 text-bata-700 ring-bata-200',
+  report_created: 'bg-accent-50 text-accent-700 ring-accent-200',
   work_logged: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
-  status_changed: 'bg-toska-500/10 text-toska-600 ring-toska-400/40',
+  status_changed: 'bg-accent-50 text-accent-600 ring-accent-100',
   report_deleted: 'bg-red-50 text-red-800 ring-red-200',
-  analysis: 'bg-krem-100 text-maroon-700 ring-krem-300',
+  analysis: 'bg-mist-100 text-ink-700 ring-mist-300',
   analysis_failed: 'bg-amber-50 text-amber-800 ring-amber-200',
   proof_rejected: 'bg-amber-50 text-amber-800 ring-amber-200',
   verification_failed: 'bg-amber-50 text-amber-800 ring-amber-200',
-  login: 'bg-krem-100 text-maroon-700 ring-krem-300',
-  daily_summary: 'bg-krem-100 text-maroon-700 ring-krem-300',
-  question: 'bg-krem-100 text-maroon-700 ring-krem-300',
+  login: 'bg-mist-100 text-ink-700 ring-mist-300',
+  daily_summary: 'bg-mist-100 text-ink-700 ring-mist-300',
+  question: 'bg-mist-100 text-ink-700 ring-mist-300',
 };
 
 export default function ActivityPanel() {
@@ -53,7 +53,7 @@ export default function ActivityPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-xl bg-permukaan px-4 py-3 text-sm leading-relaxed text-maroon-700 ring-1 ring-krem-200">
+      <p className="rounded-nav bg-surface px-4 py-3 text-sm leading-relaxed text-ink-700">
         {t('activity.description')}
       </p>
 
@@ -71,9 +71,9 @@ export default function ActivityPanel() {
       </select>
 
       <ol className="mt-4 space-y-2">
-        {loading && <p className="text-maroon-600">{t('common.loading')}</p>}
+        {loading && <p className="text-ink-600">{t('common.loading')}</p>}
         {!loading && !data.length && (
-          <p className="card p-10 text-center text-maroon-600">{t('activity.empty')}</p>
+          <p className="card p-10 text-center text-ink-600">{t('activity.empty')}</p>
         )}
 
         {data.map((a) => (
@@ -86,21 +86,21 @@ export default function ActivityPanel() {
               >
                 {t(`action.${a.action}`)}
               </span>
-              <span className="text-sm font-semibold text-maroon-900">{a.actor}</span>
-              <span className="ml-auto text-xs text-maroon-600">{relativeTime(a.created_at)}</span>
+              <span className="text-sm font-semibold text-ink-900">{a.actor}</span>
+              <span className="ml-auto text-xs text-ink-600">{relativeTime(a.created_at)}</span>
             </div>
 
-            <p className="mt-1.5 text-sm text-maroon-800">{a.summary}</p>
+            <p className="mt-1.5 text-sm text-ink-800">{a.summary}</p>
 
             {/* Deletion is the only action that removes data, so its copy is laid
                 out right away, without needing a click. */}
             {a.action === 'report_deleted' && a.details && (
-              <div className="mt-2 rounded-xl border-l-4 border-red-400 bg-red-50/60 p-3 text-sm">
-                <p className="text-xs font-bold uppercase tracking-wide text-red-800">
+              <div className="mt-2 rounded-nav bg-red-50 px-4 py-3 text-body-sm">
+                <p className="text-nav font-semibold text-red-800">
                   {t('activity.deleted_contents')}
                 </p>
-                <p className="mt-1 italic text-maroon-800">“{String(a.details.description ?? '')}”</p>
-                <p className="mt-1 text-xs text-maroon-600">
+                <p className="mt-1 italic text-ink-800">“{String(a.details.description ?? '')}”</p>
+                <p className="mt-1 text-xs text-ink-600">
                   {String(a.details.toilet_name ?? '')} · {String(a.details.status ?? '')} ·{' '}
                   {String(a.details.created_at ?? '')}
                 </p>

@@ -93,7 +93,7 @@ export default function Heatmap({
                       key={c}
                       onMouseEnter={() => setHovered({ row: r, column: c, value: n })}
                       onMouseLeave={() => setHovered(null)}
-                      className="h-9 rounded-md border border-krem-200 text-center font-bold tabular-nums"
+                      className="h-9 rounded-md border border-mist-200 text-center font-bold tabular-nums"
                       style={{
                         background: sequentialStep(n, max),
                         color: n ? inkOn(n, max) : INK.muted,
@@ -113,7 +113,7 @@ export default function Heatmap({
         <span>{fewerLabel}</span>
         <span className="flex gap-0.5">
           {SEQUENTIAL.map((c) => (
-            <span key={c} className="h-3 w-5 rounded-sm border border-krem-200" style={{ background: c }} />
+            <span key={c} className="h-3 w-5 rounded-sm border border-mist-200" style={{ background: c }} />
           ))}
         </span>
         <span>{moreLabel}</span>

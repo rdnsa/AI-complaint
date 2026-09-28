@@ -37,22 +37,22 @@ export default function AccountsPanel() {
       />
 
       {error && (
-        <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800">{error}</p>
+        <p className="rounded-nav bg-red-50 px-4 py-3 text-body-sm font-medium text-red-800">{error}</p>
       )}
 
-      {loading && <p className="text-maroon-600">{t('common.loading')}</p>}
+      {loading && <p className="text-ink-600">{t('common.loading')}</p>}
 
       <ul className="space-y-2">
         {accounts.map((u) => (
           <li key={u.id} className="card p-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-bold text-maroon-900">{u.name}</span>
+              <span className="font-bold text-ink-900">{u.name}</span>
               {u.username && (
-                <code className="rounded bg-krem-100 px-1.5 py-0.5 text-xs text-maroon-700">
+                <code className="rounded bg-mist-100 px-1.5 py-0.5 text-xs text-ink-700">
                   {u.username}
                 </code>
               )}
-              <span className="rounded-full bg-krem-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-maroon-600">
+              <span className="rounded-full bg-mist-100 px-2 py-0.5 text-nav font-semibold text-ink-600">
                 {u.role === 'supervisor' ? t('account.role_supervisor') : t('account.role_staff')}
               </span>
               {!u.active && (
@@ -145,7 +145,7 @@ function AddForm({
           <option value="supervisor">{t('account.role_supervisor')}</option>
         </select>
       </div>
-      {role === 'staff' && <p className="mb-3 text-xs text-maroon-600">{t('account.staff_no_login')}</p>}
+      {role === 'staff' && <p className="mb-3 text-xs text-ink-600">{t('account.staff_no_login')}</p>}
       <div className={`grid gap-3 ${role === 'supervisor' ? 'sm:grid-cols-3' : ''}`}>
         {role === 'supervisor' && (
           <input
@@ -214,7 +214,7 @@ function EditForm({
   }
 
   return (
-    <form onSubmit={submit} className="mt-3 border-t border-krem-200 pt-3">
+    <form onSubmit={submit} className="mt-3 border-t border-mist-200 pt-3">
       <div className={`grid gap-3 ${account.role === 'supervisor' ? 'sm:grid-cols-2' : ''}`}>
         <div>
           <label className="label">{t('account.name')}</label>
@@ -229,7 +229,7 @@ function EditForm({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="mt-1 text-xs text-maroon-600">{t('account.password_blank_hint')}</p>
+          <p className="mt-1 text-xs text-ink-600">{t('account.password_blank_hint')}</p>
         </div>
         )}
       </div>

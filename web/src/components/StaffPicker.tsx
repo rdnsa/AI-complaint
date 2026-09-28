@@ -19,15 +19,11 @@ export default function StaffPicker({
 
   return (
     <div
-      className={`rounded-2xl p-4 ring-1 ${
-        selected ? 'bg-emerald-50 ring-emerald-200' : 'bg-amber-50 ring-amber-300'
-      }`}
+      className={`rounded-card bg-surface p-6 ${selected ? '' : 'ring-2 ring-accent-500'}`}
     >
-      {/* The tinted box keeps its light colour in both themes, so its label must
-          too; the theme-following maroon ink would vanish on it in dark mode. */}
       <label
         htmlFor="staff-picker"
-        className={`flex items-center gap-2 text-base font-bold ${selected ? 'text-emerald-950' : 'text-amber-950'}`}
+        className="flex items-center gap-2 font-display text-nav-title font-semibold text-ink-900"
       >
         <PersonGlyph className="h-5 w-5" />
         {t('staff.who_are_you')}

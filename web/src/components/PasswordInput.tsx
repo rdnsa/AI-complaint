@@ -21,7 +21,7 @@ export default function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputE
         title={visible ? t('password.hide') : t('password.show')}
         aria-pressed={visible}
         tabIndex={-1}
-        className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-xl text-base text-maroon-600 transition hover:text-bata-600"
+        className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-xl text-base text-ink-600 transition hover:text-accent-600"
       >
         <EyeGlyph off={visible} className="h-5 w-5" />
       </button>

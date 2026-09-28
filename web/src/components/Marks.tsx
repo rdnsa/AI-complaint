@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 /*
  * The app's whole visual vocabulary, in two tiers.
  *
- * Marks are the identity layer: a handful of flat shapes in the campus palette
+ * Marks are the identity layer: a handful of flat shapes in the monochrome palette with one blue
  * on a rounded tile, drawn on one 48-unit grid with the same corner radii, so
  * they read as one family rather than a borrowed icon set. Every mark carries
  * exactly one small accent dot in a contrasting colour — the house rule that
@@ -28,18 +28,18 @@ function Tile({ size, className = '', children }: { size: string; className?: st
 
 type MarkProps = { size?: string; className?: string };
 
-const ROLE_SIZE = 'h-12 w-12 rounded-[14px]';
+const ROLE_SIZE = 'h-14 w-14 rounded-[16px]';
 const SMALL_SIZE = 'h-10 w-10 rounded-xl';
-const LIGHT_TILE = 'bg-krem-100 ring-1 ring-inset ring-krem-200';
+const LIGHT_TILE = 'bg-mist-100 ring-1 ring-inset ring-mist-200';
 
 /** Student: a mortarboard, the tassel ending in the accent dot. */
 export function StudentMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
   return (
-    <Tile size={size} className={`bg-bata-500 ring-1 ring-inset ring-black/5 ${className}`}>
+    <Tile size={size} className={`bg-accent-500 ring-1 ring-inset ring-black/5 ${className}`}>
       <path d="M15 22.5V29c0 3.1 4 5.6 9 5.6s9-2.5 9-5.6v-6.5l-9 4.2Z" className="fill-white/55" />
       <path d="M24 11 39 18 24 25 9 18Z" className="fill-white" />
       <path d="M39 18v9.5" className="stroke-white" strokeWidth="2" strokeLinecap="round" fill="none" />
-      <circle cx="39" cy="30" r="2.4" className="fill-tetap-maroon" />
+      <circle cx="39" cy="30" r="2.4" className="fill-tetap-ink" />
     </Tile>
   );
 }
@@ -47,17 +47,17 @@ export function StudentMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
 /** Cleaning staff: a drop of water with its highlight, and a smaller drop beside it. */
 export function StaffMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
   return (
-    <Tile size={size} className={`bg-toska-500 ring-1 ring-inset ring-black/5 ${className}`}>
+    <Tile size={size} className={`bg-tetap-ink ring-1 ring-inset ring-white/15 ${className}`}>
       <path d="M22 9.5S12 21.1 12 28a10 10 0 0 0 20 0c0-6.9-10-18.5-10-18.5Z" className="fill-white" />
       <path
         d="M17.2 28.4a4.8 4.8 0 0 0 4.8 4.8"
-        className="stroke-toska-500"
+        className="stroke-tetap-ink"
         strokeWidth="2.4"
         strokeLinecap="round"
         fill="none"
       />
       <path d="M35.5 13.5S31 19 31 22a4.5 4.5 0 0 0 9 0c0-3-4.5-8.5-4.5-8.5Z" className="fill-white/55" />
-      <circle cx="37" cy="34.5" r="2.4" className="fill-tetap-maroon" />
+      <circle cx="37" cy="34.5" r="2.4" className="fill-accent-400" />
     </Tile>
   );
 }
@@ -65,11 +65,11 @@ export function StaffMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
 /** Supervisor: three rising bars, the overview of the whole building. */
 export function SupervisorMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
   return (
-    <Tile size={size} className={`bg-tetap-maroon ring-1 ring-inset ring-white/15 ${className}`}>
-      <rect x="11" y="26" width="6.5" height="11" rx="2" className="fill-tetap-krem/60" />
-      <rect x="20.75" y="20" width="6.5" height="17" rx="2" className="fill-tetap-krem" />
-      <rect x="30.5" y="13" width="6.5" height="24" rx="2" className="fill-white" />
-      <circle cx="14.25" cy="19.5" r="2.4" className="fill-bata-400" />
+    <Tile size={size} className={`bg-tetap-mist ring-1 ring-inset ring-black/5 ${className}`}>
+      <rect x="11" y="26" width="6.5" height="11" rx="2" className="fill-tetap-ink/35" />
+      <rect x="20.75" y="20" width="6.5" height="17" rx="2" className="fill-tetap-ink/65" />
+      <rect x="30.5" y="13" width="6.5" height="24" rx="2" className="fill-tetap-ink" />
+      <circle cx="14.25" cy="19.5" r="2.4" className="fill-accent-400" />
     </Tile>
   );
 }
@@ -80,12 +80,12 @@ const BUBBLE_FRONT = 'M17 25a6 6 0 0 1 6-6h12a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6h-.5v
 /** The chatbot: two speech bubbles in conversation, the front one mid-sentence. */
 export function ChatMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
   return (
-    <Tile size={size} className={`bg-maroon-lembut ring-1 ring-inset ring-white/10 ${className}`}>
-      <path d={BUBBLE_BACK} className="fill-tetap-krem/45" />
+    <Tile size={size} className={`bg-accent-500 ring-1 ring-inset ring-black/5 ${className}`}>
+      <path d={BUBBLE_BACK} className="fill-tetap-mist/45" />
       <path d={BUBBLE_FRONT} className="fill-white" />
-      <circle cx="24" cy="27.5" r="1.8" className="fill-tetap-maroon" />
-      <circle cx="29" cy="27.5" r="1.8" className="fill-tetap-maroon" />
-      <circle cx="34" cy="27.5" r="1.8" className="fill-bata-500" />
+      <circle cx="24" cy="27.5" r="1.8" className="fill-tetap-ink" />
+      <circle cx="29" cy="27.5" r="1.8" className="fill-tetap-ink" />
+      <circle cx="34" cy="27.5" r="1.8" className="fill-accent-500" />
     </Tile>
   );
 }
@@ -94,8 +94,8 @@ export function ChatMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
 export function ChatGlyph({ className = 'h-4 w-4' }: { className?: string }) {
   return (
     <svg aria-hidden viewBox="8 9 34 32" className={`shrink-0 ${className}`}>
-      <path d={BUBBLE_BACK} className="fill-bata-300" />
-      <path d={BUBBLE_FRONT} className="fill-bata-500" />
+      <path d={BUBBLE_BACK} className="fill-accent-300" />
+      <path d={BUBBLE_FRONT} className="fill-accent-500" />
     </svg>
   );
 }
@@ -111,10 +111,10 @@ export function QrMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
         height="9.4"
         rx="2.6"
         fill="none"
-        className="stroke-maroon-800"
+        className="stroke-ink-800"
         strokeWidth="2.6"
       />
-      <rect x={x + 4} y={y + 4} width="4" height="4" rx="1" className="fill-maroon-800" />
+      <rect x={x + 4} y={y + 4} width="4" height="4" rx="1" className="fill-ink-800" />
     </g>
   );
   return (
@@ -122,9 +122,9 @@ export function QrMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
       {finder(9, 9)}
       {finder(27, 9)}
       {finder(9, 27)}
-      <rect x="27" y="27" width="5" height="5" rx="1.2" className="fill-maroon-800" />
-      <rect x="34" y="34" width="5" height="5" rx="1.2" className="fill-maroon-800" />
-      <circle cx="36.5" cy="29.5" r="2.4" className="fill-bata-500" />
+      <rect x="27" y="27" width="5" height="5" rx="1.2" className="fill-ink-800" />
+      <rect x="34" y="34" width="5" height="5" rx="1.2" className="fill-ink-800" />
+      <circle cx="36.5" cy="29.5" r="2.4" className="fill-accent-500" />
     </Tile>
   );
 }
@@ -133,11 +133,11 @@ export function QrMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
 export function ReportsMark({ size = SMALL_SIZE, className = '' }: MarkProps) {
   return (
     <Tile size={size} className={`${LIGHT_TILE} ${className}`}>
-      <rect x="16" y="9" width="21" height="26" rx="4" className="fill-krem-300" />
-      <rect x="11" y="13" width="21" height="26" rx="4" className="fill-maroon-800" />
-      <rect x="15.5" y="20" width="12" height="2.6" rx="1.3" className="fill-krem-100" />
-      <rect x="15.5" y="26" width="8" height="2.6" rx="1.3" className="fill-krem-100" />
-      <circle cx="35" cy="37" r="3" className="fill-bata-500" />
+      <rect x="16" y="9" width="21" height="26" rx="4" className="fill-mist-300" />
+      <rect x="11" y="13" width="21" height="26" rx="4" className="fill-ink-800" />
+      <rect x="15.5" y="20" width="12" height="2.6" rx="1.3" className="fill-mist-100" />
+      <rect x="15.5" y="26" width="8" height="2.6" rx="1.3" className="fill-mist-100" />
+      <circle cx="35" cy="37" r="3" className="fill-accent-500" />
     </Tile>
   );
 }
@@ -146,10 +146,10 @@ export function ReportsMark({ size = SMALL_SIZE, className = '' }: MarkProps) {
 export function PodiumMark({ size = SMALL_SIZE, className = '' }: MarkProps) {
   return (
     <Tile size={size} className={`${LIGHT_TILE} ${className}`}>
-      <rect x="9" y="25" width="9" height="13" rx="2" className="fill-krem-300" />
-      <rect x="19.5" y="18" width="9" height="20" rx="2" className="fill-maroon-800" />
-      <rect x="30" y="29" width="9" height="9" rx="2" className="fill-krem-300" />
-      <circle cx="24" cy="11.5" r="3" className="fill-bata-500" />
+      <rect x="9" y="25" width="9" height="13" rx="2" className="fill-mist-300" />
+      <rect x="19.5" y="18" width="9" height="20" rx="2" className="fill-ink-800" />
+      <rect x="30" y="29" width="9" height="9" rx="2" className="fill-mist-300" />
+      <circle cx="24" cy="11.5" r="3" className="fill-accent-500" />
     </Tile>
   );
 }
@@ -160,16 +160,16 @@ export function PodiumMark({ size = SMALL_SIZE, className = '' }: MarkProps) {
  */
 export function RankMark({ rank, size = SMALL_SIZE }: { rank: number; size?: string }) {
   const podium = [
-    { tile: 'bg-bata-500', dot: 'fill-tetap-maroon' },
-    { tile: 'bg-tetap-maroon ring-1 ring-inset ring-white/15', dot: 'fill-bata-400' },
-    { tile: 'bg-toska-500', dot: 'fill-tetap-maroon' },
+    { tile: 'bg-accent-500', dot: 'fill-tetap-ink' },
+    { tile: 'bg-tetap-ink ring-1 ring-inset ring-white/15', dot: 'fill-accent-400' },
+    { tile: 'bg-ink-600', dot: 'fill-white' },
   ][rank - 1];
 
   if (!podium) {
     return (
       <span
         aria-hidden
-        className={`grid shrink-0 place-items-center text-sm font-extrabold tabular-nums text-maroon-700 ${LIGHT_TILE} ${size}`}
+        className={`grid shrink-0 place-items-center text-sm font-extrabold tabular-nums text-ink-700 ${LIGHT_TILE} ${size}`}
       >
         {rank}
       </span>
@@ -193,10 +193,10 @@ export function RankMark({ rank, size = SMALL_SIZE }: { rank: number; size?: str
   );
 }
 
-/** Done: a check on the staff colour, for the moment a job is finished. */
+/** Done: a check on the accent blue, for the moment a job is finished. */
 export function DoneMark({ size = 'h-16 w-16 rounded-[20px]', className = '' }: MarkProps) {
   return (
-    <Tile size={size} className={`bg-toska-500 ring-1 ring-inset ring-black/5 ${className}`}>
+    <Tile size={size} className={`bg-accent-500 ring-1 ring-inset ring-black/5 ${className}`}>
       <path
         d="M13.5 24.5l7 7L34.5 17"
         className="stroke-white"
@@ -205,7 +205,7 @@ export function DoneMark({ size = 'h-16 w-16 rounded-[20px]', className = '' }: 
         strokeLinejoin="round"
         fill="none"
       />
-      <circle cx="37" cy="35.5" r="2.6" className="fill-tetap-maroon" />
+      <circle cx="37" cy="35.5" r="2.6" className="fill-tetap-ink" />
     </Tile>
   );
 }

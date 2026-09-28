@@ -62,7 +62,7 @@ export default function TimeFilter({
   return (
     <div className="card mt-4 space-y-3 p-3">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-maroon-600">
+        <span className="mr-1 flex items-center gap-1.5 text-nav font-semibold text-ink-600">
           <ClockGlyph className="h-3.5 w-3.5" />
           {t('time.filter')}
         </span>
@@ -74,8 +74,8 @@ export default function TimeFilter({
             aria-pressed={preset === p}
             className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition ${
               preset === p
-                ? 'bg-maroon-800 text-permukaan ring-maroon-800'
-                : 'bg-permukaan text-maroon-700 ring-krem-300 hover:bg-krem-50'
+                ? 'bg-ink-800 text-surface ring-ink-800'
+                : 'bg-surface text-ink-700 ring-mist-300 hover:bg-mist-50'
             }`}
           >
             {t(`time.${p}`)}
@@ -88,7 +88,7 @@ export default function TimeFilter({
               setPreset('all');
               onChange(EMPTY_TIME_RANGE);
             }}
-            className="ml-auto text-xs font-semibold text-bata-600 underline underline-offset-2"
+            className="ml-auto text-xs font-semibold text-accent-600 underline underline-offset-2"
           >
             {t('time.reset')}
           </button>
@@ -98,7 +98,7 @@ export default function TimeFilter({
       <div className="flex flex-wrap items-end gap-3">
         {preset === 'custom' && (
           <>
-            <label className="text-xs text-maroon-700">
+            <label className="text-xs text-ink-700">
               <span className="mb-1 block font-semibold">{t('time.from_date')}</span>
               <input
                 type="date"
@@ -108,7 +108,7 @@ export default function TimeFilter({
                 onChange={(e) => onChange({ ...value, from: e.target.value })}
               />
             </label>
-            <label className="text-xs text-maroon-700">
+            <label className="text-xs text-ink-700">
               <span className="mb-1 block font-semibold">{t('time.to_date')}</span>
               <input
                 type="date"
@@ -120,7 +120,7 @@ export default function TimeFilter({
             </label>
           </>
         )}
-        <label className="text-xs text-maroon-700">
+        <label className="text-xs text-ink-700">
           <span className="mb-1 block font-semibold">{t('time.from_hour')}</span>
           <select
             className="input !w-auto !py-1.5"
@@ -135,7 +135,7 @@ export default function TimeFilter({
             ))}
           </select>
         </label>
-        <label className="text-xs text-maroon-700">
+        <label className="text-xs text-ink-700">
           <span className="mb-1 block font-semibold">{t('time.to_hour')}</span>
           <select
             className="input !w-auto !py-1.5"
@@ -150,7 +150,7 @@ export default function TimeFilter({
             ))}
           </select>
         </label>
-        <span className="pb-2 text-xs text-maroon-600">WIB</span>
+        <span className="pb-2 text-xs text-ink-600">WIB</span>
       </div>
     </div>
   );

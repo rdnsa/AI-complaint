@@ -45,28 +45,28 @@ export default function Tracker({ report }: { report: Report }) {
                 <span
                   className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ring-2 ${
                     reached
-                      ? 'bg-bata-500 text-white ring-bata-200'
-                      : 'bg-permukaan text-krem-300 ring-krem-200'
+                      ? 'bg-accent-500 text-white ring-accent-200'
+                      : 'bg-surface text-mist-300 ring-mist-200'
                   }`}
                 >
                   {reached ? <CheckGlyph className="h-3.5 w-3.5" /> : i + 1}
                 </span>
                 {!last && (
-                  <span className={`w-0.5 flex-1 ${i < stage ? 'bg-bata-400' : 'bg-krem-200'}`} />
+                  <span className={`w-0.5 flex-1 ${i < stage ? 'bg-accent-400' : 'bg-mist-200'}`} />
                 )}
               </div>
               <div className={`pb-5 ${last ? 'pb-0' : ''}`}>
-                <p className={`text-sm font-semibold ${reached ? 'text-maroon-900' : 'text-maroon-600/60'}`}>
+                <p className={`text-sm font-semibold ${reached ? 'text-ink-900' : 'text-ink-600/60'}`}>
                   {s.label}
                 </p>
-                {s.note && <p className="text-xs text-maroon-600">{s.note}</p>}
+                {s.note && <p className="text-xs text-ink-600">{s.note}</p>}
               </div>
             </li>
           );
         })}
       </ol>
 
-      <p className="mt-1 text-xs text-maroon-600/70">{t('tracker.auto_refresh')}</p>
+      <p className="mt-1 text-xs text-ink-600/70">{t('tracker.auto_refresh')}</p>
     </div>
   );
 }

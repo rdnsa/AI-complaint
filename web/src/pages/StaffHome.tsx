@@ -8,6 +8,7 @@ import { api, type Report } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSelectedStaff } from '../lib/staff';
 import { ArrowGlyph, StaffMark } from '../components/Marks';
+import { Reveal } from '../lib/motion';
 
 /**
  * The staff starting point when no QR is at hand: every report still waiting,
@@ -42,7 +43,7 @@ export default function StaffHome() {
             <StaffPicker staffList={staffList} selected={selected} onSelect={select} />
           </div>
 
-          <p className="mt-4 rounded-xl bg-krem-50 px-3.5 py-2.5 text-sm leading-relaxed text-maroon-700 ring-1 ring-krem-200">
+          <p className="mt-4 rounded-nav bg-mist-50 px-3.5 py-2.5 text-sm leading-relaxed text-ink-700">
             {t('staff.qr_hint')}
           </p>
         </div>
@@ -52,30 +53,31 @@ export default function StaffHome() {
           {t('staff.waiting')} {!loading && `(${open.length})`}
         </h2>
         <div className="mt-2 space-y-2">
-          {loading && <p className="text-maroon-600">{t('common.loading')}</p>}
+          {loading && <p className="text-ink-600">{t('common.loading')}</p>}
           {!loading && !open.length && (
-            <p className="card p-6 text-center text-maroon-700">{t('staff.all_done')}</p>
+            <p className="card p-6 text-center text-ink-700">{t('staff.all_done')}</p>
           )}
           {open.map((r) => (
-            <Link
-              key={r.id}
-              to={`/staff/${r.building_code}-${r.floor}`}
-              className="card group flex items-center gap-3 p-3 hover:shadow-naik"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <PriorityBadge value={r.priority} />
-                  <StatusBadge value={r.status} />
-                  <span className="text-xs text-maroon-600">{relativeTime(r.created_at)}</span>
+            <Reveal key={r.id}>
+              <Link
+                to={`/staff/${r.building_code}-${r.floor}`}
+                className="card group flex items-center gap-3 p-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <PriorityBadge value={r.priority} />
+                    <StatusBadge value={r.status} />
+                    <span className="text-xs text-ink-600">{relativeTime(r.created_at)}</span>
+                  </div>
+                  <p className="mt-1 truncate text-sm font-semibold text-ink-900">{r.toilet_name}</p>
+                  <p className="truncate text-sm text-ink-700">{r.summary ?? r.description}</p>
                 </div>
-                <p className="mt-1 truncate text-sm font-semibold text-maroon-900">{r.toilet_name}</p>
-                <p className="truncate text-sm text-maroon-700">{r.summary ?? r.description}</p>
-              </div>
-              <span className="flex shrink-0 items-center gap-1 text-sm font-bold text-bata-600">
-                {t('staff.open')}
-                <ArrowGlyph className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </Link>
+                <span className="flex shrink-0 items-center gap-1 text-sm font-bold text-accent-600">
+                  {t('staff.open')}
+                  <ArrowGlyph className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </Link>
+            </Reveal>
           ))}
         </div>
         </div>

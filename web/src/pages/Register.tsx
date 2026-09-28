@@ -49,7 +49,7 @@ export default function Register() {
               onChange={(e) => setUsername(e.target.value)}
               required
             />
-            <p className="mt-1 text-xs text-maroon-600">{t('register.username_rule')}</p>
+            <p className="mt-1 text-xs text-ink-600">{t('register.username_rule')}</p>
           </div>
           <div>
             <label htmlFor="n" className="label">
@@ -75,7 +75,7 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <p className="mt-1 text-xs text-maroon-600">{t('register.password_rule')}</p>
+            <p className="mt-1 text-xs text-ink-600">{t('register.password_rule')}</p>
           </div>
           {error && <p className="text-sm font-medium text-red-700">{error}</p>}
           <button type="submit" disabled={busy} className="btn-primary w-full py-3">
@@ -85,7 +85,7 @@ export default function Register() {
 
         <Link
           to="/login"
-          className="mx-auto mt-4 block w-fit px-2 py-2.5 text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
+          className="mx-auto mt-4 block w-fit px-2 py-2.5 text-sm font-semibold text-ink-600 underline decoration-mist-300 underline-offset-4 hover:text-accent-600"
         >
           {t('register.have_account')}
         </Link>

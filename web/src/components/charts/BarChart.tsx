@@ -31,7 +31,7 @@ export default function BarChart({ data }: { data: BarItem[] }) {
               {d.display ?? d.value}
             </span>
           </div>
-          <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-krem-100">
+          <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-mist-100">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{

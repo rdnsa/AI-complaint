@@ -5,6 +5,7 @@ import { api, type PublicReport } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { CheckGlyph, ReportsMark } from '../components/Marks';
 import ZoomableImage from '../components/ZoomableImage';
+import { Reveal } from '../lib/motion';
 
 /**
  * The public report board.
@@ -47,7 +48,7 @@ export default function PublicReports() {
       />
 
       <main className="mx-auto max-w-3xl px-4">
-        <p className="mt-6 rounded-xl bg-permukaan px-4 py-3 text-sm font-semibold text-maroon-800 ring-1 ring-krem-200">
+        <p className="mt-6 rounded-nav bg-surface px-4 py-3 text-sm font-semibold text-ink-800">
           {t('public.count', { resolved: counts.resolved, total: counts.total })}
         </p>
 
@@ -75,58 +76,53 @@ export default function PublicReports() {
         </div>
 
         <div className="mt-4 space-y-3">
-          {loading && <p className="text-maroon-600">{t('dashboard.loading_reports')}</p>}
+          {loading && <p className="text-ink-600">{t('dashboard.loading_reports')}</p>}
           {!loading && !reports.length && (
-            <p className="card p-10 text-center text-maroon-600">{t('public.empty')}</p>
+            <p className="card p-10 text-center text-ink-600">{t('public.empty')}</p>
           )}
 
           {reports.map((r) => {
-            const edge =
-              r.priority === 'high'
-                ? 'border-l-4 border-l-red-500'
-                : r.priority === 'medium'
-                  ? 'border-l-4 border-l-amber-400'
-                  : 'border-l-4 border-l-emerald-400';
-
             return (
-              <article key={r.id} className={`card p-4 ${edge}`}>
-                <div className="flex flex-wrap items-center gap-2">
-                  <PriorityBadge value={r.priority} />
-                  <StatusBadge value={r.status} />
-                  {r.categories.map((c) => (
-                    <CategoryBadge key={c} value={c} />
-                  ))}
-                  <span className="ml-auto text-xs text-maroon-600">
-                    {relativeTime(r.created_at)}
-                  </span>
-                </div>
+              <Reveal key={r.id}>
+                <article className="card p-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PriorityBadge value={r.priority} />
+                    <StatusBadge value={r.status} />
+                    {r.categories.map((c) => (
+                      <CategoryBadge key={c} value={c} />
+                    ))}
+                    <span className="ml-auto text-xs text-ink-600">
+                      {relativeTime(r.created_at)}
+                    </span>
+                  </div>
 
-                <p className="mt-2.5 font-bold text-maroon-900">{r.toilet_name}</p>
-                <p className="mt-1 text-maroon-800">
-                  {r.summary ?? (
-                    <span className="italic text-maroon-600">{t('public.pending_summary')}</span>
-                  )}
-                </p>
-
-                {/* The staff proof photo is shown openly: this is what lets anyone
-                    check the claim that a report "has been handled". */}
-                {r.proof_photo_url && (
-                  <ZoomableImage
-                    src={r.proof_photo_url}
-                    alt={t('dashboard.proof')}
-                    caption={`${t('dashboard.proof')} · ${r.toilet_name}`}
-                    frameClassName="mt-3 ring-2 ring-emerald-400"
-                    className="max-h-48"
-                  />
-                )}
-
-                {r.resolved_at && (
-                  <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                    <CheckGlyph className="h-3.5 w-3.5" />
-                    {t('tracker.resolved')} · {relativeTime(r.resolved_at)}
+                  <p className="mt-2.5 font-bold text-ink-900">{r.toilet_name}</p>
+                  <p className="mt-1 text-ink-800">
+                    {r.summary ?? (
+                      <span className="italic text-ink-600">{t('public.pending_summary')}</span>
+                    )}
                   </p>
-                )}
-              </article>
+
+                  {/* The staff proof photo is shown openly: this is what lets anyone
+                      check the claim that a report "has been handled". */}
+                  {r.proof_photo_url && (
+                    <ZoomableImage
+                      src={r.proof_photo_url}
+                      alt={t('dashboard.proof')}
+                      caption={`${t('dashboard.proof')} · ${r.toilet_name}`}
+                      frameClassName="mt-3 ring-2 ring-emerald-400"
+                      className="max-h-48"
+                    />
+                  )}
+
+                  {r.resolved_at && (
+                    <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                      <CheckGlyph className="h-3.5 w-3.5" />
+                      {t('tracker.resolved')} · {relativeTime(r.resolved_at)}
+                    </p>
+                  )}
+                </article>
+              </Reveal>
             );
           })}
         </div>

@@ -47,8 +47,8 @@ export default function ChartsPanel() {
     });
   }, [data, t]);
 
-  if (loading) return <p className="mt-6 text-maroon-600">{t('common.loading')}</p>;
-  if (!data) return <p className="card mt-6 p-10 text-center text-maroon-600">{t('charts.no_data')}</p>;
+  if (loading) return <p className="mt-6 text-ink-600">{t('common.loading')}</p>;
+  if (!data) return <p className="card mt-6 p-10 text-center text-ink-600">{t('charts.no_data')}</p>;
 
   const { trend } = data;
   const resolvedRate = trend.reports ? Math.round((trend.resolved / trend.reports) * 100) : 0;
@@ -108,13 +108,13 @@ export default function ChartsPanel() {
 
       <section className="card p-5">
         <h3 className="section-title">{t('charts.composition')}</h3>
-        <p className="mb-3 mt-1 text-xs text-maroon-600">{t('charts.composition_hint')}</p>
+        <p className="mb-3 mt-1 text-xs text-ink-600">{t('charts.composition_hint')}</p>
         <StackedBarChart data={data.dailyByPriority} labels={priorityLabels} />
       </section>
 
       <section className="card p-5">
         <h3 className="section-title">{t('charts.pattern')}</h3>
-        <p className="mb-3 mt-1 text-xs text-maroon-600">{t('charts.pattern_hint')}</p>
+        <p className="mb-3 mt-1 text-xs text-ink-600">{t('charts.pattern_hint')}</p>
         <Heatmap
           data={heat}
           rows={[0, 1, 2, 3, 4, 5, 6].map((d) => t(`weekday.${d}` as 'weekday.0'))}
@@ -128,7 +128,7 @@ export default function ChartsPanel() {
 
       <section className="card p-5">
         <h3 className="section-title">{t('charts.matrix')}</h3>
-        <p className="mb-3 mt-1 text-xs text-maroon-600">{t('charts.matrix_hint')}</p>
+        <p className="mb-3 mt-1 text-xs text-ink-600">{t('charts.matrix_hint')}</p>
         {buildingsPresent.length ? (
           <Heatmap
             data={data.matrix.map((m) => ({
@@ -147,14 +147,14 @@ export default function ChartsPanel() {
             moreLabel={t('charts.more')}
           />
         ) : (
-          <p className="text-sm text-maroon-600">{t('charts.no_data')}</p>
+          <p className="text-sm text-ink-600">{t('charts.no_data')}</p>
         )}
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="card p-5">
           <h3 className="section-title">{t('charts.effectiveness')}</h3>
-          <p className="mb-3 mt-1 text-xs text-maroon-600">{t('charts.effectiveness_hint')}</p>
+          <p className="mb-3 mt-1 text-xs text-ink-600">{t('charts.effectiveness_hint')}</p>
           {data.resolutionByPriority.length ? (
             <BarChart
               data={(['high', 'medium', 'low'] as const).map((p) => {
@@ -168,7 +168,7 @@ export default function ChartsPanel() {
               })}
             />
           ) : (
-            <p className="text-sm text-maroon-600">{t('charts.no_data')}</p>
+            <p className="text-sm text-ink-600">{t('charts.no_data')}</p>
           )}
         </section>
 
@@ -182,7 +182,7 @@ export default function ChartsPanel() {
               }))}
             />
           ) : (
-            <p className="text-sm text-maroon-600">{t('charts.no_data')}</p>
+            <p className="text-sm text-ink-600">{t('charts.no_data')}</p>
           )}
         </section>
       </div>

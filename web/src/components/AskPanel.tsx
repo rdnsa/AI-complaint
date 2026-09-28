@@ -66,7 +66,7 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
   return (
     // Compact is the landing-page variant: the surrounding panel already supplies the spacing.
     <div className={compact ? '' : 'mt-6'}>
-      <p className="max-w-2xl text-sm leading-relaxed text-maroon-700">{t('ask.description')}</p>
+      <p className="max-w-2xl text-sm leading-relaxed text-ink-700">{t('ask.description')}</p>
 
       {!conversation.length && (
         <div className="mt-5">
@@ -78,7 +78,7 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
                 type="button"
                 onClick={() => send(t(k))}
                 disabled={busy}
-                className="rounded-2xl border border-krem-300 bg-permukaan px-3.5 py-2 text-left text-xs font-semibold text-maroon-700 transition hover:border-bata-400 hover:bg-bata-50 hover:text-bata-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-ink-600/40 bg-surface px-3.5 py-2 text-left text-nav text-ink-900 transition hover:border-accent-500 hover:bg-accent-50 hover:text-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t(k)}
               </button>
@@ -93,14 +93,14 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
           {conversation.map((b, i) =>
             b.role === 'user' ? (
               <div key={i} className="flex justify-end">
-                <p className="max-w-[85%] rounded-2xl rounded-br-md bg-maroon-800 px-4 py-2.5 text-sm text-permukaan">
+                <p className="max-w-[85%] rounded-2xl rounded-br-md bg-ink-800 px-4 py-2.5 text-sm text-surface">
                   {b.text}
                 </p>
               </div>
             ) : (
               <div key={i} className="flex justify-start">
-                <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-krem-50 px-4 py-2.5 text-sm text-maroon-900 ring-1 ring-krem-200">
-                  <p className="mb-1 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-bata-600">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-mist-50 px-4 py-2.5 text-sm text-ink-900 ring-1 ring-mist-200">
+                  <p className="mb-1 flex items-center gap-1.5 text-nav font-semibold text-ink-600">
                     <ChatGlyph className="h-3.5 w-3.5" />
                     {t('ask.ai_label')}
                   </p>
@@ -112,14 +112,14 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
 
           {busy && (
             <div className="flex justify-start">
-              <p className="rounded-2xl rounded-bl-md bg-krem-50 px-4 py-2.5 text-sm italic text-maroon-600 ring-1 ring-krem-200">
+              <p className="rounded-2xl rounded-bl-md bg-mist-50 px-4 py-2.5 text-sm italic text-ink-600 ring-1 ring-mist-200">
                 {t('ask.thinking')}
               </p>
             </div>
           )}
 
           {error && (
-            <p role="alert" className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800">
+            <p role="alert" className="rounded-nav bg-red-50 px-4 py-3 text-body-sm font-medium text-red-800">
               {error}
             </p>
           )}
@@ -127,7 +127,7 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
         </div>
         )}
 
-        <form onSubmit={onSubmit} className="flex gap-2 bg-permukaan p-3">
+        <form onSubmit={onSubmit} className="flex gap-2 bg-surface p-3">
           <input
             className="input flex-1"
             value={text}
@@ -142,7 +142,7 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
         </form>
       </section>
 
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-maroon-600">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-600">
         {remaining !== null ? <span>{t('ask.remaining', { n: remaining })}</span> : <span />}
         {!!conversation.length && (
           <button

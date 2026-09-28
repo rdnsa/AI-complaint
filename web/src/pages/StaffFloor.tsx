@@ -18,6 +18,7 @@ import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSelectedStaff } from '../lib/staff';
 import { CameraGlyph, CheckGlyph, DoneMark, ReportsMark, StaffMark, ToiletTypeGlyph } from '../components/Marks';
 import ZoomableImage from '../components/ZoomableImage';
+import { Reveal } from '../lib/motion';
 
 
 type Rejection = { verdict: ProofVerdict | null; reason: string | null };
@@ -76,7 +77,7 @@ export default function StaffFloor() {
     return (
       <div className="min-h-screen">
         <Header title={t('staff.title')} compact />
-        <p className="p-10 text-center text-maroon-600">{t('common.loading')}</p>
+        <p className="p-10 text-center text-ink-600">{t('common.loading')}</p>
       </div>
     );
   }
@@ -86,9 +87,9 @@ export default function StaffFloor() {
       <div className="min-h-screen">
         <Header title={t('report.unknown_location')} compact />
         <div className="mx-auto max-w-lg px-4 py-14 text-center">
-          <p className="text-maroon-700">{t('report.unknown_location_body')}</p>
+          <p className="text-ink-700">{t('report.unknown_location_body')}</p>
           <p className="mt-2">
-            <code className="rounded-lg bg-krem-200 px-2 py-1 text-sm text-maroon-800">{floorId}</code>
+            <code className="rounded-lg bg-mist-200 px-2 py-1 text-sm text-ink-800">{floorId}</code>
           </p>
           <Link to="/staff" className="btn-primary mt-6">
             {t('report.choose_manually')}
@@ -109,7 +110,7 @@ export default function StaffFloor() {
       <main className="mx-auto max-w-lg px-4">
         <RoleSwitch floorId={floorId} active="staff" />
 
-        <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-maroon-900">
+        <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-ink-900">
           {t('common.floor', { n: floor.floor })}
         </h2>
 
@@ -150,15 +151,16 @@ export default function StaffFloor() {
             {tab === 'reports' && (
               <section className="mt-4 space-y-3">
                 {!open.length && (
-                  <p className="card p-8 text-center text-maroon-700">{t('staff.no_reports')}</p>
+                  <p className="card p-8 text-center text-ink-700">{t('staff.no_reports')}</p>
                 )}
                 {open.map((r) => (
-                  <TaskCard
-                    key={r.id}
-                    report={r}
-                    staff={selected}
-                    onChanged={() => loadOpen(floor)}
-                  />
+                  <Reveal key={r.id}>
+                    <TaskCard
+                      report={r}
+                      staff={selected}
+                      onChanged={() => loadOpen(floor)}
+                    />
+                  </Reveal>
                 ))}
               </section>
             )}
@@ -210,16 +212,9 @@ function TaskCard({
     }
   }
 
-  const edge =
-    r.priority === 'high'
-      ? 'border-l-4 border-l-red-500'
-      : r.priority === 'medium'
-        ? 'border-l-4 border-l-amber-400'
-        : 'border-l-4 border-l-emerald-400';
-
   if (done) {
     return (
-      <article className="card border-l-4 border-l-emerald-500 bg-emerald-50 p-4 text-emerald-900">
+      <article className="card p-6 text-ink-900">
         <p className="flex items-center gap-1.5 font-bold">
           <CheckGlyph />
           {t('staff.report_resolved')}
@@ -232,25 +227,25 @@ function TaskCard({
   const busy = stage !== 'idle';
 
   return (
-    <article className={`card p-4 ${edge}`}>
+    <article className="card p-6">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge value={r.priority} />
         <StatusBadge value={r.status} />
         {r.categories.map((c) => (
           <CategoryBadge key={c} value={c} />
         ))}
-        <span className="ml-auto text-xs text-maroon-600">{relativeTime(r.created_at)}</span>
+        <span className="ml-auto text-xs text-ink-600">{relativeTime(r.created_at)}</span>
       </div>
 
-      <p className="mt-2.5 font-bold text-maroon-900">{r.toilet_name}</p>
-      <p className="mt-1 text-maroon-800">{r.summary ?? r.description}</p>
+      <p className="mt-2.5 font-bold text-ink-900">{r.toilet_name}</p>
+      <p className="mt-1 text-ink-800">{r.summary ?? r.description}</p>
       {r.summary && (
-        <p className="mt-1 text-sm italic text-maroon-600">
+        <p className="mt-1 text-sm italic text-ink-600">
           {t('dashboard.original_report')}: “{r.description}”
         </p>
       )}
       {r.recommendation && (
-        <p className="mt-2.5 rounded-xl border-l-4 border-bata-400 bg-krem-50 p-3 text-sm text-maroon-700">
+        <p className="mt-2.5 rounded-nav bg-mist-100 px-4 py-3 text-body-sm text-ink-700">
           <span className="font-bold">{t('dashboard.action')} </span>
           {r.recommendation}
         </p>
@@ -291,7 +286,7 @@ function TaskCard({
           </button>
         )}
         {r.status === 'in_progress' && r.staff_name && (
-          <p className="text-center text-xs text-maroon-600">{t('dashboard.handled_by', { name: r.staff_name })}</p>
+          <p className="text-center text-xs text-ink-600">{t('dashboard.handled_by', { name: r.staff_name })}</p>
         )}
       </div>
     </article>
@@ -301,7 +296,7 @@ function TaskCard({
 function RejectionBox({ rejection }: { rejection: Rejection }) {
   const { t } = useLanguage();
   return (
-    <div role="alert" className="mt-3 rounded-xl border-l-4 border-red-400 bg-red-50/70 p-3 text-sm text-red-900">
+    <div role="alert" className="mt-3 rounded-nav bg-red-50 px-4 py-3 text-body-sm text-red-900">
       <p className="font-bold">{rejection.verdict ? t('dashboard.proof_rejected') : t('dashboard.verification_failed')}</p>
       {rejection.verdict && (
         <p className="mt-0.5">
@@ -379,10 +374,10 @@ function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
     return (
       <section className="card mt-4 p-6 text-center">
         <DoneMark className="mx-auto" />
-        <h3 className="mt-3 text-xl font-extrabold tracking-tight text-maroon-900">{t('work.submitted')}</h3>
-        <p className="mt-1 text-maroon-700">{submitted.toilet}</p>
+        <h3 className="mt-3 text-xl font-extrabold tracking-tight text-ink-900">{t('work.submitted')}</h3>
+        <p className="mt-1 text-ink-700">{submitted.toilet}</p>
         {submitted.reason && (
-          <p className="mt-2 text-sm italic text-maroon-600">
+          <p className="mt-2 text-sm italic text-ink-600">
             {t('dashboard.ai_reason')}: {submitted.reason}
           </p>
         )}
@@ -434,7 +429,7 @@ function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
               key={c}
               type="button"
               onClick={() => setDescription(c)}
-              className="rounded-full border border-krem-200 bg-permukaan px-3 py-1.5 text-sm text-maroon-700 transition hover:border-bata-300 hover:text-bata-700"
+              className="rounded-full border border-mist-200 bg-surface px-3 py-1.5 text-sm text-ink-700 transition hover:border-accent-300 hover:text-accent-700"
             >
               {c}
             </button>
@@ -444,7 +439,7 @@ function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
 
       <div>
         <span className="label">{t('work.photo')}</span>
-        <p className="-mt-1 mb-2 text-xs leading-relaxed text-maroon-600">{t('work.photo_reason')}</p>
+        <p className="-mt-1 mb-2 text-xs leading-relaxed text-ink-600">{t('work.photo_reason')}</p>
         <Camera
           open={camera}
           onClose={() => setCamera(false)}
@@ -461,7 +456,7 @@ function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
               type="button"
               onClick={() => setPhoto(null)}
               disabled={busy}
-              className="absolute right-2 top-2 rounded-lg bg-tetap-maroon/75 px-3 py-1.5 text-sm font-semibold text-white"
+              className="absolute right-2 top-2 rounded-lg bg-tetap-ink/75 px-3 py-1.5 text-sm font-semibold text-white"
             >
               {t('report.remove_photo')}
             </button>
@@ -480,7 +475,7 @@ function WorkLogForm({ floor, staff }: { floor: Floor; staff: StaffOption }) {
 
       {rejection && <RejectionBox rejection={rejection} />}
       {error && (
-        <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800" role="alert">
+        <p className="rounded-nav bg-red-50 px-4 py-3 text-body-sm font-medium text-red-800" role="alert">
           {error}
         </p>
       )}

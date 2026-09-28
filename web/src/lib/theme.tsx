@@ -25,8 +25,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
-    // The browser chrome on phones follows the header colour either way.
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#4A1D16');
+    // The browser chrome on phones matches the navigation bar in each theme.
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#161617' : '#ffffff');
   }, [dark]);
 
   const setDark = useCallback((d: boolean) => {

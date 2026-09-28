@@ -12,6 +12,7 @@ import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSession } from '../lib/session';
 import { CheckGlyph, InboxGlyph, SupervisorMark } from '../components/Marks';
 import ZoomableImage from '../components/ZoomableImage';
+import { Reveal } from '../lib/motion';
 
 export default function SupervisorDashboard() {
   const { t } = useLanguage();
@@ -30,7 +31,7 @@ export default function SupervisorDashboard() {
     return (
       <div className="min-h-screen">
         <Header title={t('dashboard.title')} compact />
-        <p className="p-10 text-center text-maroon-600">{t('common.loading')}</p>
+        <p className="p-10 text-center text-ink-600">{t('common.loading')}</p>
       </div>
     );
   }
@@ -94,7 +95,7 @@ function Board({ session }: { session: Session }) {
               await logout();
               navigate('/login', { replace: true });
             }}
-            className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25"
+            className="rounded-full px-3 py-1 text-nav text-ink-900 ring-1 ring-ink-600/60 transition hover:ring-ink-900"
           >
             {t('dashboard.logout')}
           </button>
@@ -103,14 +104,14 @@ function Board({ session }: { session: Session }) {
 
       <main className="mx-auto max-w-5xl px-4">
         {/* Five tabs do not fit one phone row: a three-column grid there, a single row from md up. */}
-        <nav className="mt-5 grid grid-cols-3 gap-1 rounded-xl bg-permukaan p-1 ring-1 ring-krem-200 md:flex">
+        <nav className="mt-5 grid grid-cols-3 gap-1 rounded-nav bg-mist-200 p-1 md:flex md:rounded-full">
           {tabs.map((k) => (
             <button
               key={k}
               onClick={() => setTab(k)}
               aria-pressed={tab === k}
-              className={`rounded-lg px-2 py-2 text-xs font-bold leading-tight transition sm:text-sm md:flex-1 md:px-3 ${
-                tab === k ? 'bg-maroon-800 text-permukaan' : 'text-maroon-700 hover:bg-krem-50'
+              className={`rounded-full px-2 py-2 text-nav font-semibold leading-tight transition sm:text-body-sm md:flex-1 md:px-3 ${
+                tab === k ? 'bg-surface text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
               }`}
             >
               {t(`tab.${k}`)}
@@ -135,7 +136,7 @@ function Board({ session }: { session: Session }) {
         )}
 
         <section className="card mt-4 overflow-hidden">
-          <div className="flex items-center justify-between gap-3 border-b border-krem-200 bg-krem-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-3 border-b border-mist-200 bg-mist-50 px-4 py-3">
             <h2 className="section-title">{t('dashboard.summary')}</h2>
             <button
               className="btn-neutral !px-3 !py-1.5 text-xs"
@@ -158,12 +159,12 @@ function Board({ session }: { session: Session }) {
           <div className="p-4">
             {summary?.exists ? (
               <>
-                <p className="leading-relaxed text-maroon-900">{summary.summary}</p>
+                <p className="leading-relaxed text-ink-900">{summary.summary}</p>
                 {!!summary.highlights?.length && (
                   <ul className="mt-3 space-y-1.5">
                     {summary.highlights.map((h) => (
-                      <li key={h} className="flex gap-2 text-sm text-maroon-700">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-bata-500" />
+                      <li key={h} className="flex gap-2 text-sm text-ink-700">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500" />
                         {h}
                       </li>
                     ))}
@@ -171,17 +172,17 @@ function Board({ session }: { session: Session }) {
                 )}
               </>
             ) : (
-              <p className="text-sm text-maroon-600">{t('dashboard.summary_empty')}</p>
+              <p className="text-sm text-ink-600">{t('dashboard.summary_empty')}</p>
             )}
 
             {!!stats?.top_locations.length && (
-              <div className="mt-4 border-t border-krem-200 pt-3">
+              <div className="mt-4 border-t border-mist-200 pt-3">
                 <p className="section-title">{t('dashboard.top_locations')}</p>
                 <ul className="mt-2 space-y-1 text-sm">
                   {stats.top_locations.map((l) => (
                     <li key={l.location} className="flex justify-between gap-3">
-                      <span className="truncate text-maroon-700">{l.location}</span>
-                      <span className="font-bold text-maroon-900">{l.count}</span>
+                      <span className="truncate text-ink-700">{l.location}</span>
+                      <span className="font-bold text-ink-900">{l.count}</span>
                     </li>
                   ))}
                 </ul>
@@ -217,19 +218,20 @@ function Board({ session }: { session: Session }) {
 
         <div className="mt-4 space-y-3">
           {!loading && (
-            <p className="text-xs text-maroon-600">{t('time.count', { n: reports.length })}</p>
+            <p className="text-xs text-ink-600">{t('time.count', { n: reports.length })}</p>
           )}
-          {loading && <p className="text-maroon-600">{t('dashboard.loading_reports')}</p>}
+          {loading && <p className="text-ink-600">{t('dashboard.loading_reports')}</p>}
           {!loading && !reports.length && (
-            <p className="card p-10 text-center text-maroon-600">{t('dashboard.empty')}</p>
+            <p className="card p-10 text-center text-ink-600">{t('dashboard.empty')}</p>
           )}
           {reports.map((r) => (
-            <ReportRow
-              key={r.id}
-              report={r}
-              onRefresh={load}
-              onDelete={remove}
-            />
+            <Reveal key={r.id}>
+              <ReportRow
+                report={r}
+                onRefresh={load}
+                onDelete={remove}
+              />
+            </Reveal>
           ))}
         </div>
           </>
@@ -245,10 +247,10 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
       ? 'text-red-700'
       : tone === 'amber' && value > 0
         ? 'text-amber-700'
-        : 'text-maroon-900';
+        : 'text-ink-900';
   return (
     <div className="card p-4">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-maroon-600">{label}</p>
+      <p className="text-nav font-semibold text-ink-600">{label}</p>
       <p className={`mt-1 text-3xl font-extrabold tracking-tight ${color}`}>{value}</p>
     </div>
   );
@@ -267,27 +269,19 @@ function ReportRow({
   const relativeTime = useRelativeTime();
   const formatTime = useFormatTime();
 
-  // The left edge marks the priority, readable from across the room.
-  const edge =
-    r.priority === 'high'
-      ? 'border-l-4 border-l-red-500'
-      : r.priority === 'medium'
-        ? 'border-l-4 border-l-amber-400'
-        : 'border-l-4 border-l-emerald-400';
-
   return (
-    <article className={`card p-4 ${edge}`}>
+    <article className="card p-6">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge value={r.priority} />
         <StatusBadge value={r.status} />
         {r.categories.map((c) => (
           <CategoryBadge key={c} value={c} />
         ))}
-        <span className="ml-auto text-xs text-maroon-600">{relativeTime(r.created_at)}</span>
+        <span className="ml-auto text-xs text-ink-600">{relativeTime(r.created_at)}</span>
       </div>
 
       {/* The exact moments, in campus time: when the report came in and when it was closed. */}
-      <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-maroon-700">
+      <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-ink-700">
         <div className="flex gap-1">
           <dt className="flex items-center gap-1 font-semibold">
             <InboxGlyph className="h-3.5 w-3.5" />
@@ -306,17 +300,17 @@ function ReportRow({
         )}
       </dl>
 
-      <p className="mt-2.5 font-bold text-maroon-900">{r.toilet_name}</p>
-      <p className="mt-1 text-maroon-800">{r.summary ?? r.description}</p>
+      <p className="mt-2.5 font-bold text-ink-900">{r.toilet_name}</p>
+      <p className="mt-1 text-ink-800">{r.summary ?? r.description}</p>
 
       {r.summary && (
-        <p className="mt-1 text-sm italic text-maroon-600">
+        <p className="mt-1 text-sm italic text-ink-600">
           {t('dashboard.original_report')}: “{r.description}”
         </p>
       )}
 
       {r.recommendation && (
-        <p className="mt-2.5 rounded-xl border-l-4 border-bata-400 bg-krem-50 p-3 text-sm text-maroon-700">
+        <p className="mt-2.5 rounded-nav bg-mist-100 px-4 py-3 text-body-sm text-ink-700">
           <span className="font-bold">{t('dashboard.action')} </span>
           {r.recommendation}
         </p>
@@ -344,7 +338,7 @@ function ReportRow({
               {r.proof_verdict === 'clean' && <> · {t('dashboard.proof_verified')}</>}
             </figcaption>
             {r.proof_reason && (
-              <p className="mt-0.5 max-w-xs text-xs italic text-maroon-600">{r.proof_reason}</p>
+              <p className="mt-0.5 max-w-xs text-xs italic text-ink-600">{r.proof_reason}</p>
             )}
           </figure>
         )}
@@ -375,7 +369,7 @@ function ReportRow({
           {t('dashboard.delete')}
         </button>
         {r.staff_name && (
-          <span className="text-xs text-maroon-600">{t('dashboard.handled_by', { name: r.staff_name })}</span>
+          <span className="text-xs text-ink-600">{t('dashboard.handled_by', { name: r.staff_name })}</span>
         )}
       </div>
     </article>

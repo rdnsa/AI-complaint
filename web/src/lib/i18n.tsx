@@ -13,7 +13,8 @@ export type Language = 'id' | 'en';
 const ID = {
   'header.university': 'Universitas Pendidikan Indonesia',
   'header.campus': 'Kampus Tasikmalaya',
-  'app.title': 'Lapor Kondisi Toilet',
+  'app.title': 'Kato Report',
+  'app.brand': 'Kato',
   'app.subtitle':
     'Laporan kamu langsung diterima petugas kebersihan, tanpa perlu login dan tanpa menyebut nama.',
 
@@ -23,6 +24,7 @@ const ID = {
   'nav.to_supervisor_dashboard': 'Buka dashboard supervisor',
   'nav.home': 'Kembali ke beranda',
   'nav.back': 'Kembali',
+  'nav.open': 'Buka',
   'nav.all_reports': 'Lihat semua laporan yang masuk',
   'language.label': 'Bahasa',
   'theme.to_dark': 'Ganti ke mode gelap',
@@ -383,7 +385,8 @@ type Key = keyof typeof ID;
 const EN: Record<Key, string> = {
   'header.university': 'Universitas Pendidikan Indonesia',
   'header.campus': 'Tasikmalaya Campus',
-  'app.title': 'Report Toilet Condition',
+  'app.title': 'Kato Report',
+  'app.brand': 'Kato',
   'app.subtitle':
     'Your report goes straight to the cleaning staff. No sign-in, and no name required.',
 
@@ -393,6 +396,7 @@ const EN: Record<Key, string> = {
   'nav.to_supervisor_dashboard': 'Open the supervisor dashboard',
   'nav.home': 'Back to home',
   'nav.back': 'Back',
+  'nav.open': 'Open',
   'nav.all_reports': 'See all incoming reports',
   'language.label': 'Language',
   'theme.to_dark': 'Switch to dark mode',

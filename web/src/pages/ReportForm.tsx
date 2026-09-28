@@ -78,7 +78,7 @@ function StudentForm({ floorId }: { floorId: string }) {
     return (
       <div className="min-h-screen">
         <Header title={t('app.title')} compact />
-        <p className="p-10 text-center text-maroon-600">{t('common.loading')}</p>
+        <p className="p-10 text-center text-ink-600">{t('common.loading')}</p>
       </div>
     );
   }
@@ -88,9 +88,9 @@ function StudentForm({ floorId }: { floorId: string }) {
       <div className="min-h-screen">
         <Header title={t('report.unknown_location')} compact />
         <div className="mx-auto max-w-lg px-4 py-14 text-center">
-          <p className="text-maroon-700">{t('report.unknown_location_body')}</p>
+          <p className="text-ink-700">{t('report.unknown_location_body')}</p>
           <p className="mt-2">
-            <code className="rounded-lg bg-krem-200 px-2 py-1 text-sm text-maroon-800">
+            <code className="rounded-lg bg-mist-200 px-2 py-1 text-sm text-ink-800">
               {floorId}
             </code>
           </p>
@@ -113,7 +113,7 @@ function StudentForm({ floorId }: { floorId: string }) {
       <main className="mx-auto max-w-lg px-4">
         <RoleSwitch floorId={floorId} active="student" />
 
-        <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-maroon-900">
+        <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-ink-900">
           {t('common.floor', { n: floor.floor })}
         </h2>
 
@@ -137,20 +137,20 @@ function StudentForm({ floorId }: { floorId: string }) {
 
         {/* Reporting without an account is still allowed; this note only explains
             what that means for the leaderboard. */}
-        <p className="mt-5 rounded-xl bg-krem-50 px-3.5 py-2.5 text-sm text-maroon-700 ring-1 ring-krem-200">
+        <p className="mt-5 rounded-nav bg-mist-50 px-3.5 py-2.5 text-sm text-ink-700">
           {session?.role === 'reporter' ? (
             t('session.reporting_as', { name: session.name })
           ) : (
             <>
               {t('session.anonymous_info')}{' '}
-              <Link to="/login" className="font-semibold text-bata-600 underline underline-offset-2">
+              <Link to="/login" className="font-semibold text-accent-600 underline underline-offset-2">
                 {t('session.login')}
               </Link>
             </>
           )}
         </p>
 
-        <p className="mt-4 leading-relaxed text-maroon-700">{t('report.prompt')}</p>
+        <p className="mt-4 leading-relaxed text-ink-700">{t('report.prompt')}</p>
 
         <form onSubmit={submit} className="mt-5 space-y-5">
           <div>
@@ -171,7 +171,7 @@ function StudentForm({ floorId }: { floorId: string }) {
                   key={c}
                   type="button"
                   onClick={() => setDescription(c)}
-                  className="rounded-full border border-krem-200 bg-permukaan px-3 py-1.5 text-xs text-maroon-600 transition hover:border-bata-300 hover:text-bata-700"
+                  className="rounded-full border border-mist-200 bg-surface px-3 py-1.5 text-xs text-ink-600 transition hover:border-accent-300 hover:text-accent-700"
                 >
                   {c.length > 36 ? `${c.slice(0, 36)}…` : c}
                 </button>
@@ -181,7 +181,7 @@ function StudentForm({ floorId }: { floorId: string }) {
 
           <div>
             <span className="label">{t('report.photo')}</span>
-            <p className="-mt-1 mb-2 text-xs leading-relaxed text-maroon-600">
+            <p className="-mt-1 mb-2 text-xs leading-relaxed text-ink-600">
               {t('report.photo_reason')}
             </p>
             {/* The live camera, not a file picker: a photo from the gallery cannot be used. */}
@@ -199,7 +199,7 @@ function StudentForm({ floorId }: { floorId: string }) {
                 <button
                   type="button"
                   onClick={() => setPhoto(null)}
-                  className="absolute right-2 top-2 rounded-lg bg-tetap-maroon/75 px-3 py-1.5 text-sm font-semibold text-white"
+                  className="absolute right-2 top-2 rounded-lg bg-tetap-ink/75 px-3 py-1.5 text-sm font-semibold text-white"
                 >
                   {t('report.remove_photo')}
                 </button>
@@ -217,12 +217,12 @@ function StudentForm({ floorId }: { floorId: string }) {
           </div>
 
           {error && (
-            <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-800" role="alert">
+            <p className="rounded-nav bg-red-50 px-4 py-3 text-body-sm font-medium text-red-800" role="alert">
               {error}
             </p>
           )}
 
-          <div className="fixed inset-x-0 bottom-0 border-t border-krem-200 bg-permukaan/95 p-4 backdrop-blur">
+          <div className="fixed inset-x-0 bottom-0 border-t border-mist-200 bg-surface/95 p-4 backdrop-blur">
             <div className="mx-auto max-w-lg">
               <button
                 type="submit"

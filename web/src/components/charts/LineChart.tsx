@@ -45,7 +45,7 @@ export default function LineChart({
 
   return (
     <figure className="m-0">
-      <div className="mb-2 flex flex-wrap items-center gap-4 text-xs font-semibold text-maroon-700">
+      <div className="mb-2 flex flex-wrap items-center gap-4 text-xs font-semibold text-ink-700">
         {[
           { color: SERIES.received, label: receivedLabel },
           { color: SERIES.resolved, label: resolvedLabel },
@@ -117,7 +117,7 @@ export default function LineChart({
 
         {hovered !== null && active && (
           <div
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-lg bg-maroon-900 px-2.5 py-1.5 text-xs text-permukaan shadow-naik"
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-full rounded-lg bg-ink-900 px-2.5 py-1.5 text-xs text-surface"
             style={{ left: `${(x(hovered) / W) * 100}%`, top: `${(y(Math.max(active.total, active.resolved)) / H) * 100}%` }}
           >
             <p className="font-bold">{active.date}</p>

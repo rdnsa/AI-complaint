@@ -17,12 +17,12 @@ export default function RoleSwitch({
 }) {
   const { t } = useLanguage();
   const classes = (on: boolean) =>
-    `flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-bold transition ${
-      on ? 'bg-maroon-800 text-permukaan shadow-naik' : 'text-maroon-700 hover:bg-krem-50'
+    `flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-body-sm font-semibold transition ${
+      on ? 'bg-surface text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
     }`;
 
   return (
-    <nav className="mt-5 flex gap-1 rounded-2xl bg-permukaan p-1 ring-1 ring-krem-200" aria-label={t('role.label')}>
+    <nav className="mt-5 flex gap-1 rounded-full bg-mist-200 p-1" aria-label={t('role.label')}>
       <Link
         to={`/report/${floorId}?as=student`}
         replace

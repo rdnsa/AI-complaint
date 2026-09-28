@@ -79,7 +79,7 @@ export default function QrCodesPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-xl bg-permukaan px-4 py-3 text-sm leading-relaxed text-maroon-700 ring-1 ring-krem-200 print:hidden">
+      <p className="rounded-nav bg-surface px-4 py-3 text-sm leading-relaxed text-ink-700 print:hidden">
         {t('qr.description')}
       </p>
 
@@ -92,7 +92,7 @@ export default function QrCodesPanel() {
             </option>
           ))}
         </select>
-        <span className="text-xs text-maroon-600">{t('qr.count', { n: shown.length })}</span>
+        <span className="text-xs text-ink-600">{t('qr.count', { n: shown.length })}</span>
         <button
           type="button"
           onClick={() => window.print()}
@@ -104,9 +104,9 @@ export default function QrCodesPanel() {
         </button>
       </div>
 
-      {loading && <p className="mt-4 text-maroon-600 print:hidden">{t('common.loading')}</p>}
+      {loading && <p className="mt-4 text-ink-600 print:hidden">{t('common.loading')}</p>}
       {!loading && !shown.length && (
-        <p className="card mt-4 p-10 text-center text-maroon-600 print:hidden">{t('qr.empty')}</p>
+        <p className="card mt-4 p-10 text-center text-ink-600 print:hidden">{t('qr.empty')}</p>
       )}
 
       {/* Only this sheet is printed (see .print-sheet in index.css): three stickers
@@ -117,21 +117,21 @@ export default function QrCodesPanel() {
             key={s.floorId}
             className="card flex flex-col items-center p-4 text-center print:break-inside-avoid print:rounded-xl print:border-2 print:border-black print:shadow-none"
           >
-            <p className="text-[11px] font-bold uppercase tracking-wider text-bata-600 print:text-black">
+            <p className="text-nav font-semibold text-ink-600 print:text-black">
               {t('qr.sticker_heading')}
             </p>
-            <p className="mt-1 text-lg font-extrabold leading-tight text-maroon-900 print:text-black">
+            <p className="mt-1 text-lg font-extrabold leading-tight text-ink-900 print:text-black">
               {t('common.building', { code: s.code })} · {t('common.floor', { n: s.floor })}
             </p>
-            <p className="text-xs text-maroon-700 print:text-black">{s.buildingName}</p>
+            <p className="text-xs text-ink-700 print:text-black">{s.buildingName}</p>
             {/* White ground in both themes: a QR code must be dark on light to scan. */}
             <div
               className="mt-3 w-full max-w-[180px] rounded-lg bg-white p-1.5"
               // The SVG is generated locally from our own URL, not from user input.
               dangerouslySetInnerHTML={{ __html: s.svg }}
             />
-            <p className="mt-2 text-xs font-semibold text-maroon-800 print:text-black">{t('qr.scan_hint')}</p>
-            <p className="mt-0.5 break-all text-[10px] text-maroon-600 print:text-black">{s.url}</p>
+            <p className="mt-2 text-xs font-semibold text-ink-800 print:text-black">{t('qr.scan_hint')}</p>
+            <p className="mt-0.5 break-all text-[10px] text-ink-600 print:text-black">{s.url}</p>
             <button
               type="button"
               onClick={() => downloadPng(s)}

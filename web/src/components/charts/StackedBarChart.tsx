@@ -32,7 +32,7 @@ export default function StackedBarChart({
 
   return (
     <figure className="m-0">
-      <div className="mb-3 flex flex-wrap gap-4 text-xs font-semibold text-maroon-700">
+      <div className="mb-3 flex flex-wrap gap-4 text-xs font-semibold text-ink-700">
         {ORDER.map((p) => (
           <span key={p} className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: PRIORITY_COLORS[p] }} />
@@ -65,13 +65,13 @@ export default function StackedBarChart({
               );
             })}
             {/* An empty day still needs a visible baseline, or it reads as missing data. */}
-            {!total(d) && <div className="h-[3px] w-full rounded-full bg-krem-200" />}
+            {!total(d) && <div className="h-[3px] w-full rounded-full bg-mist-200" />}
           </div>
         ))}
 
         {hovered !== null && (
           <div
-            className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-maroon-900 px-2.5 py-1.5 text-xs text-permukaan shadow-naik"
+            className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-ink-900 px-2.5 py-1.5 text-xs text-surface"
             style={{ left: `${((hovered + 0.5) / data.length) * 100}%` }}
           >
             <p className="font-bold">{data[hovered].date}</p>

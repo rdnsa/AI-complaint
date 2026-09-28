@@ -4,6 +4,7 @@ import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from './TimeFilter';
 import { CheckGlyph, DropGlyph } from './Marks';
 import ZoomableImage from './ZoomableImage';
+import { Reveal } from '../lib/motion';
 
 /**
  * The supervisor's view of the staff work log: which toilets have been
@@ -49,7 +50,7 @@ export default function WorkLogPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-xl bg-permukaan px-4 py-3 text-sm leading-relaxed text-maroon-700 ring-1 ring-krem-200">
+      <p className="rounded-nav bg-surface px-4 py-3 text-sm leading-relaxed text-ink-700">
         {t('work.description')}
       </p>
 
@@ -68,7 +69,7 @@ export default function WorkLogPanel() {
 
       <TimeFilter value={time} onChange={setTime} />
 
-      {!loading && <p className="mt-3 text-xs text-maroon-600">{t('time.count', { n: data.length })}</p>}
+      {!loading && <p className="mt-3 text-xs text-ink-600">{t('time.count', { n: data.length })}</p>}
 
       {!staffId && perStaff.length > 1 && (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -84,42 +85,44 @@ export default function WorkLogPanel() {
       )}
 
       <div className="mt-4 space-y-3">
-        {loading && <p className="text-maroon-600">{t('common.loading')}</p>}
+        {loading && <p className="text-ink-600">{t('common.loading')}</p>}
         {!loading && !data.length && (
-          <p className="card p-10 text-center text-maroon-600">{t('work.empty')}</p>
+          <p className="card p-10 text-center text-ink-600">{t('work.empty')}</p>
         )}
         {data.map((w) => (
-          <article key={w.id} className="card border-l-4 border-l-emerald-400 p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-inset ring-emerald-200">
-                <CheckGlyph className="h-3.5 w-3.5" />
-                {t('dashboard.proof_verified')}
-              </span>
-              <span className="text-sm font-semibold text-maroon-900">{w.staff_name}</span>
-              <span className="ml-auto text-xs text-maroon-600">{relativeTime(w.created_at)}</span>
-            </div>
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-maroon-700">
-              <DropGlyph className="h-3.5 w-3.5" />
-              <span className="font-semibold">{t('time.cleaned')}:</span> {formatTime(w.created_at)}
-            </p>
-            <p className="mt-2 font-bold text-maroon-900">{w.toilet_name}</p>
-            <p className="mt-1 text-maroon-800">{w.description}</p>
-            {w.photo_url && (
-              <figure className="m-0 mt-3">
-                <ZoomableImage
-                  src={w.photo_url}
-                  caption={`${t('dashboard.proof')} · ${w.toilet_name}`}
-                  frameClassName="ring-2 ring-emerald-400"
-                  className="max-h-44"
-                />
-                {w.proof_reason && (
-                  <figcaption className="mt-1 max-w-xs text-xs italic text-maroon-600">
-                    {w.proof_reason}
-                  </figcaption>
-                )}
-              </figure>
-            )}
-          </article>
+          <Reveal key={w.id}>
+            <article className="card p-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                  <CheckGlyph className="h-3.5 w-3.5" />
+                  {t('dashboard.proof_verified')}
+                </span>
+                <span className="text-sm font-semibold text-ink-900">{w.staff_name}</span>
+                <span className="ml-auto text-xs text-ink-600">{relativeTime(w.created_at)}</span>
+              </div>
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-ink-700">
+                <DropGlyph className="h-3.5 w-3.5" />
+                <span className="font-semibold">{t('time.cleaned')}:</span> {formatTime(w.created_at)}
+              </p>
+              <p className="mt-2 font-bold text-ink-900">{w.toilet_name}</p>
+              <p className="mt-1 text-ink-800">{w.description}</p>
+              {w.photo_url && (
+                <figure className="m-0 mt-3">
+                  <ZoomableImage
+                    src={w.photo_url}
+                    caption={`${t('dashboard.proof')} · ${w.toilet_name}`}
+                    frameClassName="ring-2 ring-emerald-400"
+                    className="max-h-44"
+                  />
+                  {w.proof_reason && (
+                    <figcaption className="mt-1 max-w-xs text-xs italic text-ink-600">
+                      {w.proof_reason}
+                    </figcaption>
+                  )}
+                </figure>
+              )}
+            </article>
+          </Reveal>
         ))}
       </div>
     </div>
