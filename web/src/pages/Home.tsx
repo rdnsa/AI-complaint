@@ -120,7 +120,7 @@ export default function Home() {
     <div className="min-h-screen">
       <Header hero kicker={`UPI ${t('header.campus')}`} title={t('app.title')} description={t('app.subtitle')}>
         {/* The roles are the cards just below; the hero only carries the secondary ways in. */}
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-body">
+        <div className="flex flex-col items-center gap-2 text-body">
           <Link to="/reports" className="link inline-flex items-center gap-1">
             {t('nav.all_reports')}
             <ArrowGlyph className="h-3.5 w-3.5" />
