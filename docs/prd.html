@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<title>PRD Sistem Pelaporan Toilet Kampus</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Plus Jakarta Sans", "Helvetica Neue", Arial, sans-serif;
+         color: #3E1712; font-size: 10.5pt; line-height: 1.55; margin: 0; }
+  h1 { font-size: 24pt; margin: 0 0 2mm; letter-spacing: -0.4pt; }
+  h2 { font-size: 14pt; margin: 9mm 0 3mm; padding-bottom: 1.5mm;
+       border-bottom: 2px solid #E2571F; page-break-after: avoid; }
+  p { margin: 0 0 3mm; }
+  .sampul { background: linear-gradient(135deg,#4A1D16,#8A3A22); color: #fff;
+            padding: 14mm 12mm; border-radius: 4mm; margin-bottom: 8mm; }
+  .sampul h1 { color: #fff; }
+  .sampul .sub { font-size: 11pt; color: #F0E4D3; margin: 0; }
+  .lencana { display: inline-block; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3);
+             padding: 1mm 3mm; border-radius: 10mm; font-size: 8.5pt; font-weight: 700;
+             letter-spacing: .5pt; text-transform: uppercase; margin-bottom: 4mm; }
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 9.5pt; }
+  th, td { text-align: left; padding: 2mm 2.6mm; border-bottom: 1px solid #EFE4D6; vertical-align: top; }
+  th { background: #FDF6F1; font-weight: 700; color: #5D2A20; }
+  tr { page-break-inside: avoid; }
+  td.id { white-space: nowrap; font-weight: 700; color: #8A3A22; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+  .cek { list-style: none; padding-left: 0; }
+  .cek li::before { content: "\2610\00a0\00a0"; color: #8A3A22; }
+  .toc { columns: 2; column-gap: 8mm; font-size: 9.5pt; margin: 3mm 0 2mm; }
+  .toc ol { margin: 0; padding-left: 5mm; }
+  .toc li { margin-bottom: 0.8mm; break-inside: avoid; }
+  figure { margin: 3mm 0 4mm; page-break-inside: avoid; }
+  figure svg { width: 100%; height: auto; border: 1px solid #EFE4D6; border-radius: 2mm; }
+  figcaption { font-size: 9pt; color: #7A3628; margin-top: 1.5mm; text-align: center; }
+  .inti { display: inline-block; font-size: 8.5pt; font-weight: 700; padding: 0.2mm 2mm; border-radius: 1.2mm;
+          background: #E2571F; color: #fff; }
+  .pendukung { display: inline-block; font-size: 8.5pt; font-weight: 700; padding: 0.2mm 2mm; border-radius: 1.2mm;
+               background: #FDF0E8; color: #5D2A20; border: 1px solid #EFD9C8; }
+  code { font-family: Menlo, Consolas, monospace; font-size: 8.8pt; background: #FDF0E8; padding: 0 1mm; border-radius: 1mm; }
+  .kaki { margin-top: 10mm; padding-top: 3mm; border-top: 1px solid #EFE4D6; font-size: 8.5pt; color: #7A3628; }
+</style></head><body>
+
+<div class="sampul">
+  <span class="lencana">Product Requirements Document &middot; 28 September 2026</span>
+  <h1>Sistem Pelaporan Toilet Kampus Berbasis AI</h1>
+  <p class="sub">UPI Kampus Tasikmalaya &middot; Jln. Dadaha No. 18<br>
+  Sistem ini membuat keluhan toilet sampai ke petugas dalam hitungan detik, dan hanya menganggap
+  keluhan selesai bila ada foto bukti yang dinilai bersih oleh AI.</p>
+</div>
+
+<div class="toc"><ol>
+  <li>Latar belakang</li>
+  <li>Tujuan dan metrik keberhasilan</li>
+  <li>Pengguna dan peran</li>
+  <li>Ruang lingkup</li>
+  <li>Alur utama</li>
+  <li>Kebutuhan fungsional</li>
+  <li>Aturan bisnis</li>
+  <li>Kebutuhan AI</li>
+  <li>Kebutuhan non-fungsional</li>
+  <li>Data dan integrasi</li>
+  <li>Risiko, batasan, dan keputusan terbuka</li>
+  <li>Status implementasi dan rencana lanjutan</li>
+</ol></div>
+
+<h2>1. Latar belakang</h2>
+<p>Keluhan toilet kampus jarang sampai ke petugas kebersihan. Mahasiswa yang menemukan toilet bau,
+becek, atau kehabisan sabun umumnya tidak melapor, karena tidak jelas harus lapor ke siapa dan tidak
+ada yang tahu apakah laporan ditindaklanjuti.</p>
+<p>Akibatnya masalah kecil dibiarkan sampai menjadi besar, dan pengawas tidak punya data tentang toilet
+mana yang paling sering bermasalah. Klaim &ldquo;sudah dibersihkan&rdquo; juga tidak bisa diperiksa.</p>
+<p>Sistem ini dibangun untuk UPI Kampus Tasikmalaya dan sudah berjalan di produksi. PRD ini
+mendokumentasikan sistem sebagaimana dibangun, sebagai acuan pengembangan berikutnya.</p>
+
+<h2>2. Tujuan dan metrik keberhasilan</h2>
+<p>Tujuannya ada empat: melapor semudah memindai QR, keluhan langsung menjadi tiket kerja yang rapi,
+&ldquo;selesai&rdquo; harus terbukti dengan foto, dan pengawas punya data untuk mengambil keputusan.</p>
+<table>
+  <tr><th style="width:22%">Tujuan</th><th style="width:38%">Metrik</th><th>Cara mengukur</th></tr>
+  <tr><td>Melapor tanpa hambatan</td><td>Jumlah laporan per hari; porsi laporan tanpa akun</td><td>Tabel <code>reports</code>, kolom <code>reporter_id</code> kosong</td></tr>
+  <tr><td>Tiket kerja otomatis</td><td>Porsi laporan dengan analisis AI berhasil; waktu analisis</td><td><code>ai_status = ok</code>, kolom <code>ai_ms</code> (saat ini sekitar 1 detik)</td></tr>
+  <tr><td>Selesai harus terbukti</td><td>Porsi laporan selesai; porsi foto bukti ditolak</td><td>Status <code>resolved</code>; baris <code>proof_rejected</code> di log aktivitas</td></tr>
+  <tr><td>Keluhan cepat ditangani</td><td>Rata-rata waktu dari laporan masuk sampai selesai, per prioritas</td><td><code>resolved_at &minus; created_at</code>, sudah tampil di grafik dashboard</td></tr>
+  <tr><td>Pengawas terinformasi</td><td>Ringkasan harian tersusun setiap hari</td><td>Satu baris <code>daily_summaries</code> per tanggal</td></tr>
+</table>
+<p>Target angka untuk setiap metrik belum ditetapkan; perlu disepakati bersama pihak kampus setelah satu
+bulan data terkumpul.</p>
+
+<h2>3. Pengguna dan peran</h2>
+<p>Hanya supervisor yang wajib login. Mahasiswa dan petugas bekerja tanpa akun supaya tidak ada hambatan
+untuk memakai sistem.</p>
+<table>
+  <tr><th style="width:16%">Pengguna</th><th style="width:22%">Cara masuk</th><th style="width:26%">Kebutuhan utama</th><th>Yang dilakukan di sistem</th></tr>
+  <tr><td>Mahasiswa (pelapor)</td><td>Tanpa login; akun opsional untuk papan peringkat</td><td>Melapor cepat dan tahu laporannya ditangani</td><td>Pindai QR lantai, pilih toilet, tulis keluhan, foto dengan kamera, lacak status</td></tr>
+  <tr><td>Petugas kebersihan</td><td>Tanpa login; memilih nama dari daftar, ponsel mengingatnya</td><td>Tahu keluhan mana yang mendesak di lantainya</td><td>Pindai QR lantai, lihat laporan terbuka, selesaikan dengan foto bukti, catat pekerjaan harian</td></tr>
+  <tr><td>Supervisor</td><td>Login dengan username dan sandi</td><td>Memantau kinerja dan menelusuri masalah</td><td>Dashboard, grafik, log pekerjaan dan aktivitas, kelola petugas dan akun, hapus spam, analisis ulang, cetak stiker QR</td></tr>
+  <tr><td>Pengunjung umum</td><td>Tanpa login</td><td>Melihat keadaan toilet kampus secara terbuka</td><td>Papan laporan publik, bertanya ke chatbot data</td></tr>
+</table>
+<p>Stiker QR di setiap lantai adalah pintu masuk bersama: mahasiswa memindainya untuk melapor, petugas
+memindainya untuk menangani laporan dan mencatat pekerjaan.</p>
+
+<h2>4. Ruang lingkup</h2>
+<p>Versi ini mencakup seluruh siklus satu keluhan, dari QR sampai terbukti selesai, ditambah pemantauan
+oleh supervisor.</p>
+<p><strong>Termasuk</strong></p>
+<ul>
+  <li>Pelaporan lewat QR per lantai (satu stiker per lantai, bukan per toilet), dengan foto kamera langsung</li>
+  <li>Klasifikasi, prioritas, ringkasan, dan rekomendasi otomatis oleh AI teks</li>
+  <li>Penyelesaian laporan dan log pekerjaan harian, keduanya dengan foto yang diperiksa AI vision</li>
+  <li>Ringkasan harian otomatis pukul 17.00 WIB</li>
+  <li>Dashboard supervisor: daftar laporan, filter waktu, grafik, log pekerjaan, log aktivitas</li>
+  <li>Papan laporan publik, papan peringkat pelapor, chatbot tanya data</li>
+  <li>Pengelolaan nama petugas dan akun supervisor; pencetakan stiker QR</li>
+  <li>Antarmuka dwibahasa (Indonesia/Inggris), tema terang dan gelap</li>
+</ul>
+<p><strong>Tidak termasuk</strong></p>
+<ul>
+  <li>Notifikasi ke petugas (push, WhatsApp, Telegram)</li>
+  <li>Login atau PIN untuk petugas</li>
+  <li>Pelatihan model AI atau dataset berlabel; model dipakai apa adanya lewat prompt</li>
+  <li>Fasilitas selain toilet, dan kampus selain UPI Tasikmalaya</li>
+  <li>Aplikasi seluler terpasang; sistem berjalan di peramban ponsel</li>
+</ul>
+
+<h2>5. Alur utama</h2>
+<figure>
+<svg viewBox="0 0 760 500" role="img" aria-label="Laporan hanya selesai bila foto bukti dinilai bersih oleh AI" font-family="Arial, Helvetica, sans-serif" font-size="13">
+  <defs><marker id="panah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8C7B72"/></marker></defs>
+  <rect width="760" height="500" fill="#fff"/>
+  <text x="22" y="34" font-size="15" font-weight="600" fill="#3E1712">Laporan hanya selesai bila foto bukti dinilai bersih oleh AI</text>
+  <text x="22" y="64" font-size="11.5" fill="#7A3628">Mahasiswa melapor</text>
+  <text x="112" y="232" font-size="11.5" fill="#7A3628">Petugas menangani</text>
+  <g fill="none" stroke="#8C7B72" stroke-width="1.25">
+    <path d="M178 110H202" marker-end="url(#panah)"/>
+    <path d="M358 110H382" marker-end="url(#panah)"/>
+    <path d="M538 110H562" marker-end="url(#panah)"/>
+    <path d="M640 138V190H100V282" marker-end="url(#panah)"/>
+    <path d="M178 310H202" marker-end="url(#panah)"/>
+    <path d="M358 310H382" marker-end="url(#panah)"/>
+    <path d="M538 310H576" marker-end="url(#panah)"/>
+    <path d="M640 270V252H460V282" marker-end="url(#panah)"/>
+    <path d="M640 350V416" marker-end="url(#panah)"/>
+  </g>
+  <g fill="none" stroke="#8C7B72" stroke-width="1.25">
+    <rect x="22" y="82" width="156" height="56" rx="8"/>
+    <rect x="202" y="82" width="156" height="56" rx="8"/>
+    <rect x="382" y="82" width="156" height="56" rx="8"/>
+    <rect x="562" y="82" width="156" height="56" rx="8"/>
+    <rect x="22" y="282" width="156" height="56" rx="8"/>
+    <rect x="202" y="282" width="156" height="56" rx="8"/>
+    <rect x="382" y="282" width="156" height="56" rx="8"/>
+    <polygon points="576,310 640,270 704,310 640,350"/>
+  </g>
+  <rect x="562" y="416" width="156" height="56" rx="8" fill="#E2571F" fill-opacity="0.12" stroke="#E2571F" stroke-width="2"/>
+  <g text-anchor="middle" fill="#3E1712">
+    <text x="100" y="106" font-weight="600">Pindai QR lantai</text><text x="100" y="124" font-size="11.5" fill="#7A3628">pilih toilet</text>
+    <text x="280" y="106" font-weight="600">Kirim keluhan</text><text x="280" y="124" font-size="11.5" fill="#7A3628">teks + foto kamera</text>
+    <text x="460" y="106" font-weight="600">Laporan tersimpan</text><text x="460" y="124" font-size="11.5" fill="#7A3628">status: baru</text>
+    <text x="640" y="106" font-weight="600">Analisis AI teks</text><text x="640" y="124" font-size="11.5" fill="#7A3628">kategori, prioritas</text>
+    <text x="370" y="182" font-size="11.5" fill="#7A3628">muncul di halaman petugas lantai itu, yang mendesak di atas</text>
+    <text x="100" y="306" font-weight="600">Pindai QR lantai</text><text x="100" y="324" font-size="11.5" fill="#7A3628">pilih nama petugas</text>
+    <text x="280" y="306" font-weight="600">Mulai kerjakan</text><text x="280" y="324" font-size="11.5" fill="#7A3628">status: diproses</text>
+    <text x="460" y="306" font-weight="600">Foto bukti</text><text x="460" y="324" font-size="11.5" fill="#7A3628">dari kamera</text>
+    <text x="640" y="308" font-weight="600">AI vision:</text><text x="640" y="324">bersih?</text>
+    <text x="550" y="244" font-size="11.5" fill="#7A3628">tidak: ditolak + alasan</text>
+    <text x="640" y="440" font-weight="600">Selesai</text><text x="640" y="458" font-size="11.5" fill="#7A3628">foto tampil di papan</text>
+  </g>
+  <text x="652" y="378" font-size="11.5" fill="#7A3628">ya</text>
+</svg>
+<figcaption>Siklus hidup satu laporan: 8 langkah, 1 gerbang foto.</figcaption>
+</figure>
+<p>Analisis AI berjalan setelah mahasiswa menerima nomor laporannya, jadi mahasiswa tidak pernah menunggu.
+Bila analisis gagal, laporan tetap tampil tanpa label dan supervisor bisa menganalisis ulang. Foto yang
+ditolak dihapus, lalu petugas membersihkan ulang dan memotret lagi.</p>
+
+<h2>6. Kebutuhan fungsional</h2>
+<p>Sistem memenuhi 20 kebutuhan fungsional. Enam fitur berkategori Inti adalah kontribusi riset
+(klasifikasi, prioritas, ringkasan harian, papan peringkat, verifikasi foto, tanya data); sisanya fitur
+pendukung.</p>
+<table>
+  <tr><th style="width:9%">ID</th><th>Kebutuhan</th><th style="width:17%">Aktor</th><th style="width:13%">Kategori</th></tr>
+  <tr><td class="id">FR-01</td><td>Pindai QR lantai membuka halaman lapor lantai itu; pelapor memilih WC pria, wanita, atau disabilitas</td><td>Mahasiswa</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-02</td><td>Kirim laporan tanpa akun: teks bebas + foto dari kamera langsung (JPG, PNG, WebP, maks. 5 MB)</td><td>Mahasiswa</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-03</td><td>Tolak laporan untuk toilet nonaktif; laporan kembar (toilet dan teks sama dalam 2 menit) memakai nomor laporan lama</td><td>Sistem</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-04</td><td>Lacak status dengan nomor laporan; pelapor berakun melihat semua laporannya</td><td>Mahasiswa</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-05</td><td>Registrasi dan login pelapor, opsional (username minimal 3 karakter, sandi minimal 8 karakter)</td><td>Mahasiswa</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-06</td><td>Klasifikasi otomatis: kategori (6, boleh lebih dari satu), prioritas (rendah/sedang/tinggi), ringkasan, rekomendasi</td><td>Sistem</td><td><span class="inti">Inti</span></td></tr>
+  <tr><td class="id">FR-07</td><td>Halaman petugas per lantai: pilih nama dari daftar, laporan terbuka diurutkan dari yang paling mendesak</td><td>Petugas</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-08</td><td>Status baru, diproses, selesai; selesai wajib foto bukti yang dinilai bersih oleh AI vision</td><td>Petugas</td><td><span class="inti">Inti</span></td></tr>
+  <tr><td class="id">FR-09</td><td>Log pekerjaan harian dengan foto yang diperiksa AI vision; foto ditolak tidak disimpan</td><td>Petugas</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-10</td><td>Ringkasan harian otomatis pukul 17.00 WIB; supervisor dapat membuat ulang</td><td>Sistem, Supervisor</td><td><span class="inti">Inti</span></td></tr>
+  <tr><td class="id">FR-11</td><td>Dashboard laporan dengan filter tanggal, jam (WIB), status, prioritas, gedung</td><td>Supervisor</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-12</td><td>Grafik: laporan per hari, sebaran prioritas, kategori, gedung, rata-rata waktu selesai, tren</td><td>Supervisor</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-13</td><td>Log aktivitas dan log pekerjaan petugas, dapat difilter</td><td>Supervisor</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-14</td><td>Kelola nama petugas dan akun supervisor: tambah, ganti nama, ganti sandi, nonaktifkan</td><td>Supervisor</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-15</td><td>Hapus laporan (salinan lengkap masuk log) dan analisis ulang laporan yang gagal</td><td>Supervisor</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-16</td><td>Papan laporan publik tanpa teks asli, foto pelapor, dan nama petugas</td><td>Pengunjung</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-17</td><td>Papan peringkat 20 pelapor teraktif, beserta jumlah laporannya yang selesai</td><td>Mahasiswa</td><td><span class="inti">Inti</span></td></tr>
+  <tr><td class="id">FR-18</td><td>Tanya data dalam bahasa sehari-hari; jawaban hanya dari rekap data</td><td>Pengunjung, Supervisor</td><td><span class="inti">Inti</span></td></tr>
+  <tr><td class="id">FR-19</td><td>Cetak stiker QR per lantai (3 per baris di A4, atau unduh PNG)</td><td>Supervisor</td><td><span class="pendukung">Pendukung</span></td></tr>
+  <tr><td class="id">FR-20</td><td>Antarmuka dwibahasa (Indonesia/Inggris), tema terang dan gelap</td><td>Semua</td><td><span class="pendukung">Pendukung</span></td></tr>
+</table>
+
+<h2>7. Aturan bisnis</h2>
+<p>Aturan terpenting: laporan hanya boleh berstatus selesai bila ada foto bukti yang dinilai bersih oleh
+AI vision. Aturan ini ada di lapisan domain, jadi berlaku dari jalur mana pun perubahan status datang.</p>
+<ol>
+  <li><strong>Selesai harus terbukti.</strong> Foto bukti wajib diunggah sebagai foto bukti (folder <code>proof/</code>, atau <code>work/</code> untuk log pekerjaan); foto kondisi dari mahasiswa tidak bisa dipakai ulang.</li>
+  <li><strong>Foto ditolak tidak disimpan.</strong> Foto yang dinilai kotor atau bukan toilet dihapus; penolakan dan alasannya dicatat di log aktivitas.</li>
+  <li><strong>Gangguan pemeriksa tidak meloloskan foto.</strong> Bila layanan AI vision gagal, status tidak berubah dan petugas diminta mencoba lagi; ini dibedakan dari foto ditolak.</li>
+  <li><strong>Laporan tidak hilang karena AI teks gagal.</strong> Laporan disimpan lebih dulu; kegagalan analisis dicatat sebagai <code>ai_status = failed</code> dan bisa dianalisis ulang.</li>
+  <li><strong>Semua foto dari kamera langsung.</strong> Galeri tidak dapat dipakai di antarmuka.</li>
+  <li><strong>Log aktivitas hanya ditambah.</strong> Tidak ada baris yang diubah atau dihapus lewat aplikasi; kegagalan mencatat tidak menggagalkan tindakannya.</li>
+  <li><strong>Hapus laporan meninggalkan jejak.</strong> Salinan lengkap laporan masuk ke log sebelum laporan dan fotonya dihapus.</li>
+  <li><strong>Petugas tanpa sandi, supervisor wajib sandi.</strong> Supervisor tidak bisa menonaktifkan akunnya sendiri; akun petugas tidak bisa diberi sandi.</li>
+  <li><strong>Satu QR per lantai.</strong> WC pria, wanita, atau disabilitas dipilih di formulir, sehingga jumlah stiker berkurang dua pertiga.</li>
+</ol>
+
+<h2>8. Kebutuhan AI</h2>
+<p>Sistem memakai dua model siap pakai, dibagi menurut jenis masukan: teks ke DeepSeek, foto ke Gemini.
+Tidak ada pelatihan model maupun dataset berlabel; mutu dijaga lewat prompt dan validasi keluaran.</p>
+<table>
+  <tr><th style="width:17%"></th><th>LLM teks</th><th>LLM vision</th></tr>
+  <tr><td><strong>Model</strong></td><td>DeepSeek <code>deepseek-chat</code> (mode JSON)</td><td>Google <code>gemini-3.6-flash</code> (bisa diganti model OpenAI-compatible lain)</td></tr>
+  <tr><td><strong>Tugas</strong></td><td>Klasifikasi, prioritas, ringkasan, rekomendasi; ringkasan harian; menjawab tanya data lewat pemanggilan alat</td><td>Menilai foto bukti dan foto pekerjaan: toilet atau bukan, bersih atau kotor</td></tr>
+  <tr><td><strong>Kapan dipanggil</strong></td><td>Setiap laporan baru (asinkron, setelah respons terkirim); sekali sehari oleh cron; setiap pertanyaan</td><td>Setiap petugas menutup laporan atau mencatat pekerjaan (sinkron, petugas menunggu hasilnya)</td></tr>
+  <tr><td><strong>Bila gagal</strong></td><td>Laporan tetap tersimpan tanpa label, bisa dianalisis ulang</td><td>Penutupan ditolak dengan kode 502; petugas mencoba lagi</td></tr>
+  <tr><td><strong>Hasil disimpan di</strong></td><td>Kolom AI di <code>reports</code>, tabel <code>daily_summaries</code></td><td>Kolom <code>proof_*</code> di <code>reports</code> dan <code>work_logs</code>; log <code>proof_rejected</code>, <code>verification_failed</code></td></tr>
+  <tr><td><strong>Biaya</strong></td><td>Berbayar per pemakaian, sangat murah</td><td>Tingkat gratis Google AI Studio, berkuota harian</td></tr>
+</table>
+<p>Prioritas ditentukan oleh aturan risiko keselamatan, bukan jumlah kata kunci: tinggi berarti ada risiko
+keselamatan atau toilet tidak bisa dipakai.</p>
+<p>Pada tanya data, model tidak pernah melihat baris mentah. Model hanya boleh memanggil empat alat rekap
+(hitung laporan, waktu penyelesaian, daftar laporan maks. 15, ringkasan harian), dan rekap per nama petugas
+hanya untuk supervisor.</p>
+
+<h2>9. Kebutuhan non-fungsional</h2>
+<p>Sistem berjalan di satu Cloudflare Worker dengan biaya hosting nol pada volume kampus, dan menjaga privasi
+pelapor di setiap halaman publik.</p>
+<table>
+  <tr><th style="width:22%">Aspek</th><th>Kebutuhan yang dipenuhi</th></tr>
+  <tr><td>Kinerja</td><td>Mahasiswa menerima nomor laporan tanpa menunggu AI; analisis teks sekitar 1 detik di belakang layar</td></tr>
+  <tr><td>Ketersediaan</td><td>Kegagalan AI teks tidak menggagalkan laporan; kegagalan mencatat log tidak menggagalkan tindakan</td></tr>
+  <tr><td>Keamanan akun</td><td>Sandi PBKDF2-SHA256, 100.000 iterasi, salt per pengguna; sesi berupa cookie bertanda tangan (<code>AUTH_SECRET</code>)</td></tr>
+  <tr><td>Keamanan login</td><td>Nama pengguna tak dikenal dan sandi salah memberi pesan yang sama, supaya nama pengguna tidak bisa ditebak</td></tr>
+  <tr><td>Privasi</td><td>Papan publik menyembunyikan teks asli, foto pelapor, dan nama petugas; chatbot tidak membuka nama petugas ke umum</td></tr>
+  <tr><td>Jejak audit</td><td>Semua tindakan penting tercatat di log aktivitas yang tidak bisa diubah lewat aplikasi</td></tr>
+  <tr><td>Pembatasan biaya</td><td>Tanya data dibatasi 50 pertanyaan per hari untuk semua, 20 per perangkat untuk umum</td></tr>
+  <tr><td>Aksesibilitas jaringan</td><td>Foto disajikan lewat domain aplikasi sendiri, karena sebagian ISP Indonesia memblokir domain <code>r2.dev</code></td></tr>
+  <tr><td>Kemudahan pakai</td><td>Tanpa login untuk mahasiswa dan petugas; dwibahasa; bekerja di peramban ponsel</td></tr>
+  <tr><td>Pemeliharaan</td><td>Arsitektur berlapis (routes, services, repositories, adapters, domain); semua SQL di satu folder</td></tr>
+  <tr><td>Biaya</td><td>Hosting, basis data, dan foto gratis (Cloudflare); DeepSeek sangat murah; Gemini gratis berkuota</td></tr>
+</table>
+
+<h2>10. Data dan integrasi</h2>
+<p>Data disimpan di enam tabel Cloudflare D1 (SQLite) dan satu bucket foto Cloudflare R2. Sistem bergantung
+pada dua layanan AI dari luar.</p>
+<table>
+  <tr><th style="width:26%">Penyimpanan</th><th>Isi</th></tr>
+  <tr><td><code>users</code></td><td>Akun supervisor dan pelapor, nama petugas; sandi dalam bentuk hash</td></tr>
+  <tr><td><code>buildings</code>, <code>toilets</code></td><td>Gedung, lantai, jenis toilet, status aktif</td></tr>
+  <tr><td><code>reports</code></td><td>Keluhan, foto kondisi, status, hasil AI teks, foto bukti dan penilaian AI vision</td></tr>
+  <tr><td><code>work_logs</code></td><td>Log pekerjaan petugas; setiap baris pasti berfoto bersih</td></tr>
+  <tr><td><code>daily_summaries</code></td><td>Satu ringkasan dan poin sorotan per tanggal</td></tr>
+  <tr><td><code>activity_log</code></td><td>Buku catatan kejadian, termasuk salinan laporan yang dihapus</td></tr>
+  <tr><td>R2 <code>kato</code></td><td>Foto di folder <code>report/</code>, <code>proof/</code>, <code>work/</code></td></tr>
+</table>
+<table>
+  <tr><th style="width:26%">Integrasi</th><th style="width:40%">Dipakai untuk</th><th>Konfigurasi</th></tr>
+  <tr><td>DeepSeek API</td><td>Analisis keluhan, ringkasan harian, tanya data</td><td><code>LLM_BASE_URL</code>, <code>LLM_MODEL</code>, <code>LLM_API_KEY</code></td></tr>
+  <tr><td>Google Gemini (format OpenAI)</td><td>Pemeriksaan foto</td><td><code>VISION_BASE_URL</code>, <code>VISION_MODEL</code>, <code>VISION_API_KEY</code></td></tr>
+  <tr><td>Cloudflare Cron</td><td>Pemicu ringkasan harian, <code>0 10 * * *</code> (17.00 WIB)</td><td><code>wrangler.jsonc</code></td></tr>
+</table>
+<p>Rincian kolom ada di <code>dokumentasi-teknis</code>; diagram aliran data (DFD Level 0&ndash;2) dan UML ada di
+<code>penjelasan-diagram</code>, keduanya di folder <code>docs/</code>.</p>
+
+<h2>11. Risiko, batasan, dan keputusan terbuka</h2>
+<p>Risiko terbesar adalah petugas tanpa login: siapa pun bisa memilih nama petugas mana pun. Yang
+menahannya hanya foto yang harus lolos AI dan jejak audit.</p>
+<table>
+  <tr><th style="width:24%">Batasan</th><th style="width:38%">Dampak</th><th>Arah perbaikan</th></tr>
+  <tr><td>Petugas tanpa login</td><td>Status bisa diubah atas nama petugas lain</td><td>PIN pendek per petugas atau pembatasan per perangkat; supervisor rutin meninjau log</td></tr>
+  <tr><td>Asal foto tidak bisa dibuktikan server</td><td>Kamera-saja hanya ditegakkan di antarmuka; foto lama yang bersih lewat API langsung bisa lolos</td><td>Tantangan acak di bingkai, pembandingan dengan foto kondisi, atau dua sudut foto</td></tr>
+  <tr><td>Laporan terbuka bisa dibaca tanpa login</td><td>Teks asli dan foto kondisi terlihat lewat halaman petugas</td><td>Batasi ke lantai yang dipindai, atau token per stiker</td></tr>
+  <tr><td>Tanpa pembatasan laju atau CAPTCHA saat melapor</td><td>Spam bisa masuk; hanya ditahan deteksi kembar 2 menit</td><td>Rate limiting per IP atau Cloudflare Turnstile</td></tr>
+  <tr><td>Tanpa notifikasi ke petugas</td><td>Keluhan hanya terlihat saat halaman lantai dibuka</td><td>Web Push atau WhatsApp/Telegram untuk prioritas tinggi</td></tr>
+  <tr><td>Akurasi AI vision belum diukur</td><td>Bisa salah tolak atau salah terima</td><td>Uji dengan set foto berlabel; laporkan presisi dan recall</td></tr>
+  <tr><td>Kuota dan privasi Gemini tingkat gratis</td><td>Kuota harian bisa habis; Google boleh memakai foto</td><td>Model lite atau aktifkan penagihan</td></tr>
+  <tr><td>Log pekerjaan tidak menutup laporan terbuka</td><td>Keluhan tetap terbuka walau toilet baru dibersihkan</td><td>Tawarkan penutupan dengan foto yang sama</td></tr>
+  <tr><td>Tampilan berfilter maks. 200 baris</td><td>Rentang panjang tidak tampil utuh</td><td>Paginasi atau hitungan dari server</td></tr>
+  <tr><td>Tidak ada lupa sandi</td><td>Supervisor terakhir yang lupa sandi harus diperbaiki lewat SQL</td><td>Reset lewat e-mail atau OTP</td></tr>
+  <tr><td>Belum ada uji otomatis</td><td>Verifikasi masih manual</td><td>Vitest dengan Wrangler</td></tr>
+</table>
+<p><strong>Keputusan yang menunggu pihak kampus</strong></p>
+<ul class="cek">
+  <li>Gedung D, E, F: pastikan keberadaan toiletnya, lalu daftarkan dan cetak stikernya</li>
+  <li>Jenis toilet per lantai: cocokkan asumsi &ldquo;setiap lantai punya WC pria dan wanita&rdquo; dengan kenyataan, termasuk toilet disabilitas</li>
+  <li>Ganti sandi supervisor bawaan</li>
+  <li>Tetapkan pemegang akun supervisor (sebaiknya dua orang) dan pengelola teknis untuk keadaan darurat</li>
+  <li>Sepakati bahwa supervisor rutin memeriksa tab Pekerjaan dan Aktivitas</li>
+  <li>Putuskan apakah penagihan Gemini diaktifkan supaya foto tidak dipakai Google</li>
+  <li>Tentukan bentuk apresiasi untuk pelapor teraktif</li>
+  <li>Tetapkan target angka untuk metrik keberhasilan</li>
+</ul>
+
+<h2>12. Status implementasi dan rencana lanjutan</h2>
+<p>Ke-20 kebutuhan fungsional sudah terimplementasi dan berjalan di
+<a href="https://ai-complaint.yvrtz.workers.dev">ai-complaint.yvrtz.workers.dev</a>, dengan 13 stiker QR untuk
+lantai bertoilet di 6 gedung.</p>
+<table>
+  <tr><th style="width:22%">Komponen</th><th>Teknologi</th></tr>
+  <tr><td>Backend</td><td>TypeScript, Hono di Cloudflare Workers</td></tr>
+  <tr><td>Frontend</td><td>React 18, Vite, Tailwind CSS, disajikan oleh Worker yang sama</td></tr>
+  <tr><td>Data</td><td>Cloudflare D1 (8 migrasi; skema kini seluruhnya berbahasa Inggris), Cloudflare R2</td></tr>
+  <tr><td>AI</td><td>DeepSeek <code>deepseek-chat</code>, Google <code>gemini-3.6-flash</code></td></tr>
+  <tr><td>Dokumentasi</td><td>README, dokumentasi teknis, panduan umum, BPMN to-be, penjelasan diagram DFD dan UML</td></tr>
+</table>
+<p>Kandidat pekerjaan berikutnya, diambil dari tabel batasan di atas; urutannya perlu disepakati:</p>
+<ol>
+  <li>Uji akurasi AI vision dengan set foto berlabel (presisi dan recall)</li>
+  <li>Pembatasan laju atau CAPTCHA pada pelaporan</li>
+  <li>PIN atau pembatasan perangkat untuk petugas</li>
+  <li>Notifikasi ke petugas untuk laporan prioritas tinggi</li>
+  <li>Penutupan laporan terbuka dari log pekerjaan dengan foto yang sama</li>
+  <li>Uji otomatis dan reset sandi supervisor</li>
+</ol>
+
+<div class="kaki">PRD ini disusun dari kode sumber dan dokumentasi Sistem AI Complaint per 28 September 2026.
+Versi yang dapat diedit bersama ada di Claude Docs; berkas ini adalah salinannya di repositori.</div>
+
+</body></html>

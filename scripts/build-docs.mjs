@@ -27,7 +27,7 @@ if (!chrome) {
   process.exit(1);
 }
 
-for (const name of ['panduan-umum', 'dokumentasi-teknis', 'penjelasan-diagram']) {
+for (const name of ['panduan-umum', 'dokumentasi-teknis', 'penjelasan-diagram', 'prd']) {
   const html = resolve(`docs/${name}.html`);
   const pdf = resolve(`docs/${name}.pdf`);
   execFileSync(chrome, [
