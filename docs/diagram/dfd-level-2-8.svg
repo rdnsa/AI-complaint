@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1100" viewBox="0 0 1500 1100" font-family="Arial, Helvetica, sans-serif" fill="#333333">
+<defs><filter id="bayang" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx="3" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.22"/></filter><radialGradient id="bola" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E4E4E4"/></radialGradient><linearGradient id="kotak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9E9E9"/></linearGradient><marker id="panah" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555555"/></marker></defs>
+<rect width="1500" height="1100" fill="#FFFFFF"/>
+<text x="750.0" y="44" font-size="26" font-weight="bold" text-anchor="middle">DFD Level 2 — Proses 8.0 Pantau &amp; Kelola Laporan</text>
+<text x="750.0" y="70" font-size="14" fill="#666" text-anchor="middle">Notasi Yourdon/DeMarco · lingkaran putus-putus = proses lain di Level 1 · garis tegak ganda / garis miring = salinan simbol</text>
+<polyline points="220.6,528.0 565.8,206.8" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="550.8,190.7 188.2,528.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="900.0,160.0 658.0,160.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="900.0,329.8 657.7,354.2" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="900.0,386.1 657.8,365.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="547.4,384.5 238.8,528.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="900.0,531.8 657.7,554.6" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="900.0,587.5 657.8,565.3" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="542.0,560.0 245.0,560.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="227.3,592.0 549.4,771.7" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="958.8,712.0 657.8,795.4" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="651.9,774.2 900.0,705.5" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="658.0,800.0 900.0,800.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="655.9,815.6 916.0,888.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="900.0,990.0 658.0,990.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="559.0,949.0 202.0,592.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<rect x="95.0" y="528.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="170.0" y="564.5" font-size="15" text-anchor="middle">Supervisor</text>
+<circle cx="600" cy="160" r="58" fill="url(#bola)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="600" y="148.9" font-size="12.5" text-anchor="middle" font-weight="bold">8.1</text>
+<text x="600" y="164.5" font-size="12.5" text-anchor="middle">Tampilkan</text>
+<text x="600" y="180.1" font-size="12.5" text-anchor="middle">Daftar Laporan</text>
+<circle cx="600" cy="360" r="58" fill="url(#bola)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="600" y="348.9" font-size="12.5" text-anchor="middle" font-weight="bold">8.2</text>
+<text x="600" y="364.5" font-size="12.5" text-anchor="middle">Hitung Statistik</text>
+<text x="600" y="380.1" font-size="12.5" text-anchor="middle">&amp; Grafik</text>
+<circle cx="600" cy="560" r="58" fill="url(#bola)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="600" y="548.9" font-size="12.5" text-anchor="middle" font-weight="bold">8.3</text>
+<text x="600" y="564.5" font-size="12.5" text-anchor="middle">Tampilkan</text>
+<text x="600" y="580.1" font-size="12.5" text-anchor="middle">Log</text>
+<circle cx="600" cy="800" r="58" fill="url(#bola)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="600" y="788.9" font-size="12.5" text-anchor="middle" font-weight="bold">8.4</text>
+<text x="600" y="804.5" font-size="12.5" text-anchor="middle">Hapus</text>
+<text x="600" y="820.1" font-size="12.5" text-anchor="middle">Laporan</text>
+<circle cx="600" cy="990" r="58" fill="url(#bola)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="600" y="978.9" font-size="12.5" text-anchor="middle" font-weight="bold">8.5</text>
+<text x="600" y="994.5" font-size="12.5" text-anchor="middle">Buat</text>
+<text x="600" y="1010.1" font-size="12.5" text-anchor="middle">Stiker QR</text>
+<g filter="url(#bayang)"><rect x="900.0" y="138.0" width="193.9" height="44" fill="url(#kotak)"/></g>
+<path d="M1093.9,138.0 H900.0 V182.0 H1093.9" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="138.0" x2="946.0" y2="182.0" stroke="#333333" stroke-width="1.5"/>
+<text x="923.0" y="165.0" font-size="14" font-weight="bold" text-anchor="middle">D3</text>
+<text x="956.0" y="165.0" font-size="13.5">Laporan (reports)</text>
+<g filter="url(#bayang)"><rect x="900.0" y="298.0" width="193.9" height="44" fill="url(#kotak)"/></g>
+<path d="M1093.9,298.0 H900.0 V342.0 H1093.9" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="298.0" x2="946.0" y2="342.0" stroke="#333333" stroke-width="1.5"/>
+<line x1="907.0" y1="298.0" x2="907.0" y2="342.0" stroke="#333333" stroke-width="1.5"/>
+<text x="927.0" y="325.0" font-size="14" font-weight="bold" text-anchor="middle">D3</text>
+<text x="956.0" y="325.0" font-size="13.5">Laporan (reports)</text>
+<g filter="url(#bayang)"><rect x="900.0" y="378.0" width="317.9" height="44" fill="url(#kotak)"/></g>
+<path d="M1217.9,378.0 H900.0 V422.0 H1217.9" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="378.0" x2="946.0" y2="422.0" stroke="#333333" stroke-width="1.5"/>
+<text x="923.0" y="405.0" font-size="14" font-weight="bold" text-anchor="middle">D5</text>
+<text x="956.0" y="405.0" font-size="13.5">Ringkasan Harian (daily_summaries)</text>
+<g filter="url(#bayang)"><rect x="900.0" y="498.0" width="252.2" height="44" fill="url(#kotak)"/></g>
+<path d="M1152.2,498.0 H900.0 V542.0 H1152.2" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="498.0" x2="946.0" y2="542.0" stroke="#333333" stroke-width="1.5"/>
+<text x="923.0" y="525.0" font-size="14" font-weight="bold" text-anchor="middle">D4</text>
+<text x="956.0" y="525.0" font-size="13.5">Log Pekerjaan (work_logs)</text>
+<g filter="url(#bayang)"><rect x="900.0" y="578.0" width="274.1" height="44" fill="url(#kotak)"/></g>
+<path d="M1174.1,578.0 H900.0 V622.0 H1174.1" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="578.0" x2="946.0" y2="622.0" stroke="#333333" stroke-width="1.5"/>
+<text x="923.0" y="605.0" font-size="14" font-weight="bold" text-anchor="middle">D6</text>
+<text x="956.0" y="605.0" font-size="13.5">Log Aktivitas (activity_log)</text>
+<g filter="url(#bayang)"><rect x="900.0" y="668.0" width="193.9" height="44" fill="url(#kotak)"/></g>
+<path d="M1093.9,668.0 H900.0 V712.0 H1093.9" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="668.0" x2="946.0" y2="712.0" stroke="#333333" stroke-width="1.5"/>
+<line x1="907.0" y1="668.0" x2="907.0" y2="712.0" stroke="#333333" stroke-width="1.5"/>
+<text x="927.0" y="695.0" font-size="14" font-weight="bold" text-anchor="middle">D3</text>
+<text x="956.0" y="695.0" font-size="13.5">Laporan (reports)</text>
+<g filter="url(#bayang)"><rect x="900.0" y="778.0" width="274.1" height="44" fill="url(#kotak)"/></g>
+<path d="M1174.1,778.0 H900.0 V822.0 H1174.1" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="778.0" x2="946.0" y2="822.0" stroke="#333333" stroke-width="1.5"/>
+<line x1="907.0" y1="778.0" x2="907.0" y2="822.0" stroke="#333333" stroke-width="1.5"/>
+<text x="927.0" y="805.0" font-size="14" font-weight="bold" text-anchor="middle">D6</text>
+<text x="956.0" y="805.0" font-size="13.5">Log Aktivitas (activity_log)</text>
+<g filter="url(#bayang)"><rect x="900.0" y="888.0" width="190.0" height="44" fill="url(#kotak)"/></g>
+<path d="M1090.0,888.0 H900.0 V932.0 H1090.0" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="888.0" x2="946.0" y2="932.0" stroke="#333333" stroke-width="1.5"/>
+<text x="923.0" y="915.0" font-size="14" font-weight="bold" text-anchor="middle">D7</text>
+<text x="956.0" y="915.0" font-size="13.5">Foto (R2 bucket)</text>
+<g filter="url(#bayang)"><rect x="900.0" y="968.0" width="266.8" height="44" fill="url(#kotak)"/></g>
+<path d="M1166.8,968.0 H900.0 V1012.0 H1166.8" fill="none" stroke="#333333" stroke-width="1.5"/>
+<line x1="946.0" y1="968.0" x2="946.0" y2="1012.0" stroke="#333333" stroke-width="1.5"/>
+<text x="923.0" y="995.0" font-size="14" font-weight="bold" text-anchor="middle">D2</text>
+<text x="956.0" y="995.0" font-size="13.5">Lokasi (buildings, toilets)</text>
+<text x="504.7" y="331.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">filter tanggal,</text>
+<text x="504.7" y="347.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">jam, status</text>
+<text x="419.3" y="257.4" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">daftar laporan</text>
+<text x="779.0" y="178.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">laporan</text>
+<text x="775.8" y="307.9" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">jumlah per hari, kategori,</text>
+<text x="775.8" y="323.9" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">gedung, prioritas</text>
+<text x="777.2" y="399.6" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">ringkasan tersimpan</text>
+<text x="411.4" y="492.0" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">grafik, KPI,</text>
+<text x="411.4" y="508.0" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">ringkasan harian</text>
+<text x="777.2" y="529.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">log pekerjaan</text>
+<text x="777.2" y="598.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">log aktivitas</text>
+<text x="393.5" y="534.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">log pekerjaan</text>
+<text x="393.5" y="550.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">&amp; aktivitas</text>
+<text x="405.9" y="654.9" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">perintah hapus</text>
+<text x="875.8" y="767.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">salinan laporan</text>
+<text x="781.6" y="716.4" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">hapus laporan</text>
+<text x="791.1" y="818.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">salinan laporan</text>
+<text x="791.1" y="834.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">+ log hapus</text>
+<text x="790.9" y="888.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">hapus foto laporan</text>
+<text x="779.0" y="980.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">daftar gedung &amp; lantai</text>
+<text x="422.5" y="733.0" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">stiker QR siap cetak</text>
+</svg>

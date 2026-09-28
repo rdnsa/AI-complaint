@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1010" viewBox="0 0 1500 1010" font-family="Arial, Helvetica, sans-serif" fill="#333333">
+<defs><filter id="bayang" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx="3" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.22"/></filter><radialGradient id="bola" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E4E4E4"/></radialGradient><linearGradient id="kotak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E9E9E9"/></linearGradient><marker id="panah" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555555"/></marker></defs>
+<rect width="1500" height="1010" fill="#FFFFFF"/>
+<text x="750.0" y="44" font-size="26" font-weight="bold" text-anchor="middle">DFD Level 0 — Diagram Konteks Sistem AI Complaint</text>
+<text x="750.0" y="70" font-size="14" fill="#666" text-anchor="middle">Notasi Yourdon/DeMarco · persegi = entitas eksternal · lingkaran = proses · kotak terbuka = data store</text>
+<polyline points="255.0,275.8 650.3,476.9" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="640.3,496.5 218.6,282.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="255.0,529.0 632.5,529.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="632.5,551.0 255.0,551.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="218.6,798.0 640.3,583.5" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="650.3,603.1 255.0,804.2" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="761.0,172.0 761.0,422.5" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="739.0,422.5 739.0,172.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="859.7,496.5 1281.4,282.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="1245.0,275.8 849.7,476.9" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="867.5,529.0 1245.0,529.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="1245.0,551.0 867.5,551.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="1257.1,798.0 855.2,593.5" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<circle cx="750" cy="540" r="118" fill="url(#bola)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="750" y="519.2" font-size="13.5" text-anchor="middle" font-weight="bold">0</text>
+<text x="750" y="536.1" font-size="13.5" text-anchor="middle">Sistem Pelaporan</text>
+<text x="750" y="552.9" font-size="13.5" text-anchor="middle">Toilet Kampus</text>
+<text x="750" y="569.8" font-size="13.5" text-anchor="middle">Berbasis AI</text>
+<rect x="105.0" y="218.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="180.0" y="244.9" font-size="15" text-anchor="middle">Mahasiswa</text>
+<text x="180.0" y="264.1" font-size="15" text-anchor="middle">(Pelapor)</text>
+<rect x="105.0" y="508.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="180.0" y="534.9" font-size="15" text-anchor="middle">Petugas</text>
+<text x="180.0" y="554.1" font-size="15" text-anchor="middle">Kebersihan</text>
+<rect x="105.0" y="798.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="180.0" y="824.9" font-size="15" text-anchor="middle">Pengunjung</text>
+<text x="180.0" y="844.1" font-size="15" text-anchor="middle">Umum</text>
+<rect x="675.0" y="108.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="750.0" y="144.5" font-size="15" text-anchor="middle">Supervisor</text>
+<rect x="1245.0" y="218.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="1320.0" y="244.9" font-size="15" text-anchor="middle">LLM Teks</text>
+<text x="1320.0" y="264.1" font-size="15" text-anchor="middle">(DeepSeek)</text>
+<rect x="1245.0" y="508.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="1320.0" y="534.9" font-size="15" text-anchor="middle">LLM Vision</text>
+<text x="1320.0" y="554.1" font-size="15" text-anchor="middle">(Gemini)</text>
+<rect x="1238.2" y="798.0" width="163.6" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="1320.0" y="824.9" font-size="15" text-anchor="middle">Penjadwal</text>
+<text x="1320.0" y="844.1" font-size="15" text-anchor="middle">(Cron 17:00 WIB)</text>
+<text x="481.7" y="307.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">data registrasi &amp; login,</text>
+<text x="481.7" y="323.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kode QR lantai, keluhan,</text>
+<text x="481.7" y="339.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">foto kondisi, ID laporan</text>
+<text x="401.5" y="440.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">ID laporan, status laporan,</text>
+<text x="401.5" y="456.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">papan peringkat</text>
+<text x="443.8" y="503.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kode QR lantai, nama petugas,</text>
+<text x="443.8" y="519.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">foto bukti, status, catatan pekerjaan</text>
+<text x="443.8" y="569.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">laporan terbuka,</text>
+<text x="443.8" y="585.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">hasil verifikasi foto</text>
+<text x="413.1" y="663.1" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pertanyaan data</text>
+<text x="476.4" y="746.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">papan laporan publik,</text>
+<text x="476.4" y="762.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">jawaban pertanyaan</text>
+<text x="875.0" y="285.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kredensial, data akun &amp; petugas,</text>
+<text x="875.0" y="301.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">filter waktu, perintah</text>
+<text x="875.0" y="317.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">analisis ulang / hapus</text>
+<text x="641.9" y="293.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">dashboard &amp; grafik, log,</text>
+<text x="641.9" y="309.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">ringkasan harian, stiker QR</text>
+<text x="1099.8" y="443.4" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">teks keluhan, laporan harian,</text>
+<text x="1099.8" y="459.4" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pertanyaan + data agregat</text>
+<text x="1013.4" y="298.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kategori, prioritas, ringkasan,</text>
+<text x="1013.4" y="314.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">rekomendasi, ringkasan harian,</text>
+<text x="1013.4" y="330.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">jawaban</text>
+<text x="1056.2" y="519.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">foto bukti + konteks keluhan</text>
+<text x="1056.2" y="569.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">verdict + alasan</text>
+<text x="1071.1" y="670.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pemicu harian</text>
+</svg>

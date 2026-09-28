@@ -1,0 +1,151 @@
+---
+title: UML Class Diagram — Model Domain Sistem AI Complaint
+---
+classDiagram
+  direction LR
+
+  class Building {
+    +code : String «PK»
+    +name : String
+    +sortOrder : Integer
+  }
+  class Toilet {
+    +id : String «PK»
+    +buildingCode : String «FK»
+    +floor : Integer
+    +type : ToiletType
+    +active : Boolean
+    +createdAt : DateTime
+    +displayName() String
+  }
+  class User {
+    +id : String «PK»
+    +username : String
+    +name : String
+    +role : Role
+    -passwordHash : String
+    -passwordSalt : String
+    +active : Boolean
+    +createdAt : DateTime
+    +login(username, password) Session
+    +registerReporter(username, name, password)
+    +addStaff(name)
+    +updateAccount(data)
+  }
+  class Report {
+    +id : String «PK»
+    +toiletId : String «FK»
+    +reporterId : String «FK»
+    +description : String
+    +photoKey : String
+    +status : ReportStatus
+    +staffName : String
+    +resolvedAt : DateTime
+    +aiStatus : AiStatus
+    +categories : Category[]
+    +priority : Priority
+    +summary : String
+    +recommendation : String
+    +proofPhotoKey : String
+    +proofVerdict : ProofVerdict
+    +proofReason : String
+    +createdAt : DateTime
+    +submit(toiletId, description, photoKey)
+    +runAnalysis()
+    +changeStatus(status, staff, proofPhotoKey)
+    +canResolve() Boolean
+    +delete(actor)
+  }
+  class WorkLog {
+    +id : String «PK»
+    +toiletId : String «FK»
+    +staffId : String «FK»
+    +staffName : String
+    +description : String
+    +photoKey : String
+    +proofVerdict : ProofVerdict
+    +proofReason : String
+    +createdAt : DateTime
+    +submit(toiletId, description, photoKey)
+  }
+  class DailySummary {
+    +date : Date «PK»
+    +reportCount : Integer
+    +summary : String
+    +highlights : String[]
+    +createdAt : DateTime
+    +generate(date)$
+  }
+  class ActivityLog {
+    +id : Integer «PK»
+    +createdAt : DateTime
+    +action : String
+    +reportId : String
+    +actor : String
+    +summary : String
+    +details : JSON
+    +log(action, actor, summary)$
+  }
+
+  class Role {
+    <<enumeration>>
+    supervisor
+    staff
+    reporter
+  }
+  class ReportStatus {
+    <<enumeration>>
+    new
+    in_progress
+    resolved
+  }
+  class Priority {
+    <<enumeration>>
+    low
+    medium
+    high
+  }
+  class Category {
+    <<enumeration>>
+    cleanliness
+    supplies
+    damage
+    odor
+    flooding
+    other
+  }
+  class ProofVerdict {
+    <<enumeration>>
+    clean
+    dirty
+    not_toilet
+  }
+  class AiStatus {
+    <<enumeration>>
+    pending
+    ok
+    failed
+  }
+  class ToiletType {
+    <<enumeration>>
+    men
+    women
+    accessible
+  }
+
+  Building "1" *-- "1..*" Toilet : memiliki
+  Toilet "1" <-- "0..*" Report : dilaporkan pada
+  User "0..1" <-- "0..*" Report : dibuat oleh (pelapor)
+  Toilet "1" <-- "0..*" WorkLog : dikerjakan di
+  User "1" <-- "0..*" WorkLog : dicatat oleh (petugas)
+  Report "0..1" <.. "0..*" ActivityLog : mencatat
+  DailySummary ..> Report : merangkum
+
+  User ..> Role
+  Toilet ..> ToiletType
+  Report ..> ReportStatus
+  Report ..> Priority
+  Report ..> Category
+  Report ..> ProofVerdict
+  Report ..> AiStatus
+  WorkLog ..> ProofVerdict

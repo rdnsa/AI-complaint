@@ -1,0 +1,49 @@
+---
+title: UML Sequence Diagram — Mahasiswa Membuat Laporan & Analisis AI
+---
+sequenceDiagram
+  autonumber
+  actor M as Mahasiswa
+  participant UI as Aplikasi Web (React)
+  participant API as API Worker (Hono)
+  participant RS as ReportService
+  participant AS as AnalysisService
+  participant R2 as Penyimpanan Foto (R2)
+  participant DB as Database (D1)
+  participant LLM as LLM Teks (DeepSeek)
+
+  M->>UI: Pindai QR lantai, pilih toilet
+  UI->>API: GET /api/locations/:id
+  API->>DB: SELECT toilet_info
+  DB-->>API: daftar toilet di lantai
+  API-->>UI: data lokasi
+  M->>UI: Tulis keluhan + ambil foto kamera
+  UI->>API: POST /api/uploads (foto kondisi)
+  API->>R2: simpan foto
+  R2-->>API: photo_key
+  API-->>UI: photo_key
+  UI->>API: POST /api/reports {toilet_id, description, photo_key}
+  API->>RS: submitReport()
+  RS->>DB: cek toilet aktif & laporan duplikat
+  alt laporan duplikat
+    RS-->>API: ID laporan lama
+  else laporan baru
+    RS->>DB: INSERT reports (status=new, ai_status=pending)
+    RS->>DB: INSERT activity_log (report_created)
+    RS-->>API: ID laporan baru
+  end
+  API-->>UI: 201 {id, toilet}
+  UI-->>M: Tampilkan ID & halaman status
+
+  Note over API,LLM: Setelah respons terkirim (ctx.waitUntil), berjalan asinkron
+  API-)AS: runAnalysis(id)
+  AS->>DB: ambil teks keluhan + lokasi
+  AS->>LLM: analyzeComplaint(teks, lokasi)
+  alt LLM berhasil
+    LLM-->>AS: kategori, prioritas, ringkasan, rekomendasi
+    AS->>DB: UPDATE reports (ai_status=ok, ...)
+    AS->>DB: INSERT activity_log (analysis)
+  else LLM gagal / timeout
+    AS->>DB: UPDATE reports (ai_status=failed, ai_error)
+    AS->>DB: INSERT activity_log (analysis_failed)
+  end
