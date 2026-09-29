@@ -28,7 +28,7 @@
  */
 import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { CHECKPOINTS, reachedCheckpoints } from '../staging/checkpoints.mjs';
+import { reachedCheckpoints } from '../staging/checkpoints.mjs';
 
 const OUT = 'wrangler.staging.jsonc';
 const mode = process.argv[2] ?? 'deploy';
@@ -95,7 +95,7 @@ function routerConfig() {
     build: { command: `node staging/journey.mjs ${HUB_DIR}` },
     assets: { directory: HUB_DIR, binding: 'ASSETS', run_worker_first: true },
     services: reached.map((c) => ({ binding: `CP${c.n}`, service: workerName(c.n) })),
-    vars: { CHECKPOINTS: reached.map((c) => c.n).join(','), TOTAL: String(CHECKPOINTS.length) },
+    vars: { CHECKPOINTS: reached.map((c) => c.n).join(',') },
     // The daily summary runs on the latest checkpoint's own Worker instead.
     triggers: { crons: [] },
     workers_dev: true,

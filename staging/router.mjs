@@ -19,8 +19,7 @@
  * therefore never read by another, where the same user id could be someone
  * else.
  *
- * Bindings: ASSETS (the hub), CP1…CPn (service bindings), CHECKPOINTS ("1,2,…"),
- * TOTAL (the number of checkpoints planned).
+ * Bindings: ASSETS (the hub), CP1…CPn (service bindings), CHECKPOINTS ("1,2,…").
  */
 const CHOICE = 'kato_checkpoint';
 const STATIC_PAGES = new Set(['/checkpoint', '/panduan', '/panduan.pdf', '/teknis', '/teknis.pdf']);
@@ -32,11 +31,6 @@ function readCookies(header) {
     if (i > 0) cookies.set(part.slice(0, i).trim(), part.slice(i + 1).trim());
   }
   return cookies;
-}
-
-/** The badge that tells the tester which checkpoint they are in. */
-function badge(n, total) {
-  return `<a href="/checkpoint" data-staging-badge style="position:fixed;left:12px;bottom:12px;z-index:2147483647;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(29,29,31,.88);color:#fff;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,Inter,Arial,sans-serif;text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.2);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)">Checkpoint ${n}/${total}<span style="opacity:.7;font-weight:500">· ganti</span></a>`;
 }
 
 export default {
@@ -80,12 +74,6 @@ export default {
     if (setCookies.length) {
       response.headers.delete('set-cookie');
       for (const c of setCookies) response.headers.append('set-cookie', prefix + c.trimStart());
-    }
-
-    if ((response.headers.get('content-type') ?? '').includes('text/html')) {
-      return new HTMLRewriter()
-        .on('body', { element: (el) => el.append(badge(n, env.TOTAL), { html: true }) })
-        .transform(response);
     }
     return response;
   },

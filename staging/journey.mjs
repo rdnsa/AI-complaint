@@ -174,7 +174,7 @@ function hub() {
   <p class="kicker">Laporan progress bertahap · ${latest} dari ${CHECKPOINTS.length} checkpoint</p>
   <h1>Coba setiap tahap pengembangannya</h1>
   <p class="lead">Setiap checkpoint berjalan sebagai aplikasi sendiri, persis seperti saat checkpoint itu selesai. Buka checkpoint 1 untuk melihat bentuk paling awal, lalu naik satu per satu untuk merasakan apa yang bertambah.</p>
-  <p class="hint">Buka <code>/checkpoint1</code>, <code>/checkpoint2</code>, dan seterusnya untuk berpindah checkpoint. Checkpoint yang sedang dibuka ditandai di pojok kiri bawah layar, dan satu browser membuka satu checkpoint dalam satu waktu. Data dan login di setiap checkpoint terpisah, jadi laporan yang dikirim di checkpoint 2 tidak muncul di checkpoint 3. Silakan kirim laporan percobaan sebanyak yang diperlukan.</p>
+  <p class="hint">Buka <code>/checkpoint1</code>, <code>/checkpoint2</code>, dan seterusnya untuk berpindah checkpoint. Satu browser membuka satu checkpoint dalam satu waktu; pilihan itu berlaku sampai Anda membuka checkpoint lain dari halaman ini. Data dan login di setiap checkpoint terpisah, jadi laporan yang dikirim di checkpoint 2 tidak muncul di checkpoint 3. Silakan kirim laporan percobaan sebanyak yang diperlukan.</p>
   <p class="hint">Penjelasan lengkap setiap checkpoint ada di dua dokumen: <a href="/panduan">panduan umum</a> (<a href="/panduan.pdf">PDF</a>) untuk fitur dan cara mencobanya, dan <a href="/teknis">dokumentasi teknis</a> (<a href="/teknis.pdf">PDF</a>) untuk arsitektur dan perubahan kodenya.</p>
 </div>
 <ol class="timeline">

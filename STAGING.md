@@ -90,9 +90,9 @@ Cara kerjanya:
   disimpan di cookie, dan setiap permintaan diteruskan lewat *service binding* ke Worker
   `ai-complaint-staging-cpN`. Worker checkpoint sendiri tidak punya alamat publik.
 - **Satu browser, satu checkpoint.** Aplikasi memakai alamat absolut seperti `/api/…` dan `/lapor/…`,
-  jadi satu browser hanya membuka satu checkpoint dalam satu waktu. Checkpoint yang aktif ditandai
-  di pojok kiri bawah layar. Untuk membandingkan dua checkpoint berdampingan, pakai jendela
-  penyamaran atau browser lain.
+  jadi satu browser hanya membuka satu checkpoint dalam satu waktu. Pilihan itu berlaku sampai
+  checkpoint lain dibuka lewat `/checkpointN` atau hub. Untuk membandingkan dua checkpoint berdampingan,
+  pakai jendela penyamaran atau browser lain.
 - **Login terpisah.** Cookie login disimpan terpisah per checkpoint (`cp1_…`, `cp2_…`), jadi sesi dari
   satu checkpoint tidak pernah terbaca oleh checkpoint lain.
 - **Database.** Setiap checkpoint punya database D1 sendiri, karena struktur tabelnya berubah antar

@@ -235,7 +235,7 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
       <line x1="430" y1="64" x2="430" y2="100" class="line" marker-end="url(#ah)"/>
       <rect x="250" y="102" width="360" height="66" rx="12" class="box-accent"/>
       <text x="430" y="128" text-anchor="middle" class="t">Router · ai-complaint-staging</text>
-      <text x="430" y="148" text-anchor="middle" class="s">hub /checkpoint · pilih /checkpointN · cookie cpN_* · penanda</text>
+      <text x="430" y="148" text-anchor="middle" class="s">hub /checkpoint · pilih /checkpointN · cookie cpN_*</text>
       <text x="640" y="140" class="s">service binding CP1…CP6</text>
       <g>
         <line x1="430" y1="168" x2="75" y2="220" class="line" marker-end="url(#ah)"/>
@@ -276,7 +276,7 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
     <li><code>/checkpointN[/jalur]</code> memasang cookie <code>kato_checkpoint=N</code> (30 hari, <code>SameSite=Lax</code>, <code>Secure</code>) lalu mengalihkan ke <code>/jalur</code>. Checkpoint yang belum dilaporkan dialihkan ke hub.</li>
     <li>Permintaan lain diteruskan ke Worker <code>ai-complaint-staging-cpN</code> lewat <em>service binding</em> <code>CPn</code>, sesuai cookie. Kalau cookie tidak ada, yang dipakai checkpoint terbaru. URL permintaan tidak diubah, jadi aplikasi melihat domain staging sebagai domainnya sendiri.</li>
     <li><strong>Cookie aplikasi dipisah per checkpoint.</strong> Setiap <code>Set-Cookie</code> dari aplikasi disimpan dengan awalan <code>cpN_</code>, misalnya <code>cp1_sesi_petugas</code>. Saat meneruskan permintaan, router hanya mengirim cookie berawalan checkpoint aktif dan mengembalikan namanya ke nama aslinya. Tanpa pemisahan ini, sesi dari satu checkpoint bisa diterima checkpoint lain yang memakai <code>AUTH_SECRET</code> sama, padahal id pengguna yang sama di database lain bisa berarti orang lain.</li>
-    <li>Pada respons HTML, <code>HTMLRewriter</code> menyisipkan penanda "Checkpoint N/6 · ganti" di akhir <code>&lt;body&gt;</code>.</li>
+    <li>Respons aplikasi diteruskan apa adanya; router tidak menyisipkan apa pun ke halaman, sehingga tampilan setiap checkpoint sama persis dengan aslinya.</li>
   </ol>
 
   <h3>Worker, database, dan penyimpanan</h3>
@@ -578,7 +578,7 @@ git push origin staging</code></pre>
   <div class="tbl"><table>
     <thead><tr><th>Gejala</th><th>Penyebab</th><th>Penanganan</th></tr></thead>
     <tbody>
-      <tr><td>Sesaat setelah deploy, checkpoint baru menjawab "Endpoint tidak ditemukan" atau penanda menunjukkan nomor lama</td><td>Router versi baru belum menyebar ke semua lokasi Cloudflare, jadi sebagian permintaan masih memakai daftar checkpoint lama</td><td>Tunggu sekitar satu menit</td></tr>
+      <tr><td>Sesaat setelah deploy, checkpoint baru menjawab "Endpoint tidak ditemukan" atau menampilkan checkpoint sebelumnya</td><td>Router versi baru belum menyebar ke semua lokasi Cloudflare, jadi sebagian permintaan masih memakai daftar checkpoint lama</td><td>Tunggu sekitar satu menit</td></tr>
       <tr><td><code>d1 execute</code> gagal dengan <code>InternalError … Please try again</code></td><td>Gangguan sementara di Cloudflare saat mengimpor file SQL</td><td>Jalankan <code>node scripts/staging.mjs seed</code> lagi</td></tr>
       <tr><td><code>wrangler d1 create</code> menambahkan binding ke <code>wrangler.jsonc</code></td><td>Wrangler menawarkan mengubah konfigurasi</td><td>Selalu pakai <code>--update-config=false</code>, dan jangan commit perubahan itu ke <code>main</code></td></tr>
     </tbody>
