@@ -2,7 +2,8 @@
  * The staging site's front door: one domain for every checkpoint.
  *
  *   /checkpoint          the hub (a static page built by journey.mjs)
- *   /dokumentasi[.pdf]   the progress report (staging/docs/laporan-progress)
+ *   /panduan[.pdf]       the general guide (staging/docs/panduan-umum)
+ *   /teknis[.pdf]        the technical documentation (staging/docs/dokumentasi-teknis)
  *   /checkpointN[/path]  choose checkpoint N, then continue at /path (default /)
  *   anything else        forwarded to the chosen checkpoint's Worker, or to
  *                        the latest one when nothing has been chosen yet
@@ -22,6 +23,7 @@
  * TOTAL (the number of checkpoints planned).
  */
 const CHOICE = 'kato_checkpoint';
+const STATIC_PAGES = new Set(['/checkpoint', '/panduan', '/panduan.pdf', '/teknis', '/teknis.pdf']);
 
 function readCookies(header) {
   const cookies = new Map();
@@ -44,8 +46,10 @@ export default {
     const latest = reached[reached.length - 1];
 
     const page = url.pathname.replace(/\/$/, '');
-    if (page === '/checkpoint' || page === '/dokumentasi' || page === '/dokumentasi.pdf') {
-      return env.ASSETS.fetch(new Request(new URL(page, url), request));
+    if (STATIC_PAGES.has(page)) return env.ASSETS.fetch(new Request(new URL(page, url), request));
+    // The progress report used to be one document at /dokumentasi.
+    if (page === '/dokumentasi' || page === '/dokumentasi.pdf') {
+      return Response.redirect(new URL(page.replace('/dokumentasi', '/panduan'), url).toString(), 301);
     }
 
     const pick = url.pathname.match(/^\/checkpoint(\d+)(\/.*)?$/);

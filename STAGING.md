@@ -108,15 +108,19 @@ Setiap `node scripts/staging.mjs` men-deploy Worker checkpoint terbaru, lalu rou
 sebelumnya tidak disentuh, jadi tetap berjalan dengan kode lamanya. Teks hub ada di
 `staging/checkpoints.mjs`, dan halamannya dibuat oleh `staging/journey.mjs`.
 
-## Dokumentasi laporan progress (`/dokumentasi`)
+## Dokumentasi laporan progress (`/panduan` dan `/teknis`)
 
-Laporan progress lengkap, yang menjelaskan staging dan keenam checkpoint dari sisi umum maupun
-teknis, ada di `staging/docs/laporan-progress.html`. Situs staging menyajikannya di `/dokumentasi`,
-dan PDF-nya di `/dokumentasi.pdf`. Setelah mengubah HTML-nya, buat ulang PDF-nya dengan Chrome, lalu
-deploy lagi:
+Laporan progress dibagi menjadi dua dokumen di `staging/docs/`:
+
+| Dokumen | File | Alamat di staging | Isi |
+|---|---|---|---|
+| Panduan umum | `panduan-umum.html` | `/panduan`, `/panduan.pdf` | Cara memakai staging, lalu fitur, contoh, dan skenario uji setiap checkpoint |
+| Dokumentasi teknis | `dokumentasi-teknis.html` | `/teknis`, `/teknis.pdf` | Arsitektur staging, lalu statistik, migrasi, endpoint, dan keputusan desain setiap checkpoint, ditambah operasional dan daftar commit |
+
+Alamat lama `/dokumentasi` dialihkan ke `/panduan`. Setelah mengubah HTML-nya, buat ulang PDF-nya,
+lalu deploy lagi:
 
 ```bash
-"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --no-pdf-header-footer \
-  --print-to-pdf=staging/docs/laporan-progress.pdf staging/docs/laporan-progress.html
+node staging/docs/build-pdf.mjs
 node scripts/staging.mjs
 ```

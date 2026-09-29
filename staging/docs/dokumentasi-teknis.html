@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Laporan Progress Kato Report</title>
-<meta name="description" content="Laporan progress pengembangan Kato Report: situs staging dan enam checkpoint, dari sisi umum dan teknis.">
+<title>Dokumentasi Teknis Kato Report</title>
+<meta name="description" content="Dokumentasi teknis situs staging Kato Report dan perubahan teknis di setiap checkpoint.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -135,13 +135,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 <main class="wrap">
 
 <header class="cover">
-  <p class="kicker">Laporan progress pengembangan · Kato Report</p>
-  <h1>Situs staging dan enam checkpoint pengembangan</h1>
-  <p class="lead">Kato Report adalah sistem pelaporan kondisi toilet kampus UPI Tasikmalaya. Mahasiswa melapor lewat QR, AI mengubah keluhan menjadi tiket kerja, dan penyelesaiannya dibuktikan dengan foto yang diperiksa AI. Dokumen ini menjelaskan bagaimana sistem itu dibangun dalam enam checkpoint, dan bagaimana setiap checkpoint bisa dicoba langsung di situs staging.</p>
+  <p class="kicker">Dokumentasi teknis · Kato Report</p>
+  <h1>Arsitektur staging dan perubahan teknis setiap checkpoint</h1>
+  <p class="lead">Dokumen ini untuk penilai dan pengembang. Isinya cara enam versi Kato Report berjalan bersamaan di satu domain staging, dan untuk setiap checkpoint: perubahan skema database, endpoint API, konfigurasi, serta keputusan desain beserta alasannya. Fitur dan cara mencobanya dijelaskan di panduan umum.</p>
   <div class="meta">
     <span class="chip">Situs: <a href="https://ai-complaint-staging.yvrtz.workers.dev/checkpoint">ai-complaint-staging.yvrtz.workers.dev</a></span>
     <span class="chip">Repo: <a href="https://github.com/rdnsa/AI-complaint">rdnsa/AI-complaint</a>, branch <code>staging</code></span>
-    <span class="chip no-print"><a href="/dokumentasi.pdf">Unduh PDF</a></span>
+    <span class="chip">Fitur dan skenario uji: <a href="/panduan">panduan umum</a></span>
+    <span class="chip no-print"><a href="/teknis.pdf">Unduh PDF</a></span>
   </div>
 </header>
 
@@ -149,8 +150,7 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <h2>Daftar isi</h2>
   <ol class="toc">
     <li><a href="#ringkasan">Ringkasan</a></li>
-    <li><a href="#staging">Cara memakai situs staging</a></li>
-    <li><a href="#arsitektur">Arsitektur staging (teknis)</a></li>
+    <li><a href="#arsitektur">Arsitektur staging</a></li>
     <li><a href="#cp1">Checkpoint 1: Pondasi</a></li>
     <li><a href="#cp2">Checkpoint 2: Sesuai kampus</a></li>
     <li><a href="#cp3">Checkpoint 3: Bukti, jejak, dan akun</a></li>
@@ -163,10 +163,9 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   </ol>
 </section>
 
-<!-- ============================================================ RINGKASAN -->
 <section class="card" id="ringkasan">
   <h2>1. Ringkasan</h2>
-  <p class="sub">Apa yang dibangun, dan bagaimana progresnya dilaporkan.</p>
+  <p class="sub">Sistem yang dibangun, dan bagaimana riwayatnya dipecah menjadi checkpoint.</p>
 
   <p><strong>Masalah.</strong> Keluhan tentang toilet kampus jarang sampai ke petugas kebersihan. Mahasiswa tidak tahu harus melapor ke siapa, dan tidak ada cara untuk memastikan keluhannya ditindaklanjuti. Akibatnya masalah kecil dibiarkan sampai menjadi besar.</p>
   <p><strong>Solusi.</strong> Stiker QR di setiap lantai. Mahasiswa memindai QR dan menulis keluhan dengan bahasa sehari-hari. AI (DeepSeek) menggolongkan keluhan, menentukan prioritas, dan menyusun perintah kerja. Petugas menutup laporan dengan foto bukti yang diperiksa AI kedua (Google Gemini). Supervisor memantau semuanya lewat dashboard dan Chatbot AI.</p>
@@ -185,55 +184,8 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   </table></div>
 </section>
 
-<!-- ============================================================ STAGING (UMUM) -->
-<section class="card" id="staging">
-  <h2>2. Cara memakai situs staging</h2>
-  <p class="sub">Untuk siapa saja yang ingin mencoba setiap checkpoint.</p>
-
-  <h3>Alamat</h3>
-  <div class="tbl"><table>
-    <thead><tr><th>Alamat</th><th>Isi</th></tr></thead>
-    <tbody>
-      <tr><td><code>/checkpoint</code></td><td>Hub: daftar checkpoint, fitur baru di masing-masing, dan tombol untuk mencobanya</td></tr>
-      <tr><td><code>/checkpoint3</code></td><td>Pindah ke checkpoint 3, lalu membuka berandanya</td></tr>
-      <tr><td><code>/checkpoint3/peringkat</code></td><td>Pindah ke checkpoint 3, lalu langsung membuka halaman <code>/peringkat</code></td></tr>
-      <tr><td><code>/dokumentasi</code></td><td>Dokumen ini. Versi PDF ada di <code>/dokumentasi.pdf</code></td></tr>
-      <tr><td>alamat lain</td><td>Aplikasi checkpoint yang sedang dipilih. Kalau belum memilih, yang dibuka checkpoint terbaru</td></tr>
-    </tbody>
-  </table></div>
-
-  <h3>Langkah mencoba</h3>
-  <ol class="steps">
-    <li>Buka <code>/checkpoint</code>, lalu pilih checkpoint yang ingin dicoba. Mulailah dari checkpoint 1 supaya perkembangannya terasa.</li>
-    <li>Penanda <strong>"Checkpoint N/6 · ganti"</strong> di pojok kiri bawah menunjukkan checkpoint yang sedang aktif. Ketuk penanda itu untuk kembali ke hub.</li>
-    <li>Ikuti skenario uji di bagian setiap checkpoint dalam dokumen ini.</li>
-    <li>Untuk membandingkan dua checkpoint berdampingan, buka checkpoint kedua di jendela penyamaran atau browser lain.</li>
-  </ol>
-
-  <h3>Akun untuk mencoba</h3>
-  <div class="tbl"><table>
-    <thead><tr><th>Checkpoint</th><th>Mahasiswa / pelapor</th><th>Petugas</th><th>Pengelola</th></tr></thead>
-    <tbody>
-      <tr><td>1–2</td><td>tanpa akun</td><td>nama bebas + sandi bersama (minta ke pengembang)</td><td>sama dengan petugas</td></tr>
-      <tr><td>3–5</td><td>tanpa akun, atau daftar sendiri di <code>/daftar</code></td><td>akun petugas, dibuat oleh admin</td><td>admin: <code>admin</code> / <code>Admin123!</code></td></tr>
-      <tr><td>6</td><td>tanpa akun, atau daftar sendiri di <code>/register</code></td><td>tanpa login: pilih nama (nama ditambahkan supervisor)</td><td>supervisor: <code>admin</code> / <code>Admin123!</code></td></tr>
-    </tbody>
-  </table></div>
-  <p class="note"><b>Catatan keamanan.</b> <code>Admin123!</code> adalah sandi bawaan dari migrasi database dan tercantum di repo publik. Sandi ini hanya boleh dipakai di staging. Di produksi (<code>main</code>) sandi itu wajib diganti.</p>
-
-  <h3>Yang perlu diketahui penguji</h3>
-  <ul>
-    <li><strong>Data setiap checkpoint terpisah.</strong> Laporan yang dikirim di checkpoint 2 tidak muncul di checkpoint 3, karena struktur database tiap checkpoint berbeda. Silakan mengirim laporan percobaan sebanyak yang diperlukan.</li>
-    <li><strong>Login juga terpisah.</strong> Masuk di checkpoint 3 tidak membuat Anda ikut masuk di checkpoint 4.</li>
-    <li><strong>Satu browser, satu checkpoint.</strong> Berpindah checkpoint di satu tab ikut memindahkan tab lain di browser yang sama.</li>
-    <li><strong>Fitur AI memakai layanan sungguhan.</strong> Klasifikasi keluhan memakai DeepSeek, dan pemeriksaan foto (checkpoint 5–6) memakai Gemini. Kalau layanan itu sedang sibuk, laporan tetap tersimpan dan hasil AI bisa dianalisis ulang.</li>
-    <li><strong>Ringkasan harian otomatis</strong> (pukul 17.00 WIB) hanya berjalan di checkpoint terbaru. Di checkpoint lama, ringkasan tetap bisa dibuat manual dari dashboard.</li>
-  </ul>
-</section>
-
-<!-- ============================================================ ARSITEKTUR STAGING -->
 <section class="card" id="arsitektur">
-  <h2>3. Arsitektur staging (teknis)</h2>
+  <h2>2. Arsitektur staging</h2>
   <p class="sub">Bagaimana enam versi aplikasi berjalan bersamaan di satu domain tanpa mengubah kode aplikasinya.</p>
 
   <h3>Model branch dan tag</h3>
@@ -325,40 +277,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <p>Secret Cloudflare tidak bisa dibaca kembali, jadi nilainya diambil dari <code>.dev.vars</code> lokal, yang tidak ikut di-commit. Secret yang dipakai adalah <code>LLM_API_KEY</code>, <code>VISION_API_KEY</code>, <code>AUTH_SECRET</code>, dan <code>PETUGAS_PASSWORD</code> (khusus checkpoint 1–2). Sejak checkpoint 6, <code>LLM_API_KEY</code> dan <code>VISION_API_KEY</code> boleh berisi beberapa key yang dipisah koma. Kode checkpoint yang lebih lama akan membaca daftar itu sebagai satu key yang tidak valid, jadi skrip memeriksa kodenya dulu: kalau fungsi <code>splitKeys</code> belum ada, hanya key pertama yang dikirim.</p>
 </section>
 
-<!-- ============================================================ CP1 -->
 <section class="card checkpoint" id="cp1">
-  <div class="cp-head"><span class="cp-num">1</span><div><p class="kicker">Checkpoint 1 · tag <code>checkpoint-1</code> · <code>dd9c91a</code></p><h2>Pondasi: keluhan menjadi tiket kerja</h2></div></div>
-  <div class="stats">
+  <div class="cp-head"><span class="cp-num">1</span><div><p class="kicker">Checkpoint 1 · tag <code>checkpoint-1</code> · <code>dd9c91a</code></p><h2>Pondasi: keluhan menjadi tiket kerja</h2></div></div>  <div class="stats">
     <div class="stat"><b>3</b><span>commit</span></div>
     <div class="stat"><b>35</b><span>file berubah</span></div>
     <div class="stat"><b>+7.148</b><span>baris</span></div>
     <div class="stat"><b>16</b><span>endpoint API</span></div>
   </div>
-
-  <span class="label umum">Penjelasan umum</span>
-  <p><strong>Masalah yang dijawab.</strong> Keluhan toilet tidak punya saluran. Checkpoint ini membangun alur paling dasar: mahasiswa bisa melapor dalam hitungan detik, dan petugas menerima laporan dalam bentuk yang langsung bisa dikerjakan.</p>
-  <div class="split">
-    <div class="pane"><h4>Yang bisa dilakukan</h4><ul>
-      <li><strong>Mahasiswa</strong> memindai QR di pintu WC, menulis keluhan dengan bahasa sehari-hari (bahasa gaul juga dipahami), melampirkan foto kalau mau, lalu mengirim. Konfirmasi langsung muncul.</li>
-      <li><strong>AI</strong> menentukan jenis masalah, prioritas, ringkasan yang sopan, dan perintah kerja.</li>
-      <li><strong>Petugas</strong> masuk dengan satu sandi bersama, melihat laporan dengan yang paling mendesak di atas, lalu mengubah statusnya dari <em>baru</em> ke <em>diproses</em> ke <em>selesai</em>.</li>
-      <li><strong>Pimpinan</strong> menerima ringkasan harian otomatis setiap pukul 17.00 WIB.</li>
-    </ul></div>
-    <div class="pane"><h4>Contoh hasil AI</h4>
-      <p><em>"WC lantai 2 bau banget, lantainya becek, sama sabunnya habis."</em></p>
-      <ul><li>Prioritas: <strong>tinggi</strong></li><li>Masalah: bau, genangan air, perlengkapan habis</li><li>Perintah: keringkan lantai lebih dulu karena berisiko membuat orang terpeleset, lalu bersihkan sumber bau dan isi ulang sabun.</li></ul>
-    </div>
-  </div>
-  <h4>Skenario uji</h4>
-  <ol class="steps">
-    <li>Buka <code>/checkpoint1/lapor/A-1-PRIA</code>. Formulir sudah mengetahui WC mana yang dimaksud.</li>
-    <li>Tulis <em>"airnya nggenang parah, kloset yg pojok mampet"</em>, lalu kirim. Di halaman konfirmasi, tunggu sampai kategori dan prioritas muncul. Hasil yang diharapkan: kerusakan dan genangan air, prioritas tinggi.</li>
-    <li>Buka <code>/petugas</code>, masuk dengan nama bebas dan sandi bersama, lalu ubah status laporan tadi. Coba juga tombol analisis ulang.</li>
-    <li>Di dashboard, buat ringkasan harian secara manual.</li>
-  </ol>
-  <p><strong>Yang belum ada:</strong> daftar lokasi masih data contoh, pelapor tidak bisa melacak laporannya setelah menutup halaman, dan semua petugas memakai satu sandi.</p>
-
-  <span class="label teknis">Penjelasan teknis</span>
+  <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp1">panduan umum</a>.</p>
   <h4>Fondasi</h4>
   <ul>
     <li><strong>Stack:</strong> TypeScript di Cloudflare Workers dengan Hono. Database D1 (SQLite), penyimpanan foto R2, dan frontend React + Vite + Tailwind. Frontend dan API ada di <strong>satu Worker</strong>, sehingga tidak perlu CORS dan cukup sekali deploy. Aset statis disajikan lewat binding <code>ASSETS</code> dengan <code>run_worker_first: ["/api/*"]</code> dan fallback SPA.</li>
@@ -381,40 +307,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <p><strong>Halaman:</strong> <code>/</code>, <code>/lapor/:toiletId</code>, <code>/laporan/:id</code>, <code>/petugas</code>. <strong>Konfigurasi:</strong> vars <code>LLM_BASE_URL</code> dan <code>LLM_MODEL</code> (<code>deepseek-chat</code>); secret <code>LLM_API_KEY</code>, <code>AUTH_SECRET</code> (tanda tangan cookie sesi), dan <code>PETUGAS_PASSWORD</code>.</p>
 </section>
 
-<!-- ============================================================ CP2 -->
 <section class="card checkpoint" id="cp2">
-  <div class="cp-head"><span class="cp-num">2</span><div><p class="kicker">Checkpoint 2 · tag <code>checkpoint-2</code> · <code>feb7e49</code></p><h2>Sesuai kampus, dan bisa dilacak</h2></div></div>
-  <div class="stats">
+  <div class="cp-head"><span class="cp-num">2</span><div><p class="kicker">Checkpoint 2 · tag <code>checkpoint-2</code> · <code>feb7e49</code></p><h2>Sesuai kampus, dan bisa dilacak</h2></div></div>  <div class="stats">
     <div class="stat"><b>4</b><span>commit</span></div>
     <div class="stat"><b>27</b><span>file berubah</span></div>
     <div class="stat"><b>+1.914 / −514</b><span>baris</span></div>
     <div class="stat"><b>19</b><span>endpoint API</span></div>
   </div>
-
-  <span class="label umum">Penjelasan umum</span>
-  <p><strong>Masalah yang dijawab.</strong> Satu QR per WC berarti terlalu banyak stiker yang harus dicetak dan dirawat, dan daftar lokasinya belum mencerminkan kampus. Selain itu, laporan yang sudah dikirim seolah menghilang: pelapor maupun orang lain tidak bisa melihat tindak lanjutnya.</p>
-  <div class="split">
-    <div class="pane"><h4>Yang berubah</h4><ul>
-      <li><strong>Satu QR per lantai.</strong> Pelapor memilih sendiri WC pria, wanita, atau disabilitas. Totalnya 13 stiker untuk 6 gedung yang punya toilet.</li>
-      <li><strong>Gedung UPI Kampus Tasikmalaya yang asli</strong>, dengan peta kampus di beranda sebagai cadangan kalau QR rusak.</li>
-      <li><strong>Identitas visual kampus</strong> (maroon, oranye bata, krem) dan pilihan bahasa Indonesia/Inggris.</li>
-    </ul></div>
-    <div class="pane"><h4>Transparansi</h4><ul>
-      <li><strong>Lacak laporan:</strong> garis waktu <em>diterima</em>, <em>dikerjakan</em>, <em>selesai</em>, dan daftar "Laporan saya" di beranda.</li>
-      <li><strong>Papan laporan publik</strong> <code>/laporan</code>: semua laporan dan statusnya, tanpa login.</li>
-      <li><strong>Hapus spam</strong> oleh petugas, karena papannya kini terbuka untuk umum.</li>
-    </ul></div>
-  </div>
-  <h4>Skenario uji</h4>
-  <ol class="steps">
-    <li>Buka <code>/checkpoint2/lapor/A-1</code>, pilih jenis WC, lalu kirim keluhan.</li>
-    <li>Kembali ke beranda. Laporan tadi muncul di "Laporan saya" beserta statusnya.</li>
-    <li>Buka <code>/laporan</code>. Yang tampil hanya ringkasan AI, tanpa teks asli maupun foto pelapor.</li>
-    <li>Masuk sebagai petugas, ubah status, lalu lihat garis waktu di halaman konfirmasi ikut berubah.</li>
-    <li>Ganti bahasa ke EN dari bagian atas halaman.</li>
-  </ol>
-
-  <span class="label teknis">Penjelasan teknis</span>
+  <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp2">panduan umum</a>.</p>
   <ul>
     <li><strong>Migrasi <code>0002_gedung_upi.sql</code>:</strong> tabel <code>gedung</code> berisi sepuluh gedung, dan <code>toilets</code> mendapat <code>gedung_kode</code>. Kolom <code>gedung</code> dan <code>nama</code> dihapus, dan ditambah indeks lokasi. Id lokasi QR berformat <code>&lt;kode gedung&gt;-&lt;lantai&gt;</code>, misalnya <code>A-1</code>.</li>
     <li><strong>Seed yang aman dijalankan ulang:</strong> semua WC dinonaktifkan dulu, lalu yang terdaftar diaktifkan kembali. Versi sebelumnya menghapus isi tabel dan gagal karena <em>foreign key</em> begitu ada laporan. Lantai yang terdaftar: A 1–3, B 1, C 1–5, G 1, H 1, dan I 1–2. Gedung D, E, F, dan J disiapkan sebagai komentar.</li>
@@ -426,40 +326,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <p><span class="ep-add">+ endpoint:</span> <code>GET /api/lokasi</code>, <code>GET /api/lokasi/:id</code>, <code>GET /api/reports/publik</code>, <code>GET /api/reports/ringkas</code>, <code>DELETE /api/reports/:id</code>. <span class="ep-del">− endpoint:</span> <code>GET /api/toilets</code>, <code>GET /api/toilets/:id</code>.<br><strong>Halaman baru:</strong> <code>/laporan</code>, dan <code>/lapor/:lokasiId</code> menggantikan <code>/lapor/:toiletId</code>.</p>
 </section>
 
-<!-- ============================================================ CP3 -->
 <section class="card checkpoint" id="cp3">
-  <div class="cp-head"><span class="cp-num">3</span><div><p class="kicker">Checkpoint 3 · tag <code>checkpoint-3</code> · <code>2e18c48</code></p><h2>Bukti, jejak, dan akun</h2></div></div>
-  <div class="stats">
+  <div class="cp-head"><span class="cp-num">3</span><div><p class="kicker">Checkpoint 3 · tag <code>checkpoint-3</code> · <code>2e18c48</code></p><h2>Bukti, jejak, dan akun</h2></div></div>  <div class="stats">
     <div class="stat"><b>2</b><span>commit</span></div>
     <div class="stat"><b>35</b><span>file berubah</span></div>
     <div class="stat"><b>+2.128 / −178</b><span>baris</span></div>
     <div class="stat"><b>26</b><span>endpoint API</span></div>
   </div>
-
-  <span class="label umum">Penjelasan umum</span>
-  <p><strong>Masalah yang dijawab.</strong> Laporan bisa ditutup dengan satu klik tanpa bukti. Karena semua petugas memakai satu sandi, tidak bisa diketahui siapa melakukan apa, dan mencabut akses satu orang berarti mengganti sandi semua orang.</p>
-  <div class="split">
-    <div class="pane"><h4>Akuntabilitas</h4><ul>
-      <li><strong>Foto keadaan wajib</strong> dilampirkan pelapor.</li>
-      <li><strong>Selesai berarti ada foto bukti.</strong> Tanpa foto bukti, laporan tidak bisa ditutup. Foto bukti tampil di papan publik.</li>
-      <li><strong>Catatan aktivitas</strong> merekam semua kejadian, termasuk laporan yang dihapus.</li>
-      <li><strong>Grafik</strong>: laporan masuk dan selesai per hari, prioritas, kategori, per gedung, dan rata-rata waktu penyelesaian.</li>
-    </ul></div>
-    <div class="pane"><h4>Akun</h4><ul>
-      <li>Akun pribadi dengan peran <strong>admin</strong>, <strong>petugas</strong>, atau <strong>pelapor</strong>.</li>
-      <li>Admin mengelola akun petugas dan menonaktifkannya kalau perlu.</li>
-      <li>Mahasiswa boleh mendaftar untuk masuk <strong>papan peringkat</strong>. Melapor tanpa akun tetap bisa.</li>
-    </ul></div>
-  </div>
-  <h4>Skenario uji</h4>
-  <ol class="steps">
-    <li>Buka <code>/checkpoint3/daftar</code>, buat akun pelapor, lalu kirim laporan dengan foto. Cek <code>/peringkat</code>.</li>
-    <li>Masuk di <code>/masuk</code> sebagai <code>admin</code> / <code>Admin123!</code>, lalu buat satu akun petugas di tab Pengguna.</li>
-    <li>Masuk sebagai petugas itu dan coba menandai laporan <em>selesai</em> tanpa foto. Hasil yang diharapkan: ditolak. Unggah foto bukti, dan laporan pun selesai.</li>
-    <li>Kembali sebagai admin, lalu buka tab Grafik dan Aktivitas.</li>
-  </ol>
-
-  <span class="label teknis">Penjelasan teknis</span>
+  <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp3">panduan umum</a>.</p>
   <ul>
     <li><strong>Migrasi <code>0003_bukti_dan_aktivitas.sql</code>:</strong> <code>reports.foto_selesai_key</code> dan tabel <code>aktivitas</code> dengan tiga indeks. Tabel aktivitas sengaja <strong>tanpa foreign key</strong> ke <code>reports</code>, karena justru laporan yang dihapus yang paling perlu terlacak. Isinya disalin ke catatan sebelum baris aslinya dihapus.</li>
     <li><strong>Migrasi <code>0004_pengguna.sql</code>:</strong> tabel <code>pengguna</code> (peran <code>admin</code>/<code>petugas</code>/<code>pelapor</code>), <code>reports.pelapor_id</code>, dan akun admin bawaan.</li>
@@ -470,40 +344,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <p><span class="ep-add">+ endpoint:</span> <code>POST /api/auth/masuk</code>, <code>/daftar</code>, <code>/keluar</code>, <code>GET /api/auth/saya</code>, <code>GET /api/summary/grafik</code>, <code>GET /api/aktivitas</code>, <code>GET/POST /api/pengguna</code>, <code>PATCH /api/pengguna/:id</code>, <code>GET /api/peringkat</code>. <span class="ep-del">− endpoint:</span> <code>/api/auth/login</code>, <code>/logout</code>, <code>/me</code>.<br><strong>Halaman baru:</strong> <code>/masuk</code>, <code>/daftar</code>, <code>/peringkat</code>.</p>
 </section>
 
-<!-- ============================================================ CP4 -->
 <section class="card checkpoint" id="cp4">
-  <div class="cp-head"><span class="cp-num">4</span><div><p class="kicker">Checkpoint 4 · tag <code>checkpoint-4</code> · <code>d2e7d72</code></p><h2>Rapi di dalam, tajam di dashboard</h2></div></div>
-  <div class="stats">
+  <div class="cp-head"><span class="cp-num">4</span><div><p class="kicker">Checkpoint 4 · tag <code>checkpoint-4</code> · <code>d2e7d72</code></p><h2>Rapi di dalam, tajam di dashboard</h2></div></div>  <div class="stats">
     <div class="stat"><b>4</b><span>commit</span></div>
     <div class="stat"><b>72</b><span>file berubah</span></div>
     <div class="stat"><b>+8.574 / −1.468</b><span>baris (termasuk dokumen)</span></div>
     <div class="stat"><b>26</b><span>endpoint API</span></div>
   </div>
-
-  <span class="label umum">Penjelasan umum</span>
-  <p><strong>Masalah yang dijawab.</strong> Fitur makin banyak, tetapi kode server bercampur jadi satu, sehingga setiap perubahan berisiko merusak bagian lain. Grafik juga baru menjawab "berapa banyak", padahal pimpinan butuh jawaban "kapan", "di mana", dan "apakah prioritas AI berguna".</p>
-  <div class="split">
-    <div class="pane"><h4>Yang terasa oleh pengguna</h4><ul>
-      <li><strong>"Laporan saya" ikut akun</strong>, jadi bisa dilihat dari perangkat mana pun.</li>
-      <li><strong>Angka utama dengan tren</strong> dan perbandingan dengan periode sebelumnya.</li>
-      <li><strong>Peta panas hari × jam</strong> sebagai dasar jadwal ronda.</li>
-      <li><strong>Matriks gedung × jenis masalah.</strong></li>
-      <li><strong>Waktu penyelesaian per prioritas</strong>, untuk menguji apakah prioritas AI memang bermanfaat.</li>
-    </ul></div>
-    <div class="pane"><h4>Dokumen</h4><ul>
-      <li><strong>Panduan umum</strong> tanpa istilah teknis, untuk staf dan pimpinan kampus.</li>
-      <li><strong>Dokumentasi teknis</strong> untuk penilai.</li>
-      <li>Keduanya ditulis dalam HTML dengan <em>print stylesheet</em>, sehingga satu sumber menghasilkan halaman web dan PDF.</li>
-    </ul></div>
-  </div>
-  <h4>Skenario uji</h4>
-  <ol class="steps">
-    <li>Buka <code>/checkpoint4/masuk</code> dan masuk sebagai admin. Kirim beberapa laporan dengan prioritas berbeda, lalu selesaikan sebagian.</li>
-    <li>Buka tab Grafik dan amati deretan angka utama, peta panas, matriks, dan waktu penyelesaian per prioritas.</li>
-    <li>Daftar sebagai pelapor, kirim laporan, lalu masuk dengan akun yang sama dari browser lain. "Laporan saya" tetap muncul.</li>
-  </ol>
-
-  <span class="label teknis">Penjelasan teknis</span>
+  <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp4">panduan umum</a>.</p>
   <ul>
     <li><strong>Arsitektur berlapis.</strong> Sebelumnya 37 dari 43 pernyataan SQL berada di dalam <em>route handler</em>. Sekarang ada lima lapisan dengan ketergantungan yang hanya mengarah ke dalam:
       <ul>
@@ -522,38 +370,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   </ul>
 </section>
 
-<!-- ============================================================ CP5 -->
 <section class="card checkpoint" id="cp5">
-  <div class="cp-head"><span class="cp-num">5</span><div><p class="kicker">Checkpoint 5 · tag <code>checkpoint-5</code> · <code>e44958b</code></p><h2>AI kedua: memeriksa foto dan menjawab pertanyaan</h2></div></div>
-  <div class="stats">
+  <div class="cp-head"><span class="cp-num">5</span><div><p class="kicker">Checkpoint 5 · tag <code>checkpoint-5</code> · <code>e44958b</code></p><h2>AI kedua: memeriksa foto dan menjawab pertanyaan</h2></div></div>  <div class="stats">
     <div class="stat"><b>5</b><span>commit</span></div>
     <div class="stat"><b>43</b><span>file berubah</span></div>
     <div class="stat"><b>+3.128 / −330</b><span>baris</span></div>
     <div class="stat"><b>28</b><span>endpoint API</span></div>
   </div>
-
-  <span class="label umum">Penjelasan umum</span>
-  <p><strong>Masalah yang dijawab.</strong> Foto bukti wajib diunggah, tetapi foto apa pun diterima, termasuk foto lama, foto buram, atau foto yang bukan toilet. Pimpinan yang ingin tahu "gedung mana yang paling bermasalah?" juga masih harus membaca grafik sendiri.</p>
-  <div class="split">
-    <div class="pane"><h4>AI pemeriksa foto</h4>
-      <p>Setiap foto bukti dinilai: benar toilet? sudah bersih? Kalau belum, foto <strong>ditolak beserta alasannya</strong>, laporan tetap terbuka, dan petugas diminta membersihkan lagi.</p>
-      <ul><li><span class="ep-del">Ditolak:</span> "Lantai masih basah dan ada tisu bekas."</li><li><span class="ep-add">Diterima:</span> "Kloset dan lantai terlihat bersih tanpa sampah."</li></ul>
-    </div>
-    <div class="pane"><h4>Chatbot AI dan lainnya</h4><ul>
-      <li>Pertanyaan biasa seperti <em>"Gedung mana yang paling banyak laporan 30 hari terakhir?"</em> dijawab dengan angka dari data sungguhan.</li>
-      <li>Foto yang lolos pemeriksaan diberi tanda <strong>diverifikasi AI</strong> di papan publik.</li>
-      <li>Mode gelap, ikon mata di kolom sandi, dan logo baru.</li>
-    </ul></div>
-  </div>
-  <h4>Skenario uji</h4>
-  <ol class="steps">
-    <li>Di <code>/checkpoint5</code>, kirim laporan, lalu masuk sebagai admin (atau petugas yang dibuat admin).</li>
-    <li>Selesaikan laporan dengan foto yang <em>bukan</em> toilet. Hasil yang diharapkan: ditolak dengan alasan. Ulangi dengan foto toilet yang bersih, dan laporan pun selesai.</li>
-    <li>Ajukan pertanyaan ke Chatbot AI di beranda atau di dashboard.</li>
-    <li>Coba sakelar terang/gelap.</li>
-  </ol>
-
-  <span class="label teknis">Penjelasan teknis</span>
+  <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp5">panduan umum</a>.</p>
   <ul>
     <li><strong>Dua model AI.</strong> DeepSeek tidak bisa melihat gambar, jadi foto dinilai oleh model vision terpisah lewat endpoint yang kompatibel dengan OpenAI: <code>VISION_BASE_URL</code> Gemini dengan <code>VISION_MODEL = gemini-3.6-flash</code>. <code>VISION_API_KEY</code> jatuh ke <code>LLM_API_KEY</code> kalau tidak diisi.</li>
     <li><strong>Migrasi <code>0005_verifikasi_bukti.sql</code>:</strong> kolom <code>bukti_ai_hasil</code> (<code>bersih</code> | <code>kotor</code> | <code>bukan_toilet</code>), <code>bukti_ai_alasan</code>, <code>bukti_ai_model</code>, dan <code>bukti_ai_ms</code>. Status <em>selesai</em> hanya diberikan kalau putusannya <code>bersih</code>.</li>
@@ -564,45 +388,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <p><span class="ep-add">+ endpoint:</span> <code>GET /api/tanya</code>, <code>POST /api/tanya</code>. <strong>Konfigurasi baru:</strong> vars <code>VISION_BASE_URL</code> dan <code>VISION_MODEL</code>, secret <code>VISION_API_KEY</code>.</p>
 </section>
 
-<!-- ============================================================ CP6 -->
 <section class="card checkpoint" id="cp6">
-  <div class="cp-head"><span class="cp-num">6</span><div><p class="kicker">Checkpoint 6 · tag <code>checkpoint-6</code> · <code>defb699</code> · sama dengan sistem final</p><h2>Dirancang ulang untuk pemakaian sehari-hari</h2></div></div>
-  <div class="stats">
+  <div class="cp-head"><span class="cp-num">6</span><div><p class="kicker">Checkpoint 6 · tag <code>checkpoint-6</code> · <code>defb699</code> · sama dengan sistem final</p><h2>Dirancang ulang untuk pemakaian sehari-hari</h2></div></div>  <div class="stats">
     <div class="stat"><b>17</b><span>commit</span></div>
     <div class="stat"><b>171</b><span>file berubah</span></div>
     <div class="stat"><b>+15.332 / −6.211</b><span>baris</span></div>
     <div class="stat"><b>32</b><span>endpoint API</span></div>
   </div>
-
-  <span class="label umum">Penjelasan umum</span>
-  <p><strong>Masalah yang dijawab.</strong> Untuk pemakaian sehari-hari masih ada hambatan. Petugas enggan login sambil membawa alat pel. Foto dari galeri membuka celah memakai foto lama. Pekerjaan rutin petugas di luar keluhan tidak terlihat. Dan satu beranda untuk semua orang terasa membingungkan.</p>
-  <div class="split">
-    <div class="pane"><h4>Alur baru</h4><ul>
-      <li><strong>Tiga pintu di beranda:</strong> Saya mahasiswa, Saya petugas, dan Saya supervisor.</li>
-      <li><strong>Petugas tanpa login:</strong> cukup memilih nama dari daftar "Siapa kamu?". Hanya supervisor yang login.</li>
-      <li><strong>Foto langsung dari kamera</strong>, bukan dari galeri.</li>
-      <li><strong>Laporan pekerjaan</strong> untuk ronda rutin, juga dengan foto yang diperiksa AI.</li>
-      <li><strong>Satu QR, dua peran</strong>, dengan sakelar mahasiswa/petugas di halaman lantai.</li>
-    </ul></div>
-    <div class="pane"><h4>Penyempurnaan</h4><ul>
-      <li>Filter waktu pada laporan dan laporan pekerjaan.</li>
-      <li>Peta kampus yang bisa diperbesar dan digeser, dan foto yang bisa diperbesar.</li>
-      <li>Chatbot AI dan cetak stiker QR pindah ke beranda.</li>
-      <li><strong>Kato Report:</strong> nama dan tampilan baru. Alamat halaman kini berbahasa Inggris, tetapi alamat lama di stiker tetap berfungsi.</li>
-      <li>Cadangan API key otomatis kalau satu key kena limit.</li>
-    </ul></div>
-  </div>
-  <h4>Skenario uji</h4>
-  <ol class="steps">
-    <li>Buka <code>/checkpoint6/supervisor</code>, masuk sebagai <code>admin</code> / <code>Admin123!</code>, lalu tambahkan satu nama petugas.</li>
-    <li>Di beranda pilih <strong>Saya mahasiswa</strong>, tentukan gedung dan lantai lewat peta, lalu kirim keluhan dengan foto dari kamera.</li>
-    <li>Pilih <strong>Saya petugas</strong>, pilih nama tadi, buka lantainya, lalu tekan <em>Saya kerjakan sekarang</em>. Setelah itu tekan <em>Sudah beres, foto buktinya</em>, dan lihat putusan AI.</li>
-    <li>Kirim satu laporan pekerjaan ronda rutin.</li>
-    <li>Kembali ke dashboard supervisor. Coba filter waktu, lihat laporan pekerjaan per petugas, dan ajukan pertanyaan ke Chatbot AI.</li>
-    <li>Buka alamat lama <code>/lapor/A-1</code>. Halaman itu dialihkan ke <code>/report/A-1</code>.</li>
-  </ol>
-
-  <span class="label teknis">Penjelasan teknis</span>
+  <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp6">panduan umum</a>.</p>
   <ul>
     <li><strong>Migrasi <code>0006_laporan_pekerjaan.sql</code>:</strong> tabel <code>pekerjaan</code> untuk laporan pekerjaan petugas, diindeks per petugas, toilet, dan waktu.</li>
     <li><strong>Migrasi <code>0007_peran_spv.sql</code>:</strong> peran menjadi <code>spv</code>/<code>petugas</code>/<code>pelapor</code>, dan <code>admin</code> diubah menjadi <code>spv</code>. Baris petugas kini cukup berisi nama: username dan sandi menjadi opsional (<code>UNIQUE</code> di SQLite mengizinkan banyak NULL). Tabel dibangun ulang lewat salinan karena SQLite tidak bisa mengubah <code>CHECK</code>.</li>
@@ -616,10 +409,9 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <p><span class="ep-add">+ endpoint (nama baru/baru):</span> <code>/api/auth/login|register|logout|me</code>, <code>/api/locations[/:id]</code>, <code>/api/reports/public|open|mine</code>, <code>/api/reports/:id/reanalyze</code>, <code>GET/POST /api/work-logs</code>, <code>GET /api/staff</code>, <code>/api/summary/charts</code>, <code>/api/activity</code>, <code>/api/users[/:id]</code>, <code>/api/leaderboard</code>, <code>GET/POST /api/ask</code>. Padanan berbahasa Indonesianya dari checkpoint 3–5 dihapus.</p>
 </section>
 
-<!-- ============================================================ REKAP -->
 <section class="card" id="rekap">
-  <h2>4. Rekap perkembangan</h2>
-  <p class="sub">Perkembangan sistem dari checkpoint ke checkpoint.</p>
+  <h2>3. Rekap perkembangan</h2>
+  <p class="sub">Ukuran perubahan di setiap checkpoint.</p>
 
   <h3>Statistik per checkpoint</h3>
   <div class="tbl"><table>
@@ -634,28 +426,10 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
     </tbody>
   </table></div>
   <p class="sub" style="font-size:14px">Angka diambil dari <code>git diff --shortstat</code> antar tag. Angka checkpoint 4 dan 6 termasuk dokumen HTML/PDF yang ikut di-commit.</p>
-
-  <h3>Evolusi kemampuan</h3>
-  <div class="tbl"><table>
-    <thead><tr><th>Kemampuan</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
-    <tbody>
-      <tr><td>Lapor via QR</td><td>per WC</td><td>per lantai</td><td>per lantai</td><td>per lantai</td><td>per lantai</td><td>per lantai</td></tr>
-      <tr><td>Klasifikasi dan prioritas AI</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
-      <tr><td>Foto keadaan</td><td>opsional</td><td>opsional</td><td>wajib</td><td>wajib</td><td>wajib</td><td>kamera langsung</td></tr>
-      <tr><td>Bukti penyelesaian</td><td>–</td><td>–</td><td>foto wajib</td><td>foto wajib</td><td>diperiksa AI</td><td>diperiksa AI</td></tr>
-      <tr><td>Pelacakan pelapor</td><td>–</td><td>perangkat</td><td>perangkat</td><td>akun</td><td>akun</td><td>akun</td></tr>
-      <tr><td>Papan laporan publik</td><td>–</td><td>✓</td><td>✓ + foto bukti</td><td>✓</td><td>✓ + verifikasi AI</td><td>✓</td></tr>
-      <tr><td>Masuk petugas</td><td>sandi bersama</td><td>sandi bersama</td><td>akun</td><td>akun</td><td>akun</td><td>tanpa login (pilih nama)</td></tr>
-      <tr><td>Pengelola</td><td>–</td><td>–</td><td>admin</td><td>admin</td><td>admin</td><td>supervisor</td></tr>
-      <tr><td>Dashboard</td><td>daftar</td><td>daftar</td><td>+ grafik, aktivitas</td><td>+ analitis</td><td>+ Chatbot AI</td><td>+ laporan pekerjaan, filter waktu</td></tr>
-      <tr><td>Bahasa antarmuka</td><td>ID</td><td>ID/EN</td><td>ID/EN</td><td>ID/EN</td><td>ID/EN</td><td>ID/EN</td></tr>
-    </tbody>
-  </table></div>
 </section>
 
-<!-- ============================================================ OPERASIONAL -->
 <section class="card" id="operasional">
-  <h2>5. Operasional staging</h2>
+  <h2>4. Operasional staging</h2>
   <p class="sub">Untuk pengembang yang merawat situs staging.</p>
 
   <h3>Persiapan sekali saja</h3>
@@ -705,9 +479,8 @@ npx wrangler r2 bucket delete kato-staging    # kosongkan isinya dulu</code></pr
   <p class="note"><b>Hati-hati:</b> jangan pernah menjalankan perintah di atas dengan nama <code>ai-complaint</code> atau <code>kato</code>. Keduanya milik produksi.</p>
 </section>
 
-<!-- ============================================================ LAMPIRAN -->
 <section class="card" id="lampiran">
-  <h2>6. Lampiran: daftar commit per checkpoint</h2>
+  <h2>5. Lampiran: daftar commit per checkpoint</h2>
   <p class="sub">Dari <code>git log --reverse checkpoint-(N−1)..checkpoint-N</code>. Commit awal <code>949c5f7</code> ("first commit") tidak dihitung.</p>
 
   <h4>Checkpoint 1</h4>
@@ -724,7 +497,7 @@ npx wrangler r2 bucket delete kato-staging    # kosongkan isinya dulu</code></pr
   <ul class="ep" style="columns:1"><li>777b25c feat: add camera component for photo capture and implement staff work panel</li><li>5abc63b feat: implement time filter component and related functionality for reports and work logs</li><li>298fa53 feat: enhance header with dynamic supervisor link and accessibility features</li><li>7341294 feat: add staff and student home pages, supervisor dashboard, and staff floor functionality</li><li>39f573e refactor: update staff, student, and supervisor dashboard pages for improved readability and functionality</li><li>365a461 Refactor documentation and UI components for QR code and Chatbot AI features</li><li>ff63471 feat: add MapViewer component for interactive campus map with zoom and pan functionality</li><li>f9e4aeb feat: add MapViewer component for interactive campus map with zoom and drag functionality</li><li>89c4c71 feat: implement ZoomableImage component for enhanced image viewing experience</li><li>8aa3c08 refactor: replace 'SPV' with 'supervisor' for consistency across the application</li><li>981ea49 docs: add To-Be BPMN diagram in SVG and PNG formats</li><li>31485ee docs: add system architecture diagrams and documentation build script</li><li>b7baee9 feat: add product requirements document and update build script</li><li>1c81700 refactor: rebrand application to Kato Report and update theme color tokens</li><li>1302bf5 style: change hero links layout to vertical column in Home page</li><li>5192350 chore: update Open Graph image version and alt text metadata</li><li>defb699 feat: fail over to the next API key when one is rate-limited</li></ul>
 </section>
 
-<footer class="wrap">Laporan progress Kato Report · branch <code>staging</code> · sumber: <code>staging/docs/laporan-progress.html</code></footer>
+<footer class="wrap">Dokumentasi teknis · Kato Report · branch <code>staging</code> · sumber: <code>staging/docs/dokumentasi-teknis.html</code></footer>
 </main>
 </body>
 </html>
