@@ -11,9 +11,13 @@
  *   node scripts/staging.mjs           apply D1 migrations, then deploy
  *   node scripts/staging.mjs seed      also run seed/toilets.sql before deploying
  *   node scripts/staging.mjs config    only write wrangler.staging.jsonc
+ *   node scripts/staging.mjs secrets   upload the secrets in .dev.vars to the staging Worker
+ *
+ * Cloudflare secrets are write-only, so production's values cannot be copied
+ * across; `secrets` reads the same values from the (uncommitted) .dev.vars.
  */
 import { execSync } from 'node:child_process';
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 
 const OUT = 'wrangler.staging.jsonc';
 const mode = process.argv[2] ?? 'deploy';
@@ -58,6 +62,31 @@ if (mode === 'config') {
 }
 
 const run = (command) => execSync(command, { stdio: 'inherit' });
+
+if (mode === 'secrets') {
+  if (!existsSync('.dev.vars')) {
+    rmSync(OUT, { force: true });
+    console.error('.dev.vars tidak ditemukan. Salin .dev.vars.example lalu isi dengan secret milik main.');
+    process.exit(1);
+  }
+  const secrets = {};
+  for (const line of readFileSync('.dev.vars', 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m) secrets[m[1]] = m[2].replace(/^(["'])(.*)\1$/, '$2');
+  }
+  const file = '.wrangler/staging-secrets.json';
+  mkdirSync('.wrangler', { recursive: true });
+  writeFileSync(file, JSON.stringify(secrets));
+  try {
+    run(`npx wrangler secret bulk ${file} -c ${OUT}`);
+    console.log(`Secret terkirim ke ${staging.name}: ${Object.keys(secrets).join(', ')}`);
+  } finally {
+    rmSync(file, { force: true });
+    rmSync(OUT, { force: true });
+  }
+  process.exit(0);
+}
+
 try {
   run(`npx wrangler d1 migrations apply ${staging.database_name} --remote -c ${OUT}`);
   if (mode === 'seed') {

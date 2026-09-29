@@ -28,16 +28,24 @@ Isi `domain` di `staging.config.json` (misalnya `progress.domainanda.com`). Doma
 berupa zone di akun Cloudflare yang sama. Kalau dibiarkan kosong, staging hanya bisa diakses
 lewat `ai-complaint-staging.<akun>.workers.dev`.
 
-Secret disimpan per Worker, jadi harus diisi lagi untuk Worker staging. Pertama, deploy dulu
-(lihat di bawah) agar Worker-nya ada. Setelah itu:
+Staging memakai secret yang **sama** dengan `main`. Secret di Cloudflare tidak bisa dibaca
+kembali, jadi nilainya diambil dari `.dev.vars` lokal (file ini tidak di-commit). Salin
+`.dev.vars.example` menjadi `.dev.vars`, lalu isi dengan nilai yang sama seperti secret `main`:
+
+```
+LLM_API_KEY="..."
+VISION_API_KEY="..."
+AUTH_SECRET="..."
+PETUGAS_PASSWORD="..."   # hanya dipakai di checkpoint 1–2 (login petugas dengan sandi bersama)
+```
+
+Deploy dulu sekali (lihat di bawah) agar Worker staging ada, lalu kirim semua secret sekaligus:
 
 ```bash
-node scripts/staging.mjs config
-npx wrangler secret put LLM_API_KEY      -c wrangler.staging.jsonc
-npx wrangler secret put AUTH_SECRET      -c wrangler.staging.jsonc
-npx wrangler secret put PETUGAS_PASSWORD -c wrangler.staging.jsonc   # checkpoint 1–2 saja
-npx wrangler secret put VISION_API_KEY   -c wrangler.staging.jsonc   # mulai checkpoint 5 (opsional)
+node scripts/staging.mjs secrets
 ```
+
+Jalankan lagi setiap kali secret di `main` berganti.
 
 ## Deploy checkpoint pertama
 
