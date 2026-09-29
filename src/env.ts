@@ -22,7 +22,10 @@ export interface Env {
 
   // secrets (wrangler secret put)
   LLM_API_KEY: string;
-  /** Falls back to LLM_API_KEY when both models live at the same provider. */
+  /**
+   * Falls back to LLM_API_KEY when both models live at the same provider.
+   * Either key may list several, comma-separated, tried in order on rate limit.
+   */
   VISION_API_KEY?: string;
   AUTH_SECRET: string;
 }

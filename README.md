@@ -194,7 +194,7 @@ provider that speaks it works; only configuration changes.
 |---|---|---|
 | `VISION_BASE_URL` | `wrangler.jsonc` → `vars` | `https://generativelanguage.googleapis.com/v1beta/openai` |
 | `VISION_MODEL` | `wrangler.jsonc` → `vars` | `gemini-3.6-flash` — switch to `gemini-3.5-flash-lite` for a larger free quota |
-| `VISION_API_KEY` | `wrangler secret put` / `.dev.vars` | key from <https://aistudio.google.com/apikey>; falls back to `LLM_API_KEY` when unset |
+| `VISION_API_KEY` | `wrangler secret put` / `.dev.vars` | key from <https://aistudio.google.com/apikey>; comma-separate several keys to fail over when one is rate-limited; falls back to `LLM_API_KEY` when unset |
 
 Alternatives, each a two-line change: OpenAI (`https://api.openai.com/v1`,
 `gpt-4o-mini`), OpenRouter (`https://openrouter.ai/api/v1`, any vision model),

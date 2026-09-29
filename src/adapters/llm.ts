@@ -147,44 +147,65 @@ type ToolMessage =
 /** Which model answers: the text model for complaints, the vision model for photos. */
 interface Target {
   baseUrl: string;
-  apiKey: string;
+  /** Tried in order; the next one takes over when a key is rate-limited or rejected. */
+  apiKeys: string[];
   model: string;
 }
 
+/** A secret may hold several keys separated by commas: "key1,key2,key3". */
+const splitKeys = (value: string | undefined): string[] =>
+  (value ?? '').split(',').map((k) => k.trim()).filter(Boolean);
+
 const textModel = (env: Env): Target => ({
   baseUrl: env.LLM_BASE_URL,
-  apiKey: env.LLM_API_KEY,
+  apiKeys: splitKeys(env.LLM_API_KEY),
   model: env.LLM_MODEL,
 });
 
-const visionModel = (env: Env): Target => ({
-  baseUrl: env.VISION_BASE_URL,
-  apiKey: env.VISION_API_KEY || env.LLM_API_KEY,
-  model: env.VISION_MODEL,
-});
+const visionModel = (env: Env): Target => {
+  const own = splitKeys(env.VISION_API_KEY);
+  return {
+    baseUrl: env.VISION_BASE_URL,
+    apiKeys: own.length ? own : splitKeys(env.LLM_API_KEY),
+    model: env.VISION_MODEL,
+  };
+};
+
+/** 429: rate limit or quota used up. 401/403: key invalid or blocked. Another key may still work. */
+const KEY_FAILOVER_STATUS = new Set([401, 403, 429]);
+
+/** POSTs a chat completion, falling over to the next key while the current one is refused. */
+async function postChat(target: Target, body: Record<string, unknown>): Promise<Response> {
+  const url = `${target.baseUrl.replace(/\/$/, '')}/chat/completions`;
+  let lastError = 'no API key configured';
+
+  for (const [i, apiKey] of target.apiKeys.entries()) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (res.ok) return res;
+
+    const text = await res.text().catch(() => '');
+    lastError = `LLM HTTP ${res.status}: ${text.slice(0, 300)}`;
+    if (!KEY_FAILOVER_STATUS.has(res.status)) break;
+    console.warn(`API key #${i + 1} of ${target.apiKeys.length} refused (${res.status}), trying the next one`);
+  }
+
+  throw new Error(lastError);
+}
 
 async function chatJSON(target: Target, messages: ChatMessage[], maxTokens = 500): Promise<unknown> {
-  const res = await fetch(`${target.baseUrl.replace(/\/$/, '')}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${target.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: target.model,
-      messages,
-      // Low temperature: identical wording must yield an identical classification.
-      temperature: 0.1,
-      max_tokens: maxTokens,
-      response_format: { type: 'json_object' },
-    }),
-    signal: AbortSignal.timeout(30_000),
+  const res = await postChat(target, {
+    model: target.model,
+    messages,
+    // Low temperature: identical wording must yield an identical classification.
+    temperature: 0.1,
+    max_tokens: maxTokens,
+    response_format: { type: 'json_object' },
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`LLM HTTP ${res.status}: ${body.slice(0, 300)}`);
-  }
 
   const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
   const content = data.choices?.[0]?.message?.content;
@@ -263,28 +284,15 @@ export async function chatWithTools(
 
   for (let round = 0; ; round++) {
     const last = round >= maxRounds;
-    const res = await fetch(`${target.baseUrl.replace(/\/$/, '')}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${target.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: target.model,
-        messages,
-        tools: input.tools.map((t) => ({ type: 'function', function: t })),
-        // On the final round the model may no longer ask for data; it must answer.
-        tool_choice: last ? 'none' : 'auto',
-        temperature: 0.2,
-        max_tokens: input.maxTokens ?? 600,
-      }),
-      signal: AbortSignal.timeout(30_000),
+    const res = await postChat(target, {
+      model: target.model,
+      messages,
+      tools: input.tools.map((t) => ({ type: 'function', function: t })),
+      // On the final round the model may no longer ask for data; it must answer.
+      tool_choice: last ? 'none' : 'auto',
+      temperature: 0.2,
+      max_tokens: input.maxTokens ?? 600,
     });
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      throw new Error(`LLM HTTP ${res.status}: ${body.slice(0, 300)}`);
-    }
 
     const data = (await res.json()) as ToolResponse;
     tokens.prompt += data.usage?.prompt_tokens ?? 0;
