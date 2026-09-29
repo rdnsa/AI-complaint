@@ -1,30 +1,21 @@
 /**
- * Writes the checkpoint hub of the staging site into the build output:
+ * Writes the checkpoint hub (/checkpoint) that the staging router serves: one
+ * card per checkpoint reported so far, with what it adds and buttons into that
+ * checkpoint's own running app (/checkpointN/…, handled by router.mjs).
  *
- *   /checkpoint        one card per checkpoint reported so far: what it adds,
- *                      and buttons into that checkpoint's own running app
- *   /checkpointN       redirects to checkpoint N's own Worker (a `_redirects`
- *                      rule), where the app runs exactly as it was at that point
+ * Checkpoints not merged into the current checkout get no card, so a later
+ * checkpoint is never shown before it is reported.
  *
- * Checkpoints not merged into the current checkout get neither a card nor a
- * redirect, so a later checkpoint is never shown before it is reported. Both
- * are static files, served by the asset server before the single-page-app
- * fallback, so the app's own routes are untouched.
- *
- * Run by scripts/staging.mjs after the frontend build of the root site:
- *   node staging/journey.mjs [outDir=dist]
+ * Run by scripts/staging.mjs as the router's build step:
+ *   node staging/journey.mjs <outDir>
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CHECKPOINTS, reachedCheckpoints } from './checkpoints.mjs';
 
-const outDir = process.argv[2] ?? 'dist';
-const staging = JSON.parse(readFileSync('staging.config.json', 'utf8'));
+const outDir = process.argv[2] ?? '.wrangler/staging-hub';
 const reached = reachedCheckpoints();
 const latest = reached[reached.length - 1].n;
-
-/** Where checkpoint N's own Worker answers. */
-const appUrl = (n) => `https://${staging.name}-cp${n}.${staging.workers_subdomain}.workers.dev`;
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -128,7 +119,6 @@ const FAVICON =
   );
 
 function card(c) {
-  const base = appUrl(c.n);
   const features = c.features
     .map(
       (f) => `<li><span class="who">${f.who.map((w) => `<span class="tag">${esc(w)}</span>`).join('')}</span>
@@ -137,7 +127,7 @@ function card(c) {
     .join('');
   const buttons = [
     `<a class="pill" href="/checkpoint${c.n}">Buka aplikasi checkpoint ${c.n} →</a>`,
-    ...c.tryIt.filter((t) => t.href !== '/').map((t) => `<a class="pill ghost" href="${esc(base + t.href)}">${esc(t.label)}</a>`),
+    ...c.tryIt.filter((t) => t.href !== '/').map((t) => `<a class="pill ghost" href="/checkpoint${c.n}${esc(t.href)}">${esc(t.label)}</a>`),
   ].join('');
 
   return `<li id="cp${c.n}"><span class="dot">${c.n}</span><article class="card">
@@ -172,34 +162,25 @@ function hub() {
 <body>
 <header class="top"><div class="wrap">
   <a class="brand" href="/checkpoint">Checkpoint <span>· Kato Report</span></a>
-  <nav class="top-links"><a href="/">Versi terbaru →</a></nav>
+  <nav class="top-links"><a href="/checkpoint${latest}">Versi terbaru →</a></nav>
 </div></header>
 <main class="wrap">
 <div class="hero">
   <p class="kicker">Laporan progress bertahap · ${latest} dari ${CHECKPOINTS.length} checkpoint</p>
   <h1>Coba setiap tahap pengembangannya</h1>
   <p class="lead">Setiap checkpoint berjalan sebagai aplikasi sendiri, persis seperti saat checkpoint itu selesai. Buka checkpoint 1 untuk melihat bentuk paling awal, lalu naik satu per satu untuk merasakan apa yang bertambah.</p>
-  <p class="hint">Alamat singkatnya <code>/checkpoint1</code>, <code>/checkpoint2</code>, dan seterusnya. Data di setiap checkpoint terpisah, jadi laporan yang dikirim di checkpoint 2 tidak muncul di checkpoint 3. Silakan kirim laporan percobaan sebanyak yang diperlukan.</p>
+  <p class="hint">Buka <code>/checkpoint1</code>, <code>/checkpoint2</code>, dan seterusnya untuk berpindah checkpoint. Checkpoint yang sedang dibuka ditandai di pojok kiri bawah layar, dan satu browser membuka satu checkpoint dalam satu waktu. Data dan login di setiap checkpoint terpisah, jadi laporan yang dikirim di checkpoint 2 tidak muncul di checkpoint 3. Silakan kirim laporan percobaan sebanyak yang diperlukan.</p>
 </div>
 <ol class="timeline">
 ${items}
 </ol>
 </main>
-<footer class="wrap">Situs staging untuk laporan progress. Halaman depan situs ini menjalankan checkpoint ${latest}.</footer>
+<footer class="wrap">Situs staging untuk laporan progress. Tanpa memilih, situs ini membuka checkpoint ${latest}.</footer>
 </body>
 </html>
 `;
 }
 
-/** Workers static-asset redirect rules: /checkpointN and anything under it. */
-function redirects() {
-  return (
-    reached
-      .map((c) => `/checkpoint${c.n} ${appUrl(c.n)}/ 302\n/checkpoint${c.n}/* ${appUrl(c.n)}/:splat 302`)
-      .join('\n') + '\n'
-  );
-}
-
+mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, 'checkpoint.html'), hub());
-writeFileSync(join(outDir, '_redirects'), redirects());
-console.log(`journey: /checkpoint dan pengalihan /checkpoint1${latest > 1 ? `–${latest}` : ''} ditulis ke ${outDir}/`);
+console.log(`journey: hub /checkpoint (checkpoint 1${latest > 1 ? `–${latest}` : ''}) ditulis ke ${outDir}/`);

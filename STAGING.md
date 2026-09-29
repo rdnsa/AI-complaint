@@ -72,26 +72,38 @@ berurutan, sehingga database staging selalu cocok dengan kode di checkpoint ters
 
 Jangan pernah merge `staging` ke `main`. Arahnya selalu satu: `main` → `staging`.
 
-## Setiap checkpoint bisa dicoba (`/checkpoint`)
+## Setiap checkpoint bisa dicoba, dalam satu domain (`/checkpoint`)
 
-Setiap checkpoint yang sudah dilaporkan tetap online sebagai aplikasinya sendiri, persis seperti saat
-checkpoint itu selesai, supaya teman yang tidak ikut development bisa mencoba fiturnya tahap demi tahap:
+Setiap checkpoint yang sudah dilaporkan tetap online, persis seperti saat checkpoint itu selesai.
+Semuanya dibuka lewat satu domain staging:
 
 | Alamat | Isi |
 |---|---|
-| `/` | aplikasi checkpoint terbaru |
 | `/checkpoint` | hub: daftar checkpoint, fitur baru masing-masing, dan tombol untuk mencobanya |
-| `/checkpoint1` … `/checkpoint6` | diarahkan ke Worker `ai-complaint-staging-cpN` milik checkpoint itu |
+| `/checkpoint2` | pindah ke checkpoint 2, lalu buka berandanya |
+| `/checkpoint2/lapor/A-1` | pindah ke checkpoint 2, lalu buka halaman `/lapor/A-1` |
+| alamat lain | aplikasi checkpoint yang sedang dipilih (bawaan: checkpoint terbaru) |
 
-Setiap `node scripts/staging.mjs` men-deploy dua Worker: `ai-complaint-staging-cpN` untuk checkpoint
-terbaru, lalu situs utama. Checkpoint sebelumnya tidak disentuh, jadi tetap berjalan dengan kode lamanya.
+Cara kerjanya:
 
-- **Database:** setiap checkpoint punya database D1 sendiri, karena struktur tabelnya berubah antar
+- **Router.** Worker `ai-complaint-staging` adalah router (`staging/router.mjs`). Pilihan checkpoint
+  disimpan di cookie, dan setiap permintaan diteruskan lewat *service binding* ke Worker
+  `ai-complaint-staging-cpN`. Worker checkpoint sendiri tidak punya alamat publik.
+- **Satu browser, satu checkpoint.** Aplikasi memakai alamat absolut seperti `/api/…` dan `/lapor/…`,
+  jadi satu browser hanya membuka satu checkpoint dalam satu waktu. Checkpoint yang aktif ditandai
+  di pojok kiri bawah layar. Untuk membandingkan dua checkpoint berdampingan, pakai jendela
+  penyamaran atau browser lain.
+- **Login terpisah.** Cookie login disimpan terpisah per checkpoint (`cp1_…`, `cp2_…`), jadi sesi dari
+  satu checkpoint tidak pernah terbaca oleh checkpoint lain.
+- **Database.** Setiap checkpoint punya database D1 sendiri, karena struktur tabelnya berubah antar
   checkpoint. Checkpoint 1 memakai `kato-staging`, dan checkpoint 2–6 memakai `kato-staging-cp2` sampai
   `kato-staging-cp6`. Database dibuat dan diisi data toilet otomatis saat checkpoint itu pertama kali
-  di-deploy. Situs utama memakai database checkpoint terbaru. Totalnya 5 database untuk staging,
-  jadi perhatikan batas 10 database D1 di paket gratis Cloudflare.
-- **Foto:** semua checkpoint berbagi bucket R2 `kato-staging`.
-- **Cron:** ringkasan harian otomatis hanya berjalan di situs utama. Paket gratis membatasi 5 cron.
-  Di checkpoint lama, ringkasan tetap bisa dibuat manual dari dashboard.
-- **Isi hub:** teks ada di `staging/checkpoints.mjs`, dan halamannya dibuat oleh `staging/journey.mjs`.
+  di-deploy. Totalnya 6 database untuk staging, jadi perhatikan batas 10 database D1 di paket gratis.
+- **Foto.** Semua checkpoint berbagi bucket R2 `kato-staging`.
+- **Cron.** Ringkasan harian otomatis hanya berjalan di checkpoint terbaru, karena paket gratis
+  membatasi 5 cron. Cron checkpoint sebelumnya dilepas otomatis. Di checkpoint lama, ringkasan tetap
+  bisa dibuat manual dari dashboard.
+
+Setiap `node scripts/staging.mjs` men-deploy Worker checkpoint terbaru, lalu router. Checkpoint
+sebelumnya tidak disentuh, jadi tetap berjalan dengan kode lamanya. Teks hub ada di
+`staging/checkpoints.mjs`, dan halamannya dibuat oleh `staging/journey.mjs`.

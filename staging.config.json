@@ -3,6 +3,5 @@
   "database_name": "kato-staging",
   "database_id": "72e54740-1cdf-414f-a0d2-228f39b8b993",
   "bucket_name": "kato-staging",
-  "domain": "",
-  "workers_subdomain": "yvrtz"
+  "domain": ""
 }
