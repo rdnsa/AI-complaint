@@ -1,52 +1,52 @@
-import { analisaKeluhan } from '../adapters/llm';
+import { analyzeComplaint } from '../adapters/llm';
 import type { Env } from '../env';
-import * as laporan from '../repositories/reports';
-import { catat, SISTEM } from './activity-service';
+import * as reports from '../repositories/reports';
+import { log, SYSTEM } from './activity-service';
 
 /**
  * Analyses one report and stores the result.
  *
  * Invoked through `ctx.waitUntil()` after the response has been sent, so the
  * student never waits on the LLM. This function deliberately never throws:
- * a failure is recorded as ai_status='gagal' so the report still shows up on
+ * a failure is recorded as ai_status='failed' so the report still shows up on
  * the dashboard (without AI labels) and staff can retry it by hand.
  */
-export async function jalankanAnalisis(env: Env, reportId: string): Promise<void> {
-  const baris = await laporan.ambilUntukAnalisis(env, reportId);
-  if (!baris) return;
+export async function runAnalysis(env: Env, reportId: string): Promise<void> {
+  const row = await reports.getForAnalysis(env, reportId);
+  if (!row) return;
 
-  const mulai = Date.now();
+  const start = Date.now();
   try {
-    const hasil = await analisaKeluhan(env, baris.teks, baris.lokasi);
-    await laporan.simpanHasilAnalisis(env, reportId, {
-      ...hasil,
+    const result = await analyzeComplaint(env, row.description, row.location);
+    await reports.saveAnalysis(env, reportId, {
+      ...result,
       model: env.LLM_MODEL,
-      ms: Date.now() - mulai,
+      ms: Date.now() - start,
     });
 
-    await catat(env, {
-      aksi: 'analisis',
+    await log(env, {
+      action: 'analysis',
       report_id: reportId,
-      pelaku: SISTEM,
-      ringkas: `Analisis selesai: prioritas ${hasil.prioritas} (${Date.now() - mulai} ms)`,
-      rincian: { kategori: hasil.kategori, prioritas: hasil.prioritas, model: env.LLM_MODEL },
+      actor: SYSTEM,
+      summary: `Analisis selesai: prioritas ${result.priority} (${Date.now() - start} ms)`,
+      details: { categories: result.categories, priority: result.priority, model: env.LLM_MODEL },
     });
   } catch (err) {
-    const pesan = err instanceof Error ? err.message : String(err);
-    console.error(`Analisis gagal untuk laporan ${reportId}: ${pesan}`);
-    await laporan.simpanGagalAnalisis(env, reportId, pesan, Date.now() - mulai);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`Analysis failed for report ${reportId}: ${message}`);
+    await reports.saveAnalysisFailure(env, reportId, message, Date.now() - start);
 
-    await catat(env, {
-      aksi: 'analisis_gagal',
+    await log(env, {
+      action: 'analysis_failed',
       report_id: reportId,
-      pelaku: SISTEM,
-      ringkas: 'Analisis otomatis gagal',
-      rincian: { error: pesan.slice(0, 300) },
+      actor: SYSTEM,
+      summary: 'Analisis otomatis gagal',
+      details: { error: message.slice(0, 300) },
     });
   }
 }
 
 /** Staff retry: clears the previous failure, then re-runs the analysis. */
-export async function ulangiAnalisis(env: Env, reportId: string): Promise<void> {
-  await laporan.tandaiMenungguAnalisis(env, reportId);
+export async function retryAnalysis(env: Env, reportId: string): Promise<void> {
+  await reports.markAnalysisPending(env, reportId);
 }

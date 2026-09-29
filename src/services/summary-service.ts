@@ -1,59 +1,63 @@
-import { ringkasHarian } from '../adapters/llm';
-import { tanggalWIB } from '../adapters/clock';
+import { summarizeDay } from '../adapters/llm';
+import { wibDate } from '../adapters/clock';
 import type { Env } from '../env';
-import * as laporan from '../repositories/reports';
-import * as ringkasan from '../repositories/summaries';
-import { catat, SISTEM } from './activity-service';
+import * as reports from '../repositories/reports';
+import * as summaries from '../repositories/summaries';
+import { log, SYSTEM } from './activity-service';
 
-export interface HasilRingkasan {
-  tanggal: string;
-  total_laporan: number;
-  ringkasan: string;
-  sorotan: string[];
+export interface SummaryResult {
+  date: string;
+  report_count: number;
+  summary: string;
+  highlights: string[];
 }
 
 /**
  * Writes (or rewrites) the summary for one day. Used both by the afternoon cron
  * and by the "rebuild" button on the dashboard.
  */
-export async function buatRingkasanHarian(env: Env, tanggal: string): Promise<HasilRingkasan> {
-  const daftar = await laporan.laporanPadaTanggal(env, tanggal);
+export async function generateDailySummary(env: Env, date: string): Promise<SummaryResult> {
+  const list = await reports.reportsOnDate(env, date);
 
   // A day with no reports does not need an LLM call.
-  const hasil = daftar.length
-    ? await ringkasHarian(env, tanggal, daftar)
-    : { ringkasan: 'Tidak ada keluhan yang masuk pada hari ini.', sorotan: [] };
+  const result = list.length
+    ? await summarizeDay(env, date, list)
+    : { summary: 'Tidak ada keluhan yang masuk pada hari ini.', highlights: [] };
 
-  await ringkasan.simpan(env, {
-    tanggal,
-    total: daftar.length,
-    ringkasan: hasil.ringkasan,
-    sorotan: hasil.sorotan,
+  await summaries.save(env, {
+    date,
+    total: list.length,
+    summary: result.summary,
+    highlights: result.highlights,
   });
 
-  await catat(env, {
-    aksi: 'ringkasan',
-    pelaku: SISTEM,
-    ringkas: `Ringkasan harian ${tanggal} disusun dari ${daftar.length} laporan`,
+  await log(env, {
+    action: 'daily_summary',
+    actor: SYSTEM,
+    summary: `Ringkasan harian ${date} disusun dari ${list.length} laporan`,
   });
 
-  return { tanggal, total_laporan: daftar.length, ...hasil };
+  return { date, report_count: list.length, ...result };
 }
 
-export async function ringkasanTersimpan(env: Env, tanggal: string) {
-  const baris = await ringkasan.cari(env, tanggal);
-  if (!baris) return { tanggal, ada: false as const };
-  return { ...baris, sorotan: baris.sorotan ? JSON.parse(baris.sorotan) : [], ada: true as const };
+export async function storedSummary(env: Env, date: string) {
+  const row = await summaries.find(env, date);
+  if (!row) return { date, exists: false as const };
+  return {
+    ...row,
+    highlights: row.highlights ? (JSON.parse(row.highlights) as string[]) : [],
+    exists: true as const,
+  };
 }
 
-export async function statistikHarian(env: Env, tanggal: string) {
-  return { tanggal, ...(await ringkasan.angkaHarian(env, tanggal)) };
+export async function dailyStats(env: Env, date: string) {
+  return { date, ...(await summaries.dailyCounts(env, date)) };
 }
 
 /** The run of dates the charts cover, oldest first. */
-function deretTanggal(hari: number): string[] {
-  return Array.from({ length: hari }, (_, i) =>
-    tanggalWIB(new Date(Date.now() - (hari - 1 - i) * 86_400_000)),
+function dateSeries(days: number): string[] {
+  return Array.from({ length: days }, (_, i) =>
+    wibDate(new Date(Date.now() - (days - 1 - i) * 86_400_000)),
   );
 }
 
@@ -64,62 +68,62 @@ function deretTanggal(hari: number): string[] {
  * would read as missing data, while a zero reads as "nothing was reported",
  * which is the truth.
  */
-export async function dataGrafik(env: Env, hari: number) {
-  const [angka, lanjutan] = await Promise.all([
-    ringkasan.angkaGrafik(env, hari),
-    ringkasan.angkaLanjutan(env, hari),
+export async function chartData(env: Env, days: number) {
+  const [counts, advanced] = await Promise.all([
+    summaries.chartCounts(env, days),
+    summaries.advancedCounts(env, days),
   ]);
 
-  const tanggalDeret = deretTanggal(hari);
+  const series = dateSeries(days);
 
-  const petaHarian = new Map(angka.harian.map((r) => [r.tanggal, r]));
-  const harian = tanggalDeret.map((tanggal) => {
-    const ada = petaHarian.get(tanggal);
-    return { tanggal, total: Number(ada?.total ?? 0), selesai: Number(ada?.selesai ?? 0) };
+  const dailyMap = new Map(counts.daily.map((r) => [r.date, r]));
+  const daily = series.map((date) => {
+    const found = dailyMap.get(date);
+    return { date, total: Number(found?.total ?? 0), resolved: Number(found?.resolved ?? 0) };
   });
 
-  const petaPrioritas = new Map<string, Record<string, number>>();
-  for (const r of lanjutan.harianPrioritas) {
-    const hari = petaPrioritas.get(r.tanggal) ?? {};
-    hari[r.prioritas] = Number(r.jumlah);
-    petaPrioritas.set(r.tanggal, hari);
+  const priorityMap = new Map<string, Record<string, number>>();
+  for (const r of advanced.dailyByPriority) {
+    const day = priorityMap.get(r.date) ?? {};
+    day[r.priority] = Number(r.count);
+    priorityMap.set(r.date, day);
   }
-  const harianPrioritas = tanggalDeret.map((tanggal) => {
-    const h = petaPrioritas.get(tanggal) ?? {};
+  const dailyByPriority = series.map((date) => {
+    const d = priorityMap.get(date) ?? {};
     return {
-      tanggal,
-      tinggi: h.tinggi ?? 0,
-      sedang: h.sedang ?? 0,
-      rendah: h.rendah ?? 0,
+      date,
+      high: d.high ?? 0,
+      medium: d.medium ?? 0,
+      low: d.low ?? 0,
     };
   });
 
-  const tren = lanjutan.tren;
-  const ini = Number(tren.periode_ini ?? 0);
-  const lalu = Number(tren.periode_lalu ?? 0);
+  const trend = advanced.trend;
+  const current = Number(trend.current_period ?? 0);
+  const previous = Number(trend.previous_period ?? 0);
 
   return {
-    ...angka,
-    harian,
-    harianPrioritas,
-    jamHari: lanjutan.jamHari,
-    matriks: lanjutan.matriks,
-    waktuPrioritas: lanjutan.waktuPrioritas,
-    tren: {
-      hari,
-      laporan: ini,
-      laporan_lalu: lalu,
+    ...counts,
+    daily,
+    dailyByPriority,
+    hourByDay: advanced.hourByDay,
+    matrix: advanced.matrix,
+    resolutionByPriority: advanced.resolutionByPriority,
+    trend: {
+      days,
+      reports: current,
+      previous_reports: previous,
       // A previous window of zero has no meaningful percentage change.
-      perubahan: lalu > 0 ? Math.round(((ini - lalu) / lalu) * 100) : null,
-      selesai: Number(tren.selesai_ini ?? 0),
-      tinggi: Number(tren.tinggi_ini ?? 0),
+      change: previous > 0 ? Math.round(((current - previous) / previous) * 100) : null,
+      resolved: Number(trend.resolved_current ?? 0),
+      high: Number(trend.high_current ?? 0),
     },
   };
 }
 
-export async function papanPeringkat(env: Env, pelaporId: string | null) {
+export async function leaderboard(env: Env, reporterId: string | null) {
   return {
-    data: await ringkasan.peringkatPelapor(env),
-    saya: pelaporId ? await ringkasan.posisiPelapor(env, pelaporId) : null,
+    data: await summaries.reporterLeaderboard(env),
+    me: reporterId ? await summaries.reporterPosition(env, reporterId) : null,
   };
 }

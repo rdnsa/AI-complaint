@@ -1,4 +1,4 @@
-import type { Peran } from './domain/types';
+import type { Role } from './domain/types';
 
 /**
  * Infrastructure bindings and configuration.
@@ -22,7 +22,10 @@ export interface Env {
 
   // secrets (wrangler secret put)
   LLM_API_KEY: string;
-  /** Falls back to LLM_API_KEY when both models live at the same provider. */
+  /**
+   * Falls back to LLM_API_KEY when both models live at the same provider.
+   * Either key may list several, comma-separated, tried in order on rate limit.
+   */
   VISION_API_KEY?: string;
   AUTH_SECRET: string;
 }
@@ -30,5 +33,5 @@ export interface Env {
 /** Shared Hono types: bindings plus the variables the auth middleware fills in. */
 export type AppEnv = {
   Bindings: Env;
-  Variables: { sesi: { id: string; nama: string; peran: Peran } };
+  Variables: { session: { id: string; name: string; role: Role } };
 };

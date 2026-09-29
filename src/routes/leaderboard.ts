@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { sesiSaatIni } from '../adapters/session';
+import { currentSession } from '../adapters/session';
 import type { AppEnv } from '../env';
-import * as ringkasan from '../services/summary-service';
+import * as summaries from '../services/summary-service';
 
 const app = new Hono<AppEnv>();
 
@@ -14,9 +14,9 @@ const app = new Hono<AppEnv>();
  * own position, including when they sit outside the top twenty.
  */
 app.get('/', async (c) => {
-  const sesi = await sesiSaatIni(c);
-  const pelaporId = sesi?.peran === 'pelapor' ? sesi.id : null;
-  return c.json(await ringkasan.papanPeringkat(c.env, pelaporId));
+  const session = await currentSession(c);
+  const reporterId = session?.role === 'reporter' ? session.id : null;
+  return c.json(await summaries.leaderboard(c.env, reporterId));
 });
 
 export default app;

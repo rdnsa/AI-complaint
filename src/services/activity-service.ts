@@ -1,10 +1,10 @@
-import * as aktivitas from '../repositories/activity';
-import type { Aksi } from '../repositories/activity';
+import * as activity from '../repositories/activity';
+import type { ActivityAction } from '../repositories/activity';
 import type { Env } from '../env';
 
 /** Actors that are not a named staff member. */
-export const PELAPOR = 'pelapor';
-export const SISTEM = 'sistem';
+export const REPORTER = 'reporter';
+export const SYSTEM = 'system';
 
 /**
  * Writes a single activity-log row.
@@ -13,25 +13,34 @@ export const SISTEM = 'sistem';
  * report matters more than recording it. Every error is therefore swallowed
  * here and only printed to the Worker log.
  */
-export async function catat(
+export async function log(
   env: Env,
-  data: { aksi: Aksi; pelaku: string; ringkas: string; report_id?: string | null; rincian?: unknown },
+  data: {
+    action: ActivityAction;
+    actor: string;
+    summary: string;
+    report_id?: string | null;
+    details?: unknown;
+  },
 ): Promise<void> {
   try {
-    await aktivitas.simpan(env, {
-      aksi: data.aksi,
+    await activity.insert(env, {
+      action: data.action,
       report_id: data.report_id ?? null,
-      pelaku: data.pelaku,
-      ringkas: data.ringkas,
-      rincian: data.rincian === undefined ? null : JSON.stringify(data.rincian),
+      actor: data.actor,
+      summary: data.summary,
+      details: data.details === undefined ? null : JSON.stringify(data.details),
     });
   } catch (err) {
-    console.error('Gagal mencatat aktivitas:', err);
+    console.error('Failed to write activity log:', err);
   }
 }
 
 /** The log as management reads it, with the JSON detail already parsed. */
-export async function riwayat(env: Env, filter: { aksi?: string; report_id?: string; limit?: number }) {
-  const baris = await aktivitas.cari(env, filter);
-  return baris.map((b) => ({ ...b, rincian: b.rincian ? JSON.parse(b.rincian) : null }));
+export async function history(
+  env: Env,
+  filter: { action?: string; report_id?: string; limit?: number },
+) {
+  const rows = await activity.find(env, filter);
+  return rows.map((row) => ({ ...row, details: row.details ? JSON.parse(row.details) : null }));
 }

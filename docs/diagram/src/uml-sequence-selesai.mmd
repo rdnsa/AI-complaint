@@ -1,0 +1,48 @@
+---
+title: UML Sequence Diagram — Petugas Menyelesaikan Laporan dengan Verifikasi Foto
+---
+sequenceDiagram
+  autonumber
+  actor P as Petugas Kebersihan
+  participant UI as Aplikasi Web (React)
+  participant API as API Worker (Hono)
+  participant RS as ReportService
+  participant R2 as Penyimpanan Foto (R2)
+  participant DB as Database (D1)
+  participant VIS as LLM Vision (Gemini)
+
+  P->>UI: Pindai QR lantai, pilih nama
+  UI->>API: GET /api/reports/open?building&floor
+  API->>DB: SELECT laporan status ≠ resolved
+  DB-->>API: laporan terbuka
+  API-->>UI: daftar laporan + ringkasan AI
+  P->>UI: Bersihkan toilet, ambil foto bukti
+  UI->>API: POST /api/uploads (foto bukti)
+  API->>R2: simpan foto
+  R2-->>API: proof_photo_key
+  API-->>UI: proof_photo_key
+  UI->>API: PATCH /api/reports/:id {status: resolved, staff_id, proof_photo_key}
+  API->>DB: cek petugas aktif
+  API->>RS: changeStatus()
+  RS->>R2: baca foto bukti
+  RS->>VIS: checkProofPhoto(foto, lokasi, keluhan)
+  alt verifikasi gagal (error / timeout)
+    RS->>R2: hapus foto
+    RS->>DB: INSERT activity_log (verification_failed)
+    RS-->>API: verification-failed
+    API-->>UI: 502 coba lagi
+  else verdict = dirty / not_toilet
+    VIS-->>RS: verdict + alasan
+    RS->>R2: hapus foto
+    RS->>DB: INSERT activity_log (proof_rejected)
+    RS-->>API: proof-rejected
+    API-->>UI: 422 foto ditolak + alasan
+    UI-->>P: Minta bersihkan & foto ulang
+  else verdict = clean
+    VIS-->>RS: clean + alasan
+    RS->>DB: UPDATE reports (status=resolved, staff_name, proof_*)
+    RS->>DB: INSERT activity_log (status_changed)
+    RS-->>API: ok
+    API-->>UI: 200 {status: resolved, verification}
+    UI-->>P: Laporan selesai
+  end
