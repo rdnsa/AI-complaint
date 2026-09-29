@@ -71,3 +71,14 @@ Ulangi langkah yang sama untuk `checkpoint-3` sampai `checkpoint-6`. Migrasi D1 
 berurutan, sehingga database staging selalu cocok dengan kode di checkpoint tersebut.
 
 Jangan pernah merge `staging` ke `main`. Arahnya selalu satu: `main` → `staging`.
+
+## Halaman perjalanan (`/checkpoint`)
+
+Setiap deploy staging juga membuat halaman penjelasan untuk teman yang tidak ikut development:
+
+- `/checkpoint`: garis waktu semua checkpoint
+- `/checkpoint1`, `/checkpoint2`, … `/checkpoint6`: apa yang berubah, untuk siapa, dan kenapa
+
+Halaman hanya dibuat untuk checkpoint yang sudah di-merge ke `staging`, jadi checkpoint berikutnya
+tidak terlihat sebelum dilaporkan. Isinya ada di `staging/checkpoints.mjs`, dan tampilannya
+dibuat oleh `staging/journey.mjs`. Keduanya hanya ada di branch `staging`.

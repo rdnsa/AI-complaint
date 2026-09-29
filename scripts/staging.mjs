@@ -53,6 +53,11 @@ for (const db of config.d1_databases ?? []) {
 }
 for (const bucket of config.r2_buckets ?? []) bucket.bucket_name = staging.bucket_name;
 if (staging.domain) config.routes = [{ pattern: staging.domain, custom_domain: true }];
+// After the app's own build, add the journey pages (/checkpoint, /checkpoint1 …).
+config.build = {
+  ...config.build,
+  command: `${config.build?.command ?? 'npm run build'} && node staging/journey.mjs ${config.assets?.directory ?? 'dist'}`,
+};
 delete config.$schema;
 
 writeFileSync(OUT, JSON.stringify(config, null, 2) + '\n');
