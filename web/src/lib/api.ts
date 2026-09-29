@@ -26,6 +26,7 @@ export type Prioritas = 'rendah' | 'sedang' | 'tinggi';
 export type StatusLaporan = 'baru' | 'diproses' | 'selesai';
 
 export type Jenis = 'pria' | 'wanita' | 'disabilitas';
+export type HasilBukti = 'bersih' | 'kotor' | 'bukan_toilet';
 
 export interface Gedung {
   kode: string;
@@ -52,6 +53,9 @@ export interface Laporan {
   teks: string;
   foto_url: string | null;
   foto_selesai_url: string | null;
+  /** The vision model's verdict on the proof photo; only 'bersih' ever gets stored. */
+  bukti_ai_hasil: HasilBukti | null;
+  bukti_ai_alasan: string | null;
   status: StatusLaporan;
   petugas: string | null;
   selesai_at: string | null;
@@ -104,7 +108,18 @@ export interface DataGrafik {
 export interface Aktivitas {
   id: number;
   waktu: string;
-  aksi: 'lapor' | 'analisis' | 'analisis_gagal' | 'status' | 'hapus' | 'masuk' | 'ringkasan';
+  aksi:
+    | 'lapor'
+    | 'analisis'
+    | 'analisis_gagal'
+    | 'status'
+    | 'hapus'
+    | 'masuk'
+    | 'ringkasan'
+    | 'pengguna'
+    | 'bukti_ditolak'
+    | 'verifikasi_gagal'
+    | 'tanya';
   report_id: string | null;
   pelaku: string;
   ringkas: string;
@@ -132,10 +147,26 @@ export interface Ringkasan {
   sorotan?: string[];
 }
 
+/** One turn of the admin question-answering chat. */
+export interface PesanTanya {
+  peran: 'pengguna' | 'asisten';
+  teks: string;
+}
+
+export interface JawabanTanya {
+  teks: string;
+  alat: Array<{ nama: string; argumen: Record<string, unknown> }>;
+  token: { prompt: number; jawaban: number; cache_hit: number };
+  ms: number;
+  sisa_hari_ini: number;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /** The rest of the error body, e.g. the verdict behind a rejected proof photo. */
+    readonly data: Record<string, unknown> = {},
   ) {
     super(message);
   }
@@ -147,7 +178,10 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     headers: init?.body instanceof FormData ? init.headers : { 'content-type': 'application/json', ...init?.headers },
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError((data as { error?: string }).error ?? 'Gagal menghubungi server', res.status);
+  if (!res.ok) {
+    const { error, ...sisa } = data as { error?: string } & Record<string, unknown>;
+    throw new ApiError(error ?? 'Gagal menghubungi server', res.status, sisa);
+  }
   return data as T;
 }
 
@@ -211,8 +245,9 @@ export const api = {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: Laporan[] }>(`/api/reports?${q}`);
   },
+  /** Closing with a photo takes a few seconds: the server runs the vision check first. */
   ubahStatus: (id: string, status: StatusLaporan, foto_selesai_key?: string) =>
-    req<{ ok: boolean }>(`/api/reports/${id}`, {
+    req<{ ok: boolean; status: StatusLaporan; verifikasi: { hasil: HasilBukti; alasan: string } | null }>(`/api/reports/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ status, foto_selesai_key }),
     }),
@@ -227,6 +262,10 @@ export const api = {
 
   statistik: (tanggal?: string) => req<Statistik>(`/api/summary/stats${tanggal ? `?tanggal=${tanggal}` : ''}`),
   ringkasan: (tanggal?: string) => req<Ringkasan>(`/api/summary${tanggal ? `?tanggal=${tanggal}` : ''}`),
+  /** Admin only. `riwayat` carries the recent turns so follow-up questions make sense. */
+  tanya: (pertanyaan: string, riwayat: PesanTanya[]) =>
+    req<JawabanTanya>('/api/tanya', { method: 'POST', body: JSON.stringify({ pertanyaan, riwayat }) }),
+
   buatRingkasan: (tanggal?: string) =>
     req<Ringkasan>(`/api/summary/generate${tanggal ? `?tanggal=${tanggal}` : ''}`, { method: 'POST' }),
 };

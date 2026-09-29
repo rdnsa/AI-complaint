@@ -8,6 +8,7 @@ import leaderboardRoutes from './routes/leaderboard';
 import locationRoutes from './routes/locations';
 import reportRoutes from './routes/reports';
 import summaryRoutes from './routes/summary';
+import tanyaRoutes from './routes/tanya';
 import uploadRoutes from './routes/uploads';
 import userRoutes from './routes/users';
 import { buatRingkasanHarian } from './services/summary-service';
@@ -33,6 +34,7 @@ app.route('/api/summary', summaryRoutes);
 app.route('/api/aktivitas', activityRoutes);
 app.route('/api/pengguna', userRoutes);
 app.route('/api/peringkat', leaderboardRoutes);
+app.route('/api/tanya', tanyaRoutes);
 
 app.notFound(async (c) => {
   if (c.req.path.startsWith('/api/')) return c.json({ error: 'Endpoint tidak ditemukan' }, 404);

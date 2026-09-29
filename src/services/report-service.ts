@@ -1,5 +1,16 @@
-import { hapusFoto } from '../adapters/storage';
-import { bolehDiselesaikan, toDTO, urlFoto, type ReportDTO, type Status } from '../domain/types';
+import { periksaFotoBukti } from '../adapters/llm';
+import { bacaFoto, hapusFoto } from '../adapters/storage';
+import {
+  bolehDiselesaikan,
+  toDTO,
+  urlFoto,
+  type HasilBukti,
+  type Kategori,
+  type ReportDTO,
+  type ReportRow,
+  type Status,
+  type VerifikasiBukti,
+} from '../domain/types';
 import type { Env } from '../env';
 import * as lokasi from '../repositories/locations';
 import * as laporan from '../repositories/reports';
@@ -74,9 +85,99 @@ export async function papanPublik(env: Env, filter: laporan.FilterLaporan) {
 }
 
 export type HasilUbahStatus =
-  | { jenis: 'ok'; status: Status }
+  | { jenis: 'ok'; status: Status; verifikasi: VerifikasiBukti | null }
   | { jenis: 'tidak-ditemukan' }
-  | { jenis: 'bukti-kurang' };
+  | { jenis: 'foto-tidak-ditemukan' }
+  | { jenis: 'bukti-kurang' }
+  | { jenis: 'bukti-ditolak'; hasil: Exclude<HasilBukti, 'bersih'>; alasan: string }
+  | { jenis: 'verifikasi-gagal'; pesan: string };
+
+type BuktiTersimpan = { key: string; verifikasi: VerifikasiBukti } | null;
+
+/** The proof already on the report, if it was ever verified. */
+function buktiLama(baris: ReportRow): BuktiTersimpan {
+  if (!baris.foto_selesai_key || !baris.bukti_ai_hasil) return null;
+  return {
+    key: baris.foto_selesai_key,
+    verifikasi: {
+      hasil: baris.bukti_ai_hasil,
+      alasan: baris.bukti_ai_alasan ?? '',
+      model: baris.bukti_ai_model ?? '',
+      ms: baris.bukti_ai_ms ?? 0,
+    },
+  };
+}
+
+type HasilPeriksa =
+  | { jenis: 'diterima'; bukti: NonNullable<BuktiTersimpan> }
+  | Extract<HasilUbahStatus, { jenis: 'foto-tidak-ditemukan' | 'bukti-ditolak' | 'verifikasi-gagal' }>;
+
+/**
+ * Runs the vision check on a freshly uploaded proof photo.
+ *
+ * A photo that does not pass is deleted again: the bucket only ever holds
+ * proof that passed, and the verdict survives in the activity log. A failure
+ * of the checker itself is reported separately so staff know to retry rather
+ * than to re-clean; the retry uploads a fresh copy, so that photo goes too.
+ */
+async function periksaBuktiBaru(
+  env: Env,
+  baris: ReportRow,
+  key: string,
+  petugas: string,
+): Promise<HasilPeriksa> {
+  const foto = await bacaFoto(env, key);
+  if (!foto) return { jenis: 'foto-tidak-ditemukan' };
+
+  const mulai = Date.now();
+  let putusan;
+  try {
+    putusan = await periksaFotoBukti(env, foto, {
+      lokasi: baris.toilet_nama ?? baris.toilet_id,
+      keluhan: baris.teks,
+      kategori: baris.kategori ? (JSON.parse(baris.kategori) as Kategori[]) : [],
+    });
+  } catch (err) {
+    const pesan = err instanceof Error ? err.message : String(err);
+    console.error(`Verifikasi bukti gagal untuk laporan ${baris.id}: ${pesan}`);
+    await hapusFoto(env, key);
+    await catat(env, {
+      aksi: 'verifikasi_gagal',
+      report_id: baris.id,
+      pelaku: petugas,
+      ringkas: `Pemeriksaan foto bukti gagal di ${baris.toilet_nama}`,
+      rincian: { error: pesan.slice(0, 300), model: env.VISION_MODEL },
+    });
+    return { jenis: 'verifikasi-gagal', pesan };
+  }
+  const ms = Date.now() - mulai;
+
+  if (putusan.hasil !== 'bersih') {
+    await hapusFoto(env, key);
+    await catat(env, {
+      aksi: 'bukti_ditolak',
+      report_id: baris.id,
+      pelaku: petugas,
+      ringkas: `Foto bukti ditolak (${putusan.hasil}) di ${baris.toilet_nama}: ${putusan.alasan}`,
+      rincian: {
+        hasil: putusan.hasil,
+        alasan: putusan.alasan,
+        keyakinan: putusan.keyakinan,
+        model: env.VISION_MODEL,
+        ms,
+      },
+    });
+    return { jenis: 'bukti-ditolak', hasil: putusan.hasil, alasan: putusan.alasan };
+  }
+
+  return {
+    jenis: 'diterima',
+    bukti: {
+      key,
+      verifikasi: { hasil: 'bersih', alasan: putusan.alasan, model: env.VISION_MODEL, ms },
+    },
+  };
+}
 
 export async function ubahStatus(
   env: Env,
@@ -88,8 +189,17 @@ export async function ubahStatus(
   const sebelum = await laporan.cariSatu(env, id);
   if (!sebelum) return { jenis: 'tidak-ditemukan' };
 
-  const bukti = fotoBuktiBaru ?? sebelum.foto_selesai_key;
-  if (!bolehDiselesaikan(status, bukti)) return { jenis: 'bukti-kurang' };
+  // A new photo must pass the vision check before anything else changes.
+  let bukti = buktiLama(sebelum);
+  if (fotoBuktiBaru) {
+    const periksa = await periksaBuktiBaru(env, sebelum, fotoBuktiBaru, petugas);
+    if (periksa.jenis !== 'diterima') return periksa;
+    bukti = periksa.bukti;
+  }
+
+  if (!bolehDiselesaikan(status, bukti?.key ?? null, bukti?.verifikasi.hasil ?? null)) {
+    return { jenis: 'bukti-kurang' };
+  }
 
   await laporan.ubahStatus(env, id, status, petugas, bukti);
 
@@ -98,10 +208,15 @@ export async function ubahStatus(
     report_id: id,
     pelaku: petugas,
     ringkas: `Status ${sebelum.status} → ${status} di ${sebelum.toilet_nama}`,
-    rincian: { dari: sebelum.status, ke: status, foto_bukti: bukti },
+    rincian: {
+      dari: sebelum.status,
+      ke: status,
+      foto_bukti: bukti?.key ?? null,
+      verifikasi: bukti?.verifikasi ?? null,
+    },
   });
 
-  return { jenis: 'ok', status };
+  return { jenis: 'ok', status, verifikasi: bukti?.verifikasi ?? null };
 }
 
 export async function mintaAnalisisUlang(env: Env, id: string): Promise<boolean> {

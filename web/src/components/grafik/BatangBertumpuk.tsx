@@ -71,7 +71,7 @@ export default function BatangBertumpuk({
 
         {sorot !== null && (
           <div
-            className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-maroon-900 px-2.5 py-1.5 text-xs text-white shadow-naik"
+            className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-maroon-900 px-2.5 py-1.5 text-xs text-permukaan shadow-naik"
             style={{ left: `${((sorot + 0.5) / data.length) * 100}%` }}
           >
             <p className="font-bold">{data[sorot].tanggal}</p>

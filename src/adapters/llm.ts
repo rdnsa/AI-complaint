@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { KATEGORI, PRIORITAS, type Kategori, type Prioritas } from '../domain/types';
+import {
+  KATEGORI,
+  PRIORITAS,
+  type HasilBukti,
+  type Kategori,
+  type Prioritas,
+} from '../domain/types';
 import type { Env } from '../env';
 
 /**
@@ -106,20 +112,63 @@ function coerceAnalisis(raw: z.infer<typeof AnalisisSchema>): Analisis {
   };
 }
 
+/** OpenAI-style content parts, so a message can carry an image next to text. */
+type BagianPesan =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string; detail?: 'low' | 'high' | 'auto' } };
+
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | BagianPesan[];
 }
 
-async function chatJSON(env: Env, messages: ChatMessage[], maxTokens = 500): Promise<unknown> {
-  const res = await fetch(`${env.LLM_BASE_URL.replace(/\/$/, '')}/chat/completions`, {
+/** One tool the model may call, in the OpenAI/DeepSeek function-calling shape. */
+export interface DefinisiAlat {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+interface PanggilanAlat {
+  id: string;
+  type: 'function';
+  function: { name: string; arguments: string };
+}
+
+/** A message in a tool-calling exchange: the two extra shapes the chat loop needs. */
+type PesanAlat =
+  | ChatMessage
+  | { role: 'assistant'; content: string | null; tool_calls?: PanggilanAlat[] }
+  | { role: 'tool'; tool_call_id: string; content: string };
+
+/** Which model answers: the text model for complaints, the vision model for photos. */
+interface Tujuan {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+}
+
+const modelTeks = (env: Env): Tujuan => ({
+  baseUrl: env.LLM_BASE_URL,
+  apiKey: env.LLM_API_KEY,
+  model: env.LLM_MODEL,
+});
+
+const modelVision = (env: Env): Tujuan => ({
+  baseUrl: env.VISION_BASE_URL,
+  apiKey: env.VISION_API_KEY || env.LLM_API_KEY,
+  model: env.VISION_MODEL,
+});
+
+async function chatJSON(tujuan: Tujuan, messages: ChatMessage[], maxTokens = 500): Promise<unknown> {
+  const res = await fetch(`${tujuan.baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      authorization: `Bearer ${env.LLM_API_KEY}`,
+      authorization: `Bearer ${tujuan.apiKey}`,
     },
     body: JSON.stringify({
-      model: env.LLM_MODEL,
+      model: tujuan.model,
       messages,
       // Low temperature: identical wording must yield an identical classification.
       temperature: 0.1,
@@ -148,6 +197,130 @@ async function chatJSON(env: Env, messages: ChatMessage[], maxTokens = 500): Pro
   }
 }
 
+export interface PemakaianToken {
+  prompt: number;
+  jawaban: number;
+  /** Prompt tokens served from DeepSeek's cache — billed at a fraction of the price. */
+  cache_hit: number;
+}
+
+export interface JejakAlat {
+  nama: string;
+  argumen: Record<string, unknown>;
+}
+
+export interface JawabanAlat {
+  teks: string;
+  alat: JejakAlat[];
+  token: PemakaianToken;
+}
+
+interface ResponsAlat {
+  choices?: Array<{
+    message?: { content?: string | null; tool_calls?: PanggilanAlat[] };
+    finish_reason?: string;
+  }>;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    prompt_cache_hit_tokens?: number;
+  };
+}
+
+/**
+ * Feature #6: answer a free-form question by letting the model call tools.
+ *
+ * The model never sees the database. It sees only the tool definitions, and
+ * each tool returns a small aggregate that `jalankan` computes on our side —
+ * that is what keeps a question at a few thousand tokens regardless of how
+ * many reports exist. The loop is capped: after `maksPutaran` rounds the model
+ * is forced to answer with whatever it has.
+ */
+export async function chatDenganAlat(
+  env: Env,
+  masukan: {
+    system: string;
+    riwayat: Array<{ role: 'user' | 'assistant'; content: string }>;
+    pertanyaan: string;
+    alat: DefinisiAlat[];
+    jalankan: (nama: string, argumen: Record<string, unknown>) => Promise<unknown>;
+    maksPutaran?: number;
+    maxTokens?: number;
+  },
+): Promise<JawabanAlat> {
+  const tujuan = modelTeks(env);
+  const maksPutaran = masukan.maksPutaran ?? 4;
+  const messages: PesanAlat[] = [
+    { role: 'system', content: masukan.system },
+    ...masukan.riwayat,
+    { role: 'user', content: masukan.pertanyaan },
+  ];
+  const jejak: JejakAlat[] = [];
+  const token: PemakaianToken = { prompt: 0, jawaban: 0, cache_hit: 0 };
+
+  for (let putaran = 0; ; putaran++) {
+    const terakhir = putaran >= maksPutaran;
+    const res = await fetch(`${tujuan.baseUrl.replace(/\/$/, '')}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${tujuan.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: tujuan.model,
+        messages,
+        tools: masukan.alat.map((a) => ({ type: 'function', function: a })),
+        // On the final round the model may no longer ask for data; it must answer.
+        tool_choice: terakhir ? 'none' : 'auto',
+        temperature: 0.2,
+        max_tokens: masukan.maxTokens ?? 600,
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`LLM HTTP ${res.status}: ${body.slice(0, 300)}`);
+    }
+
+    const data = (await res.json()) as ResponsAlat;
+    token.prompt += data.usage?.prompt_tokens ?? 0;
+    token.jawaban += data.usage?.completion_tokens ?? 0;
+    token.cache_hit += data.usage?.prompt_cache_hit_tokens ?? 0;
+
+    const pesan = data.choices?.[0]?.message;
+    if (!pesan) throw new Error('LLM mengembalikan respons kosong');
+
+    const panggilan = pesan.tool_calls ?? [];
+    if (!panggilan.length || terakhir) {
+      const teks = (pesan.content ?? '').trim();
+      if (!teks) throw new Error('LLM tidak memberikan jawaban');
+      return { teks, alat: jejak, token };
+    }
+
+    messages.push({ role: 'assistant', content: pesan.content ?? null, tool_calls: panggilan });
+    for (const p of panggilan) {
+      let argumen: Record<string, unknown> = {};
+      try {
+        argumen = JSON.parse(p.function.arguments || '{}') as Record<string, unknown>;
+      } catch {
+        /* the model produced malformed arguments; run the tool with none */
+      }
+      jejak.push({ nama: p.function.name, argumen });
+
+      // A failing tool is reported back to the model rather than aborting the
+      // question: it can rephrase the call or answer from what it already has.
+      let hasil: unknown;
+      try {
+        hasil = await masukan.jalankan(p.function.name, argumen);
+      } catch (err) {
+        hasil = { error: err instanceof Error ? err.message : String(err) };
+      }
+      messages.push({ role: 'tool', tool_call_id: p.id, content: JSON.stringify(hasil) });
+    }
+  }
+}
+
 /** Features #1 and #2: classify the categories and set the priority of one report. */
 export async function analisaKeluhan(env: Env, teks: string, lokasi: string): Promise<Analisis> {
   const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }];
@@ -157,7 +330,7 @@ export async function analisaKeluhan(env: Env, teks: string, lokasi: string): Pr
   }
   messages.push({ role: 'user', content: `Lokasi: ${lokasi}\nKeluhan: ${teks}` });
 
-  const raw = await chatJSON(env, messages);
+  const raw = await chatJSON(modelTeks(env), messages);
   return coerceAnalisis(AnalisisSchema.parse(raw));
 }
 
@@ -182,7 +355,7 @@ export async function ringkasHarian(
     .join('\n');
 
   const raw = await chatJSON(
-    env,
+    modelTeks(env),
     [
       {
         role: 'system',
@@ -206,4 +379,106 @@ Jawab HANYA dengan JSON valid berbentuk:
 
   const parsed = RingkasanHarianSchema.parse(raw);
   return { ringkasan: parsed.ringkasan.trim(), sorotan: parsed.sorotan.slice(0, 4) };
+}
+
+/**
+ * The model sometimes answers "true"/"ya" as a string; both must read as true,
+ * while `z.coerce.boolean()` would also turn the string "false" into true.
+ */
+const boolLonggar = z.preprocess((v) => {
+  if (typeof v === 'string') return ['true', 'ya', 'yes', '1'].includes(v.trim().toLowerCase());
+  return v;
+}, z.boolean());
+
+const PeriksaBuktiSchema = z.object({
+  toilet: boolLonggar,
+  bersih: boolLonggar,
+  keyakinan: z.coerce.number().min(0).max(1).optional(),
+  alasan: z.string().min(1),
+});
+
+export interface PeriksaBukti {
+  hasil: HasilBukti;
+  alasan: string;
+  keyakinan: number | null;
+}
+
+const PROMPT_BUKTI = `Kamu adalah pengawas kebersihan toilet kampus. Petugas kebersihan mengunggah foto
+sebagai bukti bahwa sebuah keluhan sudah ditangani. Tugasmu menilai foto itu dengan jujur dan ketat.
+
+Jawab dua pertanyaan:
+1. "toilet": apakah foto ini benar-benar memperlihatkan bagian dalam toilet/kamar mandi/WC
+   (kloset, urinoir, wastafel, lantai kamar mandi, bilik)? Foto koridor, orang, layar, langit-langit,
+   foto gelap/blur yang tidak bisa dinilai, atau objek lain → false.
+2. "bersih": apakah kondisi yang terlihat sudah layak pakai dan bersih?
+   TIDAK bersih bila terlihat: kotoran atau noda di kloset/lantai/dinding, sampah berserakan,
+   tisu bekas di lantai, genangan air atau lantai basah merata, tempat sampah meluap, coretan,
+   lumut/kerak tebal, atau bekas keluhan yang jelas belum ditangani.
+   Noda permanen kecil, keramik tua, atau lantai yang lembap tipis setelah dipel masih boleh
+   dianggap bersih.
+
+Gunakan keluhan asli sebagai konteks: bila keluhannya terlihat pada foto (mis. sampah, genangan),
+periksa apakah hal itu sudah tidak ada. Keluhan yang tidak bisa dilihat dari foto (bau, sabun habis)
+jangan dijadikan alasan menolak.
+
+Jika ragu antara bersih dan kotor, pilih "bersih": false. Jangan pernah mengarang detail yang tidak ada di foto.
+
+Jawab HANYA dengan objek JSON valid berbentuk persis:
+{"toilet":true,"bersih":false,"keyakinan":0.8,"alasan":"satu kalimat bahasa Indonesia, maksimal 25 kata, sebutkan apa yang terlihat"}`;
+
+/**
+ * Base64 without Node's Buffer. `btoa` wants a binary string, and building
+ * that in one `String.fromCharCode(...bytes)` call overflows the stack on a
+ * multi-megabyte photo, hence the chunking.
+ */
+function keBase64(bytes: ArrayBuffer): string {
+  const u8 = new Uint8Array(bytes);
+  let biner = '';
+  for (let i = 0; i < u8.length; i += 0x8000) {
+    biner += String.fromCharCode(...u8.subarray(i, i + 0x8000));
+  }
+  return btoa(biner);
+}
+
+/**
+ * Feature #5: judge whether a proof photo actually shows a clean toilet.
+ *
+ * The photo travels inline as a data URL. The bucket is private and the Worker
+ * is the only thing that can read it, so a public URL was never an option.
+ */
+export async function periksaFotoBukti(
+  env: Env,
+  foto: { bytes: ArrayBuffer; tipe: string },
+  konteks: { lokasi: string; keluhan: string; kategori: string[] },
+): Promise<PeriksaBukti> {
+  const dataUrl = `data:${foto.tipe};base64,${keBase64(foto.bytes)}`;
+  const kategori = konteks.kategori.length ? konteks.kategori.join(', ') : 'belum dianalisis';
+
+  const raw = await chatJSON(
+    modelVision(env),
+    [
+      { role: 'system', content: PROMPT_BUKTI },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: `Lokasi: ${konteks.lokasi}\nKategori keluhan: ${kategori}\nKeluhan asli: ${konteks.keluhan}\n\nFoto bukti dari petugas:`,
+          },
+          { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } },
+        ],
+      },
+    ],
+    // Generous: "thinking" models (Gemini 3.x) spend part of this budget on
+    // reasoning before the answer, and a budget of a few hundred cut the JSON off.
+    2000,
+  );
+
+  const parsed = PeriksaBuktiSchema.parse(raw);
+  const hasil: HasilBukti = !parsed.toilet ? 'bukan_toilet' : parsed.bersih ? 'bersih' : 'kotor';
+  return {
+    hasil,
+    alasan: parsed.alasan.trim().slice(0, 300),
+    keyakinan: parsed.keyakinan ?? null,
+  };
 }

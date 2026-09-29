@@ -38,7 +38,7 @@ export const SEKUENSIAL = [
 
 /** Maps a value onto the ramp; zero keeps the empty surface rather than a colour. */
 export function langkahSekuensial(nilai: number, maks: number): string {
-  if (nilai <= 0) return '#FFFFFF';
+  if (nilai <= 0) return TINTA.permukaan;
   const indeks = Math.min(
     SEKUENSIAL.length - 1,
     Math.ceil((nilai / Math.max(maks, 1)) * (SEKUENSIAL.length - 1)),
@@ -54,9 +54,15 @@ export function tintaDiAtas(nilai: number, maks: number): string {
 /** A single magnitude series needs one colour — and no legend. */
 export const TUNGGAL = '#E2571F';
 
+/**
+ * Ink colours follow the theme: they read the same CSS variables the Tailwind
+ * palette uses (web/src/index.css), so charts flip to dark along with the page.
+ * `#3E1712` etc. in the light theme, their mirrored values in the dark one.
+ */
 export const TINTA = {
-  utama: '#3E1712',
-  sekunder: '#5D2A20',
-  redup: '#9A7B72',
-  garis: '#EFE4D6',
+  utama: 'rgb(var(--maroon-900))',
+  sekunder: 'rgb(var(--maroon-700))',
+  redup: 'rgb(var(--maroon-600))',
+  garis: 'rgb(var(--krem-200))',
+  permukaan: 'rgb(var(--permukaan))',
 };

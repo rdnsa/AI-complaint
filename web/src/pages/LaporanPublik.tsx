@@ -41,7 +41,7 @@ export default function LaporanPublik() {
       <Kop judul={t('publik.judul')} keterangan={t('publik.keterangan')} />
 
       <main className="mx-auto max-w-3xl px-4">
-        <p className="mt-6 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-maroon-800 ring-1 ring-krem-200">
+        <p className="mt-6 rounded-xl bg-permukaan px-4 py-3 text-sm font-semibold text-maroon-800 ring-1 ring-krem-200">
           {t('publik.jumlah', { selesai: jumlah.selesai, total: jumlah.total })}
         </p>
 

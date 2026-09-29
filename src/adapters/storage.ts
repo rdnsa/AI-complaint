@@ -33,6 +33,17 @@ export function ambilFoto(env: Env, key: string, syarat: Headers) {
   return env.BUCKET.get(key, { onlyIf: syarat });
 }
 
+/** Reads a whole photo into memory, for handing it to the vision model. */
+export async function bacaFoto(
+  env: Env,
+  key: string,
+): Promise<{ bytes: ArrayBuffer; tipe: string } | null> {
+  if (!kunciDiizinkan(key)) return null;
+  const obj = await env.BUCKET.get(key);
+  if (!obj) return null;
+  return { bytes: await obj.arrayBuffer(), tipe: obj.httpMetadata?.contentType ?? 'image/jpeg' };
+}
+
 /** Deleting a photo must never fail the operation that triggered it. */
 export async function hapusFoto(env: Env, ...keys: Array<string | null>): Promise<void> {
   for (const key of keys) {

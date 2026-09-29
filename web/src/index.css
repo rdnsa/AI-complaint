@@ -5,6 +5,66 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * The palette as RGB triplets (see tailwind.config.js). Light values on
+   * :root; .dark on <html> swaps them. In the dark theme the scales run the
+   * other way: maroon-900, the darkest ink, becomes the lightest text, and
+   * krem-50, the lightest ground, becomes the deepest background.
+   */
+  :root {
+    --maroon-50: 251 244 242;
+    --maroon-100: 245 228 223;
+    --maroon-200: 228 192 183;
+    --maroon-600: 122 54 40;
+    --maroon-700: 93 42 32;
+    --maroon-800: 74 29 22;
+    --maroon-900: 62 23 18;
+
+    --bata-50: 254 246 241;
+    --bata-100: 252 232 220;
+    --bata-200: 247 203 176;
+    --bata-300: 240 168 127;
+    --bata-400: 234 129 73;
+    --bata-500: 226 87 31;
+    --bata-600: 199 69 19;
+    --bata-700: 160 54 16;
+
+    --krem-50: 253 250 246;
+    --krem-100: 249 242 232;
+    --krem-200: 240 228 211;
+    --krem-300: 226 208 184;
+
+    --permukaan: 255 255 255;
+    color-scheme: light;
+  }
+
+  .dark {
+    --maroon-50: 42 26 22;
+    --maroon-100: 58 38 32;
+    --maroon-200: 107 74 64;
+    --maroon-600: 201 169 156;
+    --maroon-700: 226 203 193;
+    --maroon-800: 239 224 217;
+    --maroon-900: 246 237 232;
+
+    --bata-50: 61 32 22;
+    --bata-100: 84 42 26;
+    --bata-200: 128 62 34;
+    --bata-300: 176 88 44;
+    --bata-400: 226 111 57;
+    --bata-500: 232 120 66;
+    --bata-600: 240 148 100;
+    --bata-700: 247 178 140;
+
+    --krem-50: 28 16 13;
+    --krem-100: 20 12 10;
+    --krem-200: 58 38 32;
+    --krem-300: 76 51 43;
+
+    --permukaan: 42 26 22;
+    color-scheme: dark;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
@@ -17,11 +77,14 @@
     background-size: 22px 22px;
     min-height: 100vh;
   }
+  .dark #root {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 235, 225, 0.05) 1px, transparent 0);
+  }
 }
 
 @layer components {
   .kartu {
-    @apply rounded-2xl border border-krem-200 bg-white shadow-kartu;
+    @apply rounded-2xl border border-krem-200 bg-permukaan shadow-kartu;
   }
 
   .tombol {
@@ -32,14 +95,14 @@
     @apply tombol bg-bata-500 text-white shadow-naik hover:bg-bata-600 active:scale-[.98];
   }
   .tombol-netral {
-    @apply tombol border border-krem-300 bg-white text-maroon-700 hover:border-bata-300 hover:bg-krem-50;
+    @apply tombol border border-krem-300 bg-permukaan text-maroon-700 hover:border-bata-300 hover:bg-krem-50;
   }
   .tombol-gelap {
-    @apply tombol bg-maroon-800 text-white hover:bg-maroon-700;
+    @apply tombol bg-maroon-800 text-permukaan hover:bg-maroon-700;
   }
 
   .input {
-    @apply w-full rounded-xl border border-krem-300 bg-white px-3.5 py-3 text-base text-maroon-900
+    @apply w-full rounded-xl border border-krem-300 bg-permukaan px-3.5 py-3 text-base text-maroon-900
            outline-none transition placeholder:text-maroon-200
            focus:border-bata-400 focus:ring-4 focus:ring-bata-100;
   }
@@ -53,7 +116,7 @@
            transition-all duration-150;
   }
   .pilihan-mati {
-    @apply pilihan border-krem-200 bg-white text-maroon-600 hover:border-bata-200 hover:bg-krem-50;
+    @apply pilihan border-krem-200 bg-permukaan text-maroon-600 hover:border-bata-200 hover:bg-krem-50;
   }
   .pilihan-hidup {
     @apply pilihan border-bata-500 bg-bata-50 text-bata-700 shadow-naik;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import InputSandi from '../components/InputSandi';
 import Kop from '../components/Kop';
 import { api } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
@@ -67,10 +68,8 @@ export default function Daftar() {
             <label htmlFor="p" className="label">
               {t('login.password')}
             </label>
-            <input
+            <InputSandi
               id="p"
-              type="password"
-              className="input"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

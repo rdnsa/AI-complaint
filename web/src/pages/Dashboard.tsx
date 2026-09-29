@@ -3,10 +3,13 @@ import Kop from '../components/Kop';
 import PanelAktivitas from '../components/PanelAktivitas';
 import PanelGrafik from '../components/PanelGrafik';
 import PanelPengguna from '../components/PanelPengguna';
+import PanelTanya from '../components/PanelTanya';
 import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
 import { useNavigate } from 'react-router-dom';
 import {
   api,
+  ApiError,
+  type HasilBukti,
   type Laporan,
   type Ringkasan,
   type Sesi,
@@ -51,12 +54,12 @@ function Papan({ sesi }: { sesi: Sesi }) {
   const [filter, setFilter] = useState({ status: '', prioritas: '' });
   const [memuat, setMemuat] = useState(true);
   const [menyusun, setMenyusun] = useState(false);
-  const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas' | 'pengguna'>('laporan');
-  // Account management appears for admins only — staff never see the tab at all,
-  // and the server still refuses even if the tab is forced into view.
+  const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas' | 'tanya' | 'pengguna'>('laporan');
+  // Account management and data questions appear for admins only — staff never
+  // see the tabs at all, and the server still refuses even if a tab is forced into view.
   const tabs =
     sesi.peran === 'admin'
-      ? (['laporan', 'grafik', 'aktivitas', 'pengguna'] as const)
+      ? (['laporan', 'grafik', 'aktivitas', 'tanya', 'pengguna'] as const)
       : (['laporan', 'grafik', 'aktivitas'] as const);
 
   const muat = useCallback(async () => {
@@ -84,10 +87,10 @@ function Papan({ sesi }: { sesi: Sesi }) {
     muat();
   }
 
-  async function ubahStatus(id: string, status: StatusLaporan, fotoBukti?: string) {
+  async function ubahStatus(id: string, status: StatusLaporan) {
     // Update the view first so the button feels responsive, then synchronise.
     setLaporan((prev) => prev.map((l) => (l.id === id ? { ...l, status, petugas } : l)));
-    await api.ubahStatus(id, status, fotoBukti).catch(() => {});
+    await api.ubahStatus(id, status).catch(() => {});
     muat();
   }
 
@@ -111,14 +114,14 @@ function Papan({ sesi }: { sesi: Sesi }) {
       />
 
       <main className="mx-auto max-w-5xl px-4">
-        <nav className="mt-5 flex gap-1 rounded-xl bg-white p-1 ring-1 ring-krem-200">
+        <nav className="mt-5 flex gap-1 rounded-xl bg-permukaan p-1 ring-1 ring-krem-200">
           {tabs.map((k) => (
             <button
               key={k}
               onClick={() => setTab(k)}
               aria-pressed={tab === k}
               className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold transition ${
-                tab === k ? 'bg-maroon-800 text-white' : 'text-maroon-700 hover:bg-krem-50'
+                tab === k ? 'bg-maroon-800 text-permukaan' : 'text-maroon-700 hover:bg-krem-50'
               }`}
             >
               {t(`tab.${k}`)}
@@ -128,6 +131,7 @@ function Papan({ sesi }: { sesi: Sesi }) {
 
         {tab === 'grafik' && <PanelGrafik />}
         {tab === 'aktivitas' && <PanelAktivitas />}
+        {tab === 'tanya' && sesi.peran === 'admin' && <PanelTanya />}
         {tab === 'pengguna' && sesi.peran === 'admin' && <PanelPengguna />}
 
         {tab === 'laporan' && (
@@ -264,31 +268,54 @@ function BarisLaporan({
   onHapus,
 }: {
   laporan: Laporan;
-  onUbahStatus: (id: string, status: StatusLaporan, fotoBukti?: string) => void;
+  onUbahStatus: (id: string, status: StatusLaporan) => void;
   onSegarkan: () => void;
   onHapus: (id: string) => void;
 }) {
   const { t } = useBahasa();
   const waktuRelatif = useWaktuRelatif();
   const inputBukti = useRef<HTMLInputElement>(null);
-  const [mengunggah, setMengunggah] = useState(false);
+  const [tahap, setTahap] = useState<'diam' | 'mengunggah' | 'memeriksa'>('diam');
+  const [penolakan, setPenolakan] = useState<{ hasil: HasilBukti | null; alasan: string | null } | null>(
+    null,
+  );
 
   /**
-   * Resolving a report always takes this path: choose a photo, upload it, and
-   * only then change the status. The server also refuses 'selesai' without
-   * evidence, so completion cannot be claimed by pressing a button alone.
+   * Resolving a report always takes this path: choose a photo, upload it, then
+   * ask the server to close the report. The server runs the vision check on the
+   * photo and refuses 'selesai' unless the toilet looks clean, so completion
+   * cannot be claimed by pressing a button alone. No optimistic update here:
+   * the verdict decides what the card shows next.
    */
   async function selesaikan(berkas: File) {
-    setMengunggah(true);
+    setPenolakan(null);
+    setTahap('mengunggah');
     try {
       const { key } = await api.unggahFoto(berkas, 'bukti');
-      onUbahStatus(l.id, 'selesai', key);
-    } catch {
-      /* leave the status untouched when the upload fails */
+      setTahap('memeriksa');
+      await api.ubahStatus(l.id, 'selesai', key);
+      onSegarkan();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 422) {
+        setPenolakan({
+          hasil: (err.data.hasil as HasilBukti | undefined) ?? null,
+          alasan: (err.data.alasan as string | undefined) ?? null,
+        });
+      } else {
+        setPenolakan({ hasil: null, alasan: null });
+      }
     } finally {
-      setMengunggah(false);
+      setTahap('diam');
     }
   }
+
+  const sibuk = tahap !== 'diam';
+  const pesanPenolakan =
+    penolakan?.hasil === 'bukan_toilet'
+      ? t('dash.bukti_ditolak_bukan_toilet')
+      : penolakan?.hasil === 'kotor'
+        ? t('dash.bukti_ditolak_kotor')
+        : t('dash.verifikasi_gagal');
 
   // The left edge marks the priority, readable from across the room.
   const tepi =
@@ -342,10 +369,33 @@ function BarisLaporan({
             </a>
             <figcaption className="mt-1 text-xs font-bold text-emerald-700">
               ✓ {t('dash.bukti')}
+              {l.bukti_ai_hasil === 'bersih' && <> · {t('dash.bukti_terverifikasi')}</>}
             </figcaption>
+            {l.bukti_ai_alasan && (
+              <p className="mt-0.5 max-w-xs text-xs italic text-maroon-600">{l.bukti_ai_alasan}</p>
+            )}
           </figure>
         )}
       </div>
+
+      {/* The verdict on a refused photo stays on the card until the next attempt,
+          so staff can see what the model saw before cleaning again. */}
+      {penolakan && (
+        <div
+          role="alert"
+          className="mt-3 rounded-xl border-l-4 border-red-400 bg-red-50/70 p-3 text-sm text-red-900"
+        >
+          <p className="font-bold">
+            {penolakan.hasil ? t('dash.bukti_ditolak') : t('dash.verifikasi_gagal')}
+          </p>
+          {penolakan.hasil && <p className="mt-0.5">{pesanPenolakan}</p>}
+          {penolakan.alasan && (
+            <p className="mt-1 text-xs italic text-red-800">
+              {t('dash.alasan_ai')}: {penolakan.alasan}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {l.status === 'baru' && (
@@ -369,11 +419,15 @@ function BarisLaporan({
             />
             <button
               onClick={() => inputBukti.current?.click()}
-              disabled={mengunggah}
+              disabled={sibuk}
               title={t('dash.bukti_wajib')}
               className="tombol-utama !py-1.5 text-xs"
             >
-              {mengunggah ? t('dash.mengunggah') : `📷 ${t('dash.selesaikan')}`}
+              {tahap === 'mengunggah'
+                ? t('dash.mengunggah')
+                : tahap === 'memeriksa'
+                  ? t('dash.memeriksa')
+                  : `📷 ${t('dash.selesaikan')}`}
             </button>
           </>
         )}

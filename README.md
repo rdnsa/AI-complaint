@@ -12,9 +12,21 @@ pushes it to the cleaning staff's dashboard.
 QR on the floor  →  pick the toilet  →  describe the problem  →  LLM analysis
                                                                       ↓
                                      staff dashboard  +  17:00 WIB cron → daily summary
+                                           ↓
+                       staff upload proof photo  →  vision LLM: clean?  →  resolved
 ```
 
 Live: <https://ai-complaint.yvrtz.workers.dev>
+
+Two longer documents live in [`docs/`](docs/), each as HTML and PDF
+(`npm run docs` re-renders the PDFs with headless Chrome):
+
+- [`dokumentasi-teknis`](docs/dokumentasi-teknis.pdf) — the full technical
+  reference (Indonesian): schema per column, every endpoint with request and
+  response shapes, both LLM flows, operations, troubleshooting, known limits.
+- [`panduan-umum`](docs/panduan-umum.pdf) — the plain-language guide for
+  students, cleaning staff, admins, and management: step-by-step use, FAQ,
+  privacy, what to do when something goes wrong.
 
 One QR code represents one **floor** of one building, not one toilet. The
 reporter picks men's/women's/accessible on the form, which cuts the number of
@@ -34,6 +46,12 @@ stickers to print and maintain by two thirds.
    locations and the most urgent actions.
 4. **Reporter leaderboard** — gamification ranked by report volume, shown
    alongside how many of those reports were actually resolved.
+5. **Proof-photo verification** — a vision model judges the staff photo before a
+   report can be closed: is it a toilet, and is it clean?
+6. **Ask the data** — anyone types a question in plain language on the landing
+   page ("which building had the most blockages this month?") and the text
+   model answers it by calling a small set of aggregate queries; it never sees
+   raw rows, and staff names are only revealed to signed-in staff.
 
 **Supporting features**
 
@@ -44,16 +62,37 @@ stickers to print and maintain by two thirds.
   mean time to resolution
 - Status tracking for reporters without an account
 - Building map on the landing page
+- Light and dark theme (follows the device, switchable in the header) and an
+  Indonesian/English interface
 - Bilingual interface (Indonesian / English), switchable from the header
 
 ---
+
+## Which model does what
+
+Two models, never for the same job — the split follows the input type.
+
+| | DeepSeek `deepseek-chat` | Gemini `gemini-3.6-flash` |
+|---|---|---|
+| Input | complaint text; the day's list of summaries | staff proof photo, plus the original complaint as context |
+| Job | features 1–3: classify, prioritise, summarise, daily summary; feature 6: answer admin questions via tool calls | feature 5: is this a toilet, and is it clean? |
+| Called | on every new report (async, after the response), once a day by cron, and per admin question | every time staff press "Mark done" (sync — staff wait for the verdict) |
+| On failure | report is kept unlabelled, can be re-analysed | the close is refused (`502`); staff retry |
+| Code | `analisaKeluhan()`, `ringkasHarian()`, `chatDenganAlat()` in `src/adapters/llm.ts` | `periksaFotoBukti()` in the same file |
+| Config | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | `VISION_BASE_URL`, `VISION_MODEL`, `VISION_API_KEY` |
+| Stored in | `reports.kategori/prioritas/ringkasan/rekomendasi/ai_*`, `daily_summaries` | `reports.bukti_ai_*`; `aktivitas` rows `bukti_ditolak`, `verifikasi_gagal` |
+| Cost | paid, very cheap | Google AI Studio free tier |
+
+Both go through the same `chatJSON()` helper because both providers speak the
+OpenAI chat-completions format; only the target (URL, model, key) and the
+message content differ.
 
 ## Roles
 
 | Role | How the account is created | Can do |
 |---|---|---|
 | **Admin** | ships with the database (`admin` / `Admin123!`) | everything staff can, plus create staff accounts and change their name, password, and active status |
-| **Staff** | created by an admin | change report status, upload proof, re-run analysis, delete reports |
+| **Staff** | created by an admin | change report status, upload proof (checked by the vision model), re-run analysis, delete reports |
 | **Reporter** | self-registers at `/daftar` | file reports under their name and appear on the leaderboard |
 | No account | — | still file reports and read the public board |
 
@@ -76,7 +115,8 @@ salt via WebCrypto. The plaintext is never stored anywhere.
 | File storage | Cloudflare R2, served through the Worker |
 | Frontend | React 18 + Vite + Tailwind CSS |
 | i18n | hand-rolled dictionary in `web/src/lib/i18n.tsx`, no library |
-| LLM | DeepSeek `deepseek-chat` in JSON mode — no training, no dataset |
+| LLM (text) | DeepSeek `deepseek-chat` in JSON mode — no training, no dataset |
+| LLM (vision) | any OpenAI-compatible vision model, default Gemini `gemini-3.6-flash` — judges proof photos |
 
 The frontend and the API live in the same Worker on the same origin, so there is
 no CORS configuration and only one thing to deploy.
@@ -87,7 +127,7 @@ no CORS configuration and only one thing to deploy.
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY and AUTH_SECRET
+cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY, VISION_API_KEY and AUTH_SECRET
 
 npm run db:local                 # apply migrations to the local D1
 npm run db:seed                  # load the toilet list
@@ -110,6 +150,7 @@ npm run dev                      # Vite (5173) + Worker (8787) side by side
 
 ```bash
 npx wrangler secret put LLM_API_KEY
+npx wrangler secret put VISION_API_KEY # key for the vision model; see wrangler.jsonc vars
 npx wrangler secret put AUTH_SECRET   # a long random string
 
 npm run db:remote                     # migrations against production D1
@@ -117,8 +158,60 @@ npm run db:seed:remote
 npm run deploy
 ```
 
+Run `db:remote` **before** `deploy`: the new code writes columns
+(`bukti_ai_*`) that migration `0005` adds, and closing a report fails until they exist.
+
 The R2 bucket does **not** need public access — photos are served back by the
 Worker at `GET /api/uploads/<key>`.
+
+### The vision model
+
+`deepseek-chat` cannot see images, so proof photos go to a second model. The
+call uses the OpenAI chat-completions format with an `image_url` part, so any
+provider that speaks it works; only configuration changes.
+
+| Setting | Where | Value |
+|---|---|---|
+| `VISION_BASE_URL` | `wrangler.jsonc` → `vars` | `https://generativelanguage.googleapis.com/v1beta/openai` |
+| `VISION_MODEL` | `wrangler.jsonc` → `vars` | `gemini-3.6-flash` — switch to `gemini-3.5-flash-lite` for a larger free quota |
+| `VISION_API_KEY` | `wrangler secret put` / `.dev.vars` | key from <https://aistudio.google.com/apikey>; falls back to `LLM_API_KEY` when unset |
+
+Alternatives, each a two-line change: OpenAI (`https://api.openai.com/v1`,
+`gpt-4o-mini`), OpenRouter (`https://openrouter.ai/api/v1`, any vision model),
+Anthropic (`https://api.anthropic.com/v1`, `claude-haiku-4-5-20251001`).
+
+Gemini's free tier costs nothing and needs no card, but is capped per minute
+and per day; the live numbers are at <https://aistudio.google.com/rate-limits>.
+One closed report is one request, so a campus stays far below the cap. Note
+that on the free tier Google may use submitted photos to improve its products;
+enabling billing on that project turns this off at a cost that is effectively
+zero at this volume.
+
+**Gemini model names expire.** The first deploy used `gemini-2.5-flash`, which
+Google had already closed to new users; the 404 named the replacement. Errors
+from the vision call are stored verbatim in the activity log, so look there first:
+
+```bash
+npx wrangler d1 execute kato --remote --command \
+  "SELECT waktu, rincian FROM aktivitas WHERE aksi='verifikasi_gagal' ORDER BY id DESC LIMIT 3"
+```
+
+### Checking how much the vision model is used
+
+Every check is logged, so usage can be counted without opening Google's console:
+
+```bash
+npx wrangler d1 execute kato --remote --command "
+SELECT date(waktu) AS hari, aksi, COUNT(*) AS jumlah
+  FROM aktivitas
+ WHERE aksi IN ('bukti_ditolak','verifikasi_gagal')
+    OR (aksi='status' AND rincian LIKE '%\"hasil\":\"bersih\"%')
+ GROUP BY hari, aksi ORDER BY hari DESC"
+```
+
+`status` rows with `hasil: bersih` are accepted photos, `bukti_ditolak` rejected
+ones, `verifikasi_gagal` failed calls; the three together are the day's request
+count. An `LLM HTTP 429` in the log means the daily quota ran out.
 
 ### Automatic deploys (Cloudflare Workers Builds)
 
@@ -170,13 +263,14 @@ old reports pointing at it keep their location and history intact.
 | `POST` | `/api/uploads?jenis=laporan\|bukti` | upload a photo |
 | `GET` | `/api/uploads/:key` | serve a photo from R2 |
 | `GET` | `/api/peringkat` | leaderboard |
+| `POST` | `/api/tanya` | ask a question about the report data; body `{pertanyaan, riwayat[]}`; `429` once a budget is spent |
 
 **Staff and admin**
 
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/api/reports` | dashboard list, with filters |
-| `PATCH` | `/api/reports/:id` | change status (proof photo required to close) |
+| `PATCH` | `/api/reports/:id` | change status (proof photo required to close; the photo is checked by the vision model and refused with `422` when the toilet still looks dirty) |
 | `POST` | `/api/reports/:id/analisa-ulang` | re-run a failed analysis |
 | `DELETE` | `/api/reports/:id` | delete permanently, logged with a full copy |
 | `GET` | `/api/summary`, `/api/summary/stats`, `/api/summary/grafik` | daily summary, counters, chart data |
@@ -224,23 +318,26 @@ src/
   env.ts                 infrastructure bindings and configuration
   domain/types.ts        entities, enums, DTO mapping, closing rule
   adapters/
-    llm.ts               prompt, few-shot examples, output validation
+    llm.ts               prompts, few-shot examples, output validation, proof-photo check
     storage.ts           R2 photo storage, prefixes and limits
     session.ts           JWT cookie sessions and role guards
     password.ts          PBKDF2 hashing
     clock.ts             UTC ↔ WIB day conversion
-  repositories/          reports, locations, users, activity, summaries
+  repositories/          reports, locations, users, activity, summaries,
+                         analitik (the aggregate queries the question tools run)
   services/
     report-service.ts    filing, closing, deleting a report
     analysis-service.ts  per-report analysis, run after the response is sent
     summary-service.ts   daily summary, statistics, charts, leaderboard
+    tanya-service.ts     tool definitions, system prompt and daily budget for admin questions
     user-service.ts      registration, sign-in, account management
     activity-service.ts  writing and reading the audit trail
   routes/                auth, locations, reports, uploads, summary, activity,
-                         users, leaderboard
+                         users, leaderboard, tanya
 
 web/src/
   lib/i18n.tsx           dictionary and language switcher
+  lib/tema.tsx           light/dark theme provider
   lib/sesi.tsx           session context
   lib/api.ts             typed API client
   components/Kop.tsx     page header, back button, floating pill bar
@@ -255,6 +352,8 @@ migrations/              D1 schema, applied in order
 seed/toilets.sql         the toilet list
 scripts/generate-qr.mjs  QR codes and the A4 print sheet
 scripts/build-frontend.mjs   builds the frontend before wrangler deploy
+scripts/build-docs.mjs   renders docs/*.html to PDF
+docs/                    technical reference and general guide (HTML + PDF)
 ```
 
 ---
@@ -293,8 +392,57 @@ marked resolved. Both are enforced on the server, not merely hidden in the UI.
 The proof photo is shown on the public board so that "already handled" can be checked
 by anyone.
 
+**The proof photo is judged before it is accepted.** A photo alone only proves
+that *something* was photographed. So `PATCH /api/reports/:id` hands the
+uploaded photo, together with the original complaint, to a vision model and
+asks two questions: is this the inside of a toilet, and does it look clean? Only
+a `bersih` verdict lets the status become `selesai`; `kotor` and `bukan_toilet`
+come back as `422` with the model's one-sentence reason, the photo is deleted
+from R2, and the attempt is written to the activity log as `bukti_ditolak`. The
+accepted verdict is stored on the report (`bukti_ai_*`) and shown under the
+photo. The text model (DeepSeek) cannot see images, which is why the vision
+model has its own `VISION_*` configuration; anything OpenAI-compatible works.
+When the vision endpoint itself is down the close is refused with `502` rather
+than waved through — the rule is "clean, verified", and an outage does not
+lower that bar. This is the opposite of the text analysis, which deliberately
+degrades: an unanalysed complaint is still useful, unverified proof is not.
+
+**Questions are answered through tools, not by reading the table.** The
+model receives four function definitions (`hitung_laporan`, `waktu_penyelesaian`,
+`daftar_laporan`, `ringkasan_harian`), picks one or two, and answers from the
+aggregate that comes back. Groupings and filter values are whitelisted in
+`repositories/analitik.ts` and bound as parameters, so the model chooses *which*
+query runs but never writes SQL. `daftar_laporan` returns the model-written
+`ringkasan`, never the raw complaint text, which keeps a reporter's words out of
+the asker's prompt. The endpoint is public, so it has two audiences: signed-in
+staff may group by `petugas`; everyone else gets the same tools minus that
+grouping, and staff names are stripped from listed reports. A question costs
+roughly 3–4k tokens (about half served from DeepSeek's prompt cache), only the
+last six turns travel with a follow-up, and `tanya-service.ts` refuses with
+`429` after `BATAS_HARIAN` (50) questions a day overall or `BATAS_PER_IP` (20)
+from one anonymous address (a hashed IP kept in the activity row). Every
+question is written to the activity log with the tools it called and the tokens
+it used.
+
+**Dark mode is a palette swap, not a second stylesheet.** Every colour in
+`tailwind.config.js` reads an RGB triplet from a CSS variable; `:root` in
+`web/src/index.css` holds the light values and `.dark` the dark ones, with the
+scales mirrored (the darkest ink becomes the lightest text). Components keep
+their `bg-krem-50` / `text-maroon-900` classes unchanged. Two exceptions are
+deliberate: `permukaan` names the card surface (white or deep brown) where
+`bg-white` used to be, and `tetap-*` colours never flip, so the maroon header
+stays maroon in both themes. The choice lives in `localStorage` (`tema`) and
+defaults to the device setting; a tiny inline script in `index.html` applies it
+before React loads, so a dark-mode visitor never sees a white flash.
+
+**The vision call gets a large token budget.** Gemini 3.x "thinks" before it
+answers and the thinking counts against `max_tokens`; a budget of 300 cut the
+JSON off mid-object and surfaced as "response is not JSON". The call now allows
+2,000 tokens; the answer itself stays short because the reason is capped at 25
+words in the prompt.
+
 **The activity log cannot be erased from the app.** Every report, analysis result,
-status change, deletion, staff sign-in, account change, and generated summary is
+status change, rejected proof photo, deletion, staff sign-in, account change, and generated summary is
 written to the `aktivitas` table. That table deliberately has no foreign key to
 `reports`: a deleted report is exactly the one that most needs to stay traceable,
 so its full contents are copied into the log before the row disappears.

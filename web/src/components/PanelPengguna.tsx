@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, type AkunPengelola } from '../lib/api';
+import InputSandi from './InputSandi';
 import { useBahasa } from '../lib/i18n';
 import { useSesi } from '../lib/sesi';
 
@@ -141,9 +142,7 @@ function FormTambah({
           onChange={(e) => setNama(e.target.value)}
           required
         />
-        <input
-          className="input"
-          type="password"
+        <InputSandi
           placeholder={t('login.password')}
           autoComplete="new-password"
           value={password}
@@ -199,9 +198,7 @@ function FormUbah({
         </div>
         <div>
           <label className="label">{t('akun.password_baru')}</label>
-          <input
-            className="input"
-            type="password"
+          <InputSandi
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
