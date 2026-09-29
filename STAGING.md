@@ -13,7 +13,7 @@ yang terpisah dari `main`, jadi data produksi tidak pernah tersentuh.
 | `checkpoint-3` | `2e18c48` | Bukti foto wajib saat laporan diselesaikan, log aktivitas, grafik, akun berperan (menggantikan sandi bersama), papan peringkat |
 | `checkpoint-4` | `d2e7d72` | Backend berlapis (routes, services, repositories), skema berbahasa Inggris, dashboard analitis, dokumentasi teknis dan panduan umum |
 | `checkpoint-5` | `e44958b` | Verifikasi foto bukti dengan vision AI (Gemini), tanya-jawab AI atas data laporan |
-| `checkpoint-6` | `8aa3c08` | Kamera langsung, panel kerja staff, filter waktu, beranda per peran (mahasiswa, staff, supervisor), peta kampus interaktif. Sama dengan sistem final |
+| `checkpoint-6` | `adadf61` | Kamera langsung, panel kerja staff, filter waktu, beranda per peran (mahasiswa, staff, supervisor), peta kampus interaktif, failover API key. Sama dengan sistem final |
 
 Saat ini `staging` berada di **checkpoint 1**.
 
@@ -34,7 +34,7 @@ kembali, jadi nilainya diambil dari `.dev.vars` lokal (file ini tidak di-commit)
 
 ```
 LLM_API_KEY="..."
-VISION_API_KEY="..."
+VISION_API_KEY="key1,key2,key3,key4"   # boleh beberapa key, dipisah koma
 AUTH_SECRET="..."
 PETUGAS_PASSWORD="..."   # hanya dipakai di checkpoint 1–2 (login petugas dengan sandi bersama)
 ```
@@ -45,7 +45,11 @@ Deploy dulu sekali (lihat di bawah) agar Worker staging ada, lalu kirim semua se
 node scripts/staging.mjs secrets
 ```
 
-Jalankan lagi setiap kali secret di `main` berganti.
+Setiap deploy (`node scripts/staging.mjs` atau `... seed`) juga otomatis mengirim ulang secret.
+Mulai checkpoint 6, kalau satu key kena limit, key berikutnya dipakai otomatis. Sebelum checkpoint 6
+kodenya hanya mengenal satu key, jadi skrip otomatis hanya mengirim key pertama.
+
+Jalankan `node scripts/staging.mjs secrets` lagi setiap kali secret di `main` berganti.
 
 ## Deploy checkpoint pertama
 

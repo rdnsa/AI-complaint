@@ -8,7 +8,7 @@
  * staging.config.json: its own Worker name, D1 database, R2 bucket and domain.
  * Production data is never touched.
  *
- *   node scripts/staging.mjs           apply D1 migrations, then deploy
+ *   node scripts/staging.mjs           apply D1 migrations, deploy, then upload secrets
  *   node scripts/staging.mjs seed      also run seed/toilets.sql before deploying
  *   node scripts/staging.mjs config    only write wrangler.staging.jsonc
  *   node scripts/staging.mjs secrets   upload the secrets in .dev.vars to the staging Worker
@@ -63,36 +63,56 @@ if (mode === 'config') {
 
 const run = (command) => execSync(command, { stdio: 'inherit' });
 
-if (mode === 'secrets') {
-  if (!existsSync('.dev.vars')) {
-    rmSync(OUT, { force: true });
-    console.error('.dev.vars tidak ditemukan. Salin .dev.vars.example lalu isi dengan secret milik main.');
-    process.exit(1);
-  }
+/**
+ * Uploads the secrets in .dev.vars. Checkpoints older than the key-failover
+ * commit would treat a comma-separated list as one (invalid) key, so for them
+ * only the first key of each list is sent.
+ */
+function uploadSecrets() {
   const secrets = {};
   for (const line of readFileSync('.dev.vars', 'utf8').split(/\r?\n/)) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
     if (m) secrets[m[1]] = m[2].replace(/^(["'])(.*)\1$/, '$2');
+  }
+  const multiKey = ['src/adapters/llm.ts', 'src/lib/llm.ts'].some(
+    (p) => existsSync(p) && readFileSync(p, 'utf8').includes('splitKeys'),
+  );
+  if (!multiKey) {
+    for (const name of Object.keys(secrets)) {
+      if (name.endsWith('_API_KEY')) secrets[name] = secrets[name].split(',')[0].trim();
+    }
   }
   const file = '.wrangler/staging-secrets.json';
   mkdirSync('.wrangler', { recursive: true });
   writeFileSync(file, JSON.stringify(secrets));
   try {
     run(`npx wrangler secret bulk ${file} -c ${OUT}`);
-    console.log(`Secret terkirim ke ${staging.name}: ${Object.keys(secrets).join(', ')}`);
+    console.log(
+      `Secret terkirim ke ${staging.name}: ${Object.keys(secrets).join(', ')}` +
+        (multiKey ? '' : ' (checkpoint ini hanya mendukung satu key per secret; key pertama yang dipakai)'),
+    );
   } finally {
     rmSync(file, { force: true });
-    rmSync(OUT, { force: true });
   }
-  process.exit(0);
 }
 
 try {
-  run(`npx wrangler d1 migrations apply ${staging.database_name} --remote -c ${OUT}`);
-  if (mode === 'seed') {
-    run(`npx wrangler d1 execute ${staging.database_name} --remote --file=./seed/toilets.sql -c ${OUT}`);
+  if (mode === 'secrets') {
+    if (!existsSync('.dev.vars')) {
+      console.error('.dev.vars tidak ditemukan. Salin .dev.vars.example lalu isi dengan secret milik main.');
+      process.exitCode = 1;
+    } else {
+      uploadSecrets();
+    }
+  } else {
+    run(`npx wrangler d1 migrations apply ${staging.database_name} --remote -c ${OUT}`);
+    if (mode === 'seed') {
+      run(`npx wrangler d1 execute ${staging.database_name} --remote --file=./seed/toilets.sql -c ${OUT}`);
+    }
+    run(`npx wrangler deploy -c ${OUT}`);
+    // Keep the secrets in step with the checkpoint just deployed (one key vs several).
+    if (existsSync('.dev.vars')) uploadSecrets();
   }
-  run(`npx wrangler deploy -c ${OUT}`);
 } finally {
   rmSync(OUT, { force: true });
 }
