@@ -5,7 +5,7 @@ import { wajibPetugas } from '../lib/auth';
 import { rentangHariWIB } from '../lib/waktu';
 import { PRIORITAS, STATUS, toDTO, type AppEnv, type ReportRow } from '../types';
 
-const KOLOM = `r.*, t.nama AS toilet_nama, t.gedung AS gedung, t.lantai AS lantai`;
+const KOLOM = `r.*, t.nama AS toilet_nama, t.gedung_kode, t.gedung_nama, t.lantai, t.jenis`;
 
 const BuatLaporanSchema = z.object({
   toilet_id: z.string().min(1).max(50),
@@ -23,7 +23,7 @@ app.post('/', async (c) => {
   }
   const { toilet_id, teks, foto_key } = parsed.data;
 
-  const toilet = await c.env.DB.prepare(`SELECT nama FROM toilets WHERE id = ? AND aktif = 1`)
+  const toilet = await c.env.DB.prepare(`SELECT nama FROM toilet_info WHERE id = ? AND aktif = 1`)
     .bind(toilet_id)
     .first<{ nama: string }>();
   if (!toilet) return c.json({ error: 'Kode WC tidak dikenal. Periksa QR yang kamu scan.' }, 404);
@@ -52,10 +52,86 @@ app.post('/', async (c) => {
   return c.json({ id, toilet: toilet.nama, duplikat: false }, 201);
 });
 
+/**
+ * Publik: seluruh laporan beserta status penanganannya, terbuka untuk siapa saja.
+ *
+ * Sengaja tidak menyertakan teks asli, foto, dan nama petugas. Yang ditampilkan
+ * adalah ringkasan hasil analisis — kalimatnya sudah netral dan bebas kata kasar —
+ * sehingga papan terbuka ini tidak menjadi jalan keluar bagi isi laporan mentah
+ * atau wajah orang yang tidak sengaja terfoto.
+ */
+app.get('/publik', async (c) => {
+  const { status, prioritas } = c.req.query();
+  const limit = Math.min(Number(c.req.query('limit') ?? 100) || 100, 200);
+
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (status && (STATUS as readonly string[]).includes(status)) {
+    where.push('r.status = ?');
+    params.push(status);
+  }
+  if (prioritas && (PRIORITAS as readonly string[]).includes(prioritas)) {
+    where.push('r.prioritas = ?');
+    params.push(prioritas);
+  }
+
+  const [daftar, jumlah] = await c.env.DB.batch<Record<string, unknown>>([
+    c.env.DB.prepare(
+      `SELECT r.id, r.status, r.prioritas, r.kategori, r.ringkasan, r.ai_status,
+              r.created_at, r.selesai_at, t.nama AS toilet_nama, t.gedung_kode, t.lantai
+         FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
+         ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+        ORDER BY
+          CASE r.status WHEN 'baru' THEN 0 WHEN 'diproses' THEN 1 ELSE 2 END,
+          r.created_at DESC
+        LIMIT ?`,
+    ).bind(...params, limit),
+    c.env.DB.prepare(
+      `SELECT COUNT(*) AS total, SUM(status = 'selesai') AS selesai FROM reports`,
+    ),
+  ]);
+
+  return c.json({
+    data: daftar.results.map((row) => ({
+      ...row,
+      kategori: row.kategori ? JSON.parse(row.kategori as string) : [],
+    })),
+    jumlah: jumlah.results[0] ?? { total: 0, selesai: 0 },
+  });
+});
+
+/**
+ * Publik: status ringkas beberapa laporan sekaligus.
+ *
+ * Dipakai daftar "Laporan saya" di beranda. Id laporan berupa UUID acak yang
+ * hanya dipegang pelapornya, jadi endpoint ini tidak membocorkan apa pun yang
+ * tidak sudah bisa dilihat lewat halaman konfirmasi.
+ */
+app.get('/ringkas', async (c) => {
+  const ids = (c.req.query('ids') ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 30);
+  if (!ids.length) return c.json({ data: [] });
+
+  const rows = await c.env.DB.prepare(
+    `SELECT r.id, r.status, r.prioritas, r.ai_status, r.ringkasan, r.teks, r.created_at,
+            t.nama AS toilet_nama
+       FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
+      WHERE r.id IN (${ids.map(() => '?').join(',')})
+      ORDER BY r.created_at DESC`,
+  )
+    .bind(...ids)
+    .all();
+
+  return c.json({ data: rows.results });
+});
+
 /** Publik: mahasiswa melihat status laporannya sendiri lewat link konfirmasi. */
 app.get('/:id', async (c) => {
   const row = await c.env.DB.prepare(
-    `SELECT ${KOLOM} FROM reports r JOIN toilets t ON t.id = r.toilet_id WHERE r.id = ?`,
+    `SELECT ${KOLOM} FROM reports r JOIN toilet_info t ON t.id = r.toilet_id WHERE r.id = ?`,
   )
     .bind(c.req.param('id'))
     .first<ReportRow>();
@@ -84,8 +160,8 @@ app.get('/', wajibPetugas, async (c) => {
     params.push(toilet_id);
   }
   if (gedung) {
-    where.push('t.gedung = ?');
-    params.push(gedung);
+    where.push('t.gedung_kode = ?');
+    params.push(gedung.toUpperCase());
   }
   if (tanggal) {
     const { mulai, selesai } = rentangHariWIB(tanggal);
@@ -95,7 +171,7 @@ app.get('/', wajibPetugas, async (c) => {
 
   const rows = await c.env.DB.prepare(
     `SELECT ${KOLOM}
-       FROM reports r JOIN toilets t ON t.id = r.toilet_id
+       FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY
         CASE r.status WHEN 'baru' THEN 0 WHEN 'diproses' THEN 1 ELSE 2 END,
@@ -144,6 +220,26 @@ app.post('/:id/analisa-ulang', wajibPetugas, async (c) => {
     .bind(id)
     .run();
   c.executionCtx.waitUntil(jalankanAnalisis(c.env, id));
+  return c.json({ ok: true });
+});
+
+/**
+ * Petugas: menghapus laporan permanen.
+ *
+ * Diperlukan sejak daftar laporan dibuka untuk umum — spam dan isi yang tidak
+ * pantas harus bisa disingkirkan. Fotonya ikut dihapus dari R2 supaya tidak ada
+ * berkas yatim yang terus memakan penyimpanan.
+ */
+app.delete('/:id', wajibPetugas, async (c) => {
+  const id = c.req.param('id');
+  const row = await c.env.DB.prepare(`SELECT foto_key FROM reports WHERE id = ?`)
+    .bind(id)
+    .first<{ foto_key: string | null }>();
+  if (!row) return c.json({ error: 'Laporan tidak ditemukan' }, 404);
+
+  await c.env.DB.prepare(`DELETE FROM reports WHERE id = ?`).bind(id).run();
+  if (row.foto_key) await c.env.BUCKET.delete(row.foto_key).catch(() => {});
+
   return c.json({ ok: true });
 });
 

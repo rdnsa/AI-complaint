@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,29 +9,57 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-krem-100 text-maroon-900 antialiased;
+  }
+  /* Latar bermotif halus supaya halaman tidak terasa kosong tanpa mengganggu teks. */
+  #root {
+    background-image: radial-gradient(circle at 1px 1px, rgba(90, 42, 32, 0.055) 1px, transparent 0);
+    background-size: 22px 22px;
+    min-height: 100vh;
   }
 }
 
 @layer components {
   .kartu {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-2xl border border-krem-200 bg-white shadow-kartu;
   }
+
   .tombol {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-           transition disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+           transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .tombol-utama {
-    @apply tombol bg-merek-600 text-white hover:bg-merek-700;
+    @apply tombol bg-bata-500 text-white shadow-naik hover:bg-bata-600 active:scale-[.98];
   }
   .tombol-netral {
-    @apply tombol border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+    @apply tombol border border-krem-300 bg-white text-maroon-700 hover:border-bata-300 hover:bg-krem-50;
   }
+  .tombol-gelap {
+    @apply tombol bg-maroon-800 text-white hover:bg-maroon-700;
+  }
+
   .input {
-    @apply w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base outline-none
-           focus:border-merek-500 focus:ring-2 focus:ring-merek-100;
+    @apply w-full rounded-xl border border-krem-300 bg-white px-3.5 py-3 text-base text-maroon-900
+           outline-none transition placeholder:text-maroon-200
+           focus:border-bata-400 focus:ring-4 focus:ring-bata-100;
   }
   .label {
-    @apply mb-1.5 block text-sm font-medium text-slate-700;
+    @apply mb-1.5 block text-sm font-semibold text-maroon-700;
+  }
+
+  /* Pilihan jenis WC pada formulir: kartu pilih-satu yang cukup besar untuk jempol. */
+  .pilihan {
+    @apply flex flex-1 flex-col items-center gap-1 rounded-xl border-2 px-3 py-3 text-sm font-semibold
+           transition-all duration-150;
+  }
+  .pilihan-mati {
+    @apply pilihan border-krem-200 bg-white text-maroon-600 hover:border-bata-200 hover:bg-krem-50;
+  }
+  .pilihan-hidup {
+    @apply pilihan border-bata-500 bg-bata-50 text-bata-700 shadow-naik;
+  }
+
+  .judul-bagian {
+    @apply text-xs font-bold uppercase tracking-[0.14em] text-maroon-600;
   }
 }

@@ -54,10 +54,12 @@ export interface ReportRow {
   ai_ms: number | null;
   created_at: string;
   updated_at: string;
-  // hasil JOIN toilets
+  // hasil JOIN view toilet_info
   toilet_nama?: string;
-  gedung?: string;
+  gedung_kode?: string;
+  gedung_nama?: string;
   lantai?: number;
+  jenis?: string;
 }
 
 /** Bentuk yang dikirim ke frontend: kategori sudah jadi array, foto sudah jadi URL. */

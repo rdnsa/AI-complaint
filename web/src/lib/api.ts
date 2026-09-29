@@ -1,24 +1,35 @@
 export type Prioritas = 'rendah' | 'sedang' | 'tinggi';
 export type StatusLaporan = 'baru' | 'diproses' | 'selesai';
 
-export interface Toilet {
-  id: string;
-  gedung: string;
-  lantai: number;
-  jenis: string;
+export type Jenis = 'pria' | 'wanita' | 'disabilitas';
+
+export interface Gedung {
+  kode: string;
   nama: string;
+  lantai: number[];
+}
+
+/** Satu lantai pada satu gedung — inilah yang diwakili sebuah QR. */
+export interface Lokasi {
+  gedung_kode: string;
+  gedung_nama: string;
+  lantai: number;
+  toilets: Array<{ id: string; jenis: Jenis }>;
 }
 
 export interface Laporan {
   id: string;
   toilet_id: string;
   toilet_nama: string;
-  gedung: string;
+  gedung_kode: string;
+  gedung_nama: string;
   lantai: number;
+  jenis: Jenis;
   teks: string;
   foto_url: string | null;
   status: StatusLaporan;
   petugas: string | null;
+  selesai_at: string | null;
   ai_status: 'pending' | 'ok' | 'gagal';
   kategori: string[];
   prioritas: Prioritas | null;
@@ -26,6 +37,33 @@ export interface Laporan {
   rekomendasi: string | null;
   ai_ms: number | null;
   created_at: string;
+}
+
+/** Bentuk ringkas yang dipakai daftar "Laporan saya". */
+export interface LaporanRingkas {
+  id: string;
+  status: StatusLaporan;
+  prioritas: Prioritas | null;
+  ai_status: 'pending' | 'ok' | 'gagal';
+  ringkasan: string | null;
+  teks: string;
+  toilet_nama: string;
+  created_at: string;
+}
+
+/** Bentuk laporan pada papan terbuka: tanpa teks asli, foto, dan nama petugas. */
+export interface LaporanPublik {
+  id: string;
+  status: StatusLaporan;
+  prioritas: Prioritas | null;
+  kategori: string[];
+  ringkasan: string | null;
+  ai_status: 'pending' | 'ok' | 'gagal';
+  toilet_nama: string;
+  gedung_kode: string;
+  lantai: number;
+  created_at: string;
+  selesai_at: string | null;
 }
 
 export interface Statistik {
@@ -69,8 +107,8 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  toilet: (id: string) => req<Toilet>(`/api/toilets/${encodeURIComponent(id)}`),
-  daftarToilet: () => req<{ data: Toilet[] }>('/api/toilets'),
+  daftarGedung: () => req<{ data: Gedung[] }>('/api/lokasi'),
+  lokasi: (id: string) => req<Lokasi>(`/api/lokasi/${encodeURIComponent(id)}`),
 
   kirimLaporan: (body: { toilet_id: string; teks: string; foto_key?: string | null }) =>
     req<{ id: string; toilet: string; duplikat: boolean }>('/api/reports', {
@@ -79,6 +117,18 @@ export const api = {
     }),
 
   laporan: (id: string) => req<Laporan>(`/api/reports/${id}`),
+
+  /** Papan laporan terbuka — tidak memerlukan login. */
+  laporanPublik: (filter: Record<string, string>) => {
+    const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
+    return req<{ data: LaporanPublik[]; jumlah: { total: number; selesai: number | null } }>(
+      `/api/reports/publik?${q}`,
+    );
+  },
+
+  /** Status ringkas beberapa laporan sekaligus, untuk daftar "Laporan saya". */
+  ringkasLaporan: (ids: string[]) =>
+    req<{ data: LaporanRingkas[] }>(`/api/reports/ringkas?ids=${ids.join(',')}`),
 
   unggahFoto: (file: File) => {
     const fd = new FormData();
@@ -99,20 +149,10 @@ export const api = {
   ubahStatus: (id: string, status: StatusLaporan) =>
     req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   analisaUlang: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/analisa-ulang`, { method: 'POST' }),
+  hapusLaporan: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 
   statistik: (tanggal?: string) => req<Statistik>(`/api/summary/stats${tanggal ? `?tanggal=${tanggal}` : ''}`),
   ringkasan: (tanggal?: string) => req<Ringkasan>(`/api/summary${tanggal ? `?tanggal=${tanggal}` : ''}`),
   buatRingkasan: (tanggal?: string) =>
     req<Ringkasan>(`/api/summary/generate${tanggal ? `?tanggal=${tanggal}` : ''}`, { method: 'POST' }),
 };
-
-export function waktuRelatif(iso: string): string {
-  // created_at dari D1 berformat 'YYYY-MM-DD HH:MM:SS' dalam UTC.
-  const t = Date.parse(iso.includes('T') ? iso : `${iso.replace(' ', 'T')}Z`);
-  const menit = Math.floor((Date.now() - t) / 60000);
-  if (menit < 1) return 'baru saja';
-  if (menit < 60) return `${menit} menit lalu`;
-  const jam = Math.floor(menit / 60);
-  if (jam < 24) return `${jam} jam lalu`;
-  return `${Math.floor(jam / 24)} hari lalu`;
-}
