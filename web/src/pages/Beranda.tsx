@@ -5,6 +5,7 @@ import { LencanaStatus } from '../components/Lencana';
 import { api, type Gedung, type LaporanRingkas } from '../lib/api';
 import { useBahasa, useWaktuRelatif } from '../lib/i18n';
 import { ambilRiwayat, hapusRiwayat } from '../lib/riwayat';
+import { useSesi } from '../lib/sesi';
 
 function BarisRiwayat({ laporan }: { laporan: LaporanRingkas }) {
   const { t } = useBahasa();
@@ -27,6 +28,7 @@ function BarisRiwayat({ laporan }: { laporan: LaporanRingkas }) {
 
 export default function Beranda() {
   const { t } = useBahasa();
+  const { sesi, keluar } = useSesi();
   const [gedung, setGedung] = useState<Gedung[]>([]);
   const [memuat, setMemuat] = useState(true);
   const [riwayat, setRiwayat] = useState<LaporanRingkas[]>([]);
@@ -78,13 +80,44 @@ export default function Beranda() {
           </section>
         )}
 
-        <Link
-          to="/laporan"
-          className="kartu mt-6 flex items-center justify-between gap-3 p-4 hover:shadow-naik"
-        >
-          <span className="font-semibold text-maroon-900">{t('nav.semua_laporan')}</span>
-          <span className="shrink-0 font-bold text-bata-600">→</span>
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center gap-2 rounded-xl bg-white px-4 py-3 ring-1 ring-krem-200">
+          {sesi ? (
+            <>
+              <span className="font-semibold text-maroon-900">
+                {t('sesi.halo', { nama: sesi.nama })}
+              </span>
+              <button
+                onClick={keluar}
+                className="ml-auto text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
+              >
+                {t('sesi.keluar')}
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-sm text-maroon-700">{t('daftar.keterangan')}</span>
+              <span className="ml-auto flex gap-2">
+                <Link to="/masuk" className="tombol-netral !py-1.5 text-xs">
+                  {t('sesi.masuk')}
+                </Link>
+                <Link to="/daftar" className="tombol-utama !py-1.5 text-xs">
+                  {t('sesi.daftar')}
+                </Link>
+              </span>
+            </>
+          )}
+        </div>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <Link to="/laporan" className="kartu flex items-center justify-between gap-3 p-4 hover:shadow-naik">
+            <span className="font-semibold text-maroon-900">{t('nav.semua_laporan')}</span>
+            <span className="shrink-0 font-bold text-bata-600">→</span>
+          </Link>
+          <Link to="/peringkat" className="kartu flex items-center justify-between gap-3 p-4 hover:shadow-naik">
+            <span className="font-semibold text-maroon-900">🏆 {t('peringkat.lihat')}</span>
+            <span className="shrink-0 font-bold text-bata-600">→</span>
+          </Link>
+        </div>
 
         <p className="mt-6 leading-relaxed text-maroon-700">{t('beranda.petunjuk')}</p>
 

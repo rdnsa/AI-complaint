@@ -4,6 +4,7 @@ import Kop from '../components/Kop';
 import { api, type Jenis, type Lokasi } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
 import { simpanRiwayat } from '../lib/riwayat';
+import { useSesi } from '../lib/sesi';
 
 const IKON: Record<Jenis, string> = { pria: '♂', wanita: '♀', disabilitas: '♿' };
 
@@ -11,6 +12,7 @@ export default function Lapor() {
   const { lokasiId = '' } = useParams();
   const navigate = useNavigate();
   const { t } = useBahasa();
+  const { sesi } = useSesi();
 
   const [lokasi, setLokasi] = useState<Lokasi | null>(null);
   const [memuat, setMemuat] = useState(true);
@@ -45,12 +47,13 @@ export default function Lapor() {
   async function kirim(e: React.FormEvent) {
     e.preventDefault();
     if (teks.trim().length < 5) return setGalat(t('lapor.galat_pendek'));
+    if (!foto) return setGalat(t('lapor.foto_alasan'));
 
     setMengirim(true);
     setGalat(null);
     try {
       // Foto diunggah lebih dulu supaya laporan tersimpan dengan referensi yang sudah pasti ada.
-      const foto_key = foto ? (await api.unggahFoto(foto)).key : null;
+      const foto_key = (await api.unggahFoto(foto)).key;
       const hasil = await api.kirimLaporan({ toilet_id: toiletId, teks: teks.trim(), foto_key });
       // Tanpa login, jejak inilah yang membuat pelapor bisa kembali melihat statusnya.
       simpanRiwayat({ id: hasil.id, lokasi: hasil.toilet, waktu: new Date().toISOString() });
@@ -122,7 +125,22 @@ export default function Lapor() {
           </div>
         </div>
 
-        <p className="mt-5 leading-relaxed text-maroon-700">{t('lapor.ajakan')}</p>
+        {/* Melapor tanpa akun tetap boleh; keterangan ini hanya menjelaskan
+            konsekuensinya terhadap papan peringkat. */}
+        <p className="mt-5 rounded-xl bg-krem-50 px-3.5 py-2.5 text-sm text-maroon-700 ring-1 ring-krem-200">
+          {sesi?.peran === 'pelapor' ? (
+            t('sesi.sebagai', { nama: sesi.nama })
+          ) : (
+            <>
+              {t('sesi.anonim_info')}{' '}
+              <Link to="/masuk" className="font-semibold text-bata-600 underline underline-offset-2">
+                {t('sesi.masuk')}
+              </Link>
+            </>
+          )}
+        </p>
+
+        <p className="mt-4 leading-relaxed text-maroon-700">{t('lapor.ajakan')}</p>
 
         <form onSubmit={kirim} className="mt-5 space-y-5">
           <div>
@@ -153,6 +171,9 @@ export default function Lapor() {
 
           <div>
             <span className="label">{t('lapor.foto')}</span>
+            <p className="-mt-1 mb-2 text-xs leading-relaxed text-maroon-600">
+              {t('lapor.foto_alasan')}
+            </p>
             <input
               ref={inputFoto}
               type="file"
@@ -201,7 +222,7 @@ export default function Lapor() {
             <div className="mx-auto max-w-lg">
               <button
                 type="submit"
-                disabled={mengirim || !toiletId}
+                disabled={mengirim || !toiletId || !foto}
                 className="tombol-utama w-full py-3.5 text-base"
               >
                 {mengirim ? t('lapor.mengirim') : t('lapor.kirim')}

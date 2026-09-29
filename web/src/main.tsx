@@ -2,8 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { PenyediaBahasa } from './lib/i18n';
+import { PenyediaSesi } from './lib/sesi';
 import Beranda from './pages/Beranda';
+import Daftar from './pages/Daftar';
 import Dashboard from './pages/Dashboard';
+import Masuk from './pages/Masuk';
+import Peringkat from './pages/Peringkat';
 import Lapor from './pages/Lapor';
 import LaporanPublik from './pages/LaporanPublik';
 import StatusLaporan from './pages/StatusLaporan';
@@ -12,7 +16,8 @@ import './index.css';
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <PenyediaBahasa>
-      <BrowserRouter>
+      <PenyediaSesi>
+        <BrowserRouter>
         <Routes>
           <Route path="/" element={<Beranda />} />
           {/* Tujuan QR: satu URL per lantai, mis. /lapor/A-1 */}
@@ -20,10 +25,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           {/* Papan laporan terbuka, dan halaman status satu laporan. */}
           <Route path="/laporan" element={<LaporanPublik />} />
           <Route path="/laporan/:id" element={<StatusLaporan />} />
+          <Route path="/masuk" element={<Masuk />} />
+          <Route path="/daftar" element={<Daftar />} />
+          <Route path="/peringkat" element={<Peringkat />} />
           <Route path="/petugas" element={<Dashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </PenyediaSesi>
     </PenyediaBahasa>
   </React.StrictMode>,
 );

@@ -1,3 +1,4 @@
+import { catat, SISTEM } from './aktivitas';
 import { ringkasHarian } from './llm';
 import { rentangHariWIB } from './waktu';
 import type { Env } from '../types';
@@ -43,6 +44,12 @@ export async function buatRingkasanHarian(env: Env, tanggal: string): Promise<Ha
   )
     .bind(tanggal, laporan.length, hasil.ringkasan, JSON.stringify(hasil.sorotan))
     .run();
+
+  await catat(env, {
+    aksi: 'ringkasan',
+    pelaku: SISTEM,
+    ringkas: `Ringkasan harian ${tanggal} disusun dari ${laporan.length} laporan`,
+  });
 
   return { tanggal, total_laporan: laporan.length, ...hasil };
 }

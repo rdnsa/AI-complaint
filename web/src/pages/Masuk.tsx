@@ -1,0 +1,81 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import Kop from '../components/Kop';
+import { api } from '../lib/api';
+import { useBahasa } from '../lib/i18n';
+import { useSesi } from '../lib/sesi';
+
+export default function Masuk() {
+  const { t } = useBahasa();
+  const { pasang } = useSesi();
+  const navigate = useNavigate();
+
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [galat, setGalat] = useState<string | null>(null);
+  const [proses, setProses] = useState(false);
+
+  async function kirim(e: React.FormEvent) {
+    e.preventDefault();
+    setProses(true);
+    setGalat(null);
+    try {
+      const sesi = await api.masuk(username, password);
+      pasang(sesi);
+      // Pengelola langsung dibawa ke dashboard; pelapor kembali ke beranda.
+      navigate(sesi.peran === 'pelapor' ? '/' : '/petugas', { replace: true });
+    } catch (err) {
+      setGalat(err instanceof Error ? err.message : t('login.galat'));
+      setProses(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen">
+      <Kop judul={t('login.judul')} keterangan={t('login.keterangan')} ramping />
+      <main className="mx-auto max-w-sm px-4">
+        <form onSubmit={kirim} className="kartu mt-8 space-y-4 p-5">
+          <div>
+            <label htmlFor="u" className="label">
+              {t('login.username')}
+            </label>
+            <input
+              id="u"
+              className="input"
+              autoCapitalize="none"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="p" className="label">
+              {t('login.password')}
+            </label>
+            <input
+              id="p"
+              type="password"
+              className="input"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {galat && <p className="text-sm font-medium text-red-700">{galat}</p>}
+          <button type="submit" disabled={proses} className="tombol-utama w-full py-3">
+            {proses ? t('login.memeriksa') : t('login.masuk')}
+          </button>
+        </form>
+
+        <Link
+          to="/daftar"
+          className="mx-auto mt-6 block w-fit text-sm font-semibold text-maroon-600 underline decoration-krem-300 underline-offset-4 hover:text-bata-600"
+        >
+          {t('login.belum_punya')}
+        </Link>
+      </main>
+    </div>
+  );
+}

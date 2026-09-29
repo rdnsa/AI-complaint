@@ -1,9 +1,12 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
+import aktivitasRoutes from './routes/aktivitas';
 import authRoutes from './routes/auth';
 import reportRoutes from './routes/reports';
 import summaryRoutes from './routes/summary';
 import lokasiRoutes from './routes/lokasi';
+import penggunaRoutes from './routes/pengguna';
+import peringkatRoutes from './routes/peringkat';
 import uploadRoutes from './routes/uploads';
 import { buatRingkasanHarian } from './lib/ringkasan';
 import { tanggalWIB } from './lib/waktu';
@@ -20,6 +23,9 @@ app.route('/api/lokasi', lokasiRoutes);
 app.route('/api/reports', reportRoutes);
 app.route('/api/uploads', uploadRoutes);
 app.route('/api/summary', summaryRoutes);
+app.route('/api/aktivitas', aktivitasRoutes);
+app.route('/api/pengguna', penggunaRoutes);
+app.route('/api/peringkat', peringkatRoutes);
 
 app.notFound(async (c) => {
   if (c.req.path.startsWith('/api/')) return c.json({ error: 'Endpoint tidak ditemukan' }, 404);

@@ -1,3 +1,27 @@
+export type Peran = 'admin' | 'petugas' | 'pelapor';
+
+export interface Sesi {
+  id: string;
+  nama: string;
+  peran: Peran;
+}
+
+export interface AkunPengelola {
+  id: string;
+  username: string;
+  nama: string;
+  peran: Peran;
+  aktif: number;
+  created_at: string;
+}
+
+export interface BarisPeringkat {
+  id: string;
+  nama: string;
+  laporan: number;
+  selesai: number | null;
+}
+
 export type Prioritas = 'rendah' | 'sedang' | 'tinggi';
 export type StatusLaporan = 'baru' | 'diproses' | 'selesai';
 
@@ -27,6 +51,7 @@ export interface Laporan {
   jenis: Jenis;
   teks: string;
   foto_url: string | null;
+  foto_selesai_url: string | null;
   status: StatusLaporan;
   petugas: string | null;
   selesai_at: string | null;
@@ -64,6 +89,26 @@ export interface LaporanPublik {
   lantai: number;
   created_at: string;
   selesai_at: string | null;
+  foto_selesai_url: string | null;
+}
+
+/** Angka-angka untuk grafik di dashboard. */
+export interface DataGrafik {
+  harian: Array<{ tanggal: string; total: number; selesai: number }>;
+  kategori: Array<{ kategori: string; jumlah: number }>;
+  prioritas: Array<{ prioritas: string; jumlah: number }>;
+  gedung: Array<{ gedung_kode: string; gedung_nama: string; jumlah: number }>;
+  penyelesaian: { jumlah: number; menit: number | null };
+}
+
+export interface Aktivitas {
+  id: number;
+  waktu: string;
+  aksi: 'lapor' | 'analisis' | 'analisis_gagal' | 'status' | 'hapus' | 'masuk' | 'ringkasan';
+  report_id: string | null;
+  pelaku: string;
+  ringkas: string;
+  rincian: Record<string, unknown> | null;
 }
 
 export interface Statistik {
@@ -130,26 +175,56 @@ export const api = {
   ringkasLaporan: (ids: string[]) =>
     req<{ data: LaporanRingkas[] }>(`/api/reports/ringkas?ids=${ids.join(',')}`),
 
-  unggahFoto: (file: File) => {
+  /** `jenis` memisahkan foto keadaan dari pelapor dan foto bukti dari petugas. */
+  unggahFoto: (file: File, jenis: 'laporan' | 'bukti' = 'laporan') => {
     const fd = new FormData();
     fd.append('file', file);
-    return req<{ key: string; url: string }>('/api/uploads', { method: 'POST', body: fd });
+    return req<{ key: string; url: string }>(`/api/uploads?jenis=${jenis}`, {
+      method: 'POST',
+      body: fd,
+    });
   },
 
-  // --- petugas ---
-  login: (nama: string, password: string) =>
-    req<{ nama: string }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ nama, password }) }),
-  logout: () => req<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
-  saya: () => req<{ nama: string }>('/api/auth/me'),
+  // --- akun ---
+  masuk: (username: string, password: string) =>
+    req<Sesi>('/api/auth/masuk', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  daftar: (username: string, nama: string, password: string) =>
+    req<Sesi>('/api/auth/daftar', {
+      method: 'POST',
+      body: JSON.stringify({ username, nama, password }),
+    }),
+  keluar: () => req<{ ok: boolean }>('/api/auth/keluar', { method: 'POST' }),
+  saya: () => req<Sesi>('/api/auth/saya'),
+
+  // --- khusus admin ---
+  daftarPengguna: () => req<{ data: AkunPengelola[] }>('/api/pengguna'),
+  buatPengguna: (body: { username: string; nama: string; password: string }) =>
+    req<AkunPengelola>('/api/pengguna', { method: 'POST', body: JSON.stringify(body) }),
+  ubahPengguna: (id: string, body: { nama?: string; password?: string; aktif?: boolean }) =>
+    req<{ ok: boolean }>(`/api/pengguna/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+
+  peringkat: () =>
+    req<{ data: BarisPeringkat[]; saya: { peringkat: number; laporan: number } | null }>(
+      '/api/peringkat',
+    ),
 
   daftarLaporan: (filter: Record<string, string>) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: Laporan[] }>(`/api/reports?${q}`);
   },
-  ubahStatus: (id: string, status: StatusLaporan) =>
-    req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  ubahStatus: (id: string, status: StatusLaporan, foto_selesai_key?: string) =>
+    req<{ ok: boolean }>(`/api/reports/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, foto_selesai_key }),
+    }),
   analisaUlang: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/analisa-ulang`, { method: 'POST' }),
   hapusLaporan: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
+
+  grafik: () => req<DataGrafik>('/api/summary/grafik'),
+  aktivitas: (filter: Record<string, string> = {}) => {
+    const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
+    return req<{ data: Aktivitas[] }>(`/api/aktivitas?${q}`);
+  },
 
   statistik: (tanggal?: string) => req<Statistik>(`/api/summary/stats${tanggal ? `?tanggal=${tanggal}` : ''}`),
   ringkasan: (tanggal?: string) => req<Ringkasan>(`/api/summary${tanggal ? `?tanggal=${tanggal}` : ''}`),

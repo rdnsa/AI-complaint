@@ -1,23 +1,34 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Kop from '../components/Kop';
+import PanelAktivitas from '../components/PanelAktivitas';
+import PanelGrafik from '../components/PanelGrafik';
+import PanelPengguna from '../components/PanelPengguna';
 import { LencanaKategori, LencanaPrioritas, LencanaStatus } from '../components/Lencana';
-import { api, type Laporan, type Ringkasan, type Statistik, type StatusLaporan } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+import {
+  api,
+  type Laporan,
+  type Ringkasan,
+  type Sesi,
+  type Statistik,
+  type StatusLaporan,
+} from '../lib/api';
 import { useBahasa, useWaktuRelatif } from '../lib/i18n';
+import { useSesi } from '../lib/sesi';
 
 export default function Dashboard() {
   const { t } = useBahasa();
-  const [petugas, setPetugas] = useState<string | null>(null);
-  const [memeriksaSesi, setMemeriksaSesi] = useState(true);
+  const { sesi, memuat } = useSesi();
+  const navigate = useNavigate();
+
+  const bolehMasuk = sesi && sesi.peran !== 'pelapor';
 
   useEffect(() => {
-    api
-      .saya()
-      .then((r) => setPetugas(r.nama))
-      .catch(() => setPetugas(null))
-      .finally(() => setMemeriksaSesi(false));
-  }, []);
+    // Pelapor tidak punya urusan di sini; halaman masuk yang menentukan tujuannya.
+    if (!memuat && !bolehMasuk) navigate('/masuk', { replace: true });
+  }, [memuat, bolehMasuk, navigate]);
 
-  if (memeriksaSesi) {
+  if (!bolehMasuk) {
     return (
       <div className="min-h-screen">
         <Kop judul={t('dash.judul')} ramping />
@@ -25,71 +36,28 @@ export default function Dashboard() {
       </div>
     );
   }
-  if (!petugas) return <FormLogin onSukses={setPetugas} />;
-  return <Papan petugas={petugas} onLogout={() => setPetugas(null)} />;
+
+  return <Papan sesi={sesi} />;
 }
 
-function FormLogin({ onSukses }: { onSukses: (nama: string) => void }) {
+function Papan({ sesi }: { sesi: Sesi }) {
   const { t } = useBahasa();
-  const [nama, setNama] = useState('');
-  const [password, setPassword] = useState('');
-  const [galat, setGalat] = useState<string | null>(null);
-  const [proses, setProses] = useState(false);
-
-  async function masuk(e: React.FormEvent) {
-    e.preventDefault();
-    setProses(true);
-    setGalat(null);
-    try {
-      onSukses((await api.login(nama, password)).nama);
-    } catch (err) {
-      setGalat(err instanceof Error ? err.message : t('login.galat'));
-      setProses(false);
-    }
-  }
-
-  return (
-    <div className="min-h-screen">
-      <Kop judul={t('login.judul')} keterangan={t('login.keterangan')} ramping />
-      <main className="mx-auto max-w-sm px-4">
-        <form onSubmit={masuk} className="kartu mt-8 space-y-4 p-5">
-          <div>
-            <label htmlFor="nama" className="label">
-              {t('login.nama')}
-            </label>
-            <input id="nama" className="input" value={nama} onChange={(e) => setNama(e.target.value)} required />
-          </div>
-          <div>
-            <label htmlFor="pw" className="label">
-              {t('login.password')}
-            </label>
-            <input
-              id="pw"
-              type="password"
-              className="input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          {galat && <p className="text-sm font-medium text-red-700">{galat}</p>}
-          <button type="submit" disabled={proses} className="tombol-utama w-full py-3">
-            {proses ? t('login.memeriksa') : t('login.masuk')}
-          </button>
-        </form>
-      </main>
-    </div>
-  );
-}
-
-function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void }) {
-  const { t } = useBahasa();
+  const { keluar } = useSesi();
+  const navigate = useNavigate();
+  const petugas = sesi.nama;
   const [laporan, setLaporan] = useState<Laporan[]>([]);
   const [statistik, setStatistik] = useState<Statistik | null>(null);
   const [ringkasan, setRingkasan] = useState<Ringkasan | null>(null);
   const [filter, setFilter] = useState({ status: '', prioritas: '' });
   const [memuat, setMemuat] = useState(true);
   const [menyusun, setMenyusun] = useState(false);
+  const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas' | 'pengguna'>('laporan');
+  // Pengelolaan akun hanya muncul bagi admin — petugas biasa tidak melihat tabnya
+  // sama sekali, dan server tetap menolak walau tabnya dipaksa muncul.
+  const tabs =
+    sesi.peran === 'admin'
+      ? (['laporan', 'grafik', 'aktivitas', 'pengguna'] as const)
+      : (['laporan', 'grafik', 'aktivitas'] as const);
 
   const muat = useCallback(async () => {
     const [l, s, r] = await Promise.all([
@@ -116,10 +84,10 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
     muat();
   }
 
-  async function ubahStatus(id: string, status: StatusLaporan) {
+  async function ubahStatus(id: string, status: StatusLaporan, fotoBukti?: string) {
     // Perbarui tampilan lebih dulu supaya tombol terasa responsif, lalu sinkronkan.
     setLaporan((prev) => prev.map((l) => (l.id === id ? { ...l, status, petugas } : l)));
-    await api.ubahStatus(id, status).catch(() => {});
+    await api.ubahStatus(id, status, fotoBukti).catch(() => {});
     muat();
   }
 
@@ -127,13 +95,13 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
     <div className="min-h-screen pb-16">
       <Kop
         judul={t('dash.judul')}
-        keterangan={t('dash.sebagai', { nama: petugas })}
+        keterangan={t('dash.sebagai', { nama: `${petugas} · ${sesi.peran}` })}
         ramping
         kanan={
           <button
             onClick={async () => {
-              await api.logout().catch(() => {});
-              onLogout();
+              await keluar();
+              navigate('/masuk', { replace: true });
             }}
             className="rounded-lg bg-white/15 px-3 py-1.5 text-xs font-bold text-white ring-1 ring-white/25 transition hover:bg-white/25"
           >
@@ -143,6 +111,27 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
       />
 
       <main className="mx-auto max-w-5xl px-4">
+        <nav className="mt-5 flex gap-1 rounded-xl bg-white p-1 ring-1 ring-krem-200">
+          {tabs.map((k) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              aria-pressed={tab === k}
+              className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold transition ${
+                tab === k ? 'bg-maroon-800 text-white' : 'text-maroon-700 hover:bg-krem-50'
+              }`}
+            >
+              {t(`tab.${k}`)}
+            </button>
+          ))}
+        </nav>
+
+        {tab === 'grafik' && <PanelGrafik />}
+        {tab === 'aktivitas' && <PanelAktivitas />}
+        {tab === 'pengguna' && sesi.peran === 'admin' && <PanelPengguna />}
+
+        {tab === 'laporan' && (
+          <>
         {statistik && (
           <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Kartu label={t('dash.stat_total')} nilai={statistik.hari_ini.total ?? 0} />
@@ -246,6 +235,8 @@ function Papan({ petugas, onLogout }: { petugas: string; onLogout: () => void })
             />
           ))}
         </div>
+          </>
+        )}
       </main>
     </div>
   );
@@ -273,12 +264,31 @@ function BarisLaporan({
   onHapus,
 }: {
   laporan: Laporan;
-  onUbahStatus: (id: string, status: StatusLaporan) => void;
+  onUbahStatus: (id: string, status: StatusLaporan, fotoBukti?: string) => void;
   onSegarkan: () => void;
   onHapus: (id: string) => void;
 }) {
   const { t } = useBahasa();
   const waktuRelatif = useWaktuRelatif();
+  const inputBukti = useRef<HTMLInputElement>(null);
+  const [mengunggah, setMengunggah] = useState(false);
+
+  /**
+   * Menyelesaikan laporan selalu lewat jalur ini: pilih foto, unggah, baru
+   * status berubah. Server juga menolak 'selesai' tanpa bukti, jadi klaim
+   * penyelesaian tidak bisa dibuat hanya dengan menekan tombol.
+   */
+  async function selesaikan(berkas: File) {
+    setMengunggah(true);
+    try {
+      const { key } = await api.unggahFoto(berkas, 'bukti');
+      onUbahStatus(l.id, 'selesai', key);
+    } catch {
+      /* biarkan status apa adanya bila unggahan gagal */
+    } finally {
+      setMengunggah(false);
+    }
+  }
 
   // Garis tepi kiri memberi tanda prioritas yang terbaca dari kejauhan.
   const tepi =
@@ -315,11 +325,27 @@ function BarisLaporan({
         </p>
       )}
 
-      {l.foto_url && (
-        <a href={l.foto_url} target="_blank" rel="noreferrer">
-          <img src={l.foto_url} alt="" className="mt-3 max-h-64 rounded-xl" />
-        </a>
-      )}
+      <div className="mt-3 flex flex-wrap gap-3">
+        {l.foto_url && (
+          <a href={l.foto_url} target="_blank" rel="noreferrer">
+            <img src={l.foto_url} alt="" className="max-h-44 rounded-xl" />
+          </a>
+        )}
+        {l.foto_selesai_url && (
+          <figure className="m-0">
+            <a href={l.foto_selesai_url} target="_blank" rel="noreferrer">
+              <img
+                src={l.foto_selesai_url}
+                alt=""
+                className="max-h-44 rounded-xl ring-2 ring-emerald-400"
+              />
+            </a>
+            <figcaption className="mt-1 text-xs font-bold text-emerald-700">
+              ✓ {t('dash.bukti')}
+            </figcaption>
+          </figure>
+        )}
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {l.status === 'baru' && (
@@ -328,9 +354,28 @@ function BarisLaporan({
           </button>
         )}
         {l.status !== 'selesai' && (
-          <button onClick={() => onUbahStatus(l.id, 'selesai')} className="tombol-utama !py-1.5 text-xs">
-            {t('dash.selesaikan')}
-          </button>
+          <>
+            <input
+              ref={inputBukti}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) selesaikan(f);
+                e.target.value = '';
+              }}
+            />
+            <button
+              onClick={() => inputBukti.current?.click()}
+              disabled={mengunggah}
+              title={t('dash.bukti_wajib')}
+              className="tombol-utama !py-1.5 text-xs"
+            >
+              {mengunggah ? t('dash.mengunggah') : `📷 ${t('dash.selesaikan')}`}
+            </button>
+          </>
         )}
         {l.ai_status === 'gagal' && (
           <button
