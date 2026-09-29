@@ -107,6 +107,17 @@ svg .arrow { fill: var(--slate); }
 
 footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 
+.sprint { background: var(--accent-soft); border-radius: 18px; padding: 18px 20px; margin: 4px 0 18px; }
+.sprint h4 { margin: 14px 0 6px; }
+.sprint h4:first-child { margin-top: 0; }
+.sprint .goal { font-size: 16.5px; margin: 0 0 4px; }
+.sprint ul { margin-bottom: 4px; }
+.sprint table { background: var(--surface); border-radius: 12px; overflow: hidden; margin-bottom: 0; }
+.sprint td:first-child { font-weight: 600; white-space: nowrap; }
+.sprint td.before { color: var(--slate); }
+#sprint td:first-child { white-space: nowrap; }
+@media (max-width: 700px) { .sprint td:first-child { white-space: normal; } }
+
 @media (max-width: 700px) {
   .card { padding: 20px; border-radius: 18px; }
   .split { grid-template-columns: 1fr; }
@@ -125,7 +136,7 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   .card { padding: 0; margin: 0 0 8mm; border-radius: 0; background: none; }
   .card.checkpoint, #staging, #arsitektur, #rekap, #operasional, #lampiran { break-before: page; }
   h2, h3, h4 { break-after: avoid; }
-  table, figure, .pane, .stat, .note, .ok, pre { break-inside: avoid; }
+  table, figure, .pane, .stat, .note, .ok, pre, .sprint { break-inside: avoid; }
   a { color: var(--ink); }
   .no-print { display: none; }
 }
@@ -149,13 +160,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <h2>Daftar isi</h2>
   <ol class="toc">
     <li><a href="#ringkasan">Ringkasan</a></li>
+    <li><a href="#sprint">Rencana sprint</a></li>
     <li><a href="#staging">Cara memakai situs staging</a></li>
-    <li><a href="#cp1">Checkpoint 1: Pondasi</a></li>
-    <li><a href="#cp2">Checkpoint 2: Sesuai kampus</a></li>
-    <li><a href="#cp3">Checkpoint 3: Bukti, jejak, dan akun</a></li>
-    <li><a href="#cp4">Checkpoint 4: Rapi dan tajam</a></li>
-    <li><a href="#cp5">Checkpoint 5: AI kedua</a></li>
-    <li><a href="#cp6">Checkpoint 6: Siap pakai</a></li>
+    <li><a href="#cp1">Sprint 1 / Checkpoint 1: Pondasi</a></li>
+    <li><a href="#cp2">Sprint 2 / Checkpoint 2: Sesuai kampus</a></li>
+    <li><a href="#cp3">Sprint 3 / Checkpoint 3: Bukti, jejak, dan akun</a></li>
+    <li><a href="#cp4">Sprint 4 / Checkpoint 4: Rapi dan tajam</a></li>
+    <li><a href="#cp5">Sprint 5 / Checkpoint 5: AI kedua</a></li>
+    <li><a href="#cp6">Sprint 6 / Checkpoint 6: Siap pakai</a></li>
     <li><a href="#rekap">Rekap perkembangan</a></li>
   </ol>
 </section>
@@ -181,8 +193,25 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   </table></div>
 </section>
 
+<section class="card" id="sprint">
+  <h2>2. Rencana sprint</h2>
+  <p class="sub">Pengembangan dibagi menjadi enam sprint. Setiap sprint diakhiri satu checkpoint yang bisa dicoba di staging, jadi Sprint N sama dengan Checkpoint N.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Sprint</th><th>Tujuan</th><th>Hasil yang bisa dicoba</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#cp1"><b>Sprint 1</b></a></td><td>Membuktikan alur inti: keluhan dari QR sampai menjadi tiket kerja yang bisa langsung dikerjakan petugas.</td><td>Lapor via QR, klasifikasi dan prioritas oleh AI, dashboard petugas, ringkasan harian</td></tr>
+      <tr><td><a href="#cp2"><b>Sprint 2</b></a></td><td>Menyesuaikan sistem dengan kampus yang sebenarnya, dan membuat penanganan laporan terlihat oleh semua orang.</td><td>QR per lantai di gedung UPI, dwibahasa, pelacakan status, papan laporan publik</td></tr>
+      <tr><td><a href="#cp3"><b>Sprint 3</b></a></td><td>Membuat penyelesaian bisa dibuktikan, dan setiap tindakan bisa dipertanggungjawabkan per orang.</td><td>Foto wajib, bukti penyelesaian, catatan aktivitas, grafik, akun berperan, papan peringkat</td></tr>
+      <tr><td><a href="#cp4"><b>Sprint 4</b></a></td><td>Merapikan fondasi kode dan mempertajam dashboard sebelum menambah fitur AI berikutnya.</td><td>Arsitektur berlapis, dashboard analitis, "Laporan saya" per akun, dokumen panduan dan teknis</td></tr>
+      <tr><td><a href="#cp5"><b>Sprint 5</b></a></td><td>Memakai AI untuk memverifikasi pekerjaan petugas dan menjawab pertanyaan tentang data.</td><td>Pemeriksaan foto bukti oleh vision AI, Chatbot AI, mode gelap</td></tr>
+      <tr><td><a href="#cp6"><b>Sprint 6</b></a></td><td>Menyesuaikan alur dengan cara kerja di lapangan, dan menyiapkan sistem untuk dipakai sungguhan.</td><td>Tiga peran, petugas tanpa login, kamera langsung, laporan pekerjaan, rebrand Kato Report, failover API key</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub" style="font-size:14px;margin:0">Rincian backlog dan perubahan dari sprint ke sprint ada di awal bagian setiap checkpoint.</p>
+</section>
+
 <section class="card" id="staging">
-  <h2>2. Cara memakai situs staging</h2>
+  <h2>3. Cara memakai situs staging</h2>
   <p class="sub">Untuk siapa saja yang ingin mencoba setiap checkpoint.</p>
 
   <h3>Alamat</h3>
@@ -228,7 +257,28 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp1">
-  <div class="cp-head"><span class="cp-num">1</span><div><p class="kicker">Checkpoint 1 · tag <code>checkpoint-1</code> · <code>dd9c91a</code></p><h2>Pondasi: keluhan menjadi tiket kerja</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Keluhan toilet tidak punya saluran. Checkpoint ini membangun alur paling dasar: mahasiswa bisa melapor dalam hitungan detik, dan petugas menerima laporan dalam bentuk yang langsung bisa dikerjakan.</p>
+  <div class="cp-head"><span class="cp-num">1</span><div><p class="kicker">Sprint 1 · Checkpoint 1 · tag <code>checkpoint-1</code> · <code>dd9c91a</code></p><h2>Pondasi: keluhan menjadi tiket kerja</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Keluhan toilet tidak punya saluran. Checkpoint ini membangun alur paling dasar: mahasiswa bisa melapor dalam hitungan detik, dan petugas menerima laporan dalam bentuk yang langsung bisa dikerjakan.</p>
+  <div class="sprint">
+    <h4>Sprint 1</h4>
+    <p class="goal"><b>Tujuan:</b> Membuktikan alur inti: keluhan dari QR sampai menjadi tiket kerja yang bisa langsung dikerjakan petugas.</p>
+    <h4>Backlog sprint</h4>
+    <ul>
+      <li>Sebagai <b>mahasiswa</b>, saya ingin melapor cukup dengan memindai QR, agar tidak perlu mencari siapa yang harus dihubungi.</li>
+      <li>Sebagai <b>petugas</b>, saya ingin keluhan sudah digolongkan dan diprioritaskan, agar tahu mana yang harus dikerjakan lebih dulu.</li>
+      <li>Sebagai <b>petugas</b>, saya ingin mengubah status laporan, agar pekerjaan saya tercatat.</li>
+      <li>Sebagai <b>pimpinan</b>, saya ingin ringkasan harian, agar tahu keadaan toilet tanpa membuka semua laporan.</li>
+    </ul>
+    <h4>Kondisi awal → Sprint 1</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sebelum Sprint 1</th><th>Sprint 1</th></tr></thead>
+      <tbody>
+        <tr><td>Saluran melapor</td><td class="before">Belum ada; keluhan disampaikan lisan atau tidak sama sekali</td><td>Stiker QR per WC yang membuka formulir web</td></tr>
+        <tr><td>Mengolah keluhan</td><td class="before">Dibaca dan dipilah manual</td><td>AI menggolongkan, memberi prioritas, dan menyusun perintah kerja</td></tr>
+        <tr><td>Pekerjaan petugas</td><td class="before">Tidak tercatat</td><td>Dashboard dengan status baru, diproses, dan selesai</td></tr>
+        <tr><td>Informasi untuk pimpinan</td><td class="before">Tidak ada</td><td>Ringkasan harian otomatis pukul 17.00 WIB</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <div class="split">
     <div class="pane"><h4>Yang bisa dilakukan</h4><ul>
       <li><strong>Mahasiswa</strong> memindai QR di pintu WC, menulis keluhan dengan bahasa sehari-hari (bahasa gaul juga dipahami), melampirkan foto kalau mau, lalu mengirim. Konfirmasi langsung muncul.</li>
@@ -253,9 +303,35 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp2">
-  <div class="cp-head"><span class="cp-num">2</span><div><p class="kicker">Checkpoint 2 · tag <code>checkpoint-2</code> · <code>feb7e49</code></p><h2>Sesuai kampus, dan bisa dilacak</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Satu QR per WC berarti terlalu banyak stiker yang harus dicetak dan dirawat, dan daftar lokasinya belum mencerminkan kampus. Selain itu, laporan yang sudah dikirim seolah menghilang: pelapor maupun orang lain tidak bisa melihat tindak lanjutnya.</p>
+  <div class="cp-head"><span class="cp-num">2</span><div><p class="kicker">Sprint 2 · Checkpoint 2 · tag <code>checkpoint-2</code> · <code>feb7e49</code></p><h2>Sesuai kampus, dan bisa dilacak</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Satu QR per WC berarti terlalu banyak stiker yang harus dicetak dan dirawat, dan daftar lokasinya belum mencerminkan kampus. Selain itu, laporan yang sudah dikirim seolah menghilang: pelapor maupun orang lain tidak bisa melihat tindak lanjutnya.</p>
+  <div class="sprint">
+    <h4>Sprint 2</h4>
+    <p class="goal"><b>Tujuan:</b> Menyesuaikan sistem dengan kampus yang sebenarnya, dan membuat penanganan laporan terlihat oleh semua orang.</p>
+    <h4>Backlog sprint</h4>
+    <ul>
+      <li>Sebagai <b>pengelola</b>, saya ingin satu QR per lantai, agar stiker yang harus dicetak dan dirawat lebih sedikit.</li>
+      <li>Sebagai <b>mahasiswa</b>, saya ingin memilih lokasi dari gedung kampus yang asli, dan memakai peta kalau QR rusak.</li>
+      <li>Sebagai <b>mahasiswa</b>, saya ingin melacak status laporan saya setelah mengirimnya.</li>
+      <li>Sebagai <b>warga kampus</b>, saya ingin melihat semua laporan dan statusnya, agar yakin keluhan benar-benar ditindaklanjuti.</li>
+      <li>Sebagai <b>petugas</b>, saya ingin bisa menghapus laporan spam.</li>
+      <li>Sebagai <b>pengguna</b>, saya ingin antarmuka berbahasa Inggris.</li>
+    </ul>
+    <h4>Yang berubah dari Sprint 1 ke Sprint 2</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 1</th><th>Sprint 2</th></tr></thead>
+      <tbody>
+        <tr><td>Stiker QR</td><td class="before">Satu per WC, jadi stikernya banyak</td><td>Satu per lantai (13 stiker); jenis WC dipilih di formulir</td></tr>
+        <tr><td>Daftar lokasi</td><td class="before">Data contoh</td><td>Gedung UPI Kampus Tasikmalaya yang asli, dengan peta kampus di beranda</td></tr>
+        <tr><td>Tampilan</td><td class="before">Generik</td><td>Identitas kampus: maroon, oranye bata, dan krem</td></tr>
+        <tr><td>Bahasa</td><td class="before">Indonesia</td><td>Indonesia dan Inggris</td></tr>
+        <tr><td>Setelah melapor</td><td class="before">Pelapor kehilangan jejak laporannya</td><td>Garis waktu status dan daftar "Laporan saya"</td></tr>
+        <tr><td>Siapa yang melihat laporan</td><td class="before">Hanya petugas</td><td>Siapa pun, lewat papan laporan publik (hanya ringkasan AI)</td></tr>
+        <tr><td>Moderasi</td><td class="before">Tidak ada</td><td>Petugas bisa menghapus laporan spam</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <div class="split">
-    <div class="pane"><h4>Yang berubah</h4><ul>
+    <div class="pane"><h4>Fitur baru</h4><ul>
       <li><strong>Satu QR per lantai.</strong> Pelapor memilih sendiri WC pria, wanita, atau disabilitas. Totalnya 13 stiker untuk 6 gedung yang punya toilet.</li>
       <li><strong>Gedung UPI Kampus Tasikmalaya yang asli</strong>, dengan peta kampus di beranda sebagai cadangan kalau QR rusak.</li>
       <li><strong>Identitas visual kampus</strong> (maroon, oranye bata, krem) dan pilihan bahasa Indonesia/Inggris.</li>
@@ -278,7 +354,32 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp3">
-  <div class="cp-head"><span class="cp-num">3</span><div><p class="kicker">Checkpoint 3 · tag <code>checkpoint-3</code> · <code>2e18c48</code></p><h2>Bukti, jejak, dan akun</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Laporan bisa ditutup dengan satu klik tanpa bukti. Karena semua petugas memakai satu sandi, tidak bisa diketahui siapa melakukan apa, dan mencabut akses satu orang berarti mengganti sandi semua orang.</p>
+  <div class="cp-head"><span class="cp-num">3</span><div><p class="kicker">Sprint 3 · Checkpoint 3 · tag <code>checkpoint-3</code> · <code>2e18c48</code></p><h2>Bukti, jejak, dan akun</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Laporan bisa ditutup dengan satu klik tanpa bukti. Karena semua petugas memakai satu sandi, tidak bisa diketahui siapa melakukan apa, dan mencabut akses satu orang berarti mengganti sandi semua orang.</p>
+  <div class="sprint">
+    <h4>Sprint 3</h4>
+    <p class="goal"><b>Tujuan:</b> Membuat penyelesaian bisa dibuktikan, dan setiap tindakan bisa dipertanggungjawabkan per orang.</p>
+    <h4>Backlog sprint</h4>
+    <ul>
+      <li>Sebagai <b>pengelola</b>, saya ingin laporan hanya bisa ditutup dengan foto bukti.</li>
+      <li>Sebagai <b>petugas</b>, saya ingin melihat foto keadaan dari pelapor, agar tahu apa yang akan dihadapi.</li>
+      <li>Sebagai <b>pimpinan</b>, saya ingin catatan semua tindakan, termasuk laporan yang dihapus.</li>
+      <li>Sebagai <b>pimpinan</b>, saya ingin melihat grafik perkembangan laporan.</li>
+      <li>Sebagai <b>admin</b>, saya ingin setiap petugas punya akun sendiri, agar akses bisa dicabut per orang.</li>
+      <li>Sebagai <b>mahasiswa</b>, saya ingin ikut papan peringkat pelapor.</li>
+    </ul>
+    <h4>Yang berubah dari Sprint 2 ke Sprint 3</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 2</th><th>Sprint 3</th></tr></thead>
+      <tbody>
+        <tr><td>Foto dari pelapor</td><td class="before">Opsional</td><td>Wajib</td></tr>
+        <tr><td>Menutup laporan</td><td class="before">Cukup satu klik</td><td>Wajib melampirkan foto bukti, yang juga tampil di papan publik</td></tr>
+        <tr><td>Jejak tindakan</td><td class="before">Tidak ada</td><td>Catatan aktivitas, termasuk laporan yang dihapus</td></tr>
+        <tr><td>Dashboard</td><td class="before">Daftar laporan</td><td>Tab laporan, grafik, aktivitas, dan pengguna (khusus admin)</td></tr>
+        <tr><td>Masuk petugas</td><td class="before">Satu sandi untuk semua petugas</td><td>Akun pribadi dengan peran admin, petugas, atau pelapor</td></tr>
+        <tr><td>Mahasiswa</td><td class="before">Selalu anonim</td><td>Tetap boleh anonim, atau mendaftar untuk ikut papan peringkat</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <div class="split">
     <div class="pane"><h4>Akuntabilitas</h4><ul>
       <li><strong>Foto keadaan wajib</strong> dilampirkan pelapor.</li>
@@ -303,7 +404,29 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp4">
-  <div class="cp-head"><span class="cp-num">4</span><div><p class="kicker">Checkpoint 4 · tag <code>checkpoint-4</code> · <code>d2e7d72</code></p><h2>Rapi di dalam, tajam di dashboard</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Fitur makin banyak, tetapi kode server bercampur jadi satu, sehingga setiap perubahan berisiko merusak bagian lain. Grafik juga baru menjawab "berapa banyak", padahal pimpinan butuh jawaban "kapan", "di mana", dan "apakah prioritas AI berguna".</p>
+  <div class="cp-head"><span class="cp-num">4</span><div><p class="kicker">Sprint 4 · Checkpoint 4 · tag <code>checkpoint-4</code> · <code>d2e7d72</code></p><h2>Rapi di dalam, tajam di dashboard</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Fitur makin banyak, tetapi kode server bercampur jadi satu, sehingga setiap perubahan berisiko merusak bagian lain. Grafik juga baru menjawab "berapa banyak", padahal pimpinan butuh jawaban "kapan", "di mana", dan "apakah prioritas AI berguna".</p>
+  <div class="sprint">
+    <h4>Sprint 4</h4>
+    <p class="goal"><b>Tujuan:</b> Merapikan fondasi kode dan mempertajam dashboard sebelum menambah fitur AI berikutnya.</p>
+    <h4>Backlog sprint</h4>
+    <ul>
+      <li>Sebagai <b>pengembang</b>, saya ingin kode server dipisah per lapisan, agar perubahan di satu bagian tidak merembet ke bagian lain.</li>
+      <li>Sebagai <b>mahasiswa</b>, saya ingin daftar "Laporan saya" tersedia di perangkat mana pun.</li>
+      <li>Sebagai <b>pimpinan</b>, saya ingin tahu kapan dan di mana keluhan paling sering muncul.</li>
+      <li>Sebagai <b>pimpinan</b>, saya ingin tahu apakah prioritas dari AI memang mempercepat penanganan.</li>
+      <li>Sebagai <b>pihak kampus</b>, saya ingin dokumen yang menjelaskan sistem ini.</li>
+    </ul>
+    <h4>Yang berubah dari Sprint 3 ke Sprint 4</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 3</th><th>Sprint 4</th></tr></thead>
+      <tbody>
+        <tr><td>"Laporan saya"</td><td class="before">Terikat pada satu perangkat</td><td>Ikut akun, jadi bisa dilihat dari perangkat mana pun</td></tr>
+        <tr><td>Grafik</td><td class="before">Jumlah dan sebaran laporan</td><td>+ angka utama bertren, peta panas hari × jam, gedung × jenis masalah, waktu penyelesaian per prioritas</td></tr>
+        <tr><td>Dokumen</td><td class="before">Hanya README</td><td>Panduan umum dan dokumentasi teknis, dalam versi web dan PDF</td></tr>
+        <tr><td>Fitur lain</td><td class="before">–</td><td>Tidak berubah; sprint ini sebagian besar perbaikan di balik layar</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <div class="split">
     <div class="pane"><h4>Yang terasa oleh pengguna</h4><ul>
       <li><strong>"Laporan saya" ikut akun</strong>, jadi bisa dilihat dari perangkat mana pun.</li>
@@ -328,7 +451,28 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp5">
-  <div class="cp-head"><span class="cp-num">5</span><div><p class="kicker">Checkpoint 5 · tag <code>checkpoint-5</code> · <code>e44958b</code></p><h2>AI kedua: memeriksa foto dan menjawab pertanyaan</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Foto bukti wajib diunggah, tetapi foto apa pun diterima, termasuk foto lama, foto buram, atau foto yang bukan toilet. Pimpinan yang ingin tahu "gedung mana yang paling bermasalah?" juga masih harus membaca grafik sendiri.</p>
+  <div class="cp-head"><span class="cp-num">5</span><div><p class="kicker">Sprint 5 · Checkpoint 5 · tag <code>checkpoint-5</code> · <code>e44958b</code></p><h2>AI kedua: memeriksa foto dan menjawab pertanyaan</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Foto bukti wajib diunggah, tetapi foto apa pun diterima, termasuk foto lama, foto buram, atau foto yang bukan toilet. Pimpinan yang ingin tahu "gedung mana yang paling bermasalah?" juga masih harus membaca grafik sendiri.</p>
+  <div class="sprint">
+    <h4>Sprint 5</h4>
+    <p class="goal"><b>Tujuan:</b> Memakai AI untuk memverifikasi pekerjaan petugas dan menjawab pertanyaan tentang data.</p>
+    <h4>Backlog sprint</h4>
+    <ul>
+      <li>Sebagai <b>pengelola</b>, saya ingin foto bukti diperiksa otomatis, agar klaim "sudah bersih" bisa dipercaya.</li>
+      <li>Sebagai <b>petugas</b>, saya ingin tahu alasannya kalau foto saya ditolak.</li>
+      <li>Sebagai <b>pimpinan</b>, saya ingin bertanya tentang data laporan dengan bahasa biasa.</li>
+      <li>Sebagai <b>pengguna</b>, saya ingin memakai mode gelap.</li>
+    </ul>
+    <h4>Yang berubah dari Sprint 4 ke Sprint 5</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 4</th><th>Sprint 5</th></tr></thead>
+      <tbody>
+        <tr><td>Foto bukti</td><td class="before">Diterima asal ada</td><td>Diperiksa AI (benar toilet? sudah bersih?) dan ditolak beserta alasannya kalau belum</td></tr>
+        <tr><td>Papan publik</td><td class="before">Menampilkan foto bukti</td><td>+ tanda "diverifikasi AI"</td></tr>
+        <tr><td>Membaca data</td><td class="before">Lewat grafik</td><td>+ Chatbot AI di beranda dan dashboard</td></tr>
+        <tr><td>Tampilan</td><td class="before">Terang saja</td><td>Terang atau gelap, ikon mata di kolom sandi, dan logo baru</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <div class="split">
     <div class="pane"><h4>AI pemeriksa foto</h4>
       <p>Setiap foto bukti dinilai: benar toilet? sudah bersih? Kalau belum, foto <strong>ditolak beserta alasannya</strong>, laporan tetap terbuka, dan petugas diminta membersihkan lagi.</p>
@@ -351,7 +495,36 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp6">
-  <div class="cp-head"><span class="cp-num">6</span><div><p class="kicker">Checkpoint 6 · tag <code>checkpoint-6</code> · <code>defb699</code> · sama dengan sistem final</p><h2>Dirancang ulang untuk pemakaian sehari-hari</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Untuk pemakaian sehari-hari masih ada hambatan. Petugas enggan login sambil membawa alat pel. Foto dari galeri membuka celah memakai foto lama. Pekerjaan rutin petugas di luar keluhan tidak terlihat. Dan satu beranda untuk semua orang terasa membingungkan.</p>
+  <div class="cp-head"><span class="cp-num">6</span><div><p class="kicker">Sprint 6 · Checkpoint 6 · tag <code>checkpoint-6</code> · <code>defb699</code> · sama dengan sistem final</p><h2>Dirancang ulang untuk pemakaian sehari-hari</h2></div></div>  <p><strong>Masalah yang dijawab.</strong> Untuk pemakaian sehari-hari masih ada hambatan. Petugas enggan login sambil membawa alat pel. Foto dari galeri membuka celah memakai foto lama. Pekerjaan rutin petugas di luar keluhan tidak terlihat. Dan satu beranda untuk semua orang terasa membingungkan.</p>
+  <div class="sprint">
+    <h4>Sprint 6</h4>
+    <p class="goal"><b>Tujuan:</b> Menyesuaikan alur dengan cara kerja di lapangan, dan menyiapkan sistem untuk dipakai sungguhan.</p>
+    <h4>Backlog sprint</h4>
+    <ul>
+      <li>Sebagai <b>petugas</b>, saya ingin bekerja tanpa login, karena tangan saya sedang memegang alat kebersihan.</li>
+      <li>Sebagai <b>pengelola</b>, saya ingin foto diambil langsung dari kamera, agar foto lama tidak bisa dipakai ulang.</li>
+      <li>Sebagai <b>supervisor</b>, saya ingin melihat pekerjaan rutin petugas, bukan hanya penanganan keluhan.</li>
+      <li>Sebagai <b>pengguna</b>, saya ingin langsung dibawa ke halaman yang sesuai dengan peran saya.</li>
+      <li>Sebagai <b>supervisor</b>, saya ingin menyaring data per rentang waktu.</li>
+      <li>Sebagai <b>pengelola</b>, saya ingin sistem tetap berjalan ketika satu API key kena limit.</li>
+    </ul>
+    <h4>Yang berubah dari Sprint 5 ke Sprint 6</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 5</th><th>Sprint 6</th></tr></thead>
+      <tbody>
+        <tr><td>Beranda</td><td class="before">Satu halaman untuk semua orang</td><td>Tiga pintu: Saya mahasiswa, Saya petugas, Saya supervisor</td></tr>
+        <tr><td>Masuk petugas</td><td class="before">Akun dan sandi</td><td>Tanpa login, cukup memilih nama dari daftar</td></tr>
+        <tr><td>Pengelola</td><td class="before">Admin</td><td>Supervisor, yang juga mengelola daftar nama petugas</td></tr>
+        <tr><td>Foto</td><td class="before">Dari galeri atau kamera</td><td>Langsung dari kamera</td></tr>
+        <tr><td>Pekerjaan rutin</td><td class="before">Tidak tercatat</td><td>Laporan pekerjaan dengan foto yang diperiksa AI</td></tr>
+        <tr><td>Filter</td><td class="before">Tidak ada</td><td>Filter waktu pada laporan dan laporan pekerjaan</td></tr>
+        <tr><td>Peta dan foto</td><td class="before">Gambar statis</td><td>Bisa diperbesar dan digeser</td></tr>
+        <tr><td>Chatbot dan stiker QR</td><td class="before">Chatbot di beranda dan dashboard; stiker dibuat lewat skrip</td><td>Keduanya dikumpulkan di beranda, termasuk cetak stiker QR</td></tr>
+        <tr><td>Nama dan tampilan</td><td class="before">Identitas visual UPI</td><td>Kato Report, dengan tampilan baru</td></tr>
+        <tr><td>Alamat halaman</td><td class="before">Berbahasa Indonesia (<code>/lapor</code>, <code>/petugas</code>)</td><td>Berbahasa Inggris (<code>/report</code>, <code>/staff</code>); alamat lama tetap dialihkan</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <div class="split">
     <div class="pane"><h4>Alur baru</h4><ul>
       <li><strong>Tiga pintu di beranda:</strong> Saya mahasiswa, Saya petugas, dan Saya supervisor.</li>
@@ -381,7 +554,7 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card" id="rekap">
-  <h2>3. Rekap perkembangan</h2>
+  <h2>4. Rekap perkembangan</h2>
   <p class="sub">Apa saja yang bertambah dari checkpoint ke checkpoint.</p>
 
   <h3>Evolusi kemampuan</h3>

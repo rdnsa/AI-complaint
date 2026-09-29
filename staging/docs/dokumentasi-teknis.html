@@ -107,6 +107,17 @@ svg .arrow { fill: var(--slate); }
 
 footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 
+.sprint { background: var(--accent-soft); border-radius: 18px; padding: 18px 20px; margin: 4px 0 18px; }
+.sprint h4 { margin: 14px 0 6px; }
+.sprint h4:first-child { margin-top: 0; }
+.sprint .goal { font-size: 16.5px; margin: 0 0 4px; }
+.sprint ul { margin-bottom: 4px; }
+.sprint table { background: var(--surface); border-radius: 12px; overflow: hidden; margin-bottom: 0; }
+.sprint td:first-child { font-weight: 600; white-space: nowrap; }
+.sprint td.before { color: var(--slate); }
+#sprint td:first-child { white-space: nowrap; }
+@media (max-width: 700px) { .sprint td:first-child { white-space: normal; } }
+
 @media (max-width: 700px) {
   .card { padding: 20px; border-radius: 18px; }
   .split { grid-template-columns: 1fr; }
@@ -125,7 +136,7 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   .card { padding: 0; margin: 0 0 8mm; border-radius: 0; background: none; }
   .card.checkpoint, #staging, #arsitektur, #rekap, #operasional, #lampiran { break-before: page; }
   h2, h3, h4 { break-after: avoid; }
-  table, figure, .pane, .stat, .note, .ok, pre { break-inside: avoid; }
+  table, figure, .pane, .stat, .note, .ok, pre, .sprint { break-inside: avoid; }
   a { color: var(--ink); }
   .no-print { display: none; }
 }
@@ -150,13 +161,14 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   <h2>Daftar isi</h2>
   <ol class="toc">
     <li><a href="#ringkasan">Ringkasan</a></li>
+    <li><a href="#sprint">Rencana sprint</a></li>
     <li><a href="#arsitektur">Arsitektur staging</a></li>
-    <li><a href="#cp1">Checkpoint 1: Pondasi</a></li>
-    <li><a href="#cp2">Checkpoint 2: Sesuai kampus</a></li>
-    <li><a href="#cp3">Checkpoint 3: Bukti, jejak, dan akun</a></li>
-    <li><a href="#cp4">Checkpoint 4: Rapi dan tajam</a></li>
-    <li><a href="#cp5">Checkpoint 5: AI kedua</a></li>
-    <li><a href="#cp6">Checkpoint 6: Siap pakai</a></li>
+    <li><a href="#cp1">Sprint 1 / Checkpoint 1: Pondasi</a></li>
+    <li><a href="#cp2">Sprint 2 / Checkpoint 2: Sesuai kampus</a></li>
+    <li><a href="#cp3">Sprint 3 / Checkpoint 3: Bukti, jejak, dan akun</a></li>
+    <li><a href="#cp4">Sprint 4 / Checkpoint 4: Rapi dan tajam</a></li>
+    <li><a href="#cp5">Sprint 5 / Checkpoint 5: AI kedua</a></li>
+    <li><a href="#cp6">Sprint 6 / Checkpoint 6: Siap pakai</a></li>
     <li><a href="#rekap">Rekap perkembangan</a></li>
     <li><a href="#operasional">Operasional staging</a></li>
     <li><a href="#lampiran">Lampiran: daftar commit</a></li>
@@ -184,8 +196,25 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
   </table></div>
 </section>
 
+<section class="card" id="sprint">
+  <h2>2. Rencana sprint</h2>
+  <p class="sub">Pengembangan dibagi menjadi enam sprint. Setiap sprint diakhiri satu checkpoint yang bisa dicoba di staging, jadi Sprint N sama dengan Checkpoint N.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Sprint</th><th>Tujuan</th><th>Fokus teknis</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#cp1"><b>Sprint 1</b></a></td><td>Membuktikan alur inti: keluhan dari QR sampai menjadi tiket kerja yang bisa langsung dikerjakan petugas.</td><td>Worker + D1 + R2, pipeline LLM asinkron, validasi keluaran AI</td></tr>
+      <tr><td><a href="#cp2"><b>Sprint 2</b></a></td><td>Menyesuaikan sistem dengan kampus yang sebenarnya, dan membuat penanganan laporan terlihat oleh semua orang.</td><td>Skema lokasi per gedung dan lantai, seed idempoten, endpoint publik yang dibatasi</td></tr>
+      <tr><td><a href="#cp3"><b>Sprint 3</b></a></td><td>Membuat penyelesaian bisa dibuktikan, dan setiap tindakan bisa dipertanggungjawabkan per orang.</td><td>Aturan bukti di server, tabel audit tanpa FK, hashing sandi PBKDF2</td></tr>
+      <tr><td><a href="#cp4"><b>Sprint 4</b></a></td><td>Merapikan fondasi kode dan mempertajam dashboard sebelum menambah fitur AI berikutnya.</td><td>Refaktor ke lima lapisan tanpa mengubah perilaku, grafik yang menjawab pertanyaan</td></tr>
+      <tr><td><a href="#cp5"><b>Sprint 5</b></a></td><td>Memakai AI untuk memverifikasi pekerjaan petugas dan menjawab pertanyaan tentang data.</td><td>Model vision kedua, tool calling dengan kuota, kolom hasil verifikasi</td></tr>
+      <tr><td><a href="#cp6"><b>Sprint 6</b></a></td><td>Menyesuaikan alur dengan cara kerja di lapangan, dan menyiapkan sistem untuk dipakai sungguhan.</td><td>Skema berbahasa Inggris, peran supervisor, frontend per peran, ketahanan API key</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub" style="font-size:14px;margin:0">Rincian perubahan teknis dari sprint ke sprint ada di awal bagian setiap checkpoint.</p>
+</section>
+
 <section class="card" id="arsitektur">
-  <h2>2. Arsitektur staging</h2>
+  <h2>3. Arsitektur staging</h2>
   <p class="sub">Bagaimana enam versi aplikasi berjalan bersamaan di satu domain tanpa mengubah kode aplikasinya.</p>
 
   <h3>Model branch dan tag</h3>
@@ -278,13 +307,29 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp1">
-  <div class="cp-head"><span class="cp-num">1</span><div><p class="kicker">Checkpoint 1 · tag <code>checkpoint-1</code> · <code>dd9c91a</code></p><h2>Pondasi: keluhan menjadi tiket kerja</h2></div></div>  <div class="stats">
+  <div class="cp-head"><span class="cp-num">1</span><div><p class="kicker">Sprint 1 · Checkpoint 1 · tag <code>checkpoint-1</code> · <code>dd9c91a</code></p><h2>Pondasi: keluhan menjadi tiket kerja</h2></div></div>  <div class="stats">
     <div class="stat"><b>3</b><span>commit</span></div>
     <div class="stat"><b>35</b><span>file berubah</span></div>
     <div class="stat"><b>+7.148</b><span>baris</span></div>
     <div class="stat"><b>16</b><span>endpoint API</span></div>
   </div>
   <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp1">panduan umum</a>.</p>
+  <div class="sprint">
+    <h4>Sprint 1</h4>
+    <p class="goal"><b>Tujuan:</b> Membuktikan alur inti: keluhan dari QR sampai menjadi tiket kerja yang bisa langsung dikerjakan petugas. <b>Fokus teknis:</b> Worker + D1 + R2, pipeline LLM asinkron, validasi keluaran AI.</p>
+    <h4>Kondisi awal → Sprint 1 (teknis)</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sebelum Sprint 1</th><th>Sprint 1</th></tr></thead>
+      <tbody>
+        <tr><td>Infrastruktur</td><td class="before">Repositori kosong</td><td>Satu Cloudflare Worker (Hono) untuk API dan frontend React; D1 untuk data, R2 untuk foto</td></tr>
+        <tr><td>Database</td><td class="before">–</td><td>Migrasi <code>0001</code>: <code>toilets</code>, <code>reports</code>, <code>daily_summaries</code></td></tr>
+        <tr><td>API</td><td class="before">–</td><td>16 endpoint</td></tr>
+        <tr><td>AI</td><td class="before">–</td><td>DeepSeek lewat <code>ctx.waitUntil()</code>; keluaran divalidasi Zod dan dipaksa ke enum; bisa dianalisis ulang</td></tr>
+        <tr><td>Autentikasi</td><td class="before">–</td><td>Satu sandi bersama (<code>PETUGAS_PASSWORD</code>) dan cookie sesi bertanda tangan <code>AUTH_SECRET</code></td></tr>
+        <tr><td>Deploy</td><td class="before">–</td><td><code>build.command</code> membangun frontend otomatis; cron <code>0 10 * * *</code> untuk ringkasan harian</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <h4>Fondasi</h4>
   <ul>
     <li><strong>Stack:</strong> TypeScript di Cloudflare Workers dengan Hono. Database D1 (SQLite), penyimpanan foto R2, dan frontend React + Vite + Tailwind. Frontend dan API ada di <strong>satu Worker</strong>, sehingga tidak perlu CORS dan cukup sekali deploy. Aset statis disajikan lewat binding <code>ASSETS</code> dengan <code>run_worker_first: ["/api/*"]</code> dan fallback SPA.</li>
@@ -308,13 +353,28 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp2">
-  <div class="cp-head"><span class="cp-num">2</span><div><p class="kicker">Checkpoint 2 · tag <code>checkpoint-2</code> · <code>feb7e49</code></p><h2>Sesuai kampus, dan bisa dilacak</h2></div></div>  <div class="stats">
+  <div class="cp-head"><span class="cp-num">2</span><div><p class="kicker">Sprint 2 · Checkpoint 2 · tag <code>checkpoint-2</code> · <code>feb7e49</code></p><h2>Sesuai kampus, dan bisa dilacak</h2></div></div>  <div class="stats">
     <div class="stat"><b>4</b><span>commit</span></div>
     <div class="stat"><b>27</b><span>file berubah</span></div>
     <div class="stat"><b>+1.914 / −514</b><span>baris</span></div>
     <div class="stat"><b>19</b><span>endpoint API</span></div>
   </div>
   <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp2">panduan umum</a>.</p>
+  <div class="sprint">
+    <h4>Sprint 2</h4>
+    <p class="goal"><b>Tujuan:</b> Menyesuaikan sistem dengan kampus yang sebenarnya, dan membuat penanganan laporan terlihat oleh semua orang. <b>Fokus teknis:</b> Skema lokasi per gedung dan lantai, seed idempoten, endpoint publik yang dibatasi.</p>
+    <h4>Yang berubah dari Sprint 1 ke Sprint 2 (teknis)</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 1</th><th>Sprint 2</th></tr></thead>
+      <tbody>
+        <tr><td>Model lokasi</td><td class="before"><code>toilets</code> satu baris per WC dengan nama gedung sebagai teks</td><td>Tabel <code>gedung</code> + <code>toilets.gedung_kode</code>; id QR <code>&lt;gedung&gt;-&lt;lantai&gt;</code> (migrasi <code>0002</code>)</td></tr>
+        <tr><td>Seed data toilet</td><td class="before">Menghapus isi tabel, sehingga gagal kena <em>foreign key</em> begitu ada laporan</td><td>Menonaktifkan semua lalu mengaktifkan yang terdaftar; aman dijalankan ulang</td></tr>
+        <tr><td>API</td><td class="before">16 endpoint</td><td>19 endpoint: + <code>/api/lokasi</code>, <code>/api/lokasi/:id</code>, <code>/api/reports/publik</code>, <code>/api/reports/ringkas</code>, <code>DELETE /api/reports/:id</code>; − <code>/api/toilets</code></td></tr>
+        <tr><td>Pelacakan</td><td class="before">–</td><td>Id laporan di <code>localStorage</code>, status diambil sekaligus lewat satu permintaan</td></tr>
+        <tr><td>i18n</td><td class="before">–</td><td>Kamus sendiri tanpa pustaka tambahan</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <ul>
     <li><strong>Migrasi <code>0002_gedung_upi.sql</code>:</strong> tabel <code>gedung</code> berisi sepuluh gedung, dan <code>toilets</code> mendapat <code>gedung_kode</code>. Kolom <code>gedung</code> dan <code>nama</code> dihapus, dan ditambah indeks lokasi. Id lokasi QR berformat <code>&lt;kode gedung&gt;-&lt;lantai&gt;</code>, misalnya <code>A-1</code>.</li>
     <li><strong>Seed yang aman dijalankan ulang:</strong> semua WC dinonaktifkan dulu, lalu yang terdaftar diaktifkan kembali. Versi sebelumnya menghapus isi tabel dan gagal karena <em>foreign key</em> begitu ada laporan. Lantai yang terdaftar: A 1–3, B 1, C 1–5, G 1, H 1, dan I 1–2. Gedung D, E, F, dan J disiapkan sebagai komentar.</li>
@@ -327,13 +387,27 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp3">
-  <div class="cp-head"><span class="cp-num">3</span><div><p class="kicker">Checkpoint 3 · tag <code>checkpoint-3</code> · <code>2e18c48</code></p><h2>Bukti, jejak, dan akun</h2></div></div>  <div class="stats">
+  <div class="cp-head"><span class="cp-num">3</span><div><p class="kicker">Sprint 3 · Checkpoint 3 · tag <code>checkpoint-3</code> · <code>2e18c48</code></p><h2>Bukti, jejak, dan akun</h2></div></div>  <div class="stats">
     <div class="stat"><b>2</b><span>commit</span></div>
     <div class="stat"><b>35</b><span>file berubah</span></div>
     <div class="stat"><b>+2.128 / −178</b><span>baris</span></div>
     <div class="stat"><b>26</b><span>endpoint API</span></div>
   </div>
   <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp3">panduan umum</a>.</p>
+  <div class="sprint">
+    <h4>Sprint 3</h4>
+    <p class="goal"><b>Tujuan:</b> Membuat penyelesaian bisa dibuktikan, dan setiap tindakan bisa dipertanggungjawabkan per orang. <b>Fokus teknis:</b> Aturan bukti di server, tabel audit tanpa FK, hashing sandi PBKDF2.</p>
+    <h4>Yang berubah dari Sprint 2 ke Sprint 3 (teknis)</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 2</th><th>Sprint 3</th></tr></thead>
+      <tbody>
+        <tr><td>Database</td><td class="before">3 tabel inti + <code>gedung</code></td><td>+ <code>reports.foto_selesai_key</code>, tabel <code>aktivitas</code> tanpa FK (<code>0003</code>); + tabel <code>pengguna</code>, <code>reports.pelapor_id</code>, admin bawaan (<code>0004</code>)</td></tr>
+        <tr><td>Autentikasi</td><td class="before">Sandi bersama dibandingkan dengan secret</td><td>Akun per orang, sandi di-hash PBKDF2-SHA256 100.000 iterasi; secret <code>PETUGAS_PASSWORD</code> dihapus</td></tr>
+        <tr><td>Aturan bukti</td><td class="before">–</td><td>Dijaga di server, bukan hanya disembunyikan di antarmuka</td></tr>
+        <tr><td>API</td><td class="before">19 endpoint</td><td>26 endpoint: + <code>/api/auth/masuk|daftar|keluar|saya</code>, <code>/api/summary/grafik</code>, <code>/api/aktivitas</code>, <code>/api/pengguna</code>, <code>/api/peringkat</code>; − <code>/api/auth/login|logout|me</code></td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <ul>
     <li><strong>Migrasi <code>0003_bukti_dan_aktivitas.sql</code>:</strong> <code>reports.foto_selesai_key</code> dan tabel <code>aktivitas</code> dengan tiga indeks. Tabel aktivitas sengaja <strong>tanpa foreign key</strong> ke <code>reports</code>, karena justru laporan yang dihapus yang paling perlu terlacak. Isinya disalin ke catatan sebelum baris aslinya dihapus.</li>
     <li><strong>Migrasi <code>0004_pengguna.sql</code>:</strong> tabel <code>pengguna</code> (peran <code>admin</code>/<code>petugas</code>/<code>pelapor</code>), <code>reports.pelapor_id</code>, dan akun admin bawaan.</li>
@@ -345,13 +419,28 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp4">
-  <div class="cp-head"><span class="cp-num">4</span><div><p class="kicker">Checkpoint 4 · tag <code>checkpoint-4</code> · <code>d2e7d72</code></p><h2>Rapi di dalam, tajam di dashboard</h2></div></div>  <div class="stats">
+  <div class="cp-head"><span class="cp-num">4</span><div><p class="kicker">Sprint 4 · Checkpoint 4 · tag <code>checkpoint-4</code> · <code>d2e7d72</code></p><h2>Rapi di dalam, tajam di dashboard</h2></div></div>  <div class="stats">
     <div class="stat"><b>4</b><span>commit</span></div>
     <div class="stat"><b>72</b><span>file berubah</span></div>
     <div class="stat"><b>+8.574 / −1.468</b><span>baris (termasuk dokumen)</span></div>
     <div class="stat"><b>26</b><span>endpoint API</span></div>
   </div>
   <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp4">panduan umum</a>.</p>
+  <div class="sprint">
+    <h4>Sprint 4</h4>
+    <p class="goal"><b>Tujuan:</b> Merapikan fondasi kode dan mempertajam dashboard sebelum menambah fitur AI berikutnya. <b>Fokus teknis:</b> Refaktor ke lima lapisan tanpa mengubah perilaku, grafik yang menjawab pertanyaan.</p>
+    <h4>Yang berubah dari Sprint 3 ke Sprint 4 (teknis)</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 3</th><th>Sprint 4</th></tr></thead>
+      <tbody>
+        <tr><td>Struktur backend</td><td class="before">37 dari 43 pernyataan SQL berada di <em>route handler</em></td><td>Lima lapisan: <code>domain/</code>, <code>repositories/</code>, <code>services/</code>, <code>adapters/</code>, <code>routes/</code></td></tr>
+        <tr><td>Aturan bukti</td><td class="before">Dicek di masing-masing route</td><td>Satu aturan di lapisan domain</td></tr>
+        <tr><td>API</td><td class="before">26 endpoint</td><td>26 endpoint: + <code>/api/reports/saya</code>; − <code>/api/reports/ringkas</code></td></tr>
+        <tr><td>Database</td><td class="before">–</td><td>Tidak berubah (tidak ada migrasi)</td></tr>
+        <tr><td>Bahasa kode</td><td class="before">Komentar berbahasa Indonesia</td><td>README ditulis ulang, dan semua komentar berbahasa Inggris</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <ul>
     <li><strong>Arsitektur berlapis.</strong> Sebelumnya 37 dari 43 pernyataan SQL berada di dalam <em>route handler</em>. Sekarang ada lima lapisan dengan ketergantungan yang hanya mengarah ke dalam:
       <ul>
@@ -371,13 +460,28 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp5">
-  <div class="cp-head"><span class="cp-num">5</span><div><p class="kicker">Checkpoint 5 · tag <code>checkpoint-5</code> · <code>e44958b</code></p><h2>AI kedua: memeriksa foto dan menjawab pertanyaan</h2></div></div>  <div class="stats">
+  <div class="cp-head"><span class="cp-num">5</span><div><p class="kicker">Sprint 5 · Checkpoint 5 · tag <code>checkpoint-5</code> · <code>e44958b</code></p><h2>AI kedua: memeriksa foto dan menjawab pertanyaan</h2></div></div>  <div class="stats">
     <div class="stat"><b>5</b><span>commit</span></div>
     <div class="stat"><b>43</b><span>file berubah</span></div>
     <div class="stat"><b>+3.128 / −330</b><span>baris</span></div>
     <div class="stat"><b>28</b><span>endpoint API</span></div>
   </div>
   <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp5">panduan umum</a>.</p>
+  <div class="sprint">
+    <h4>Sprint 5</h4>
+    <p class="goal"><b>Tujuan:</b> Memakai AI untuk memverifikasi pekerjaan petugas dan menjawab pertanyaan tentang data. <b>Fokus teknis:</b> Model vision kedua, tool calling dengan kuota, kolom hasil verifikasi.</p>
+    <h4>Yang berubah dari Sprint 4 ke Sprint 5 (teknis)</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 4</th><th>Sprint 5</th></tr></thead>
+      <tbody>
+        <tr><td>Model AI</td><td class="before">Satu model teks (DeepSeek)</td><td>Dua model: + model vision (Gemini) lewat endpoint yang kompatibel dengan OpenAI</td></tr>
+        <tr><td>Database</td><td class="before">–</td><td>+ <code>bukti_ai_hasil</code>, <code>bukti_ai_alasan</code>, <code>bukti_ai_model</code>, <code>bukti_ai_ms</code> (<code>0005</code>)</td></tr>
+        <tr><td>API</td><td class="before">26 endpoint</td><td>28 endpoint: + <code>GET/POST /api/tanya</code> (tool calling, 50 pertanyaan/hari, 20 per IP)</td></tr>
+        <tr><td>Konfigurasi</td><td class="before"><code>LLM_*</code> saja</td><td>+ <code>VISION_BASE_URL</code>, <code>VISION_MODEL</code>, <code>VISION_API_KEY</code></td></tr>
+        <tr><td>Anggaran token AI</td><td class="before">Lebih kecil</td><td>Dinaikkan ke 2.000 agar model <em>reasoning</em> tidak terpotong</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <ul>
     <li><strong>Dua model AI.</strong> DeepSeek tidak bisa melihat gambar, jadi foto dinilai oleh model vision terpisah lewat endpoint yang kompatibel dengan OpenAI: <code>VISION_BASE_URL</code> Gemini dengan <code>VISION_MODEL = gemini-3.6-flash</code>. <code>VISION_API_KEY</code> jatuh ke <code>LLM_API_KEY</code> kalau tidak diisi.</li>
     <li><strong>Migrasi <code>0005_verifikasi_bukti.sql</code>:</strong> kolom <code>bukti_ai_hasil</code> (<code>bersih</code> | <code>kotor</code> | <code>bukan_toilet</code>), <code>bukti_ai_alasan</code>, <code>bukti_ai_model</code>, dan <code>bukti_ai_ms</code>. Status <em>selesai</em> hanya diberikan kalau putusannya <code>bersih</code>.</li>
@@ -389,13 +493,29 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card checkpoint" id="cp6">
-  <div class="cp-head"><span class="cp-num">6</span><div><p class="kicker">Checkpoint 6 · tag <code>checkpoint-6</code> · <code>defb699</code> · sama dengan sistem final</p><h2>Dirancang ulang untuk pemakaian sehari-hari</h2></div></div>  <div class="stats">
+  <div class="cp-head"><span class="cp-num">6</span><div><p class="kicker">Sprint 6 · Checkpoint 6 · tag <code>checkpoint-6</code> · <code>defb699</code> · sama dengan sistem final</p><h2>Dirancang ulang untuk pemakaian sehari-hari</h2></div></div>  <div class="stats">
     <div class="stat"><b>17</b><span>commit</span></div>
     <div class="stat"><b>171</b><span>file berubah</span></div>
     <div class="stat"><b>+15.332 / −6.211</b><span>baris</span></div>
     <div class="stat"><b>32</b><span>endpoint API</span></div>
   </div>
   <p class="sub" style="font-size:14px">Fitur dan skenario uji checkpoint ini: <a href="/panduan#cp6">panduan umum</a>.</p>
+  <div class="sprint">
+    <h4>Sprint 6</h4>
+    <p class="goal"><b>Tujuan:</b> Menyesuaikan alur dengan cara kerja di lapangan, dan menyiapkan sistem untuk dipakai sungguhan. <b>Fokus teknis:</b> Skema berbahasa Inggris, peran supervisor, frontend per peran, ketahanan API key.</p>
+    <h4>Yang berubah dari Sprint 5 ke Sprint 6 (teknis)</h4>
+    <div class="tbl"><table>
+      <thead><tr><th>Aspek</th><th>Sprint 5</th><th>Sprint 6</th></tr></thead>
+      <tbody>
+        <tr><td>Database</td><td class="before">Skema berbahasa Indonesia, peran <code>admin</code>/<code>petugas</code>/<code>pelapor</code></td><td>+ tabel <code>pekerjaan</code> (<code>0006</code>); <code>admin</code> menjadi <code>spv</code> dan petugas tanpa sandi (<code>0007</code>); seluruh skema ke bahasa Inggris (<code>0008</code>)</td></tr>
+        <tr><td>API</td><td class="before">28 endpoint berbahasa Indonesia</td><td>32 endpoint berbahasa Inggris: + <code>/api/work-logs</code>, <code>/api/staff</code>, <code>/api/reports/open</code></td></tr>
+        <tr><td>Frontend</td><td class="before">Halaman umum: beranda, lapor, dashboard</td><td>Halaman per peran (<code>StudentHome</code>, <code>StaffHome</code>, <code>StaffFloor</code>, <code>SupervisorDashboard</code>) + komponen <code>Camera</code>, <code>StaffPicker</code>, <code>RoleSwitch</code>, <code>TimeFilter</code>, peta interaktif, <code>ZoomableImage</code></td></tr>
+        <tr><td>Desain</td><td class="before">Palet UPI</td><td>Token warna di variabel CSS (terang dan gelap), gaya halaman produk Apple</td></tr>
+        <tr><td>API key AI</td><td class="before">Satu key per secret</td><td>Beberapa key dipisah koma; respons 429/401/403 dicoba ulang dengan key berikutnya</td></tr>
+        <tr><td>Dokumen</td><td class="before">Panduan umum dan dokumentasi teknis</td><td>+ BPMN <em>to-be</em>, diagram arsitektur, penjelasan diagram, dan PRD</td></tr>
+      </tbody>
+    </table></div>
+  </div>
   <ul>
     <li><strong>Migrasi <code>0006_laporan_pekerjaan.sql</code>:</strong> tabel <code>pekerjaan</code> untuk laporan pekerjaan petugas, diindeks per petugas, toilet, dan waktu.</li>
     <li><strong>Migrasi <code>0007_peran_spv.sql</code>:</strong> peran menjadi <code>spv</code>/<code>petugas</code>/<code>pelapor</code>, dan <code>admin</code> diubah menjadi <code>spv</code>. Baris petugas kini cukup berisi nama: username dan sandi menjadi opsional (<code>UNIQUE</code> di SQLite mengizinkan banyak NULL). Tabel dibangun ulang lewat salinan karena SQLite tidak bisa mengubah <code>CHECK</code>.</li>
@@ -410,7 +530,7 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card" id="rekap">
-  <h2>3. Rekap perkembangan</h2>
+  <h2>4. Rekap perkembangan</h2>
   <p class="sub">Ukuran perubahan di setiap checkpoint.</p>
 
   <h3>Statistik per checkpoint</h3>
@@ -429,7 +549,7 @@ footer { color: var(--slate); font-size: 13px; padding: 8px 0 48px; }
 </section>
 
 <section class="card" id="operasional">
-  <h2>4. Operasional staging</h2>
+  <h2>5. Operasional staging</h2>
   <p class="sub">Untuk pengembang yang merawat situs staging.</p>
 
   <h3>Persiapan sekali saja</h3>
@@ -480,7 +600,7 @@ npx wrangler r2 bucket delete kato-staging    # kosongkan isinya dulu</code></pr
 </section>
 
 <section class="card" id="lampiran">
-  <h2>5. Lampiran: daftar commit per checkpoint</h2>
+  <h2>6. Lampiran: daftar commit per checkpoint</h2>
   <p class="sub">Dari <code>git log --reverse checkpoint-(N−1)..checkpoint-N</code>. Commit awal <code>949c5f7</code> ("first commit") tidak dihitung.</p>
 
   <h4>Checkpoint 1</h4>
