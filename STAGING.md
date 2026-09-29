@@ -13,7 +13,7 @@ yang terpisah dari `main`, jadi data produksi tidak pernah tersentuh.
 | `checkpoint-3` | `2e18c48` | Bukti foto wajib saat laporan diselesaikan, log aktivitas, grafik, akun berperan (menggantikan sandi bersama), papan peringkat |
 | `checkpoint-4` | `d2e7d72` | Backend berlapis (routes, services, repositories), skema berbahasa Inggris, dashboard analitis, dokumentasi teknis dan panduan umum |
 | `checkpoint-5` | `e44958b` | Verifikasi foto bukti dengan vision AI (Gemini), tanya-jawab AI atas data laporan |
-| `checkpoint-6` | `adadf61` | Kamera langsung, panel kerja staff, filter waktu, beranda per peran (mahasiswa, staff, supervisor), peta kampus interaktif, failover API key. Sama dengan sistem final |
+| `checkpoint-6` | `defb699` | Kamera langsung, panel kerja staff, filter waktu, beranda per peran (mahasiswa, staff, supervisor), peta kampus interaktif, rebrand Kato Report, PRD dan diagram, failover API key. Sama dengan sistem final |
 
 Saat ini `staging` berada di **checkpoint 1**.
 
