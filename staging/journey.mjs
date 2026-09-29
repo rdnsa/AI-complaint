@@ -6,10 +6,13 @@
  * Checkpoints not merged into the current checkout get no card, so a later
  * checkpoint is never shown before it is reported.
  *
+ * It also copies the progress report (staging/docs/laporan-progress.html and
+ * .pdf) next to it, served as /dokumentasi and /dokumentasi.pdf.
+ *
  * Run by scripts/staging.mjs as the router's build step:
  *   node staging/journey.mjs <outDir>
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CHECKPOINTS, reachedCheckpoints } from './checkpoints.mjs';
 
@@ -162,7 +165,7 @@ function hub() {
 <body>
 <header class="top"><div class="wrap">
   <a class="brand" href="/checkpoint">Checkpoint <span>· Kato Report</span></a>
-  <nav class="top-links"><a href="/checkpoint${latest}">Versi terbaru →</a></nav>
+  <nav class="top-links"><a href="/dokumentasi">Dokumentasi</a> &nbsp;·&nbsp; <a href="/checkpoint${latest}">Versi terbaru →</a></nav>
 </div></header>
 <main class="wrap">
 <div class="hero">
@@ -170,6 +173,7 @@ function hub() {
   <h1>Coba setiap tahap pengembangannya</h1>
   <p class="lead">Setiap checkpoint berjalan sebagai aplikasi sendiri, persis seperti saat checkpoint itu selesai. Buka checkpoint 1 untuk melihat bentuk paling awal, lalu naik satu per satu untuk merasakan apa yang bertambah.</p>
   <p class="hint">Buka <code>/checkpoint1</code>, <code>/checkpoint2</code>, dan seterusnya untuk berpindah checkpoint. Checkpoint yang sedang dibuka ditandai di pojok kiri bawah layar, dan satu browser membuka satu checkpoint dalam satu waktu. Data dan login di setiap checkpoint terpisah, jadi laporan yang dikirim di checkpoint 2 tidak muncul di checkpoint 3. Silakan kirim laporan percobaan sebanyak yang diperlukan.</p>
+  <p class="hint">Penjelasan lengkap setiap checkpoint, dari sisi umum dan teknis, ada di <a href="/dokumentasi">dokumentasi laporan progress</a> (<a href="/dokumentasi.pdf">PDF</a>).</p>
 </div>
 <ol class="timeline">
 ${items}
@@ -183,4 +187,8 @@ ${items}
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, 'checkpoint.html'), hub());
+for (const ext of ['html', 'pdf']) {
+  const source = `staging/docs/laporan-progress.${ext}`;
+  if (existsSync(source)) copyFileSync(source, join(outDir, `dokumentasi.${ext}`));
+}
 console.log(`journey: hub /checkpoint (checkpoint 1${latest > 1 ? `–${latest}` : ''}) ditulis ke ${outDir}/`);

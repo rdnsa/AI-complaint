@@ -2,6 +2,7 @@
  * The staging site's front door: one domain for every checkpoint.
  *
  *   /checkpoint          the hub (a static page built by journey.mjs)
+ *   /dokumentasi[.pdf]   the progress report (staging/docs/laporan-progress)
  *   /checkpointN[/path]  choose checkpoint N, then continue at /path (default /)
  *   anything else        forwarded to the chosen checkpoint's Worker, or to
  *                        the latest one when nothing has been chosen yet
@@ -42,8 +43,9 @@ export default {
     const reached = env.CHECKPOINTS.split(',').map(Number);
     const latest = reached[reached.length - 1];
 
-    if (url.pathname === '/checkpoint' || url.pathname === '/checkpoint/') {
-      return env.ASSETS.fetch(new Request(new URL('/checkpoint', url), request));
+    const page = url.pathname.replace(/\/$/, '');
+    if (page === '/checkpoint' || page === '/dokumentasi' || page === '/dokumentasi.pdf') {
+      return env.ASSETS.fetch(new Request(new URL(page, url), request));
     }
 
     const pick = url.pathname.match(/^\/checkpoint(\d+)(\/.*)?$/);

@@ -107,3 +107,16 @@ Cara kerjanya:
 Setiap `node scripts/staging.mjs` men-deploy Worker checkpoint terbaru, lalu router. Checkpoint
 sebelumnya tidak disentuh, jadi tetap berjalan dengan kode lamanya. Teks hub ada di
 `staging/checkpoints.mjs`, dan halamannya dibuat oleh `staging/journey.mjs`.
+
+## Dokumentasi laporan progress (`/dokumentasi`)
+
+Laporan progress lengkap, yang menjelaskan staging dan keenam checkpoint dari sisi umum maupun
+teknis, ada di `staging/docs/laporan-progress.html`. Situs staging menyajikannya di `/dokumentasi`,
+dan PDF-nya di `/dokumentasi.pdf`. Setelah mengubah HTML-nya, buat ulang PDF-nya dengan Chrome, lalu
+deploy lagi:
+
+```bash
+"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --no-pdf-header-footer \
+  --print-to-pdf=staging/docs/laporan-progress.pdf staging/docs/laporan-progress.html
+node scripts/staging.mjs
+```
