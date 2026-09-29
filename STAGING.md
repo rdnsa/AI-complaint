@@ -72,13 +72,26 @@ berurutan, sehingga database staging selalu cocok dengan kode di checkpoint ters
 
 Jangan pernah merge `staging` ke `main`. Arahnya selalu satu: `main` → `staging`.
 
-## Halaman perjalanan (`/checkpoint`)
+## Setiap checkpoint bisa dicoba (`/checkpoint`)
 
-Setiap deploy staging juga membuat halaman penjelasan untuk teman yang tidak ikut development:
+Setiap checkpoint yang sudah dilaporkan tetap online sebagai aplikasinya sendiri, persis seperti saat
+checkpoint itu selesai, supaya teman yang tidak ikut development bisa mencoba fiturnya tahap demi tahap:
 
-- `/checkpoint`: garis waktu semua checkpoint
-- `/checkpoint1`, `/checkpoint2`, … `/checkpoint6`: apa yang berubah, untuk siapa, dan kenapa
+| Alamat | Isi |
+|---|---|
+| `/` | aplikasi checkpoint terbaru |
+| `/checkpoint` | hub: daftar checkpoint, fitur baru masing-masing, dan tombol untuk mencobanya |
+| `/checkpoint1` … `/checkpoint6` | diarahkan ke Worker `ai-complaint-staging-cpN` milik checkpoint itu |
 
-Halaman hanya dibuat untuk checkpoint yang sudah di-merge ke `staging`, jadi checkpoint berikutnya
-tidak terlihat sebelum dilaporkan. Isinya ada di `staging/checkpoints.mjs`, dan tampilannya
-dibuat oleh `staging/journey.mjs`. Keduanya hanya ada di branch `staging`.
+Setiap `node scripts/staging.mjs` men-deploy dua Worker: `ai-complaint-staging-cpN` untuk checkpoint
+terbaru, lalu situs utama. Checkpoint sebelumnya tidak disentuh, jadi tetap berjalan dengan kode lamanya.
+
+- **Database:** setiap checkpoint punya database D1 sendiri, karena struktur tabelnya berubah antar
+  checkpoint. Checkpoint 1 memakai `kato-staging`, dan checkpoint 2–6 memakai `kato-staging-cp2` sampai
+  `kato-staging-cp6`. Database dibuat dan diisi data toilet otomatis saat checkpoint itu pertama kali
+  di-deploy. Situs utama memakai database checkpoint terbaru. Totalnya 5 database untuk staging,
+  jadi perhatikan batas 10 database D1 di paket gratis Cloudflare.
+- **Foto:** semua checkpoint berbagi bucket R2 `kato-staging`.
+- **Cron:** ringkasan harian otomatis hanya berjalan di situs utama. Paket gratis membatasi 5 cron.
+  Di checkpoint lama, ringkasan tetap bisa dibuat manual dari dashboard.
+- **Isi hub:** teks ada di `staging/checkpoints.mjs`, dan halamannya dibuat oleh `staging/journey.mjs`.
