@@ -1,17 +1,17 @@
 /**
- * Membangun frontend React ke ./dist sebelum Worker dideploy.
+ * Builds the React frontend into ./dist before the Worker is deployed.
  *
- * Dipanggil otomatis oleh wrangler lewat `build.command` di wrangler.jsonc,
- * sehingga `npx wrangler deploy` cukup berdiri sendiri — termasuk di Cloudflare
- * Workers Builds, yang menjalankan perintah deploy pada repo hasil clone yang
- * belum tentu punya node_modules.
+ * Invoked automatically by wrangler through `build.command` in wrangler.jsonc,
+ * so that `npx wrangler deploy` stands on its own — including on Cloudflare
+ * Workers Builds, which runs the deploy command against a fresh clone that does
+ * not necessarily have node_modules.
  */
 import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
 const jalankan = (perintah) => execSync(perintah, { stdio: 'inherit' });
 
-// Di mesin lokal dependensi biasanya sudah ada, jadi langkah ini dilewati.
+// On a local machine the dependencies are usually present, so this step is skipped.
 if (!existsSync('node_modules/vite')) {
   console.log('node_modules belum ada — memasang dependensi terlebih dahulu…');
   jalankan('npm ci --include=dev --no-audit --no-fund');

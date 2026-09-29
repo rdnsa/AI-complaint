@@ -3,7 +3,7 @@ import { api, type AkunPengelola } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
 import { useSesi } from '../lib/sesi';
 
-/** Pengelolaan akun petugas — hanya tampil dan hanya bisa dipakai oleh admin. */
+/** Staff account management — visible and usable by admins only. */
 export default function PanelPengguna() {
   const { t } = useBahasa();
   const { sesi } = useSesi();
@@ -179,7 +179,7 @@ function FormUbah({
     try {
       await api.ubahPengguna(akun.id, {
         nama: nama !== akun.nama ? nama : undefined,
-        // Kolom sandi yang dibiarkan kosong berarti sandi lama tetap dipakai.
+        // An empty password field means the existing password is kept.
         password: password ? password : undefined,
       });
       onSelesai();

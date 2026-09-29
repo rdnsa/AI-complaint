@@ -15,7 +15,8 @@
     "db:seed:remote": "wrangler d1 execute kato --remote --file=./seed/toilets.sql",
     "qr": "node scripts/generate-qr.mjs",
     "typecheck": "tsc --noEmit",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "docs": "node scripts/build-docs.mjs"
   },
   "dependencies": {
     "hono": "^4.6.14",

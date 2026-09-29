@@ -5,14 +5,16 @@ import Lacak from '../components/Lacak';
 import { LencanaKategori, LencanaPrioritas } from '../components/Lencana';
 import { api, type Laporan } from '../lib/api';
 import { useBahasa } from '../lib/i18n';
+import { useSesi } from '../lib/sesi';
 
 /**
- * Halaman konfirmasi untuk pelapor. Laporan tersimpan seketika, sedangkan
- * analisis LLM menyusul; halaman ini melakukan polling sampai hasilnya siap.
+ * Confirmation page for the reporter. The report is stored instantly while the
+ * LLM analysis follows; this page polls until the result is ready.
  */
 export default function StatusLaporan() {
   const { id = '' } = useParams();
   const { t } = useBahasa();
+  const { sesi } = useSesi();
   const [laporan, setLaporan] = useState<Laporan | null>(null);
   const [galat, setGalat] = useState<string | null>(null);
 
@@ -22,15 +24,15 @@ export default function StatusLaporan() {
     let cepat = 0;
 
     async function ambil() {
-      // Tab yang tersembunyi tidak perlu dimuat ulang; cukup diperiksa lagi nanti.
+      // A hidden tab does not need refreshing; it is simply checked again later.
       if (document.hidden) return jadwalkan(15_000);
       try {
         const data = await api.laporan(id);
         if (batal) return;
         setLaporan(data);
-        // Selagi analisis berjalan, muat ulang tiap 2 detik supaya hasilnya
-        // muncul seketika. Sesudah itu cukup pelan, sekadar memantau perubahan
-        // status penanganan oleh petugas selama halaman dibuka.
+        // While the analysis runs, refresh every 2 seconds so the result appears
+        // at once. After that a slow pace is enough, just to catch status changes
+        // made by staff while the page stays open.
         jadwalkan(data.ai_status === 'pending' && cepat++ < 20 ? 2000 : 15_000);
       } catch {
         if (!batal) setGalat(t('status.galat_muat'));
@@ -116,7 +118,7 @@ export default function StatusLaporan() {
 
         {laporan && (
           <p className="mt-4 text-center text-xs leading-relaxed text-maroon-600">
-            {t('status.tersimpan')}
+            {sesi?.peran === 'pelapor' ? t('status.tersimpan_akun') : t('status.tersimpan')}
           </p>
         )}
 

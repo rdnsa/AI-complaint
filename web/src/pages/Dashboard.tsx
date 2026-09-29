@@ -24,7 +24,7 @@ export default function Dashboard() {
   const bolehMasuk = sesi && sesi.peran !== 'pelapor';
 
   useEffect(() => {
-    // Pelapor tidak punya urusan di sini; halaman masuk yang menentukan tujuannya.
+    // Reporters have no business here; the sign-in page decides where they go.
     if (!memuat && !bolehMasuk) navigate('/masuk', { replace: true });
   }, [memuat, bolehMasuk, navigate]);
 
@@ -52,8 +52,8 @@ function Papan({ sesi }: { sesi: Sesi }) {
   const [memuat, setMemuat] = useState(true);
   const [menyusun, setMenyusun] = useState(false);
   const [tab, setTab] = useState<'laporan' | 'grafik' | 'aktivitas' | 'pengguna'>('laporan');
-  // Pengelolaan akun hanya muncul bagi admin — petugas biasa tidak melihat tabnya
-  // sama sekali, dan server tetap menolak walau tabnya dipaksa muncul.
+  // Account management appears for admins only — staff never see the tab at all,
+  // and the server still refuses even if the tab is forced into view.
   const tabs =
     sesi.peran === 'admin'
       ? (['laporan', 'grafik', 'aktivitas', 'pengguna'] as const)
@@ -73,7 +73,7 @@ function Papan({ sesi }: { sesi: Sesi }) {
 
   useEffect(() => {
     muat();
-    // Dashboard menempel di dinding ruang petugas, jadi ia menyegarkan diri sendiri.
+    // The dashboard lives on the wall of the staff room, so it refreshes itself.
     const timer = setInterval(muat, 30_000);
     return () => clearInterval(timer);
   }, [muat]);
@@ -85,7 +85,7 @@ function Papan({ sesi }: { sesi: Sesi }) {
   }
 
   async function ubahStatus(id: string, status: StatusLaporan, fotoBukti?: string) {
-    // Perbarui tampilan lebih dulu supaya tombol terasa responsif, lalu sinkronkan.
+    // Update the view first so the button feels responsive, then synchronise.
     setLaporan((prev) => prev.map((l) => (l.id === id ? { ...l, status, petugas } : l)));
     await api.ubahStatus(id, status, fotoBukti).catch(() => {});
     muat();
@@ -152,7 +152,7 @@ function Papan({ sesi }: { sesi: Sesi }) {
                 try {
                   setRingkasan(await api.buatRingkasan());
                 } catch {
-                  /* biarkan ringkasan lama tetap tampil */
+                  /* leave the previous summary on screen */
                 } finally {
                   setMenyusun(false);
                 }
@@ -274,9 +274,9 @@ function BarisLaporan({
   const [mengunggah, setMengunggah] = useState(false);
 
   /**
-   * Menyelesaikan laporan selalu lewat jalur ini: pilih foto, unggah, baru
-   * status berubah. Server juga menolak 'selesai' tanpa bukti, jadi klaim
-   * penyelesaian tidak bisa dibuat hanya dengan menekan tombol.
+   * Resolving a report always takes this path: choose a photo, upload it, and
+   * only then change the status. The server also refuses 'selesai' without
+   * evidence, so completion cannot be claimed by pressing a button alone.
    */
   async function selesaikan(berkas: File) {
     setMengunggah(true);
@@ -284,13 +284,13 @@ function BarisLaporan({
       const { key } = await api.unggahFoto(berkas, 'bukti');
       onUbahStatus(l.id, 'selesai', key);
     } catch {
-      /* biarkan status apa adanya bila unggahan gagal */
+      /* leave the status untouched when the upload fails */
     } finally {
       setMengunggah(false);
     }
   }
 
-  // Garis tepi kiri memberi tanda prioritas yang terbaca dari kejauhan.
+  // The left edge marks the priority, readable from across the room.
   const tepi =
     l.prioritas === 'tinggi'
       ? 'border-l-4 border-l-red-500'

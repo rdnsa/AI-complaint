@@ -1,16 +1,16 @@
--- Migration 0004: akun pengguna berperan, menggantikan sandi bersama.
+-- Migration 0004: role-based user accounts, replacing the shared password.
 --
--- Sebelumnya seluruh petugas memakai satu sandi dari secret PETUGAS_PASSWORD,
--- sehingga tidak ada cara memastikan siapa yang bertindak dan tidak ada cara
--- mencabut akses satu orang saja. Sekarang setiap orang punya akun sendiri.
+-- Previously all staff shared one password from the PETUGAS_PASSWORD secret, so
+-- there was no way to tell who had acted and no way to revoke one person without
+-- changing everyone else. Now each person has their own account.
 
 CREATE TABLE pengguna (
   id         TEXT PRIMARY KEY,
-  -- COLLATE NOCASE: 'Budi' dan 'budi' tidak boleh menjadi dua akun berbeda.
+  -- COLLATE NOCASE: 'Budi' and 'budi' must not become two different accounts.
   username   TEXT NOT NULL UNIQUE COLLATE NOCASE,
   nama       TEXT NOT NULL,
   peran      TEXT NOT NULL CHECK (peran IN ('admin', 'petugas', 'pelapor')),
-  -- PBKDF2-SHA256, 100.000 iterasi, salt per pengguna. Sandi asli tidak pernah disimpan.
+  -- PBKDF2-SHA256, 100,000 iterations, per-user salt. The plaintext is never stored.
   sandi_hash TEXT NOT NULL,
   sandi_salt TEXT NOT NULL,
   aktif      INTEGER NOT NULL DEFAULT 1,
@@ -19,13 +19,13 @@ CREATE TABLE pengguna (
 
 CREATE INDEX idx_pengguna_peran ON pengguna (peran, aktif);
 
--- Laporan boleh tetap anonim, jadi kolomnya nullable. Yang bertanda pemilik
--- inilah yang dihitung pada papan peringkat pelapor.
+-- Reports may stay anonymous, so the column is nullable. Only reports that carry
+-- an owner are counted on the reporter leaderboard.
 ALTER TABLE reports ADD COLUMN pelapor_id TEXT REFERENCES pengguna(id);
 CREATE INDEX idx_reports_pelapor ON reports (pelapor_id);
 
--- Akun admin bawaan. Hash di bawah dihitung dari sandi 'Admin123!'.
--- GANTI SANDI INI setelah masuk pertama kali.
+-- The default admin account. The hash below is derived from the password 'Admin123!'.
+-- CHANGE THIS PASSWORD after the first sign-in.
 INSERT INTO pengguna (id, username, nama, peran, sandi_hash, sandi_salt) VALUES (
   'adm-0001',
   'admin',

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<title>Dokumentasi Teknis AI Complaint</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Plus Jakarta Sans", "Helvetica Neue", Arial, sans-serif;
+         color: #3E1712; font-size: 10pt; line-height: 1.5; margin: 0; }
+  h1 { font-size: 23pt; margin: 0 0 2mm; letter-spacing: -0.4pt; }
+  h2 { font-size: 13.5pt; margin: 8mm 0 2.5mm; padding-bottom: 1.5mm;
+       border-bottom: 2px solid #E2571F; page-break-after: avoid; }
+  h3 { font-size: 10.5pt; margin: 4.5mm 0 1.5mm; page-break-after: avoid; }
+  p { margin: 0 0 2.5mm; }
+  code, .mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.8pt;
+                background: #FDF0E8; padding: 0.3mm 1.2mm; border-radius: 1mm; }
+  pre { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.2pt; line-height: 1.45;
+        background: #FDFAF6; border: 1px solid #EFE4D6; border-left: 3px solid #E2571F;
+        border-radius: 2mm; padding: 3.5mm 4mm; overflow: hidden; page-break-inside: avoid;
+        margin: 2mm 0 3.5mm; }
+  .sampul { background: linear-gradient(135deg,#4A1D16,#8A3A22); color: #fff;
+            padding: 13mm 12mm; border-radius: 4mm; margin-bottom: 7mm; }
+  .sampul h1 { color: #fff; }
+  .sampul .sub { font-size: 10.5pt; color: #F0E4D3; margin: 0; }
+  .lencana { display: inline-block; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3);
+             padding: 1mm 3mm; border-radius: 10mm; font-size: 8pt; font-weight: 700;
+             letter-spacing: .5pt; text-transform: uppercase; margin-bottom: 4mm; }
+  table { width: 100%; border-collapse: collapse; margin: 2.5mm 0 4mm; font-size: 9pt; }
+  th, td { text-align: left; padding: 2mm 2.5mm; border-bottom: 1px solid #EFE4D6; vertical-align: top; }
+  th { background: #FDF6F1; font-weight: 700; color: #5D2A20; }
+  td.mono, th.mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.3pt; background: none; }
+  .catatan { border-left: 3px solid #0E9F6E; background: #F0FBF6; padding: 3mm 4mm;
+             margin: 2.5mm 0 3.5mm; font-size: 9.3pt; page-break-inside: avoid; }
+  .peringatan { border-left: 3px solid #D97706; background: #FFFAF0; padding: 3mm 4mm;
+                margin: 2.5mm 0 3.5mm; font-size: 9.3pt; page-break-inside: avoid; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+  .kaki { margin-top: 9mm; padding-top: 3mm; border-top: 1px solid #EFE4D6;
+          font-size: 8.5pt; color: #7A3628; }
+  .pecah { page-break-before: always; }
+</style></head><body>
+
+<div class="sampul">
+  <span class="lencana">Dokumentasi Teknis</span>
+  <h1>AI Complaint</h1>
+  <p class="sub">Klasifikasi dan penentuan prioritas keluhan toilet berbasis LLM<br>
+  UPI Kampus Tasikmalaya &middot; <span class="mono" style="background:rgba(255,255,255,.15);color:#fff">ai-complaint.yvrtz.workers.dev</span></p>
+</div>
+
+<h2>1. Ringkasan sistem</h2>
+<p>Mahasiswa memindai QR di pintu toilet, menulis keluhan dengan bahasa bebas, lalu
+<em>pretrained LLM</em> mengubahnya menjadi tiket kerja terstruktur — kategori, prioritas,
+ringkasan netral, dan rekomendasi tindakan. Tidak ada pelatihan model dan tidak ada dataset
+yang perlu dilabeli; kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
+
+<pre>QR per lantai  →  pilih jenis WC  →  tulis keluhan + foto  →  LLM
+                                                                ↓
+                          dashboard petugas  +  cron 17.00 WIB → ringkasan harian</pre>
+
+<h2>2. Tumpukan teknologi</h2>
+<table>
+  <tr><th>Lapisan</th><th>Pilihan</th><th>Alasan</th></tr>
+  <tr><td>Bahasa</td><td>TypeScript</td><td>Binding D1 dan R2 hanya tersedia di runtime JS/TS Workers</td></tr>
+  <tr><td>Runtime</td><td>Cloudflare Workers</td><td>Tanpa server, mulai dingin di bawah 20 ms, gratis pada skala kampus</td></tr>
+  <tr><td>Framework API</td><td>Hono</td><td>Router ringan yang berjalan native di Workers</td></tr>
+  <tr><td>Basis data</td><td>Cloudflare D1 (SQLite)</td><td>Binding langsung, migrasi ter-versi</td></tr>
+  <tr><td>Penyimpanan berkas</td><td>Cloudflare R2</td><td>Diakses lewat binding, disajikan ulang oleh Worker</td></tr>
+  <tr><td>Frontend</td><td>React 18 + Vite + Tailwind</td><td>Satu Worker melayani API dan aset, sehingga tanpa CORS</td></tr>
+  <tr><td>LLM</td><td>DeepSeek <span class="mono">deepseek-chat</span></td><td>JSON mode, latensi ~1,1 detik, biaya rendah</td></tr>
+</table>
+
+<h2>3. Arsitektur</h2>
+<p>Backend disusun berlapis dengan arah ketergantungan hanya ke dalam. Aturan tiap lapisan
+diperiksa dan tidak ada yang dilanggar.</p>
+
+<pre>routes/  →  services/  →  repositories/  →  D1
+                ↓
+           adapters/            domain/</pre>
+
+<table>
+  <tr><th>Lapisan</th><th>Tanggung jawab</th><th>Aturan yang dipatuhi</th></tr>
+  <tr><td class="mono">domain/</td><td>Kosakata dan aturan masalah</td><td>Tidak mengimpor apa pun — tanpa Hono, D1, R2</td></tr>
+  <tr><td class="mono">repositories/</td><td>Seluruh pernyataan SQL</td><td>Tahu basis data, tidak tahu HTTP</td></tr>
+  <tr><td class="mono">services/</td><td><em>Use case</em> dan aturan bisnis</td><td>Tidak menyebut Hono sama sekali</td></tr>
+  <tr><td class="mono">adapters/</td><td>LLM, R2, hash sandi, sesi, waktu</td><td>Membungkus dunia luar</td></tr>
+  <tr><td class="mono">routes/</td><td>Parse, validasi, delegasi, format</td><td>Nol SQL, nol aturan bisnis</td></tr>
+</table>
+
+<div class="catatan">
+  <strong>Konsekuensi yang dapat diuji:</strong> seluruh 38 pernyataan SQL berada di
+  <span class="mono">repositories/</span>. Berpindah dari D1 ke Postgres berarti menulis ulang
+  satu direktori, bukan seluruh berkas route. Aturan &ldquo;laporan hanya boleh ditutup bila ada
+  bukti&rdquo; tinggal di lapisan domain, sehingga setiap pemanggil memutuskan dengan cara yang sama.
+</div>
+
+<h2 class="pecah">4. Model data</h2>
+<table>
+  <tr><th>Tabel</th><th>Isi</th><th>Catatan rancangan</th></tr>
+  <tr><td class="mono">gedung</td><td>Sepuluh gedung kampus</td><td>Nama dipisah agar tidak diulang di tiap baris toilet</td></tr>
+  <tr><td class="mono">toilets</td><td>Satu baris per WC fisik</td><td>Dinonaktifkan, bukan dihapus, agar riwayat laporan tetap utuh</td></tr>
+  <tr><td class="mono">toilet_info</td><td><em>View</em> gabungan</td><td>Merakit nama tampilan di satu tempat</td></tr>
+  <tr><td class="mono">reports</td><td>Laporan + hasil analisis</td><td>Kolom manusia dan kolom mesin dipisah</td></tr>
+  <tr><td class="mono">pengguna</td><td>Akun admin, petugas, pelapor</td><td>PBKDF2-SHA256, salt per pengguna</td></tr>
+  <tr><td class="mono">aktivitas</td><td>Jejak audit</td><td><strong>Tanpa foreign key</strong> ke reports — lihat bagian 7</td></tr>
+  <tr><td class="mono">daily_summaries</td><td>Ringkasan harian</td><td>Ditulis cron, dapat dibuat ulang manual</td></tr>
+</table>
+
+<h2>5. Alur analisis LLM</h2>
+<p>Tiga hal menjaga keluaran model tetap dapat dipercaya:</p>
+
+<h3>Prompt berbasis aturan, bukan contoh acak</h3>
+<p>Prompt sistem mendefinisikan enam kategori dan tiga tingkat prioritas dengan kriteria
+eksplisit berbasis risiko keselamatan — bukan berbasis kata kunci. Ditambah tiga contoh
+<em>few-shot</em> untuk mengunci gaya bahasa dan penerapan aturannya.</p>
+
+<h3>Validasi berlapis</h3>
+<pre>respons JSON → Zod schema → coerceAnalisis() → enum basis data</pre>
+<p>Kategori di luar daftar dibuang; prioritas tak dikenal jatuh ke <span class="mono">sedang</span>.
+Model tidak pernah bisa menuliskan nilai yang tidak dikenal basis data.</p>
+
+<h3>Asinkron dan tahan gagal</h3>
+<p>Analisis dijalankan lewat <span class="mono">ctx.waitUntil()</span> setelah respons dikirim,
+sehingga pelapor menerima konfirmasi seketika. Kegagalan ditandai
+<span class="mono">ai_status='gagal'</span> beserta pesan errornya; laporan tetap tampil di
+dashboard dan dapat dianalisis ulang. Latensi tiap panggilan disimpan di kolom
+<span class="mono">ai_ms</span> sebagai data kuantitatif.</p>
+
+<h2>6. Keamanan dan wewenang</h2>
+<table>
+  <tr><th>Aspek</th><th>Penerapan</th></tr>
+  <tr><td>Kata sandi</td><td>PBKDF2-SHA256, 100.000 iterasi, salt 16 byte per pengguna, lewat WebCrypto</td></tr>
+  <tr><td>Sesi</td><td>JWT HS256 dalam cookie <span class="mono">HttpOnly</span>, <span class="mono">SameSite=Lax</span>, masa berlaku 12 jam</td></tr>
+  <tr><td>Wewenang</td><td>Middleware <span class="mono">wajibPeran()</span>; tiap endpoint menyebut sendiri peran yang boleh</td></tr>
+  <tr><td>Enumerasi akun</td><td>Pesan galat identik untuk akun tak dikenal dan sandi salah</td></tr>
+  <tr><td>Perbandingan hash</td><td>Waktu-konstan, agar lama respons tidak membocorkan isi hash</td></tr>
+  <tr><td>Akses berkas</td><td>Hanya prefix <span class="mono">laporan/</span> dan <span class="mono">bukti/</span> yang boleh dibaca</td></tr>
+</table>
+
+<p>Batas wewenang diuji langsung terhadap sistem berjalan: <span class="mono">GET /api/reports</span>
+tanpa sesi menghasilkan <strong>401</strong>, akun pelapor yang mengakses
+<span class="mono">/api/pengguna</span> menghasilkan <strong>403</strong>, dan admin tidak dapat
+menonaktifkan akunnya sendiri.</p>
+
+<h2 class="pecah">7. Empat keputusan rancangan yang berbiaya</h2>
+
+<h3>Jejak audit sengaja tanpa foreign key</h3>
+<p>Tabel <span class="mono">aktivitas</span> tidak menunjuk <span class="mono">reports</span>
+dengan foreign key. Alasannya justru laporan yang <em>dihapus</em>-lah yang paling perlu
+terlacak. Saat penghapusan, seluruh isi laporan disalin ke kolom
+<span class="mono">rincian</span> sebelum barisnya hilang, lengkap dengan pelaku dan waktunya.
+Foreign key akan memaksa baris audit ikut terhapus — kebalikan dari tujuannya.</p>
+
+<h3>Penyelesaian menuntut bukti, ditolak di server</h3>
+<p>Baik foto keadaan dari pelapor maupun foto bukti dari petugas divalidasi di sisi server,
+bukan sekadar disembunyikan di antarmuka. Status <span class="mono">selesai</span> tanpa
+<span class="mono">foto_selesai_key</span> dijawab <strong>400</strong>.</p>
+
+<h3>Foto tidak melewati domain pihak ketiga</h3>
+<p>Endpoint <span class="mono">GET /api/uploads/&lt;key&gt;</span> membaca objek langsung dari
+binding R2. Selain menghilangkan kebutuhan membuka bucket ke publik, ini menghindari domain
+<span class="mono">pub-*.r2.dev</span> yang DNS-nya dibajak sebagian ISP di Indonesia —
+terverifikasi saat pengembangan: resolver lokal mengembalikan alamat non-Cloudflare dan
+koneksi TLS gagal, sedangkan lewat 1.1.1.1 hostname yang sama benar mengarah ke Cloudflare.</p>
+
+<h3>Warna grafik dihitung, bukan dikira-kira</h3>
+<p>Palet deret dan palet prioritas lolos pemeriksaan rentang terang, ambang chroma,
+keterpisahan bagi buta warna (deutan/protan/tritan), dan kontras terhadap latar. Ramp
+sekuensial untuk <em>heatmap</em> diverifikasi monoton dalam luminansi (0,933 → 0,164).</p>
+
+<h2>8. Antarmuka API</h2>
+<table>
+  <tr><th>Akses</th><th class="mono">Endpoint</th><th>Keterangan</th></tr>
+  <tr><td rowspan="6">Publik</td><td class="mono">POST /api/auth/masuk · /daftar · /keluar</td><td>Sesi</td></tr>
+  <tr><td class="mono">GET /api/lokasi · /api/lokasi/:id</td><td>Gedung dan lantai; tujuan QR</td></tr>
+  <tr><td class="mono">POST /api/reports</td><td>Kirim laporan (foto wajib)</td></tr>
+  <tr><td class="mono">GET /api/reports/publik</td><td>Papan laporan terbuka</td></tr>
+  <tr><td class="mono">POST/GET /api/uploads</td><td>Unggah dan sajikan foto</td></tr>
+  <tr><td class="mono">GET /api/peringkat</td><td>Papan peringkat pelapor</td></tr>
+  <tr><td rowspan="4">Petugas</td><td class="mono">GET /api/reports</td><td>Daftar dashboard berikut filter</td></tr>
+  <tr><td class="mono">PATCH /api/reports/:id</td><td>Ubah status (bukti wajib untuk menutup)</td></tr>
+  <tr><td class="mono">DELETE /api/reports/:id</td><td>Hapus permanen, dicatat utuh</td></tr>
+  <tr><td class="mono">GET /api/summary/* · /api/aktivitas</td><td>Statistik, grafik, jejak audit</td></tr>
+  <tr><td>Admin</td><td class="mono">GET/POST/PATCH /api/pengguna</td><td>Kelola akun petugas</td></tr>
+</table>
+
+<h2>9. Penyebaran</h2>
+<pre>npx wrangler secret put LLM_API_KEY
+npx wrangler secret put AUTH_SECRET
+
+npm run db:remote        # migrasi D1 produksi
+npm run db:seed:remote   # daftar toilet
+npm run deploy</pre>
+
+<p>Cloudflare Workers Builds cukup disetel dengan perintah deploy
+<span class="mono">npx wrangler deploy</span>; frontend dibangun sendiri lewat
+<span class="mono">build.command</span> yang juga memasang dependensi pada checkout bersih.
+Cron <span class="mono">0 10 * * *</span> (17.00 WIB) memicu penyusunan ringkasan harian.</p>
+
+<div class="peringatan">
+  <strong>Wajib dilakukan sebelum dipakai sungguhan:</strong> ganti kata sandi admin bawaan.
+  Nilainya tercatat di berkas migrasi yang ter-commit sehingga harus dianggap publik.
+</div>
+
+<div class="kaki">
+  Repositori: <span class="mono">github.com/rdnsa/AI-complaint</span> &middot;
+  Dokumentasi lengkap ada pada <span class="mono">README.md</span>.
+</div>
+
+</body></html>

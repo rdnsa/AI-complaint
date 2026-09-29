@@ -3,12 +3,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 export type Bahasa = 'id' | 'en';
 
 /**
- * Kamus antarmuka. Bahasa Indonesia menjadi acuan bentuk kamus, sehingga
- * TypeScript menolak kompilasi bila ada kunci yang lupa diterjemahkan.
+ * The interface dictionary. Indonesian defines the shape, so TypeScript refuses
+ * to compile when a key is left untranslated.
  *
- * Catatan: hasil analisis LLM (ringkasan dan rekomendasi) tetap berbahasa
- * Indonesia karena pembacanya adalah petugas kebersihan; yang diterjemahkan
- * di sini hanyalah antarmukanya.
+ * Note: LLM output (summaries and recommendations) stays in Indonesian because
+ * its readers are the cleaning staff; only the interface itself is translated
+ * here.
  */
 const ID = {
   'kop.universitas': 'Universitas Pendidikan Indonesia',
@@ -68,7 +68,9 @@ const ID = {
     'Analisis otomatis belum berhasil, tetapi laporan kamu tetap tercatat dan akan ditinjau petugas.',
   'status.tindakan': 'Tindakan untuk petugas:',
   'status.galat_muat': 'Gagal memuat laporan',
-  'status.tersimpan': 'Laporan ini tersimpan di daftar “Laporan saya” pada halaman depan.',
+  'status.tersimpan':
+    'Simpan tautan halaman ini, atau masuk ke akunmu agar laporan ini tercatat di daftar “Laporan saya”.',
+  'status.tersimpan_akun': 'Laporan ini tercatat di daftar “Laporan saya” pada akunmu.',
 
   'publik.judul': 'Laporan Masuk',
   'publik.keterangan':
@@ -78,9 +80,7 @@ const ID = {
   'publik.jumlah': '{selesai} dari {total} laporan sudah selesai ditangani',
 
   'riwayat.judul': 'Laporan saya',
-  'riwayat.keterangan': 'Tersimpan di perangkat ini saja.',
   'riwayat.lihat': 'Lihat',
-  'riwayat.hapus': 'Hapus riwayat',
 
   'lacak.judul': 'Status penanganan',
   'lacak.diterima': 'Laporan diterima',
@@ -179,6 +179,30 @@ const ID = {
   'grafik.rata': 'Rata-rata waktu penyelesaian',
   'grafik.rata_dari': 'dari {n} laporan yang sudah selesai',
   'grafik.belum': 'Belum ada data yang cukup untuk digambarkan.',
+  'grafik.periode': '{n} hari terakhir',
+  'grafik.vs_lalu': 'vs {n} hari sebelumnya',
+  'grafik.kpi_laporan': 'Laporan masuk',
+  'grafik.kpi_tinggi': 'Prioritas tinggi',
+  'grafik.kpi_tuntas': 'Tingkat penyelesaian',
+  'grafik.komposisi': 'Komposisi prioritas per hari',
+  'grafik.komposisi_ket': 'Apakah beban yang berat bertambah, atau hanya jumlahnya yang naik?',
+  'grafik.pola': 'Kapan keluhan masuk',
+  'grafik.pola_ket': 'Hari × jam (WIB) — dasar untuk menyusun jadwal ronda petugas.',
+  'grafik.matriks': 'Gedung × jenis masalah',
+  'grafik.matriks_ket': 'Menunjukkan masalah mana yang menempel pada gedung tertentu.',
+  'grafik.efektivitas': 'Waktu penyelesaian per prioritas',
+  'grafik.efektivitas_ket':
+    'Uji nyata sistem prioritas: laporan berprioritas tinggi seharusnya selesai lebih cepat.',
+  'grafik.sedikit': 'sedikit',
+  'grafik.banyak': 'banyak',
+  'grafik.belum_selesai': 'belum ada yang selesai',
+  'hari.0': 'Min',
+  'hari.1': 'Sen',
+  'hari.2': 'Sel',
+  'hari.3': 'Rab',
+  'hari.4': 'Kam',
+  'hari.5': 'Jum',
+  'hari.6': 'Sab',
   'grafik.jam': '{n} jam',
   'grafik.menit': '{n} menit',
   'aktivitas.judul': 'Catatan aktivitas',
@@ -279,7 +303,9 @@ const EN: Record<Kunci, string> = {
     'Automatic analysis has not succeeded yet, but your report is recorded and staff will review it.',
   'status.tindakan': 'Action for staff:',
   'status.galat_muat': 'Could not load the report',
-  'status.tersimpan': 'This report is saved in the “My reports” list on the home page.',
+  'status.tersimpan':
+    'Save this page\u2019s link, or sign in so the report is listed under “My reports” on your account.',
+  'status.tersimpan_akun': 'This report is listed under “My reports” on your account.',
 
   'publik.judul': 'Incoming Reports',
   'publik.keterangan':
@@ -289,9 +315,7 @@ const EN: Record<Kunci, string> = {
   'publik.jumlah': '{selesai} of {total} reports resolved',
 
   'riwayat.judul': 'My reports',
-  'riwayat.keterangan': 'Saved on this device only.',
   'riwayat.lihat': 'View',
-  'riwayat.hapus': 'Clear history',
 
   'lacak.judul': 'Handling status',
   'lacak.diterima': 'Report received',
@@ -390,6 +414,30 @@ const EN: Record<Kunci, string> = {
   'grafik.rata': 'Average time to resolve',
   'grafik.rata_dari': 'across {n} resolved reports',
   'grafik.belum': 'Not enough data to plot yet.',
+  'grafik.periode': 'last {n} days',
+  'grafik.vs_lalu': 'vs the previous {n} days',
+  'grafik.kpi_laporan': 'Reports received',
+  'grafik.kpi_tinggi': 'High priority',
+  'grafik.kpi_tuntas': 'Resolution rate',
+  'grafik.komposisi': 'Priority mix per day',
+  'grafik.komposisi_ket': 'Is the heavy work growing, or only the raw count?',
+  'grafik.pola': 'When complaints arrive',
+  'grafik.pola_ket': 'Day × hour (WIB) — the basis for scheduling cleaning rounds.',
+  'grafik.matriks': 'Building × problem type',
+  'grafik.matriks_ket': 'Shows which problem is stuck to which building.',
+  'grafik.efektivitas': 'Time to resolve, by priority',
+  'grafik.efektivitas_ket':
+    'The real test of the priority system: high-priority reports should close faster.',
+  'grafik.sedikit': 'fewer',
+  'grafik.banyak': 'more',
+  'grafik.belum_selesai': 'none resolved yet',
+  'hari.0': 'Sun',
+  'hari.1': 'Mon',
+  'hari.2': 'Tue',
+  'hari.3': 'Wed',
+  'hari.4': 'Thu',
+  'hari.5': 'Fri',
+  'hari.6': 'Sat',
   'grafik.jam': '{n} h',
   'grafik.menit': '{n} min',
   'aktivitas.judul': 'Activity log',
@@ -441,10 +489,10 @@ function bahasaAwal(): Bahasa {
   try {
     const tersimpan = localStorage.getItem(PENYIMPANAN);
     if (tersimpan === 'id' || tersimpan === 'en') return tersimpan;
-    // Pengunjung berbahasa Inggris langsung mendapat antarmuka Inggris.
+    // An English-speaking visitor gets the English interface straight away.
     if (navigator.language?.toLowerCase().startsWith('en')) return 'en';
   } catch {
-    /* localStorage bisa diblokir; jatuh ke bawaan */
+    /* localStorage may be blocked; fall back to the default */
   }
   return 'id';
 }
@@ -457,7 +505,7 @@ export function PenyediaBahasa({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(PENYIMPANAN, bahasa);
     } catch {
-      /* abaikan bila penyimpanan tidak tersedia */
+      /* ignore when storage is unavailable */
     }
   }, [bahasa]);
 
@@ -480,12 +528,12 @@ export function useBahasa() {
   return nilai;
 }
 
-/** Waktu relatif yang mengikuti bahasa aktif. */
+/** Relative time that follows the active language. */
 export function useWaktuRelatif() {
   const { t } = useBahasa();
   return useCallback(
     (iso: string) => {
-      // created_at dari D1 berformat 'YYYY-MM-DD HH:MM:SS' dalam UTC.
+      // created_at from D1 is 'YYYY-MM-DD HH:MM:SS' in UTC.
       const waktu = Date.parse(iso.includes('T') ? iso : `${iso.replace(' ', 'T')}Z`);
       const menit = Math.floor((Date.now() - waktu) / 60000);
       if (menit < 1) return t('waktu.baru');

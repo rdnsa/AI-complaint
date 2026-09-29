@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ai-complaint",
-  // Token OAuth ini punya akses ke beberapa akun; sebutkan yang memiliki D1 & R2 "kato".
+  // This OAuth token can reach several accounts; name the one that owns D1 & R2 "kato".
   "account_id": "2b672ad4e8f27a584bd22e9ec749e326",
   "main": "src/index.ts",
   "compatibility_date": "2025-08-01",
@@ -9,22 +9,22 @@
 
   "observability": { "enabled": true },
 
-  // Frontend dibangun otomatis sebelum deploy, sehingga `wrangler deploy`
-  // tidak pernah menemukan ./dist dalam keadaan kosong.
+  // The frontend is built automatically before deploying, so `wrangler deploy`
+  // never finds ./dist empty.
   "build": {
     "command": "node scripts/build-frontend.mjs"
   },
 
-  // Frontend React (hasil `npm run build`) di-serve dari Worker yang sama.
-  // run_worker_first: request /api/* selalu masuk ke Worker, sisanya static file.
+  // The React frontend (output of `npm run build`) is served by this same Worker.
+  // run_worker_first: /api/* always reaches the Worker, everything else is a static file.
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    // /api/* wajib masuk Worker lebih dulu. Path lain yang tidak cocok dengan file
-    // statis (mis. /lapor/A-2-PRIA) dikembalikan sebagai index.html agar routing
-    // React bekerja; tanpa ini asset server justru me-redirect ke "/".
-    // "/__scheduled" hanya dipakai `wrangler dev --test-scheduled` untuk memicu cron
-    // secara manual; tanpa dikecualikan di sini, ia tertelan SPA fallback di bawah.
+    // /api/* must reach the Worker first. Any other path that matches no static
+    // file (e.g. /lapor/A-1) is returned as index.html so React routing works;
+    // without this the asset server would redirect to "/" instead.
+    // "/__scheduled" is only used by `wrangler dev --test-scheduled` to fire the
+    // cron by hand; without this exception it would be swallowed by the SPA fallback.
     "run_worker_first": ["/api/*", "/__scheduled"],
     "not_found_handling": "single-page-application"
   },
@@ -45,7 +45,7 @@
     }
   ],
 
-  // Ringkasan harian otomatis: 10:00 UTC == 17:00 WIB
+  // Automatic daily summary: 10:00 UTC == 17:00 WIB
   "triggers": {
     "crons": ["0 10 * * *"]
   },
@@ -55,8 +55,8 @@
     "LLM_MODEL": "deepseek-chat"
   }
 
-  // Secret (JANGAN ditaruh di sini, pakai `wrangler secret put`):
+  // Secrets (do NOT put them here, use `wrangler secret put`):
   //   LLM_API_KEY
   //   AUTH_SECRET
-  //   PETUGAS_PASSWORD
+
 }

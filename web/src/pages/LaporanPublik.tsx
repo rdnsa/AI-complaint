@@ -5,11 +5,11 @@ import { api, type LaporanPublik as Laporan } from '../lib/api';
 import { useBahasa, useWaktuRelatif } from '../lib/i18n';
 
 /**
- * Papan laporan terbuka.
+ * The public report board.
  *
- * Isinya sama dengan daftar di dashboard petugas, tetapi tanpa satu pun tombol
- * tindakan: mengubah status, menganalisis ulang, dan menghapus tetap menjadi
- * wewenang petugas yang sudah masuk.
+ * Identical in content to the staff dashboard list, but with no action buttons
+ * at all: changing status, re-running analysis, and deleting remain the
+ * authority of signed-in staff.
  */
 export default function LaporanPublik() {
   const { t } = useBahasa();

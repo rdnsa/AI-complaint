@@ -1,10 +1,10 @@
 /**
- * Penyimpanan kata sandi: PBKDF2-SHA256 lewat WebCrypto.
+ * Password storage: PBKDF2-SHA256 via WebCrypto.
  *
- * bcrypt dan argon2 tidak tersedia di runtime Workers tanpa WebAssembly
- * tambahan, sedangkan PBKDF2 sudah ada di WebCrypto dan cukup kuat selama
- * jumlah iterasinya besar. Setiap pengguna memakai salt sendiri, sehingga dua
- * orang dengan sandi sama tetap menghasilkan hash berbeda.
+ * bcrypt and argon2 are unavailable in the Workers runtime without extra
+ * WebAssembly, whereas PBKDF2 ships with WebCrypto and is strong enough as long
+ * as the iteration count is high. Each user gets their own salt, so two people
+ * with the same password still end up with different hashes.
  */
 const ITERASI = 100_000;
 const PANJANG_BIT = 256;
@@ -40,7 +40,7 @@ export async function hitungHash(sandi: string, saltHex: string): Promise<string
   return keHex(new Uint8Array(bit));
 }
 
-/** Perbandingan waktu-konstan agar lama respons tidak membocorkan isi hash. */
+/** Constant-time comparison, so response time cannot leak the stored hash. */
 export async function cocok(sandi: string, saltHex: string, hashHex: string): Promise<boolean> {
   const hitung = await hitungHash(sandi, saltHex);
   if (hitung.length !== hashHex.length) return false;

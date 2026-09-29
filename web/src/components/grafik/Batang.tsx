@@ -3,15 +3,17 @@ import { TINTA, TUNGGAL } from './warna';
 export interface ItemBatang {
   label: string;
   nilai: number;
+  /** Overrides the printed value when the raw number is not the readable form. */
+  tampil?: string;
   warna?: string;
 }
 
 /**
- * Peringkat magnitudo: batang mendatar karena labelnya berupa teks panjang
- * (nama kategori, nama gedung) yang akan terpotong bila ditaruh di sumbu X.
+ * A magnitude ranking. The bars run horizontally because the labels are long
+ * text (category names, building names) that would be truncated on an X axis.
  *
- * Nilainya ditulis langsung di ujung batang, jadi grafik ini tetap terbaca
- * tanpa mengandalkan warna maupun kursor.
+ * Values are printed at the end of each bar, so the chart stays readable
+ * without relying on colour or on a pointer.
  */
 export default function Batang({ data }: { data: ItemBatang[] }) {
   if (!data.length) return null;
@@ -26,7 +28,7 @@ export default function Batang({ data }: { data: ItemBatang[] }) {
               {d.label}
             </span>
             <span className="shrink-0 font-bold" style={{ color: TINTA.utama }}>
-              {d.nilai}
+              {d.tampil ?? d.nilai}
             </span>
           </div>
           <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-krem-100">

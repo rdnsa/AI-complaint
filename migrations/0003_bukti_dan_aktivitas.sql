@@ -1,14 +1,14 @@
--- Migration 0003: foto bukti penyelesaian dan catatan aktivitas.
+-- Migration 0003: proof-of-completion photos and the activity log.
 
--- Foto yang diunggah petugas sebagai bukti bahwa keluhan benar-benar ditangani.
+-- The photo staff upload as evidence that a complaint was genuinely handled.
 ALTER TABLE reports ADD COLUMN foto_selesai_key TEXT;
 
--- Catatan aktivitas untuk pihak manajemen.
+-- Activity log, for management oversight.
 --
--- Sengaja TANPA foreign key ke reports: justru laporan yang sudah dihapuslah
--- yang paling perlu tetap terlacak. Saat penghapusan terjadi, seluruh isi
--- laporan disalin ke kolom `rincian`, sehingga manajemen masih bisa melihat apa
--- yang hilang, siapa yang menghapusnya, dan kapan.
+-- Deliberately WITHOUT a foreign key to reports: a deleted report is exactly the
+-- one that most needs to stay traceable. On deletion the entire report is copied
+-- into the `rincian` column, so management can still see what was lost, who
+-- removed it, and when.
 CREATE TABLE aktivitas (
   id        INTEGER PRIMARY KEY AUTOINCREMENT,
   waktu     TEXT NOT NULL DEFAULT (datetime('now')),

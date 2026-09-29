@@ -1,7 +1,8 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { sign, verify } from 'hono/jwt';
-import type { AppEnv, Peran } from '../types';
+import type { Peran } from '../domain/types';
+import type { AppEnv } from '../env';
 
 const COOKIE = 'sesi';
 const ALG = 'HS256';
@@ -44,11 +45,11 @@ export async function sesiSaatIni(c: Context<AppEnv>): Promise<Sesi | null> {
 }
 
 /**
- * Membatasi endpoint pada peran tertentu.
+ * Restricts an endpoint to specific roles.
  *
- * Admin sengaja tidak diberi akses otomatis ke segalanya: setiap endpoint
- * menyebut sendiri peran mana yang boleh, sehingga kewenangannya terbaca
- * langsung di tempat rutenya didefinisikan.
+ * Admin is deliberately not granted blanket access: each endpoint names the
+ * roles it accepts, so the authority required is readable at the point where
+ * the route is defined.
  */
 export function wajibPeran(...boleh: Peran[]): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
@@ -60,6 +61,6 @@ export function wajibPeran(...boleh: Peran[]): MiddlewareHandler<AppEnv> {
   };
 }
 
-/** Petugas dan admin sama-sama mengerjakan laporan. */
+/** Staff and admins both work on reports. */
 export const wajibPetugas = wajibPeran('admin', 'petugas');
 export const wajibAdmin = wajibPeran('admin');

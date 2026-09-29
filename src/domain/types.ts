@@ -1,25 +1,13 @@
+/**
+ * The domain layer: vocabulary and rules of the problem itself.
+ *
+ * Nothing here may import Hono, D1, R2, or any other framework — that is the
+ * property which lets these rules be read, tested, and reused without booting
+ * a Worker.
+ */
+
 export const PERAN = ['admin', 'petugas', 'pelapor'] as const;
 export type Peran = (typeof PERAN)[number];
-
-export interface Env {
-  DB: D1Database;
-  BUCKET: R2Bucket;
-  ASSETS: Fetcher;
-
-  // vars (wrangler.jsonc)
-  LLM_BASE_URL: string;
-  LLM_MODEL: string;
-
-  // secrets (wrangler secret put)
-  LLM_API_KEY: string;
-  AUTH_SECRET: string;
-}
-
-/** Tipe Hono bersama: binding + variabel yang diisi middleware auth. */
-export type AppEnv = {
-  Bindings: Env;
-  Variables: { sesi: { id: string; nama: string; peran: Peran } };
-};
 
 export const KATEGORI = [
   'kebersihan',
@@ -37,7 +25,7 @@ export type Prioritas = (typeof PRIORITAS)[number];
 export const STATUS = ['baru', 'diproses', 'selesai'] as const;
 export type Status = (typeof STATUS)[number];
 
-/** Baris mentah tabel `reports` seperti yang dikembalikan D1. */
+/** A raw `reports` row as stored, joined with its location. */
 export interface ReportRow {
   id: string;
   toilet_id: string;
@@ -58,7 +46,7 @@ export interface ReportRow {
   pelapor_id: string | null;
   created_at: string;
   updated_at: string;
-  // hasil JOIN view toilet_info
+  // produced by the JOIN against the toilet_info view
   toilet_nama?: string;
   gedung_kode?: string;
   gedung_nama?: string;
@@ -66,7 +54,7 @@ export interface ReportRow {
   jenis?: string;
 }
 
-/** Bentuk yang dikirim ke frontend: kategori sudah jadi array, foto sudah jadi URL. */
+/** What the frontend receives: categories parsed, photo keys turned into URLs. */
 export interface ReportDTO
   extends Omit<ReportRow, 'kategori' | 'foto_key' | 'foto_selesai_key'> {
   kategori: Kategori[];
@@ -74,13 +62,27 @@ export interface ReportDTO
   foto_selesai_url: string | null;
 }
 
+/** Photos are served by our own Worker, never by a third-party domain. */
+export function urlFoto(key: string | null | undefined): string | null {
+  return key ? `/api/uploads/${key}` : null;
+}
+
 export function toDTO(row: ReportRow): ReportDTO {
   const { kategori, foto_key, foto_selesai_key, ...rest } = row;
   return {
     ...rest,
     kategori: kategori ? (JSON.parse(kategori) as Kategori[]) : [],
-    // Path relatif: foto dilayani Worker ini sendiri, satu domain dengan aplikasi.
-    foto_url: foto_key ? `/api/uploads/${foto_key}` : null,
-    foto_selesai_url: foto_selesai_key ? `/api/uploads/${foto_selesai_key}` : null,
+    foto_url: urlFoto(foto_key),
+    foto_selesai_url: urlFoto(foto_selesai_key),
   };
+}
+
+/**
+ * A report may only be closed once evidence exists.
+ *
+ * This is the one business rule strict enough to deserve its own function: the
+ * HTTP layer, the service layer, and any future caller all decide the same way.
+ */
+export function bolehDiselesaikan(status: Status, fotoBukti: string | null): boolean {
+  return status !== 'selesai' || Boolean(fotoBukti);
 }

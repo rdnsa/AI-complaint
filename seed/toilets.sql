@@ -1,63 +1,63 @@
--- Daftar WC per gedung dan lantai — UPI Kampus Tasikmalaya.
+-- The list of toilets per building and floor — UPI Tasikmalaya Campus.
 --
--- Berkas ini aman dijalankan ulang kapan saja, termasuk saat sudah ada laporan
--- masuk. Caranya: seluruh WC dinonaktifkan lebih dulu, lalu yang tercantum di
--- daftar bawah dihidupkan kembali. WC yang dikeluarkan dari daftar tidak ikut
--- terhapus dari database — ia hanya berhenti muncul di aplikasi, sehingga
--- laporan lama yang menunjuk ke sana tetap utuh beserta riwayatnya.
+-- This file is safe to re-run at any time, including once reports exist. It
+-- deactivates every toilet first, then reactivates the ones listed below. A
+-- toilet removed from the list is not deleted from the database — it merely
+-- stops appearing in the app, so older reports pointing at it keep their
+-- location and history intact.
 --
--- Id wajib berformat '<kode gedung>-<lantai>-<JENIS>' karena pembuat QR dan
--- tampilan lokasi mengandalkannya.
+-- Ids must follow '<building>-<floor>-<TYPE>', because the QR generator and the
+-- location display both rely on that format.
 --
--- Status tiap gedung:
---   A  Ki Hajar Dewantara       lantai 1-3, ada toilet          → terdaftar
---   B  Masjid At-Tarbiyah       1 lantai                        → terdaftar
---   C  Dewi Sartika             5 lantai                        → terdaftar
---   D  KH. Ahmad Dahlan         1 lantai, ada toilet atau tidak masih dipastikan
---   E  Dr. Wahidin Sudirohusodo 2 lantai, sejauh diketahui tanpa toilet
---   F  Daoed Joesoef            gedung tidak terpakai, perlu dipastikan
---   G  RA. Kartini              1 lantai                        → terdaftar
---   H  Mohamad Yamin            2 lantai, toilet hanya lantai 1 → terdaftar
---   I  Dr. Sutomo               3 lantai, toilet lantai 1-2      → terdaftar
---   J  KH. Moh. Hasyim Ashari   tanpa toilet
+-- Status of each building:
+--   A  Ki Hajar Dewantara       floors 1-3, has toilets            → registered
+--   B  Masjid At-Tarbiyah       single floor                       → registered
+--   C  Dewi Sartika             5 floors                           → registered
+--   D  KH. Ahmad Dahlan         1 floor, toilets still unconfirmed
+--   E  Dr. Wahidin Sudirohusodo 2 floors, believed to have none
+--   F  Daoed Joesoef            building unused, needs confirming
+--   G  RA. Kartini              single floor                       → registered
+--   H  Mohamad Yamin            2 floors, toilets on floor 1 only  → registered
+--   I  Dr. Sutomo               3 floors, toilets on floors 1-2    → registered
+--   J  KH. Moh. Hasyim Ashari   no toilets
 --
--- Gedung tanpa toilet sengaja tidak didaftarkan: ia tidak muncul di daftar
--- pilihan dan tidak dibuatkan QR. Baris untuk D, E, dan F sudah disiapkan di
--- bagian bawah — cukup hapus tanda komentarnya setelah kondisinya dipastikan.
+-- Buildings without toilets are intentionally left unregistered: they do not
+-- appear in the picker and get no QR code. Rows for D, E, and F are prepared at
+-- the bottom — just uncomment them once their condition is confirmed.
 --
--- CATATAN: tiap lantai diasumsikan punya WC pria dan wanita. Bila ada lantai
--- yang hanya punya salah satunya, atau punya WC disabilitas, sesuaikan barisnya
--- lalu jalankan ulang seed dan buat ulang QR.
+-- NOTE: every floor is assumed to have both a men's and a women's toilet. Where
+-- a floor has only one of them, or has an accessible toilet, adjust its rows,
+-- then re-run the seed and regenerate the QR codes.
 
 UPDATE toilets SET aktif = 0;
 
 INSERT INTO toilets (id, gedung_kode, lantai, jenis) VALUES
-  -- Gedung A - Ki Hajar Dewantara (lantai 1-3)
+  -- Building A - Ki Hajar Dewantara (floors 1-3)
   ('A-1-PRIA', 'A', 1, 'pria'), ('A-1-WANITA', 'A', 1, 'wanita'),
   ('A-2-PRIA', 'A', 2, 'pria'), ('A-2-WANITA', 'A', 2, 'wanita'),
   ('A-3-PRIA', 'A', 3, 'pria'), ('A-3-WANITA', 'A', 3, 'wanita'),
 
-  -- Gedung B - Masjid At-Tarbiyah (1 lantai)
+  -- Building B - Masjid At-Tarbiyah (single floor)
   ('B-1-PRIA', 'B', 1, 'pria'), ('B-1-WANITA', 'B', 1, 'wanita'),
 
-  -- Gedung C - Dewi Sartika (lantai 1-5)
+  -- Building C - Dewi Sartika (floors 1-5)
   ('C-1-PRIA', 'C', 1, 'pria'), ('C-1-WANITA', 'C', 1, 'wanita'),
   ('C-2-PRIA', 'C', 2, 'pria'), ('C-2-WANITA', 'C', 2, 'wanita'),
   ('C-3-PRIA', 'C', 3, 'pria'), ('C-3-WANITA', 'C', 3, 'wanita'),
   ('C-4-PRIA', 'C', 4, 'pria'), ('C-4-WANITA', 'C', 4, 'wanita'),
   ('C-5-PRIA', 'C', 5, 'pria'), ('C-5-WANITA', 'C', 5, 'wanita'),
 
-  -- Gedung G - RA. Kartini (1 lantai)
+  -- Building G - RA. Kartini (single floor)
   ('G-1-PRIA', 'G', 1, 'pria'), ('G-1-WANITA', 'G', 1, 'wanita'),
 
-  -- Gedung H - Mohamad Yamin (2 lantai, toilet hanya di lantai 1)
+  -- Building H - Mohamad Yamin (2 floors, toilets on floor 1 only)
   ('H-1-PRIA', 'H', 1, 'pria'), ('H-1-WANITA', 'H', 1, 'wanita'),
 
-  -- Gedung I - Dr. Sutomo (3 lantai, toilet di lantai 1 dan 2)
+  -- Building I - Dr. Sutomo (3 floors, toilets on floors 1 and 2)
   ('I-1-PRIA', 'I', 1, 'pria'), ('I-1-WANITA', 'I', 1, 'wanita'),
   ('I-2-PRIA', 'I', 2, 'pria'), ('I-2-WANITA', 'I', 2, 'wanita')
 
-  -- Belum dipastikan — hapus tanda komentar bila ternyata ada toiletnya:
+  -- Unconfirmed — uncomment once these buildings are known to have toilets:
   -- , ('D-1-PRIA', 'D', 1, 'pria'), ('D-1-WANITA', 'D', 1, 'wanita')
   -- , ('E-1-PRIA', 'E', 1, 'pria'), ('E-1-WANITA', 'E', 1, 'wanita')
   -- , ('E-2-PRIA', 'E', 2, 'pria'), ('E-2-WANITA', 'E', 2, 'wanita')

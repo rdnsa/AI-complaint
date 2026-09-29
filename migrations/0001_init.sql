@@ -1,6 +1,6 @@
--- Migration 0001: skema awal AI Complaint (toilet kampus)
+-- Migration 0001: initial schema for AI Complaint (campus toilets)
 
--- Satu baris per WC fisik. Nilai `id` inilah yang di-encode ke dalam QR.
+-- One row per physical toilet. This `id` is what gets encoded into the QR code.
 CREATE TABLE toilets (
   id          TEXT PRIMARY KEY,            -- contoh: 'A-2-PRIA'
   gedung      TEXT NOT NULL,               -- 'Gedung A'
@@ -17,13 +17,13 @@ CREATE TABLE reports (
   teks        TEXT NOT NULL,               -- keluhan mentah dari mahasiswa
   foto_key    TEXT,                        -- object key di R2, NULL kalau tanpa foto
 
-  -- Alur kerja petugas (dikendalikan manusia)
+  -- Staff workflow (driven by people)
   status      TEXT NOT NULL DEFAULT 'baru' -- 'baru' | 'diproses' | 'selesai'
               CHECK (status IN ('baru', 'diproses', 'selesai')),
   petugas     TEXT,
   selesai_at  TEXT,
 
-  -- Hasil analisis LLM (dikendalikan mesin, diisi asinkron)
+  -- LLM analysis results (driven by the machine, filled in asynchronously)
   ai_status   TEXT NOT NULL DEFAULT 'pending'
               CHECK (ai_status IN ('pending', 'ok', 'gagal')),
   kategori    TEXT,                        -- JSON array, contoh: ["kebersihan","perlengkapan"]
@@ -38,13 +38,13 @@ CREATE TABLE reports (
   updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Dashboard selalu memfilter/mengurutkan lewat kombinasi ini.
+-- The dashboard always filters and sorts through these combinations.
 CREATE INDEX idx_reports_created  ON reports (created_at DESC);
 CREATE INDEX idx_reports_status   ON reports (status, created_at DESC);
 CREATE INDEX idx_reports_toilet   ON reports (toilet_id, created_at DESC);
 CREATE INDEX idx_reports_ai       ON reports (ai_status) WHERE ai_status <> 'ok';
 
--- Fitur #3: ringkasan harian hasil cron.
+-- Feature #3: the daily summary written by the cron.
 CREATE TABLE daily_summaries (
   tanggal       TEXT PRIMARY KEY,          -- 'YYYY-MM-DD' waktu WIB
   total_laporan INTEGER NOT NULL,

@@ -33,7 +33,7 @@ export interface Gedung {
   lantai: number[];
 }
 
-/** Satu lantai pada satu gedung — inilah yang diwakili sebuah QR. */
+/** One floor of one building — this is what a QR code stands for. */
 export interface Lokasi {
   gedung_kode: string;
   gedung_nama: string;
@@ -64,19 +64,7 @@ export interface Laporan {
   created_at: string;
 }
 
-/** Bentuk ringkas yang dipakai daftar "Laporan saya". */
-export interface LaporanRingkas {
-  id: string;
-  status: StatusLaporan;
-  prioritas: Prioritas | null;
-  ai_status: 'pending' | 'ok' | 'gagal';
-  ringkasan: string | null;
-  teks: string;
-  toilet_nama: string;
-  created_at: string;
-}
-
-/** Bentuk laporan pada papan terbuka: tanpa teks asli, foto, dan nama petugas. */
+/** A report on the public board: no raw text, no photo, no staff name. */
 export interface LaporanPublik {
   id: string;
   status: StatusLaporan;
@@ -92,13 +80,25 @@ export interface LaporanPublik {
   foto_selesai_url: string | null;
 }
 
-/** Angka-angka untuk grafik di dashboard. */
+/** The numbers behind the dashboard charts. */
 export interface DataGrafik {
   harian: Array<{ tanggal: string; total: number; selesai: number }>;
+  harianPrioritas: Array<{ tanggal: string; tinggi: number; sedang: number; rendah: number }>;
   kategori: Array<{ kategori: string; jumlah: number }>;
   prioritas: Array<{ prioritas: string; jumlah: number }>;
   gedung: Array<{ gedung_kode: string; gedung_nama: string; jumlah: number }>;
   penyelesaian: { jumlah: number; menit: number | null };
+  jamHari: Array<{ hari: number; jam: number; jumlah: number }>;
+  matriks: Array<{ gedung_kode: string; kategori: string; jumlah: number }>;
+  waktuPrioritas: Array<{ prioritas: string; jumlah: number; menit: number | null }>;
+  tren: {
+    hari: number;
+    laporan: number;
+    laporan_lalu: number;
+    perubahan: number | null;
+    selesai: number;
+    tinggi: number;
+  };
 }
 
 export interface Aktivitas {
@@ -163,7 +163,7 @@ export const api = {
 
   laporan: (id: string) => req<Laporan>(`/api/reports/${id}`),
 
-  /** Papan laporan terbuka — tidak memerlukan login. */
+  /** The public report board — no sign-in required. */
   laporanPublik: (filter: Record<string, string>) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: LaporanPublik[]; jumlah: { total: number; selesai: number | null } }>(
@@ -171,11 +171,10 @@ export const api = {
     );
   },
 
-  /** Status ringkas beberapa laporan sekaligus, untuk daftar "Laporan saya". */
-  ringkasLaporan: (ids: string[]) =>
-    req<{ data: LaporanRingkas[] }>(`/api/reports/ringkas?ids=${ids.join(',')}`),
+  /** The signed-in reporter's own reports. */
+  laporanSaya: () => req<{ data: Laporan[] }>('/api/reports/saya'),
 
-  /** `jenis` memisahkan foto keadaan dari pelapor dan foto bukti dari petugas. */
+  /** `jenis` separates the reporter's condition photo from the staff proof photo. */
   unggahFoto: (file: File, jenis: 'laporan' | 'bukti' = 'laporan') => {
     const fd = new FormData();
     fd.append('file', file);
@@ -185,7 +184,7 @@ export const api = {
     });
   },
 
-  // --- akun ---
+  // --- accounts ---
   masuk: (username: string, password: string) =>
     req<Sesi>('/api/auth/masuk', { method: 'POST', body: JSON.stringify({ username, password }) }),
   daftar: (username: string, nama: string, password: string) =>
@@ -196,7 +195,7 @@ export const api = {
   keluar: () => req<{ ok: boolean }>('/api/auth/keluar', { method: 'POST' }),
   saya: () => req<Sesi>('/api/auth/saya'),
 
-  // --- khusus admin ---
+  // --- admin only ---
   daftarPengguna: () => req<{ data: AkunPengelola[] }>('/api/pengguna'),
   buatPengguna: (body: { username: string; nama: string; password: string }) =>
     req<AkunPengelola>('/api/pengguna', { method: 'POST', body: JSON.stringify(body) }),

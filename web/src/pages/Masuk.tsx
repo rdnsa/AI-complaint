@@ -22,7 +22,7 @@ export default function Masuk() {
     try {
       const sesi = await api.masuk(username, password);
       pasang(sesi);
-      // Pengelola langsung dibawa ke dashboard; pelapor kembali ke beranda.
+      // Managers go straight to the dashboard; reporters return to the landing page.
       navigate(sesi.peran === 'pelapor' ? '/' : '/petugas', { replace: true });
     } catch (err) {
       setGalat(err instanceof Error ? err.message : t('login.galat'));
