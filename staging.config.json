@@ -1,7 +1,7 @@
 {
   "name": "ai-complaint-staging",
   "database_name": "kato-staging",
-  "database_id": "GANTI-DENGAN-ID-DARI-wrangler-d1-create",
+  "database_id": "72e54740-1cdf-414f-a0d2-228f39b8b993",
   "bucket_name": "kato-staging",
   "domain": ""
 }
