@@ -5,9 +5,16 @@ import { defineConfig } from 'vite';
 const webDir = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = fileURLToPath(new URL('..', import.meta.url));
 
+// Link-preview crawlers need absolute URLs, so index.html refers to the deployed
+// origin as %SITE_URL%. Override with SITE_URL=… when deploying elsewhere.
+const SITE_URL = (process.env.SITE_URL ?? 'https://ai-complaint.yvrtz.workers.dev').replace(/\/$/, '');
+
 export default defineConfig({
   root: webDir,
-  plugins: [react()],
+  plugins: [
+    react(),
+    { name: 'site-url', transformIndexHtml: (html) => html.replaceAll('%SITE_URL%', SITE_URL) },
+  ],
   // The Tailwind/PostCSS config lives at the repo root, not inside web/.
   css: { postcss: rootDir },
   build: {

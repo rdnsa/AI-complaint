@@ -14,7 +14,7 @@ export type ActivityAction =
   | 'question'
   | 'work_logged';
 
-export const ACTIVITY_ACTIONS: ActivityAction[] = [
+const ACTIVITY_ACTIONS: ActivityAction[] = [
   'report_created',
   'analysis',
   'analysis_failed',

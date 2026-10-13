@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import Camera from '../components/Camera';
 import Header from '../components/Header';
 import RoleSwitch from '../components/RoleSwitch';
-import { api, type Floor, type ToiletType } from '../lib/api';
+import { api, type Floor } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
 import { readStoredStaff } from '../lib/staff';
 import { useSession } from '../lib/session';

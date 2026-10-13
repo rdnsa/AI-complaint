@@ -53,7 +53,7 @@ export async function currentSession(c: Context<AppEnv>): Promise<Session | null
  * roles it accepts, so the authority required is readable at the point where
  * the route is defined.
  */
-export function requireRole(...allowed: Role[]): MiddlewareHandler<AppEnv> {
+function requireRole(...allowed: Role[]): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
     const session = await currentSession(c);
     if (!session) return c.json({ error: 'Silakan masuk terlebih dahulu.' }, 401);

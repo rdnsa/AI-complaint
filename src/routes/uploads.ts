@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
 import {
+  ALLOWED_TYPES,
+  FOLDER,
   getPhoto,
   isAllowedKey,
   MAX_BYTES,
   savePhoto,
-  ALLOWED_TYPES,
   type PhotoKind,
 } from '../adapters/storage';
 import { photoUrl } from '../domain/types';
@@ -27,10 +28,12 @@ app.post('/', async (c) => {
   if (!ALLOWED_TYPES.has(file.type)) {
     return c.json({ error: 'Format harus JPG, PNG, atau WebP' }, 415);
   }
-  if (file.size > MAX_BYTES) return c.json({ error: 'Ukuran foto maksimal 5 MB' }, 413);
+  if (file.size > MAX_BYTES) {
+    return c.json({ error: `Ukuran foto maksimal ${MAX_BYTES / 1024 / 1024} MB` }, 413);
+  }
 
-  const requested = c.req.query('kind');
-  const kind: PhotoKind = requested === 'proof' || requested === 'work' ? requested : 'report';
+  const requested = c.req.query('kind') ?? '';
+  const kind: PhotoKind = Object.hasOwn(FOLDER, requested) ? (requested as PhotoKind) : 'report';
   const key = await savePhoto(c.env, file, kind);
 
   return c.json({ key, url: photoUrl(key) }, 201);

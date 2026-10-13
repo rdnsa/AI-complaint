@@ -20,7 +20,7 @@ import { log } from './activity-service';
 /** Questions per day, everyone together. Roughly 3,000 tokens each. */
 export const DAILY_LIMIT = 50;
 /** Questions per day from one anonymous address, so one visitor cannot spend the whole budget. */
-export const PER_IP_LIMIT = 20;
+const PER_IP_LIMIT = 20;
 
 export type Asker =
   | { kind: 'supervisor'; name: string }

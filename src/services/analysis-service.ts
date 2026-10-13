@@ -45,8 +45,3 @@ export async function runAnalysis(env: Env, reportId: string): Promise<void> {
     });
   }
 }
-
-/** Staff retry: clears the previous failure, then re-runs the analysis. */
-export async function retryAnalysis(env: Env, reportId: string): Promise<void> {
-  await reports.markAnalysisPending(env, reportId);
-}

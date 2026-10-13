@@ -2,7 +2,7 @@
  * Generates a QR image per floor, plus one printable HTML sheet.
  *
  *   node scripts/generate-qr.mjs                          # read from the local Worker
- *   BASE_URL=https://ai-complaint.workers.dev npm run qr
+ *   BASE_URL=https://ai-complaint.yvrtz.workers.dev npm run qr
  *
  * One QR code stands for one floor of one building and points at
  * <BASE_URL>/report/<building>-<floor>. The toilet type (men/women/accessible)

@@ -12,7 +12,6 @@ import {
   type ProofVerdict,
   type Report,
   type StaffOption,
-  type ToiletType,
 } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSelectedStaff } from '../lib/staff';

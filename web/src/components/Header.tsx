@@ -10,7 +10,7 @@ const OPTIONS: Array<{ code: Language; label: string }> = [
   { code: 'en', label: 'EN' },
 ];
 
-export function LanguageButton({ small = false }: { small?: boolean }) {
+function LanguageButton({ small = false }: { small?: boolean }) {
   const { language, setLanguage, t } = useLanguage();
   return (
     <div
@@ -35,7 +35,7 @@ export function LanguageButton({ small = false }: { small?: boolean }) {
 }
 
 /** Light/dark toggle switch: the knob slides from the sun to the moon. */
-export function ThemeButton({ small = false }: { small?: boolean }) {
+function ThemeButton({ small = false }: { small?: boolean }) {
   const { dark, setDark } = useTheme();
   const { t } = useLanguage();
   const size = small ? 'h-6 w-11' : 'h-8 w-14';
