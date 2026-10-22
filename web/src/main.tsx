@@ -15,6 +15,8 @@ import StudentHome from './pages/StudentHome';
 import StaffHome from './pages/StaffHome';
 import StaffFloor from './pages/StaffFloor';
 import ReportStatus from './pages/ReportStatus';
+import CleaningAreas from './pages/CleaningAreas';
+import CleaningForm from './pages/CleaningForm';
 import './index.css';
 
 /**
@@ -52,6 +54,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           {/* Staff without sign-in: pick a name, resolve reports, log work. */}
           <Route path="/staff" element={<StaffHome />} />
           <Route path="/staff/:floorId" element={<StaffFloor />} />
+          {/* Cleaning reports per area: the area QR points at /clean/<area>. */}
+          <Route path="/clean" element={<CleaningAreas />} />
+          <Route path="/clean/:areaId" element={<CleaningForm />} />
           {/* The public report board, and the status page of a single report. */}
           <Route path="/reports" element={<PublicReports />} />
           <Route path="/reports/:id" element={<ReportStatus />} />

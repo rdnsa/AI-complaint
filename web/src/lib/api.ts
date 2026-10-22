@@ -144,7 +144,9 @@ export type ActivityAction =
   | 'proof_rejected'
   | 'verification_failed'
   | 'question'
-  | 'work_logged';
+  | 'work_logged'
+  | 'cleaning_reported'
+  | 'cleaning_out_of_range';
 
 export interface ActivityEntry {
   id: number;
@@ -189,6 +191,64 @@ export interface AskAnswer {
   tokens: { prompt: number; completion: number; cache_hit: number };
   ms: number;
   remaining_today: number;
+}
+
+export type CleaningTask = 'sweep' | 'mop' | 'glass' | 'toilet';
+export const CLEANING_TASKS: CleaningTask[] = ['sweep', 'mop', 'glass', 'toilet'];
+
+/** 'ok' on campus, 'far' away from it, 'unknown' when the phone gave no position. */
+export type LocationStatus = 'ok' | 'far' | 'unknown';
+
+/** An area with its own QR: usually one floor, sometimes a yard or a court. */
+export interface CleaningArea {
+  id: string;
+  name: string;
+  building_code: string | null;
+  floor: number | null;
+  tasks: CleaningTask[];
+  /** The staff assigned here by the assignment letter. */
+  staff: StaffOption[];
+}
+
+export interface Campus {
+  lat: number;
+  lng: number;
+  radius_m: number;
+}
+
+export interface CleaningReport {
+  id: string;
+  area_id: string;
+  area_name: string;
+  staff_id: string;
+  staff_name: string;
+  note: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  accuracy_m: number | null;
+  distance_m: number | null;
+  location_status: LocationStatus;
+  created_at: string;
+  tasks: Array<{ task: CleaningTask; photo_url: string | null; photo_at: string }>;
+}
+
+export interface CleaningRecap {
+  date: string;
+  staff: Array<{
+    staff_id: string;
+    staff_name: string;
+    expected: number;
+    done: number;
+    reports: number;
+    alerts: number;
+    areas: Array<{
+      area_id: string;
+      area_name: string;
+      assigned: boolean;
+      tasks: Partial<Record<CleaningTask, { done_at: string | null; times: number; flagged: boolean }>>;
+    }>;
+  }>;
+  totals: { expected: number; done: number; reports: number; alerts: number };
 }
 
 /** The vision check's verdict on a proof or work photo. */
@@ -248,7 +308,7 @@ export const api = {
    * `kind` separates the reporter's condition photo, the staff proof photo,
    * and the photo on a staff work report.
    */
-  uploadPhoto: (file: File, kind: 'report' | 'proof' | 'work' = 'report') => {
+  uploadPhoto: (file: File, kind: 'report' | 'proof' | 'work' | 'cleaning' = 'report') => {
     const fd = new FormData();
     fd.append('file', file);
     return req<{ key: string; url: string }>(`/api/uploads?kind=${kind}`, {
@@ -318,6 +378,32 @@ export const api = {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: WorkLog[] }>(`/api/work-logs?${q}`);
   },
+
+  // --- cleaning reports per area ---
+  serverTime: () => req<{ ok: boolean; time: string }>('/api/health'),
+  cleaningAreas: () => req<{ data: CleaningArea[] }>('/api/cleaning/areas'),
+  cleaningArea: (id: string) =>
+    req<CleaningArea & { campus: Campus }>(`/api/cleaning/areas/${encodeURIComponent(id)}`),
+  submitCleaning: (body: {
+    staff_id: string;
+    area_id: string;
+    tasks: Array<{ task: CleaningTask; photo_key: string }>;
+    note: string | null;
+    position: { latitude: number; longitude: number; accuracy: number | null } | null;
+  }) =>
+    req<{
+      id: string;
+      area: string;
+      duplicate: boolean;
+      location_status: LocationStatus;
+      distance_m: number | null;
+    }>('/api/cleaning/reports', { method: 'POST', body: JSON.stringify(body) }),
+  /** Supervisor only. `alerts: '1'` keeps only the reports filed off campus or without GPS. */
+  cleaningReports: (filter: Record<string, string> = {}) => {
+    const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
+    return req<{ data: CleaningReport[] }>(`/api/cleaning/reports?${q}`);
+  },
+  cleaningRecap: (date: string) => req<CleaningRecap>(`/api/cleaning/recap?date=${date}`),
 
   reanalyze: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reanalyze`, { method: 'POST' }),
   deleteReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),

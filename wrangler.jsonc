@@ -58,7 +58,14 @@
     // works; e.g. OpenAI "https://api.openai.com/v1" + "gpt-4o-mini", or
     // OpenRouter "https://openrouter.ai/api/v1" + any vision model there.
     "VISION_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
-    "VISION_MODEL": "gemini-3.6-flash"
+    "VISION_MODEL": "gemini-3.6-flash",
+    // The campus boundary for cleaning reports: a report filed further than
+    // CAMPUS_RADIUS_M from this point is flagged to the supervisor. The centre
+    // is a placeholder on Jl. Dadaha; replace it with the campus pin from Google
+    // Maps (long-press → copy the coordinates).
+    "CAMPUS_LAT": "-7.3351",
+    "CAMPUS_LNG": "108.2217",
+    "CAMPUS_RADIUS_M": "500"
   }
 
   // Secrets (do NOT put them here, use `wrangler secret put`):

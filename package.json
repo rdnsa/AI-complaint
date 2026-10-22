@@ -13,6 +13,8 @@
     "db:remote": "wrangler d1 migrations apply kato --remote",
     "db:seed": "wrangler d1 execute kato --local --file=./seed/toilets.sql",
     "db:seed:remote": "wrangler d1 execute kato --remote --file=./seed/toilets.sql",
+    "db:seed:cleaning": "wrangler d1 execute kato --local --file=./seed/cleaning-areas.sql",
+    "db:seed:cleaning:remote": "wrangler d1 execute kato --remote --file=./seed/cleaning-areas.sql",
     "qr": "node scripts/generate-qr.mjs",
     "typecheck": "tsc --noEmit",
     "cf-typegen": "wrangler types",

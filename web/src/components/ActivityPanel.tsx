@@ -5,6 +5,8 @@ import { useLanguage, useRelativeTime } from '../lib/i18n';
 const ACTIONS = [
   'report_created',
   'work_logged',
+  'cleaning_reported',
+  'cleaning_out_of_range',
   'status_changed',
   'proof_rejected',
   'report_deleted',
@@ -19,6 +21,8 @@ const ACTIONS = [
 const COLORS: Record<string, string> = {
   report_created: 'bg-accent-50 text-accent-700 ring-accent-200',
   work_logged: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  cleaning_reported: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+  cleaning_out_of_range: 'bg-red-50 text-red-800 ring-red-200',
   status_changed: 'bg-accent-50 text-accent-600 ring-accent-100',
   report_deleted: 'bg-red-50 text-red-800 ring-red-200',
   analysis: 'bg-mist-100 text-ink-700 ring-mist-300',

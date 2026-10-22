@@ -12,6 +12,10 @@ import { useLanguage } from '../lib/i18n';
  *
  * The frame is scaled down and encoded as JPEG here, which also keeps every
  * upload well under the 5 MB server limit.
+ *
+ * `stamp`, when given, is read at the moment of capture and burned into the
+ * bottom of the photo (who, where, when), so the picture still says what it
+ * proves once it leaves the app, e.g. printed in a report for management.
  */
 
 const MAX_SIDE = 1600;
@@ -23,10 +27,12 @@ export default function Camera({
   open,
   onClose,
   onCapture,
+  stamp,
 }: {
   open: boolean;
   onClose: () => void;
   onCapture: (photo: File) => void;
+  stamp?: () => string[];
 }) {
   const { t } = useLanguage();
   const video = useRef<HTMLVideoElement>(null);
@@ -104,7 +110,9 @@ export default function Camera({
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(v.videoWidth * scale);
     canvas.height = Math.round(v.videoHeight * scale);
-    canvas.getContext('2d')?.drawImage(v, 0, 0, canvas.width, canvas.height);
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(v, 0, 0, canvas.width, canvas.height);
+    if (ctx && stamp) drawStamp(ctx, canvas.width, canvas.height, stamp());
     canvas.toBlob(
       (blob) => {
         if (!blob) return setError('failed');
@@ -180,4 +188,22 @@ export default function Camera({
       </div>
     </div>
   );
+}
+
+/** White text on a dark band across the bottom, sized to the photo so it stays legible. */
+function drawStamp(ctx: CanvasRenderingContext2D, width: number, height: number, lines: string[]) {
+  if (!lines.length) return;
+  const size = Math.max(14, Math.round(Math.min(width, height) / 30));
+  const lineHeight = Math.round(size * 1.35);
+  const pad = Math.round(size * 0.7);
+  const band = lines.length * lineHeight + pad * 2;
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.fillRect(0, height - band, width, band);
+  ctx.fillStyle = '#fff';
+  ctx.textBaseline = 'top';
+  lines.forEach((line, i) => {
+    ctx.font = `${i === 0 ? 'bold ' : ''}${size}px system-ui, sans-serif`;
+    ctx.fillText(line, pad, height - band + pad + i * lineHeight, width - pad * 2);
+  });
 }

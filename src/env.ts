@@ -19,6 +19,10 @@ export interface Env {
   // a separate vision model. Any OpenAI-compatible endpoint works.
   VISION_BASE_URL: string;
   VISION_MODEL: string;
+  // The campus boundary for cleaning reports (decimal degrees, metres).
+  CAMPUS_LAT: string;
+  CAMPUS_LNG: string;
+  CAMPUS_RADIUS_M: string;
 
   // secrets (wrangler secret put)
   LLM_API_KEY: string;

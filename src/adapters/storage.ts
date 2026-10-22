@@ -5,10 +5,11 @@ import type { Env } from '../env';
  *
  * Three kinds of photo share one bucket, separated by prefix: 'report' for the
  * condition photo from a reporter, 'proof' for the proof-of-completion photo
- * from staff, 'work' for the photo on a staff work log. Only these prefixes
+ * from staff, 'work' for the photo on a staff work log, 'cleaning' for the
+ * photo of one task on a cleaning report. Only these prefixes
  * (plus their pre-rename Indonesian equivalents) may ever be read back.
  */
-export const FOLDER = { report: 'report', proof: 'proof', work: 'work' } as const;
+export const FOLDER = { report: 'report', proof: 'proof', work: 'work', cleaning: 'cleaning' } as const;
 export type PhotoKind = keyof typeof FOLDER;
 
 /**
@@ -51,6 +52,13 @@ export async function readPhoto(
   const obj = await env.BUCKET.get(key);
   if (!obj) return null;
   return { bytes: await obj.arrayBuffer(), type: obj.httpMetadata?.contentType ?? 'image/jpeg' };
+}
+
+/** When the server received a photo, or null when it does not exist. */
+export async function photoUploadedAt(env: Env, key: string): Promise<Date | null> {
+  if (!isAllowedKey(key)) return null;
+  const head = await env.BUCKET.head(key);
+  return head?.uploaded ?? null;
 }
 
 /** Deleting a photo must never fail the operation that triggered it. */

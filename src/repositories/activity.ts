@@ -12,7 +12,9 @@ export type ActivityAction =
   | 'proof_rejected'
   | 'verification_failed'
   | 'question'
-  | 'work_logged';
+  | 'work_logged'
+  | 'cleaning_reported'
+  | 'cleaning_out_of_range';
 
 const ACTIVITY_ACTIONS: ActivityAction[] = [
   'report_created',
@@ -27,6 +29,8 @@ const ACTIVITY_ACTIONS: ActivityAction[] = [
   'verification_failed',
   'question',
   'work_logged',
+  'cleaning_reported',
+  'cleaning_out_of_range',
 ];
 
 export interface ActivityRow {

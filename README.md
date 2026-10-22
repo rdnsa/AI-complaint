@@ -64,6 +64,15 @@ stickers to print and maintain by two thirds.
 - Building map on the landing page
 - Staff work log: cleaners record which toilets they cleaned, with an
   AI-checked photo, without signing in (they pick their name from a list)
+- Cleaning reports per area (`/clean/<area>`), from the 2026 staff assignment
+  letter: one QR per floor or area, the staff member ticks sweep / mop / wipe
+  glass / clean toilet and photographs each task. Photos are stamped with name,
+  area, server time and GPS; a photo older than three hours or already used is
+  refused; a report filed outside `CAMPUS_RADIUS_M` of the campus (or without
+  GPS) is accepted but flagged to the supervisor. The supervisor's **Kebersihan**
+  tab shows a printable daily recap per staff member (done ✓ / not done ✗) and
+  prints the area QR stickers. Areas and assignments live in
+  `seed/cleaning-areas.sql` (`npm run db:seed:cleaning`)
 - Photos only from the live in-page camera, never from the gallery
 - Time filters (date range and WIB hour window) and exact timestamps in the
   supervisor dashboard

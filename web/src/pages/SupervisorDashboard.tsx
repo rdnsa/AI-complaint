@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import ActivityPanel from '../components/ActivityPanel';
 import ChartsPanel from '../components/ChartsPanel';
 import WorkLogPanel from '../components/WorkLogPanel';
+import CleaningPanel from '../components/CleaningPanel';
 import AccountsPanel from '../components/AccountsPanel';
 import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges';
 import { useNavigate } from 'react-router-dom';
@@ -51,18 +52,23 @@ function Board({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [tab, setTab] = useState<
-    'reports' | 'work_logs' | 'charts' | 'activity' | 'accounts'
+    'reports' | 'cleaning' | 'work_logs' | 'charts' | 'activity' | 'accounts'
   >('reports');
+  // Today's cleaning reports filed off campus or without GPS: a red count on the tab.
+  const [cleaningAlerts, setCleaningAlerts] = useState(0);
   // The AI chatbot and the QR stickers are on the home page, open to everyone.
-  const tabs = ['reports', 'work_logs', 'charts', 'activity', 'accounts'] as const;
+  const tabs = ['reports', 'cleaning', 'work_logs', 'charts', 'activity', 'accounts'] as const;
 
   const load = useCallback(async () => {
-    const [r, s, sum] = await Promise.all([
+    const today = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const [r, s, sum, alerts] = await Promise.all([
       // A time filter can reach far back, so allow the full page the server permits.
       api.reports({ ...filter, ...time, limit: '200' }),
       api.stats().catch(() => null),
       api.summary().catch(() => null),
+      api.cleaningReports({ from: today, to: today, alerts: '1' }).catch(() => ({ data: [] })),
     ]);
+    setCleaningAlerts(alerts.data.length);
     setReports(r.data);
     setStats(s);
     setSummary(sum);
@@ -103,7 +109,7 @@ function Board({ session }: { session: Session }) {
       />
 
       <main className="mx-auto max-w-5xl px-4">
-        {/* Five tabs do not fit one phone row: a three-column grid there, a single row from md up. */}
+        {/* Six tabs do not fit one phone row: a three-column grid there, a single row from md up. */}
         <nav className="mt-5 grid grid-cols-3 gap-1 rounded-nav bg-mist-200 p-1 md:flex md:rounded-full">
           {tabs.map((k) => (
             <button
@@ -115,10 +121,14 @@ function Board({ session }: { session: Session }) {
               }`}
             >
               {t(`tab.${k}`)}
+              {k === 'cleaning' && cleaningAlerts > 0 && (
+                <span className="ml-1.5 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{cleaningAlerts}</span>
+              )}
             </button>
           ))}
         </nav>
 
+        {tab === 'cleaning' && <CleaningPanel />}
         {tab === 'work_logs' && <WorkLogPanel />}
         {tab === 'charts' && <ChartsPanel />}
         {tab === 'activity' && <ActivityPanel />}

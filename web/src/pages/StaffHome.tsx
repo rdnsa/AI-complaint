@@ -46,6 +46,10 @@ export default function StaffHome() {
           <p className="mt-4 rounded-nav bg-mist-50 px-3.5 py-2.5 text-sm leading-relaxed text-ink-700">
             {t('staff.qr_hint')}
           </p>
+
+          <Link to="/clean" className="btn-primary mt-4 w-full py-3">
+            {t('clean.open_from_staff')}
+          </Link>
         </div>
 
         <div>

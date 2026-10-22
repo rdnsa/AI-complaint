@@ -257,6 +257,15 @@ export function CameraGlyph({ className = 'h-4 w-4' }: GlyphProps) {
   );
 }
 
+export function PinGlyph({ className = 'h-4 w-4' }: GlyphProps) {
+  return (
+    <Glyph className={className}>
+      <path d="M10 17.5s5.5-5 5.5-9.25a5.5 5.5 0 0 0-11 0C4.5 12.5 10 17.5 10 17.5Z" />
+      <circle cx="10" cy="8.25" r="2" />
+    </Glyph>
+  );
+}
+
 export function PrintGlyph({ className = 'h-4 w-4' }: GlyphProps) {
   return (
     <Glyph className={className}>
