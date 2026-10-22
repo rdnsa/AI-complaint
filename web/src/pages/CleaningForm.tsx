@@ -147,11 +147,6 @@ export default function CleaningForm() {
 
       <main className="mx-auto max-w-lg px-4">
         <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-ink-900">{area.name}</h2>
-        {!!area.staff.length && (
-          <p className="mt-1 text-sm text-ink-600">
-            {t('clean.assigned')}: {area.staff.map((s) => s.name).join(', ')}
-          </p>
-        )}
 
         <div className="mt-4">
           <StaffPicker staffList={sortedStaff} selected={selected} onSelect={select} />
