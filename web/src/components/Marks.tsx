@@ -100,35 +100,6 @@ export function ChatGlyph({ className = 'h-4 w-4' }: { className?: string }) {
   );
 }
 
-/** QR stickers: the three finder squares of a real QR code, and a few modules. */
-export function QrMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
-  const finder = (x: number, y: number) => (
-    <g key={`${x}-${y}`}>
-      <rect
-        x={x + 1.3}
-        y={y + 1.3}
-        width="9.4"
-        height="9.4"
-        rx="2.6"
-        fill="none"
-        className="stroke-ink-800"
-        strokeWidth="2.6"
-      />
-      <rect x={x + 4} y={y + 4} width="4" height="4" rx="1" className="fill-ink-800" />
-    </g>
-  );
-  return (
-    <Tile size={size} className={`${LIGHT_TILE} ${className}`}>
-      {finder(9, 9)}
-      {finder(27, 9)}
-      {finder(9, 27)}
-      <rect x="27" y="27" width="5" height="5" rx="1.2" className="fill-ink-800" />
-      <rect x="34" y="34" width="5" height="5" rx="1.2" className="fill-ink-800" />
-      <circle cx="36.5" cy="29.5" r="2.4" className="fill-accent-500" />
-    </Tile>
-  );
-}
-
 /** All reports: a stack of report slips. */
 export function ReportsMark({ size = SMALL_SIZE, className = '' }: MarkProps) {
   return (

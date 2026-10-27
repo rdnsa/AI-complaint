@@ -1,25 +1,13 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import AskPanel from '../components/AskPanel';
 import { StatusBadge } from '../components/Badges';
-import {
-  ArrowGlyph,
-  ChatMark,
-  PodiumMark,
-  QrMark,
-  ReportsMark,
-  StaffMark,
-  StudentMark,
-  SupervisorMark,
-} from '../components/Marks';
+import { ArrowGlyph, ChatMark, StaffMark, StudentMark } from '../components/Marks';
 import { api, type Report } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { Reveal } from '../lib/motion';
 import { useSession } from '../lib/session';
-
-// The QR generator library is only needed once the stickers are opened.
-const QrCodesPanel = lazy(() => import('../components/QrCodesPanel'));
 
 function MyReportRow({ report }: { report: Report }) {
   const { t } = useLanguage();
@@ -44,9 +32,8 @@ function MyReportRow({ report }: { report: Report }) {
 }
 
 /**
- * A full-width band of the page. A 'white' band is a strip of frosted glass
- * across the aurora; a 'mist' band leaves the aurora bare, so chapters still
- * alternate.
+ * A full-width band of the page. A 'white' band is a strip of glass across the
+ * page; a 'mist' band leaves the page ground bare, so chapters still alternate.
  */
 function Band({ id, tone, children }: { id?: string; tone: 'white' | 'mist'; children: ReactNode }) {
   return (
@@ -96,21 +83,10 @@ function RoleDoor({ to, mark, title, body }: { to: string; mark: ReactNode; titl
   );
 }
 
-function QuickLink({ to, mark, label }: { to: string; mark: ReactNode; label: string }) {
-  return (
-    <Link to={to} className="card group flex items-center gap-4 px-6 py-5">
-      {mark}
-      <span className="min-w-0 flex-1 font-display text-nav-title font-semibold text-ink-900">{label}</span>
-      <ArrowGlyph className="h-4 w-4 text-accent-600 transition-transform group-hover:translate-x-0.5" />
-    </Link>
-  );
-}
-
 export default function Home() {
   const { t } = useLanguage();
   const { session, logout } = useSession();
   const [myReports, setMyReports] = useState<Report[]>([]);
-  const [showQr, setShowQr] = useState(false);
 
   // Reports belong to the account, not to the device, so the list follows the
   // reporter to any phone or browser they sign in from.
@@ -131,9 +107,21 @@ export default function Home() {
             {t('nav.all_reports')}
             <ArrowGlyph className="h-3.5 w-3.5" />
           </Link>
+          <Link to="/leaderboard" className="link inline-flex items-center gap-1">
+            {t('leaderboard.view')}
+            <ArrowGlyph className="h-3.5 w-3.5" />
+          </Link>
           {session ? (
             <span className="text-ink-600">
               {t('session.hello', { name: session.name })} ·{' '}
+              {session.role === 'supervisor' && (
+                <>
+                  <Link to="/supervisor" className="link">
+                    {t('nav.to_supervisor_dashboard')}
+                  </Link>{' '}
+                  ·{' '}
+                </>
+              )}
               <button onClick={logout} className="link">
                 {t('session.logout')}
               </button>
@@ -163,23 +151,12 @@ export default function Home() {
         </Band>
       )}
 
-      {/* Three parties, three doors. Students and staff need no sign-in; the supervisor signs in. */}
+      {/* Two doors, neither needs a sign-in. The supervisor signs in from the links above. */}
       <Band id="roles" tone="mist">
         <BandHeading title={t('home.section_roles')} body={t('register.description')} />
-        <Reveal stagger className="grid gap-5 sm:grid-cols-3">
+        <Reveal stagger className="grid gap-5 sm:grid-cols-2">
           <RoleDoor to="/student" mark={<StudentMark />} title={t('role.student')} body={t('role.student_body')} />
           <RoleDoor to="/staff" mark={<StaffMark />} title={t('role.staff')} body={t('role.staff_body')} />
-          {/* A signed-in supervisor goes straight to the dashboard; anyone else signs in first. */}
-          <RoleDoor
-            to={session?.role === 'supervisor' ? '/supervisor' : '/login'}
-            mark={<SupervisorMark />}
-            title={t('role.supervisor')}
-            body={session?.role === 'supervisor' ? t('nav.to_supervisor_dashboard') : t('role.supervisor_body')}
-          />
-        </Reveal>
-        <Reveal stagger delay={150} className="mt-5 grid gap-5 sm:grid-cols-2">
-          <QuickLink to="/reports" mark={<ReportsMark />} label={t('nav.all_reports')} />
-          <QuickLink to="/leaderboard" mark={<PodiumMark />} label={t('leaderboard.view')} />
         </Reveal>
       </Band>
 
@@ -190,42 +167,6 @@ export default function Home() {
         </Reveal>
       </Band>
 
-      {/* The stickers are only floor addresses that are already on every door,
-          so anyone may print a replacement. Folded by default: thirteen QR
-          codes would otherwise bury the rest of the page. */}
-      <Band id="qr" tone="mist">
-        <BandHeading
-          title={t('qr.title')}
-          body={t('qr.subtitle')}
-          link={
-            <button
-              type="button"
-              onClick={() => setShowQr((v) => !v)}
-              aria-expanded={showQr}
-              className="link inline-flex items-center gap-1 text-body print:hidden"
-            >
-              {showQr ? t('qr.hide') : t('qr.show')}
-              <ArrowGlyph className={`h-3.5 w-3.5 transition-transform duration-200 ${showQr ? '-rotate-90' : 'rotate-90'}`} />
-            </button>
-          }
-        />
-        {showQr ? (
-          <Suspense fallback={<p className="mt-6 text-ink-600">{t('common.loading')}</p>}>
-            <QrCodesPanel />
-          </Suspense>
-        ) : (
-          <Reveal>
-            <button
-              type="button"
-              onClick={() => setShowQr(true)}
-              className="card flex w-full items-center gap-4 px-6 py-5 text-left print:hidden"
-            >
-              <QrMark />
-              <span className="font-display text-nav-title font-semibold text-ink-900">{t('home.section_qr')}</span>
-            </button>
-          </Reveal>
-        )}
-      </Band>
     </div>
   );
 }

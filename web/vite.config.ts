@@ -23,6 +23,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // A second `npm run dev` stops here instead of quietly opening on 5174
+    // next to the first one: the app is always at http://localhost:5173.
+    strictPort: true,
     // `npm run dev` runs Vite and Wrangler together; /api calls are
     // forwarded to the local Worker, so no CORS is needed.
     proxy: { '/api': 'http://127.0.0.1:8787' },

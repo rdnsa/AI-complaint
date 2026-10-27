@@ -4,7 +4,6 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from '
 import { LanguageProvider } from './lib/i18n';
 import { SessionProvider } from './lib/session';
 import { ThemeProvider } from './lib/theme';
-import Ambient from './components/Ambient';
 import Home from './pages/Home';
 import './index.css';
 
@@ -45,7 +44,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <LanguageProvider>
       <SessionProvider>
         <BrowserRouter>
-        <Ambient />
         <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<Home />} />

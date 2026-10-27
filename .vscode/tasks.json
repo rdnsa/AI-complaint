@@ -1,0 +1,27 @@
+{
+  // Starts `npm run dev` when the project is opened in VS Code, so the local
+  // app (http://localhost:5173) is always running while you work. Frontend
+  // changes reload in the browser, src/ changes reload the Worker, and saved
+  // migrations or seed files are applied to the local database
+  // (scripts/watch-db.mjs). VS Code asks once to allow automatic tasks.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "runOptions": { "runOn": "folderOpen", "instanceLimit": 1 },
+      "presentation": { "reveal": "silent", "panel": "dedicated", "group": "dev" },
+      "problemMatcher": {
+        "owner": "dev",
+        "pattern": { "regexp": "^__never__$" },
+        "background": {
+          "activeBegins": true,
+          "beginsPattern": "VITE v",
+          "endsPattern": "ready in"
+        }
+      }
+    }
+  ]
+}

@@ -165,7 +165,7 @@ export default function Header({
 
   return (
     <>
-      <nav ref={bar} className="sticky top-0 z-50 border-b border-white/50 bg-glass/80 backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 print:hidden">
+      <nav ref={bar} className="sticky top-0 z-50 border-b border-black/5 bg-surface/90 backdrop-blur-2xl backdrop-saturate-[1.8] dark:border-white/10 print:hidden">
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-2">
             {!onHome && scrolled && <BackButton round />}
@@ -201,7 +201,7 @@ export default function Header({
         />
       </nav>
 
-      {/* No ground of its own: the title sits straight on the aurora. */}
+      {/* No ground of its own: the title sits straight on the page. */}
       <header>
         {hero ? (
           // The landing stage enters in sequence: label, title, line, actions.

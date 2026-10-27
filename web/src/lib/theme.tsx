@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 /**
  * Light or dark theme.
  *
- * Light is the default for everyone; dark is only used once a visitor picks
+ * Dark is the default for everyone; light is only used once a visitor picks
  * it with the toggle, and that choice is stored per browser. The `dark` class
  * on <html> is what the palette variables in index.css react to, so switching
  * costs no re-render of individual components.
@@ -12,9 +12,9 @@ const STORAGE_KEY = 'theme';
 
 function initialDark(): boolean {
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'dark';
+    return localStorage.getItem(STORAGE_KEY) !== 'light';
   } catch {
-    return false; // localStorage may be blocked; stay on the light default
+    return true; // localStorage may be blocked; stay on the dark default
   }
 }
 

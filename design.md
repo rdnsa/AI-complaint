@@ -5,21 +5,22 @@
 > sections below; the surfaces do not. Where this file says "white card on
 > Studio Mist, flat and shadowless", Kato does the following instead:
 >
-> - **Ground:** soft grey, drifting from lavender-grey (top left) to sage (bottom
->   right), with a few dark orbs fixed behind the page. The glass blurs them
->   into soft shadows, which is what makes the panes read as glass
->   (`--canvas`, `--aurora` in `web/src/index.css`). Dark theme: near-black,
->   dim light orbs. Blue stays the only strong hue, on links and the primary pill.
-> - **Droplets:** two clear glass droplets in the side margins (`Ambient.tsx`,
->   `.droplet`), on wide screens only.
+> - **Ground:** clean, never colourful: Studio Mist (#f5f5f7) in the light
+>   theme, black in the dark theme, with soft grey light and shade behind the
+>   content so the glass has something to bend (`--canvas`, `--aurora` in
+>   `web/src/index.css`). Grey only, no hue.
 > - **Type:** page and section titles in a light weight with tight tracking.
-> - **Surfaces:** clear frosted glass (`.glass`): the surface colour at 42%
->   opacity (45% in the dark theme), `blur(40px) saturate(140%)`, a reflection
->   across the pane, a thick white rim with an inner glow, and a deep soft
->   shadow. Cards
->   (`.card`), inputs, the choice tiles, the neutral pill and the navigation bar
->   are all glass. In Tailwind, `bg-glass` is that surface colour without the
->   blur; `bg-surface` stays solid.
+> - **Surfaces:** strong liquid glass, after Apple (`.glass`): the surface
+>   colour at 45% (50% in the dark theme), `blur(36px) saturate(200%)`; a
+>   1.5px specular rim (`.glass::before`, a gradient on the edge) that is
+>   brightest at the top-left, dims to grey in the middle and lights again at
+>   the bottom-right; a glare along the top and a glow along the bottom edge;
+>   an inner glow; deep layered shadows. Fields (`.input`) share the material,
+>   with a light border for a rim. In Tailwind, `bg-glass` is that surface
+>   colour without the blur; `bg-surface` stays solid.
+> - **Navigation bar:** solid surface at 90% with a blur, as on apple.com.
+>   Chrome does not blur content that has a backdrop filter of its own (the
+>   cards), so a clearer bar would show them sharp beneath it.
 > - **Primary action:** the solid Pricing Blue pill, no gradient, no glow.
 > - **Copy:** short. One line where one line will do; no paragraph that only
 >   explains the screen.

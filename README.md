@@ -158,8 +158,18 @@ npm run db:local                 # apply migrations to the local D1
 npm run db:seed                  # load the toilets (older reports point at them)
 
 npm run build                    # the frontend must be built once before wrangler dev
-npm run dev                      # Vite (5173) + Worker (8787) side by side
+npm run dev                      # Vite (5173) + Worker (8787) + database watcher
 ```
+
+`npm run dev` is the only command to keep running. Frontend changes reload
+in the browser, `src/` changes reload the Worker, and `scripts/watch-db.mjs`
+applies pending migrations at start and whenever a file in `migrations/` or
+`seed/` is saved (local database only). In VS Code it starts by itself when the
+folder is opened (`.vscode/tasks.json`; allow automatic tasks once). The app is
+always at `http://localhost:5173`: a second `npm run dev` stops with "port in
+use" instead of opening elsewhere, and a Worker left on port 8787 by an earlier
+run of this project is stopped first (`scripts/free-dev-port.mjs`). Restart it
+only after changing `package.json` dependencies.
 
 | Page | URL |
 |---|---|

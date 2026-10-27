@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n api,web -c cyan,magenta \"wrangler dev\" \"vite --config web/vite.config.ts\"",
+    "predev": "node scripts/free-dev-port.mjs",
+    "dev": "concurrently -n db,api,web -c yellow,cyan,magenta \"node scripts/watch-db.mjs\" \"wrangler dev --port 8787\" \"vite --config web/vite.config.ts\"",
     "dev:api": "wrangler dev",
     "dev:web": "vite --config web/vite.config.ts",
     "build": "vite build --config web/vite.config.ts",

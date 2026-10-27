@@ -4,6 +4,7 @@ import ActivityPanel from '../components/ActivityPanel';
 import ChartsPanel from '../components/ChartsPanel';
 import WorkLogPanel from '../components/WorkLogPanel';
 import CleaningPanel from '../components/CleaningPanel';
+import QrCodesPanel from '../components/QrCodesPanel';
 import AccountsPanel from '../components/AccountsPanel';
 import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges';
 import { useNavigate } from 'react-router-dom';
@@ -52,12 +53,12 @@ function Board({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [tab, setTab] = useState<
-    'reports' | 'cleaning' | 'work_logs' | 'charts' | 'activity' | 'accounts'
+    'reports' | 'cleaning' | 'work_logs' | 'charts' | 'activity' | 'accounts' | 'qr'
   >('reports');
   // Today's cleaning reports filed off campus or without GPS: a red count on the tab.
   const [cleaningAlerts, setCleaningAlerts] = useState(0);
-  // The AI chatbot and the QR stickers are on the home page, open to everyone.
-  const tabs = ['reports', 'cleaning', 'work_logs', 'charts', 'activity', 'accounts'] as const;
+  // The AI chatbot is on the home page, open to everyone; the QR stickers are a tab here.
+  const tabs = ['reports', 'cleaning', 'work_logs', 'charts', 'activity', 'accounts', 'qr'] as const;
 
   const load = useCallback(async () => {
     const today = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -109,8 +110,8 @@ function Board({ session }: { session: Session }) {
       />
 
       <main className="mx-auto max-w-5xl px-4">
-        {/* Six tabs do not fit one phone row: a three-column grid there, a single row from md up. */}
-        <nav className="mt-5 grid grid-cols-3 gap-1 rounded-nav bg-mist-200 p-1 md:flex md:rounded-full">
+        {/* Seven tabs do not fit one phone row: a grid there, a single row from md up. */}
+        <nav className="mt-5 grid grid-cols-4 gap-1 rounded-nav bg-mist-200 p-1 md:flex md:rounded-full">
           {tabs.map((k) => (
             <button
               key={k}
@@ -133,6 +134,7 @@ function Board({ session }: { session: Session }) {
         {tab === 'charts' && <ChartsPanel />}
         {tab === 'activity' && <ActivityPanel />}
         {tab === 'accounts' && <AccountsPanel />}
+        {tab === 'qr' && <QrCodesPanel />}
 
         {tab === 'reports' && (
           <>

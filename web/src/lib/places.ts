@@ -63,8 +63,9 @@ export function areaAt(areas: CleaningArea[], place: Place | null, part: string)
  * The place and part a link or QR code stands for. The id is an area id
  * ('C-2', 'C-HALAMAN', 'LAPANG-VOLI'), or the '<building>-<floor>' of a door
  * sticker printed before reports covered the whole campus ('A-2'): that lands
- * on the floor, or on the whole building when it is cleaned as one. A building
- * whose floor has no location of its own is picked without a part.
+ * on the floor, or on the whole building when it is cleaned as one. A bare
+ * building letter ('G', a location retired when the building got floors), or
+ * a floor with no location of its own, picks the building without a part.
  */
 export function locate(
   id: string,
@@ -74,17 +75,17 @@ export function locate(
   const area = areas.find((a) => a.id === id.toUpperCase());
   if (area) return { key: placeKeyOf(area), part: partOf(area) };
 
-  const m = /^([A-Za-z])-(\d+)$/.exec(id);
+  const m = /^([A-Za-z])(?:-(\d+))?$/.exec(id);
   const place = m && places.find((p) => p.code === m[1].toUpperCase());
   if (!place) return null;
-  if (place.parts.includes(m[2])) return { key: place.key, part: m[2] };
+  if (m[2] && place.parts.includes(m[2])) return { key: place.key, part: m[2] };
   return { key: place.key, part: place.parts.includes('whole') ? 'whole' : '' };
 }
 
 /**
  * Whether a report is about the chosen place and part; no part means anywhere
- * in the place. Reports from before 0011 point at a toilet, matched by its
- * building and floor.
+ * in the place. Reports from before 0011 point at a toilet, and some at a
+ * location since retired; both are matched by building and floor.
  */
 export function reportIsAt(
   r: Pick<Report, 'area_id' | 'building_code' | 'floor'>,
@@ -92,10 +93,8 @@ export function reportIsAt(
   place: Place,
   part: string,
 ): boolean {
-  if (r.area_id) {
-    const a = areas.find((x) => x.id === r.area_id);
-    return !!a && placeKeyOf(a) === place.key && (!part || partOf(a) === part);
-  }
+  const a = r.area_id ? areas.find((x) => x.id === r.area_id) : undefined;
+  if (a) return placeKeyOf(a) === place.key && (!part || partOf(a) === part);
   return (
     r.building_code === place.code && part !== 'yard' && (!part || part === 'whole' || r.floor === Number(part))
   );

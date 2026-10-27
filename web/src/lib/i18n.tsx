@@ -15,7 +15,7 @@ const ID = {
   'header.campus': 'Kampus Tasikmalaya',
   'app.title': 'Kato Report',
   'app.brand': 'Kato',
-  'app.subtitle': 'Lapor masalah kebersihan kampus, tanpa login.',
+  'app.subtitle': 'Lapor masalah kebersihan kampus.',
 
   'common.loading': 'Memuat…',
   'common.building': 'Gedung {code}',
@@ -122,8 +122,8 @@ const ID = {
   'leaderboard.no_reports_yet': 'Kamu belum mengirim laporan atas nama akun ini.',
 
   'tab.accounts': 'Petugas & Supervisor',
+  'tab.qr': 'QR lokasi',
   'home.section_roles': 'Pilih peran',
-  'home.section_qr': 'Stiker QR',
   'ask.title': 'Chatbot AI',
   'ask.tagline': 'Tanya data laporan',
   'ask.try': 'Coba tanyakan',
@@ -240,10 +240,6 @@ const ID = {
   'dashboard.delete_confirm': 'Hapus laporan ini secara permanen? Tindakan ini tidak bisa dibatalkan.',
 
   'tab.work_logs': 'Pekerjaan',
-  'qr.title': 'Kode QR untuk setiap lokasi',
-  'qr.subtitle': 'Cetak ulang stiker.',
-  'qr.show': 'Tampilkan',
-  'qr.hide': 'Sembunyikan',
   'qr.description': 'Satu QR per lokasi. Cetak dan tempel di lokasinya.',
   'qr.all_buildings': 'Semua lokasi',
   'qr.count': '{n} kode QR',
@@ -261,8 +257,6 @@ const ID = {
   'role.student_body': 'Laporkan tempat kotor atau fasilitas rusak.',
   'role.staff': 'Saya petugas',
   'role.staff_body': 'Selesaikan keluhan dan tugas harian.',
-  'role.supervisor': 'Saya supervisor',
-  'role.supervisor_body': 'Pantau laporan dan kerja petugas.',
 
   'staff.title': 'Halaman Petugas',
   'staff.description': 'Tanpa login. Cukup pilih namamu.',
@@ -419,7 +413,7 @@ const EN: Record<Key, string> = {
   'header.campus': 'Tasikmalaya Campus',
   'app.title': 'Kato Report',
   'app.brand': 'Kato',
-  'app.subtitle': 'Report campus cleanliness issues, no sign-in.',
+  'app.subtitle': 'Report campus cleanliness issues.',
 
   'common.loading': 'Loading…',
   'common.building': 'Building {code}',
@@ -526,8 +520,8 @@ const EN: Record<Key, string> = {
   'leaderboard.no_reports_yet': 'You have not filed any report under this account yet.',
 
   'tab.accounts': 'Staff & Supervisors',
+  'tab.qr': 'Location QR',
   'home.section_roles': 'Choose your role',
-  'home.section_qr': 'QR stickers',
   'ask.title': 'AI Chatbot',
   'ask.tagline': 'Ask about the report data',
   'ask.try': 'Try asking',
@@ -644,10 +638,6 @@ const EN: Record<Key, string> = {
   'dashboard.delete_confirm': 'Delete this report permanently? This cannot be undone.',
 
   'tab.work_logs': 'Work log',
-  'qr.title': 'QR codes for every location',
-  'qr.subtitle': 'Reprint stickers.',
-  'qr.show': 'Show',
-  'qr.hide': 'Hide',
   'qr.description': 'One QR per location. Print it and stick it there.',
   'qr.all_buildings': 'All locations',
   'qr.count': '{n} QR codes',
@@ -665,8 +655,6 @@ const EN: Record<Key, string> = {
   'role.student_body': 'Report a dirty spot or a broken facility.',
   'role.staff': "I'm cleaning staff",
   'role.staff_body': 'Resolve complaints and daily tasks.',
-  'role.supervisor': "I'm the supervisor",
-  'role.supervisor_body': 'Monitor reports and staff work.',
 
   'staff.title': 'Staff Page',
   'staff.description': 'No sign-in. Just pick your name.',
