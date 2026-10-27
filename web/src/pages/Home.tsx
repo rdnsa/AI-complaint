@@ -101,41 +101,32 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Header hero kicker={`UPI ${t('header.campus')}`} title={t('app.title')} description={t('app.subtitle')}>
-        {/* The roles are the cards just below; the hero only carries the secondary ways in. */}
-        <div className="flex flex-col items-center gap-2 text-body">
-          <Link to="/reports" className="link inline-flex items-center gap-1">
-            {t('nav.all_reports')}
-            <ArrowGlyph className="h-3.5 w-3.5" />
-          </Link>
-          <Link to="/leaderboard" className="link inline-flex items-center gap-1">
-            {t('leaderboard.view')}
-            <ArrowGlyph className="h-3.5 w-3.5" />
-          </Link>
+        {/* The roles are the cards just below; the hero carries the other ways in, as pills. */}
+        {/* The account; the public boards sit under the role cards below. */}
+        <div className="mx-auto flex max-w-xl flex-col gap-6">
           {session ? (
-            <span className="text-ink-600">
-              {t('session.hello', { name: session.name })} ·{' '}
-              {session.role === 'supervisor' && (
-                <>
-                  <Link to="/supervisor" className="link">
+            <div className="flex flex-col gap-3">
+              <p className="text-body-sm text-ink-600">{t('session.hello', { name: session.name })}</p>
+              <div className={`grid gap-3 ${session.role === 'supervisor' ? 'grid-cols-2' : ''}`}>
+                {session.role === 'supervisor' && (
+                  <Link to="/supervisor" className="btn-primary w-full py-3">
                     {t('nav.to_supervisor_dashboard')}
-                  </Link>{' '}
-                  ·{' '}
-                </>
-              )}
-              <button onClick={logout} className="link">
-                {t('session.logout')}
-              </button>
-            </span>
+                  </Link>
+                )}
+                <button type="button" onClick={logout} className="btn-neutral w-full py-3">
+                  {t('session.logout')}
+                </button>
+              </div>
+            </div>
           ) : (
-            <span className="text-ink-600">
-              <Link to="/login" className="link">
+            <div className="grid grid-cols-2 gap-3">
+              <Link to="/login" className="btn-dark w-full py-3">
                 {t('session.login')}
-              </Link>{' '}
-              ·{' '}
-              <Link to="/register" className="link">
+              </Link>
+              <Link to="/register" className="btn-primary w-full py-3">
                 {t('session.register')}
               </Link>
-            </span>
+            </div>
           )}
         </div>
       </Header>
@@ -151,12 +142,22 @@ export default function Home() {
         </Band>
       )}
 
-      {/* Two doors, neither needs a sign-in. The supervisor signs in from the links above. */}
+      {/* Two doors, neither needs a sign-in, then the public boards. The supervisor signs in above. */}
       <Band id="roles" tone="mist">
         <BandHeading title={t('home.section_roles')} body={t('register.description')} />
         <Reveal stagger className="grid gap-5 sm:grid-cols-2">
           <RoleDoor to="/student" mark={<StudentMark />} title={t('role.student')} body={t('role.student_body')} />
           <RoleDoor to="/staff" mark={<StaffMark />} title={t('role.staff')} body={t('role.staff_body')} />
+        </Reveal>
+        <Reveal stagger delay={150} className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Link to="/reports" className="btn-neutral w-full py-3">
+            {t('nav.all_reports')}
+            <ArrowGlyph className="h-3.5 w-3.5" />
+          </Link>
+          <Link to="/leaderboard" className="btn-neutral w-full py-3">
+            {t('leaderboard.view')}
+            <ArrowGlyph className="h-3.5 w-3.5" />
+          </Link>
         </Reveal>
       </Band>
 
