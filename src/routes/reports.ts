@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { HTTP_CACHE } from '../adapters/memo';
 import { z } from 'zod';
 import { FOLDER } from '../adapters/storage';
 import { currentSession, requireSupervisor } from '../adapters/session';
@@ -21,7 +22,7 @@ const clampNumber = (value: string | undefined, fallback: number, max: number) =
   Math.min(Number(value ?? fallback) || fallback, max);
 
 const SubmitSchema = z.object({
-  toilet_id: z.string().min(1).max(50),
+  area_id: z.string().min(1).max(30),
   description: z.string().trim().min(5, 'Keluhan terlalu pendek').max(1000),
   // A photo is required: a complaint without one is hard for staff to verify,
   // and its presence makes the public board far more trustworthy.
@@ -30,11 +31,11 @@ const SubmitSchema = z.object({
     .min(1, 'Foto keadaan wajib dilampirkan')
     .max(200)
     // Only a photo uploaded as a condition photo counts: a staff proof photo or
-    // an arbitrary string must not be passed off as the student's evidence.
+    // an arbitrary string must not be passed off as the reporter's evidence.
     .refine((key) => key.startsWith(`${FOLDER.report}/`), 'Foto keadaan tidak valid. Ambil foto ulang.'),
 });
 
-/** Public: a student files a complaint after scanning the QR code. */
+/** Public: a reporter files a complaint about a location, after scanning its QR code or picking it. */
 app.post('/', async (c) => {
   const parsed = SubmitSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) {
@@ -46,16 +47,20 @@ app.post('/', async (c) => {
   const session = await currentSession(c);
   const reporter = session?.role === 'reporter' ? { id: session.id, name: session.name } : null;
 
-  const result = await reports.submitReport(c.env, parsed.data, reporter);
+  const result = await reports.submitReport(
+    c.env,
+    { ...parsed.data, area_id: parsed.data.area_id.toUpperCase() },
+    reporter,
+  );
   if (result.kind === 'unknown-location') {
-    return c.json({ error: 'Kode WC tidak dikenal. Periksa QR yang kamu scan.' }, 404);
+    return c.json({ error: 'Lokasi tidak dikenal. Pilih ulang gedung dan lantai atau halamannya.' }, 404);
   }
 
-  // The LLM runs after the response is sent, so the student is confirmed instantly.
+  // The LLM runs after the response is sent, so the reporter is confirmed instantly.
   if (!result.duplicate) c.executionCtx.waitUntil(reports.runAnalysis(c.env, result.id));
 
   return c.json(
-    { id: result.id, toilet: result.toilet, duplicate: result.duplicate },
+    { id: result.id, location: result.location, duplicate: result.duplicate },
     result.duplicate ? 200 : 201,
   );
 });
@@ -63,6 +68,7 @@ app.post('/', async (c) => {
 /** Public: every report and how far it has been handled, open to anyone. */
 app.get('/public', async (c) => {
   const { status, priority } = c.req.query();
+  c.header('Cache-Control', HTTP_CACHE.board);
   return c.json(
     await reports.publicBoard(c.env, {
       status,
@@ -111,7 +117,7 @@ app.get('/', requireSupervisor, async (c) => {
     data: await reports.dashboardReports(c.env, {
       status: q.status,
       priority: q.priority,
-      toilet_id: q.toilet_id,
+      area_id: q.area_id,
       building: q.building,
       ...readTimeFilter(q),
       limit: clampNumber(q.limit, 100, 200),
@@ -131,8 +137,8 @@ const StatusChangeSchema = z.object({
  * Staff do not sign in; they send the `staff_id` picked on the dropdown,
  * which must belong to an active staff member. A signed-in supervisor may act
  * under their own name instead. Closing needs a proof photo, and the photo is
- * judged by the vision model before the status changes — a photo of a dirty
- * toilet is refused.
+ * judged by the vision model before the status changes — a photo of a place
+ * still dirty, or of another place, is refused.
  */
 app.patch('/:id', async (c) => {
   const parsed = StatusChangeSchema.safeParse(await c.req.json().catch(() => ({})));
@@ -170,9 +176,9 @@ app.patch('/:id', async (c) => {
       return c.json(
         {
           error:
-            result.verdict === 'not_toilet'
-              ? 'Foto tidak menunjukkan toilet. Ambil foto kondisi toilet yang sudah dibersihkan.'
-              : 'Toilet pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang.',
+            result.verdict === 'wrong_place'
+              ? 'Foto tidak menunjukkan lokasi yang dilaporkan. Ambil foto lokasi itu setelah dibersihkan.'
+              : 'Lokasi pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang.',
           verdict: result.verdict,
           reason: result.reason,
         },

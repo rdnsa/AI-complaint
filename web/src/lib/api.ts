@@ -27,32 +27,22 @@ export interface LeaderboardRow {
 export type Priority = 'low' | 'medium' | 'high';
 export type ReportStatus = 'new' | 'in_progress' | 'resolved';
 
+/** A toilet's type, only on the older work logs. */
 export type ToiletType = 'men' | 'women' | 'accessible';
-export type ProofVerdict = 'clean' | 'dirty' | 'not_toilet';
+/** 'wrong_place': the photo does not show the reported location. */
+export type ProofVerdict = 'clean' | 'dirty' | 'wrong_place';
 export type Category = 'cleanliness' | 'supplies' | 'damage' | 'odor' | 'flooding' | 'other';
-
-export interface Building {
-  code: string;
-  name: string;
-  floors: number[];
-}
-
-/** One floor of one building — this is what a QR code stands for. */
-export interface Floor {
-  building_code: string;
-  building_name: string;
-  floor: number;
-  toilets: Array<{ id: string; type: ToiletType }>;
-}
 
 export interface Report {
   id: string;
-  toilet_id: string;
-  toilet_name: string;
-  building_code: string;
-  building_name: string;
-  floor: number;
-  type: ToiletType;
+  /** Where: an area (a floor, a building's yard, a court); a toilet on reports from before. */
+  area_id: string | null;
+  toilet_id: string | null;
+  location_name: string;
+  building_code: string | null;
+  building_name: string | null;
+  /** 0 is a building's yard, null a whole building or a place outside the buildings. */
+  floor: number | null;
   description: string;
   photo_url: string | null;
   proof_photo_url: string | null;
@@ -103,9 +93,10 @@ export interface PublicReport {
   categories: Category[];
   summary: string | null;
   ai_status: 'pending' | 'ok' | 'failed';
-  toilet_name: string;
-  building_code: string;
-  floor: number;
+  area_id: string | null;
+  location_name: string;
+  building_code: string | null;
+  floor: number | null;
   created_at: string;
   resolved_at: string | null;
   proof_photo_url: string | null;
@@ -193,8 +184,9 @@ export interface AskAnswer {
   remaining_today: number;
 }
 
-export type CleaningTask = 'sweep' | 'mop' | 'glass' | 'toilet';
-export const CLEANING_TASKS: CleaningTask[] = ['sweep', 'mop', 'glass', 'toilet'];
+/** The six daily tasks, the same on every area. 'sweep' and 'mop' only appear in reports from before. */
+export type CleaningTask = 'sweep_mop' | 'glass' | 'toilet' | 'trash' | 'gallon' | 'tidy' | 'sweep' | 'mop';
+export const CLEANING_TASKS: CleaningTask[] = ['sweep_mop', 'glass', 'toilet', 'trash', 'gallon', 'tidy'];
 
 /** 'ok' on campus, 'far' away from it, 'unknown' when the phone gave no position. */
 export type LocationStatus = 'ok' | 'far' | 'unknown';
@@ -204,6 +196,7 @@ export interface CleaningArea {
   id: string;
   name: string;
   building_code: string | null;
+  building_name: string | null;
   floor: number | null;
   tasks: CleaningTask[];
   /** The staff assigned here by the assignment letter. */
@@ -228,6 +221,16 @@ export interface CleaningReport {
   accuracy_m: number | null;
   distance_m: number | null;
   location_status: LocationStatus;
+  created_at: string;
+  tasks: Array<{ task: CleaningTask; photo_url: string | null; photo_at: string }>;
+}
+
+/** A staff report on the public board: no staff name, no GPS. */
+export interface PublicCleaningReport {
+  id: string;
+  area_id: string;
+  area_name: string;
+  note: string | null;
   created_at: string;
   tasks: Array<{ task: CleaningTask; photo_url: string | null; photo_at: string }>;
 }
@@ -268,6 +271,27 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Read-mostly lists (locations, staff names) are fetched once per visit and
+ * shared by every page for `ttl` ms, so moving between pages does not refetch
+ * them. A failed fetch is not kept.
+ */
+const shared = new Map<string, { until: number; value: Promise<unknown> }>();
+function cachedReq<T>(path: string, ttl: number): Promise<T> {
+  const hit = shared.get(path);
+  if (hit && hit.until > Date.now()) return hit.value as Promise<T>;
+  const value = req<T>(path);
+  shared.set(path, { until: Date.now() + ttl, value });
+  value.catch(() => shared.delete(path));
+  return value;
+}
+
+/** Staff names also appear on the location list, by assignment. */
+function forgetStaff() {
+  shared.delete('/api/staff');
+  shared.delete('/api/cleaning/areas');
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
@@ -282,11 +306,8 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  locations: () => req<{ data: Building[] }>('/api/locations'),
-  floor: (id: string) => req<Floor>(`/api/locations/${encodeURIComponent(id)}`),
-
-  submitReport: (body: { toilet_id: string; description: string; photo_key?: string | null }) =>
-    req<{ id: string; toilet: string; duplicate: boolean }>('/api/reports', {
+  submitReport: (body: { area_id: string; description: string; photo_key?: string | null }) =>
+    req<{ id: string; location: string; duplicate: boolean }>('/api/reports', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
@@ -335,9 +356,10 @@ export const api = {
     body:
       | { role: 'staff'; name: string }
       | { role: 'supervisor'; username: string; name: string; password: string },
-  ) => req<ManagedAccount>('/api/users', { method: 'POST', body: JSON.stringify(body) }),
+  ) =>
+    req<ManagedAccount>('/api/users', { method: 'POST', body: JSON.stringify(body) }).finally(forgetStaff),
   updateUser: (id: string, body: { name?: string; password?: string; active?: boolean }) =>
-    req<{ ok: boolean }>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    req<{ ok: boolean }>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).finally(forgetStaff),
 
   leaderboard: () =>
     req<{ data: LeaderboardRow[]; me: { rank: number; reports: number } | null }>('/api/leaderboard'),
@@ -347,7 +369,7 @@ export const api = {
     return req<{ data: Report[] }>(`/api/reports?${q}`);
   },
   // --- cleaning staff (no sign-in: they send the id picked on the dropdown) ---
-  staffList: () => req<{ data: StaffOption[] }>('/api/staff'),
+  staffList: () => cachedReq<{ data: StaffOption[] }>('/api/staff', 60_000),
   /** Reports still waiting for staff; `building` + `floor` narrow it to one floor. */
   openReports: (filter: { building?: string; floor?: number } = {}) => {
     const q = new URLSearchParams();
@@ -381,7 +403,7 @@ export const api = {
 
   // --- cleaning reports per area ---
   serverTime: () => req<{ ok: boolean; time: string }>('/api/health'),
-  cleaningAreas: () => req<{ data: CleaningArea[] }>('/api/cleaning/areas'),
+  cleaningAreas: () => cachedReq<{ data: CleaningArea[]; campus: Campus }>('/api/cleaning/areas', 5 * 60_000),
   cleaningArea: (id: string) =>
     req<CleaningArea & { campus: Campus }>(`/api/cleaning/areas/${encodeURIComponent(id)}`),
   submitCleaning: (body: {
@@ -403,6 +425,7 @@ export const api = {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: CleaningReport[] }>(`/api/cleaning/reports?${q}`);
   },
+  publicCleaningReports: () => req<{ data: PublicCleaningReport[] }>('/api/cleaning/reports/public'),
   cleaningRecap: (date: string) => req<CleaningRecap>(`/api/cleaning/recap?date=${date}`),
 
   reanalyze: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reanalyze`, { method: 'POST' }),

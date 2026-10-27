@@ -9,6 +9,11 @@
 
   "observability": { "enabled": true },
 
+  // The app lives at https://ai-complaint.yvrtz.workers.dev and nowhere else:
+  // no per-version preview URLs.
+  "workers_dev": true,
+  "preview_urls": false,
+
   // The frontend is built automatically before deploying, so `wrangler deploy`
   // never finds ./dist empty.
   "build": {

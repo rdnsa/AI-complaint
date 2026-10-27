@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLanguage } from '../lib/i18n';
 
 /**
@@ -126,7 +127,9 @@ export default function Camera({
 
   if (!open) return null;
 
-  return (
+  // Rendered on <body>: a glass card around the opener has a backdrop filter,
+  // which would otherwise trap this full-screen layer inside the card.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -186,7 +189,8 @@ export default function Camera({
         </button>
         <span className="w-20" />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

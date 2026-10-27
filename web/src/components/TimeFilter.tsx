@@ -75,7 +75,7 @@ export default function TimeFilter({
             className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition ${
               preset === p
                 ? 'bg-ink-800 text-surface ring-ink-800'
-                : 'bg-surface text-ink-700 ring-mist-300 hover:bg-mist-50'
+                : 'bg-glass text-ink-700 ring-mist-300 hover:bg-mist-50'
             }`}
           >
             {t(`time.${p}`)}

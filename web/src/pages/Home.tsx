@@ -1,8 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import AskPanel from '../components/AskPanel';
-import QrCodesPanel from '../components/QrCodesPanel';
 import { StatusBadge } from '../components/Badges';
 import {
   ArrowGlyph,
@@ -19,6 +18,9 @@ import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { Reveal } from '../lib/motion';
 import { useSession } from '../lib/session';
 
+// The QR generator library is only needed once the stickers are opened.
+const QrCodesPanel = lazy(() => import('../components/QrCodesPanel'));
+
 function MyReportRow({ report }: { report: Report }) {
   const { t } = useLanguage();
   const relativeTime = useRelativeTime();
@@ -30,7 +32,7 @@ function MyReportRow({ report }: { report: Report }) {
           <StatusBadge value={report.status} />
           <span className="text-nav text-ink-600">{relativeTime(report.created_at)}</span>
         </div>
-        <p className="mt-1.5 truncate font-display text-nav-title font-semibold text-ink-900">{report.toilet_name}</p>
+        <p className="mt-1.5 truncate font-display text-nav-title font-semibold text-ink-900">{report.location_name}</p>
         <p className="truncate text-body-sm text-ink-600">{report.summary ?? report.description}</p>
       </div>
       <span className="flex shrink-0 items-center gap-1 text-body-sm text-accent-600 group-hover:underline">
@@ -42,12 +44,16 @@ function MyReportRow({ report }: { report: Report }) {
 }
 
 /**
- * A full-width band of the page. Bands alternate Gallery White and Studio Mist,
- * so chapters separate by tone rather than by lines or shadows.
+ * A full-width band of the page. A 'white' band is a strip of frosted glass
+ * across the aurora; a 'mist' band leaves the aurora bare, so chapters still
+ * alternate.
  */
 function Band({ id, tone, children }: { id?: string; tone: 'white' | 'mist'; children: ReactNode }) {
   return (
-    <section id={id} className={`scroll-mt-14 ${tone === 'white' ? 'bg-surface' : 'bg-mist-100'}`}>
+    <section
+      id={id}
+      className={`scroll-mt-14 ${tone === 'white' ? 'border-y border-white/50 bg-glass/70 backdrop-blur-2xl dark:border-white/10' : ''}`}
+    >
       <div className="mx-auto max-w-5xl px-4 py-16 sm:py-section">{children}</div>
     </section>
   );
@@ -61,7 +67,7 @@ function BandHeading({ title, body, link }: { title: string; body?: string; link
   return (
     <Reveal stagger className="mb-8 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
       <div className="max-w-2xl">
-        <h2 className="font-display text-feature-sm font-semibold text-ink-900 sm:text-feature">{title}</h2>
+        <h2 className="font-display text-feature-sm font-light tracking-[-0.03em] text-ink-900 sm:text-feature">{title}</h2>
         {body && <p className="mt-3 text-body text-ink-600">{body}</p>}
       </div>
       {link && <div>{link}</div>}
@@ -179,7 +185,7 @@ export default function Home() {
 
       <Band id="ai" tone="white">
         <BandHeading title={t('ask.title')} body={t('ask.tagline')} link={<ChatMark />} />
-        <Reveal className="rounded-card bg-mist-100 p-6 sm:p-8">
+        <Reveal className="card p-6 sm:p-8">
           <AskPanel compact />
         </Reveal>
       </Band>
@@ -204,7 +210,9 @@ export default function Home() {
           }
         />
         {showQr ? (
-          <QrCodesPanel />
+          <Suspense fallback={<p className="mt-6 text-ink-600">{t('common.loading')}</p>}>
+            <QrCodesPanel />
+          </Suspense>
         ) : (
           <Reveal>
             <button

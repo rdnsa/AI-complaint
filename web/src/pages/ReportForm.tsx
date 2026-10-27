@@ -1,34 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Camera from '../components/Camera';
+import CampusMap from '../components/CampusMap';
 import Header from '../components/Header';
+import LocationSelect from '../components/LocationSelect';
 import RoleSwitch from '../components/RoleSwitch';
-import { api, type Floor } from '../lib/api';
+import { api, type CleaningArea } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
+import { areaAt, buildPlaces, locate } from '../lib/places';
 import { readStoredStaff } from '../lib/staff';
 import { useSession } from '../lib/session';
-import { CameraGlyph, ToiletTypeGlyph } from '../components/Marks';
+import { CameraGlyph, StudentMark } from '../components/Marks';
 
-
+/**
+ * The reporter's page: pick the location (building, then floor or yard),
+ * describe the problem, add a photo. Without a QR it opens empty (/student);
+ * a location QR (/report/C-2) opens it with the location already picked.
+ */
 export default function ReportForm() {
-  const { floorId = '' } = useParams();
+  const { locationId = '' } = useParams();
   const [search] = useSearchParams();
-  // A phone that has picked a staff name belongs to a cleaner: the door QR
-  // opens their page directly. `?as=student` (the switch) opts out.
-  if (search.get('as') !== 'student' && readStoredStaff()) {
-    return <Navigate to={`/staff/${floorId}`} replace />;
+  // A phone that has picked a staff name belongs to a cleaner: the location
+  // QR opens their page directly. `?as=student` (the switch) opts out.
+  if (locationId && search.get('as') !== 'student' && readStoredStaff()) {
+    return <Navigate to={`/staff/${locationId}`} replace />;
   }
-  return <StudentForm floorId={floorId} />;
+  return <ReporterForm locationId={locationId} />;
 }
 
-function StudentForm({ floorId }: { floorId: string }) {
+function ReporterForm({ locationId }: { locationId: string }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { session } = useSession();
 
-  const [floor, setFloor] = useState<Floor | null>(null);
+  const [areas, setAreas] = useState<CleaningArea[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toiletId, setToiletId] = useState<string>('');
+  const [placeKey, setPlaceKey] = useState('');
+  const [part, setPart] = useState('');
+  const [unknownQr, setUnknownQr] = useState(false);
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -38,15 +47,20 @@ function StudentForm({ floorId }: { floorId: string }) {
 
   useEffect(() => {
     api
-      .floor(floorId)
-      .then((f) => {
-        setFloor(f);
-        // When a floor has only one toilet, there is nothing to choose.
-        if (f.toilets.length === 1) setToiletId(f.toilets[0].id);
+      .cleaningAreas()
+      .then((r) => {
+        setAreas(r.data);
+        const target = locationId ? locate(locationId, r.data, buildPlaces(r.data)) : null;
+        setUnknownQr(Boolean(locationId) && !target);
+        setPlaceKey(target?.key ?? '');
+        setPart(target?.part ?? '');
       })
-      .catch(() => setFloor(null))
+      .catch(() => setAreas([]))
       .finally(() => setLoading(false));
-  }, [floorId]);
+  }, [locationId]);
+
+  const places = useMemo(() => buildPlaces(areas), [areas]);
+  const area = areaAt(areas, places.find((p) => p.key === placeKey) ?? null, part);
 
   // The preview is an object URL; released when the photo changes so memory is not leaked.
   useEffect(() => {
@@ -58,15 +72,16 @@ function StudentForm({ floorId }: { floorId: string }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!area) return setError(t('report.pick_location'));
     if (description.trim().length < 5) return setError(t('report.error_too_short'));
     if (!photo) return setError(t('report.photo_reason'));
 
     setSubmitting(true);
     setError(null);
     try {
-  // The photo is uploaded first, so the report is stored with a reference that already exists.
+      // The photo is uploaded first, so the report is stored with a reference that already exists.
       const photo_key = (await api.uploadPhoto(photo)).key;
-      const result = await api.submitReport({ toilet_id: toiletId, description: description.trim(), photo_key });
+      const result = await api.submitReport({ area_id: area.id, description: description.trim(), photo_key });
       navigate(`/reports/${result.id}`, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('report.error_submit'));
@@ -77,62 +92,37 @@ function StudentForm({ floorId }: { floorId: string }) {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <Header title={t('app.title')} compact />
+        <Header title={t('role.student')} compact />
         <p className="p-10 text-center text-ink-600">{t('common.loading')}</p>
-      </div>
-    );
-  }
-
-  if (!floor) {
-    return (
-      <div className="min-h-screen">
-        <Header title={t('report.unknown_location')} compact />
-        <div className="mx-auto max-w-lg px-4 py-14 text-center">
-          <p className="text-ink-700">{t('report.unknown_location_body')}</p>
-          <p className="mt-2">
-            <code className="rounded-lg bg-mist-200 px-2 py-1 text-sm text-ink-800">
-              {floorId}
-            </code>
-          </p>
-          <Link to="/student" className="btn-primary mt-6">
-            {t('report.choose_manually')}
-          </Link>
-        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen pb-36">
-      <Header
-        title={t('common.building', { code: floor.building_code })}
-        description={floor.building_name}
-        compact
-      />
+      <Header title={t('role.student')} description={t('role.student_body')} compact mark={<StudentMark />} />
 
       <main className="mx-auto max-w-lg px-4">
-        <RoleSwitch floorId={floorId} active="student" />
+        {locationId && <RoleSwitch locationId={locationId} active="student" />}
 
-        <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-ink-900">
-          {t('common.floor', { n: floor.floor })}
-        </h2>
+        {unknownQr && (
+          <p className="mt-5 rounded-nav bg-amber-50 px-4 py-3 text-body-sm text-amber-900">{t('location.unknown_qr')}</p>
+        )}
 
-        <div className="mt-4">
-          <span className="label">{t('report.choose_toilet')}</span>
-          <div className="flex gap-2">
-            {floor.toilets.map((wc) => (
-              <button
-                key={wc.id}
-                type="button"
-                onClick={() => setToiletId(wc.id)}
-                aria-pressed={toiletId === wc.id}
-                className={toiletId === wc.id ? 'choice-on' : 'choice-off'}
-              >
-                <ToiletTypeGlyph type={wc.type} />
-                {t(`toilet_type.${wc.type}`)}
-              </button>
-            ))}
-          </div>
+        <CampusMap />
+
+        <div className="mt-6">
+          <LocationSelect
+            places={places}
+            placeKey={placeKey}
+            part={part}
+            onChange={(key, next) => {
+              setPlaceKey(key);
+              setPart(next);
+              setUnknownQr(false);
+              setError(null);
+            }}
+          />
         </div>
 
         {/* Reporting without an account is still allowed; this note only explains
@@ -149,8 +139,6 @@ function StudentForm({ floorId }: { floorId: string }) {
             </>
           )}
         </p>
-
-        <p className="mt-4 leading-relaxed text-ink-700">{t('report.prompt')}</p>
 
         <form onSubmit={submit} className="mt-5 space-y-5">
           <div>
@@ -171,7 +159,7 @@ function StudentForm({ floorId }: { floorId: string }) {
                   key={c}
                   type="button"
                   onClick={() => setDescription(c)}
-                  className="rounded-full border border-mist-200 bg-surface px-3 py-1.5 text-xs text-ink-600 transition hover:border-accent-300 hover:text-accent-700"
+                  className="rounded-full border border-mist-200 bg-glass px-3 py-1.5 text-xs text-ink-600 transition hover:border-accent-300 hover:text-accent-700"
                 >
                   {c.length > 36 ? `${c.slice(0, 36)}…` : c}
                 </button>
@@ -181,9 +169,6 @@ function StudentForm({ floorId }: { floorId: string }) {
 
           <div>
             <span className="label">{t('report.photo')}</span>
-            <p className="-mt-1 mb-2 text-xs leading-relaxed text-ink-600">
-              {t('report.photo_reason')}
-            </p>
             {/* The live camera, not a file picker: a photo from the gallery cannot be used. */}
             <Camera
               open={camera}
@@ -222,11 +207,11 @@ function StudentForm({ floorId }: { floorId: string }) {
             </p>
           )}
 
-          <div className="fixed inset-x-0 bottom-0 border-t border-mist-200 bg-surface/95 p-4 backdrop-blur">
+          <div className="fixed inset-x-0 bottom-0 border-t border-mist-200 bg-glass/95 p-4 backdrop-blur">
             <div className="mx-auto max-w-lg">
               <button
                 type="submit"
-                disabled={submitting || !toiletId || !photo}
+                disabled={submitting || !area || !photo}
                 className="btn-primary w-full py-3.5 text-base"
               >
                 {submitting ? t('report.submitting') : t('report.submit')}

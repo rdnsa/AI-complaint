@@ -1,15 +1,16 @@
 # AI Complaint
 
-**LLM-based classification and prioritisation of campus toilet complaints.**
+**LLM-based classification and prioritisation of campus cleanliness and facility complaints.**
 Built for Universitas Pendidikan Indonesia, Tasikmalaya Campus (Jln. Dadaha No. 18).
 
-A student scans the QR code on a toilet door and writes the problem in their own
-words. A pretrained LLM turns that free text into a structured work ticket —
+A reporter scans the QR code at a location — a floor of a building, a
+building's yard, or a court — or picks the building and floor/yard on the
+page, and writes the problem in their own words. A pretrained LLM turns that free text into a structured work ticket —
 category, priority, a neutral summary, and a recommended course of action — and
 pushes it to the cleaning staff's dashboard.
 
 ```
-QR on the floor  →  pick the toilet  →  describe the problem  →  LLM analysis
+QR or picked location  →  describe the problem  →  LLM analysis
                                                                       ↓
                                      staff dashboard  +  17:00 WIB cron → daily summary
                                            ↓
@@ -28,9 +29,9 @@ Two longer documents live in [`docs/`](docs/), each as HTML and PDF
   students, cleaning staff, admins, and management: step-by-step use, FAQ,
   privacy, what to do when something goes wrong.
 
-One QR code represents one **floor** of one building, not one toilet. The
-reporter picks men's/women's/accessible on the form, which cuts the number of
-stickers to print and maintain by two thirds.
+One QR code represents one **location**: a floor of a building, a building's
+yard, or a place like Lapang Voli. The same locations appear on every page, so
+a complaint, a daily task and a sticker always name a place the same way.
 
 ---
 
@@ -47,7 +48,7 @@ stickers to print and maintain by two thirds.
 4. **Reporter leaderboard** — gamification ranked by report volume, shown
    alongside how many of those reports were actually resolved.
 5. **Proof-photo verification** — a vision model judges the staff photo before a
-   report can be closed: is it a toilet, and is it clean?
+   report can be closed: does it show the reported location, and is it clean?
 6. **Ask the data** — anyone types a question in plain language on the landing
    page ("which building had the most blockages this month?") and the text
    model answers it by calling a small set of aggregate queries; it never sees
@@ -61,12 +62,15 @@ stickers to print and maintain by two thirds.
 - Charts in the dashboard: daily series, priority spread, categories, buildings,
   mean time to resolution
 - Status tracking for reporters without an account
-- Building map on the landing page
-- Staff work log: cleaners record which toilets they cleaned, with an
-  AI-checked photo, without signing in (they pick their name from a list)
-- Cleaning reports per area (`/clean/<area>`), from the 2026 staff assignment
-  letter: one QR per floor or area, the staff member ticks sweep / mop / wipe
-  glass / clean toilet and photographs each task. Photos are stamped with name,
+- One location list for every page: the locations of the 2026 staff assignment
+  letter (`seed/cleaning-areas.sql`), picked as **Gedung** then **Lantai /
+  Halaman** — a floor, the building's yard, or the whole building/area
+- Staff work log (older): cleaners recorded which toilets they cleaned, with an
+  AI-checked photo; kept read-only in the supervisor dashboard
+- Daily cleaning tasks per location (`/staff`, or `/clean/<area>` from a staff
+  sticker): six tasks, the same everywhere — sweep & mop, wipe the windows,
+  clean the toilet, empty the bins, refill the water gallon, tidy the room —
+  each photographed and sent on its own. Photos are stamped with name,
   area, server time and GPS; a photo older than three hours or already used is
   refused; a report filed outside `CAMPUS_RADIUS_M` of the campus (or without
   GPS) is accepted but flagged to the supervisor. The supervisor's **Kebersihan**
@@ -89,7 +93,7 @@ Two models, never for the same job — the split follows the input type.
 | | DeepSeek `deepseek-chat` | Gemini `gemini-3.6-flash` |
 |---|---|---|
 | Input | complaint text; the day's list of summaries | staff proof photo, plus the original complaint as context |
-| Job | features 1–3: classify, prioritise, summarise, daily summary; feature 6: answer admin questions via tool calls | feature 5: is this a toilet, and is it clean? |
+| Job | features 1–3: classify, prioritise, summarise, daily summary; feature 6: answer admin questions via tool calls | feature 5: is this the reported location, and is it clean? |
 | Called | on every new report (async, after the response), once a day by cron, and per admin question | every time staff close a report or log a clean (sync — staff wait for the verdict) |
 | On failure | report is kept unlabelled, can be re-analysed | the close is refused (`502`); staff retry |
 | Code | `analyzeComplaint()`, `summarizeDay()`, `chatWithTools()` in `src/adapters/llm.ts` | `checkProofPhoto()` in the same file |
@@ -107,8 +111,8 @@ Three parties, and only the supervisor ever signs in.
 
 | Role | How it is created | Signs in? | Can do |
 |---|---|---|---|
-| **Student** (reporter) | nobody — or self-registers at `/register` to appear on the leaderboard | no (optional) | report a toilet's condition with a live-camera photo |
-| **Cleaning staff** | the supervisor adds a **name** in the dashboard | **no** — picks their name from a dropdown on the floor page | finish student reports on that floor (proof photo checked by the vision model), and log the toilets they cleaned (work log, same photo check) |
+| **Reporter** | nobody — or self-registers at `/register` to appear on the leaderboard | no (optional) | report a dirty spot or broken facility at any location, with a live-camera photo |
+| **Cleaning staff** | the supervisor adds a **name** in the dashboard | **no** — picks their name from a dropdown on the staff page | resolve the complaints at a location (proof photo checked by the vision model), and send the daily tasks |
 | **Supervisor** (SPV) | ships with the database (`admin` / `Admin123!`); can add more | yes | monitor reports and the staff work log, charts, activity log; manage staff names and supervisor accounts. The AI chatbot and the QR stickers are on the home page, for everyone |
 
 > **Change the default supervisor password after the first sign-in.** It is
@@ -151,7 +155,7 @@ npm install
 cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY, VISION_API_KEY and AUTH_SECRET
 
 npm run db:local                 # apply migrations to the local D1
-npm run db:seed                  # load the toilet list
+npm run db:seed                  # load the toilets (older reports point at them)
 
 npm run build                    # the frontend must be built once before wrangler dev
 npm run dev                      # Vite (5173) + Worker (8787) side by side
@@ -257,32 +261,38 @@ and `npm run db:remote` once, by hand.
 
 ## Printing QR codes
 
-**From the app:** home page → **QR codes for toilet doors** → *Show* (open to
-everyone; a sticker is only a floor address already on the door). One sticker per
-floor, generated in the browser from the live location list. Filter by
-building, press **Print** (only the stickers are printed, three per row on A4),
-or download a single sticker as PNG. Each code points at
-`<this site>/report/<building>-<floor>`.
+**From the app:** home page → **QR codes for every location** → *Show* (open to
+everyone; a sticker is only a location address). One sticker per location,
+generated in the browser from the live location list. Filter by location, press
+**Print** (only the stickers are printed, three per row on A4), or download a
+single sticker as PNG. Each code points at `<this site>/report/<location>`
+(e.g. `/report/C-2`, `/report/C-HALAMAN`); reporters and staff share it.
+Stickers printed earlier, pointing at `/report/<building>-<floor>`, still work.
 
 **From the command line** (batch PNGs plus a print sheet):
 
 ```bash
-BASE_URL=https://<your-worker>.workers.dev npm run qr
+BASE_URL=https://ai-complaint.yvrtz.workers.dev npm run qr
 ```
 
-Produces `qr-codes/<building>-<floor>.png` plus `qr-codes/cetak.html`, an A4
+Produces `qr-codes/<location>.png` plus `qr-codes/cetak.html`, an A4
 print sheet with bilingual stickers. The folder is emptied on every run so that
 codes from an older location list can never be printed by accident.
 
-### Changing the toilet list
+### Changing the location list
 
-Edit `seed/toilets.sql`, re-run the seed, then regenerate the QR codes — in that
-order, because the codes are generated from whatever is active in the database.
+Edit `seed/cleaning-areas.sql`, re-run it (`npm run db:seed:cleaning`, or
+`db:seed:cleaning:remote`), then regenerate the QR codes — in that order,
+because the codes are generated from whatever is active in the database. In
+that file, floor `0` is a building's yard and `NULL` the whole building or a
+place outside the buildings.
 
 The seed file is safe to run repeatedly, including once reports exist. It
-deactivates every toilet and then reactivates the ones listed, rather than
-deleting rows. A toilet removed from the list simply stops appearing in the app;
-old reports pointing at it keep their location and history intact.
+deactivates every location and then reactivates the ones listed, rather than
+deleting rows. A location removed from the list simply stops appearing in the
+app; old reports pointing at it keep their location and history intact.
+Reports filed before migration 0011 point at a toilet (`seed/toilets.sql`) and
+still show it.
 
 ---
 
@@ -294,8 +304,8 @@ old reports pointing at it keep their location and history intact.
 |---|---|---|
 | `POST` | `/api/auth/login`, `/api/auth/register`, `/api/auth/logout` | sign in, register, sign out |
 | `GET` | `/api/auth/me` | current session |
-| `GET` | `/api/locations`, `/api/locations/:id` | buildings and floors; one floor (QR target) |
-| `POST` | `/api/reports` | file a report `{toilet_id, description, photo_key}` |
+| `GET` | `/api/cleaning/areas` | every location, and the campus boundary |
+| `POST` | `/api/reports` | file a report `{area_id, description, photo_key}` |
 | `GET` | `/api/reports/public` | public report board |
 | `GET` | `/api/reports/mine` | the signed-in reporter's own reports |
 | `GET` | `/api/reports/open?building=&floor=` | reports still waiting for staff |
@@ -438,8 +448,8 @@ by anyone.
 **The proof photo is judged before it is accepted.** A photo alone only proves
 that *something* was photographed. So `PATCH /api/reports/:id` hands the
 uploaded photo, together with the original complaint, to a vision model and
-asks two questions: is this the inside of a toilet, and does it look clean? Only
-a `clean` verdict lets the status become `resolved`; `dirty` and `not_toilet`
+asks two questions: does it show the reported location, and does it look clean?
+Only a `clean` verdict lets the status become `resolved`; `dirty` and `wrong_place`
 come back as `422` with the model's one-sentence reason, the photo is deleted
 from R2, and the attempt is written to the activity log as `proof_rejected`. The
 accepted verdict is stored on the report (`proof_*`) and shown under the

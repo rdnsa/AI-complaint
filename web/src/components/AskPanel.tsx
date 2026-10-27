@@ -78,7 +78,7 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
                 type="button"
                 onClick={() => send(t(k))}
                 disabled={busy}
-                className="rounded-full border border-ink-600/40 bg-surface px-3.5 py-2 text-left text-nav text-ink-900 transition hover:border-accent-500 hover:bg-accent-50 hover:text-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-ink-600/40 bg-glass px-3.5 py-2 text-left text-nav text-ink-900 transition hover:border-accent-500 hover:bg-accent-50 hover:text-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t(k)}
               </button>
@@ -127,7 +127,7 @@ export default function AskPanel({ compact = false }: { compact?: boolean }) {
         </div>
         )}
 
-        <form onSubmit={onSubmit} className="flex gap-2 bg-surface p-3">
+        <form onSubmit={onSubmit} className="flex gap-2 bg-glass p-3">
           <input
             className="input flex-1"
             value={text}

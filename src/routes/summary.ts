@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { HTTP_CACHE } from '../adapters/memo';
 import { wibDate } from '../adapters/clock';
 import { requireSupervisor } from '../adapters/session';
 import type { AppEnv } from '../env';
@@ -24,6 +25,7 @@ app.get('/stats', requireSupervisor, async (c) => {
 /** The numbers behind the dashboard charts. */
 app.get('/charts', requireSupervisor, async (c) => {
   const days = Math.min(Number(c.req.query('days') ?? 14) || 14, 90);
+  c.header('Cache-Control', HTTP_CACHE.charts);
   return c.json(await summaries.chartData(c.env, days));
 });
 

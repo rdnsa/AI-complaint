@@ -46,7 +46,7 @@ export default function Tracker({ report }: { report: Report }) {
                   className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ring-2 ${
                     reached
                       ? 'bg-accent-500 text-white ring-accent-200'
-                      : 'bg-surface text-mist-300 ring-mist-200'
+                      : 'bg-glass text-mist-300 ring-mist-200'
                   }`}
                 >
                   {reached ? <CheckGlyph className="h-3.5 w-3.5" /> : i + 1}

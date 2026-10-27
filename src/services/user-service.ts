@@ -1,4 +1,5 @@
 import { createSalt, hashPassword, verifyPassword } from '../adapters/password';
+import { forget, memo } from '../adapters/memo';
 import type { Role } from '../domain/types';
 import type { Env } from '../env';
 import * as users from '../repositories/users';
@@ -83,6 +84,7 @@ export async function addStaff(env: Env, name: string, supervisor: string): Prom
     password_hash: null,
     password_salt: null,
   });
+  forgetStaff();
   await log(env, { action: 'user_changed', actor: supervisor, summary: `Menambah petugas ${name}` });
   return { id, name, role: 'staff' };
 }
@@ -108,8 +110,15 @@ export function listManaged(env: Env) {
   return users.listManaged(env);
 }
 
+/** Staff names appear on the dropdown and, by assignment, on the location list. */
+function forgetStaff() {
+  forget('staff');
+  forget('areas');
+}
+
+/** The staff dropdown, read on every staff page; dropped whenever an account changes. */
 export function activeStaff(env: Env) {
-  return users.activeStaff(env);
+  return memo('staff', 60_000, () => users.activeStaff(env));
 }
 
 export function findActiveStaff(env: Env, id: string) {
@@ -161,6 +170,7 @@ export async function updateAccount(
   }
 
   await users.update(env, id, set, params);
+  forgetStaff();
   await log(env, {
     action: 'user_changed',
     actor: supervisor.name,

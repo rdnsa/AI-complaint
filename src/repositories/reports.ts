@@ -16,13 +16,13 @@ import { buildTimeFilter, type TimeFilter } from './time-filter';
  * database would mean rewriting this file alone.
  */
 
-const COLUMNS = `r.*, t.name AS toilet_name, t.building_code, t.building_name, t.floor, t.type`;
-const FROM = `FROM reports r JOIN toilet_info t ON t.id = r.toilet_id`;
+const COLUMNS = `r.*, t.name AS location_name, t.building_code, t.building_name, t.floor`;
+const FROM = `FROM reports r JOIN location_info t ON t.id = COALESCE(r.area_id, r.toilet_id)`;
 
 export interface ReportFilter extends TimeFilter {
   status?: string;
   priority?: string;
-  toilet_id?: string;
+  area_id?: string;
   building?: string;
   limit?: number;
 }
@@ -40,9 +40,9 @@ function buildFilter(f: ReportFilter): { clause: string; params: unknown[] } {
     where.push('r.priority = ?');
     params.push(f.priority);
   }
-  if (f.toilet_id) {
-    where.push('r.toilet_id = ?');
-    params.push(f.toilet_id);
+  if (f.area_id) {
+    where.push('r.area_id = ?');
+    params.push(f.area_id);
   }
   if (f.building) {
     where.push('t.building_code = ?');
@@ -76,6 +76,7 @@ export async function findForDashboard(env: Env, f: ReportFilter): Promise<Repor
 
 export interface PublicRow {
   id: string;
+  area_id: string | null;
   status: ReportStatus;
   priority: string | null;
   categories: string | null;
@@ -84,9 +85,9 @@ export interface PublicRow {
   created_at: string;
   resolved_at: string | null;
   proof_photo_key: string | null;
-  toilet_name: string;
-  building_code: string;
-  floor: number;
+  location_name: string;
+  building_code: string | null;
+  floor: number | null;
 }
 
 export async function findForPublic(
@@ -96,9 +97,9 @@ export async function findForPublic(
   const { clause, params } = buildFilter(f);
   const [list, counts] = await env.DB.batch<Record<string, unknown>>([
     env.DB.prepare(
-      `SELECT r.id, r.status, r.priority, r.categories, r.summary, r.ai_status,
+      `SELECT r.id, r.area_id, r.status, r.priority, r.categories, r.summary, r.ai_status,
               r.created_at, r.resolved_at, r.proof_photo_key,
-              t.name AS toilet_name, t.building_code, t.floor
+              t.name AS location_name, t.building_code, t.floor
          ${FROM} ${clause}
         ORDER BY
           CASE r.status WHEN 'new' THEN 0 WHEN 'in_progress' THEN 1 ELSE 2 END,
@@ -158,20 +159,20 @@ export async function findByReporter(env: Env, reporterId: string): Promise<Repo
 }
 
 /**
- * An identical complaint for the same toilet within two minutes is almost
+ * An identical complaint for the same location within two minutes is almost
  * certainly a double-tapped send button, not two different people.
  */
 export async function findDuplicate(
   env: Env,
-  toiletId: string,
+  areaId: string,
   description: string,
 ): Promise<string | null> {
   const row = await env.DB.prepare(
     `SELECT id FROM reports
-      WHERE toilet_id = ? AND description = ? AND created_at > datetime('now', '-2 minutes')
+      WHERE area_id = ? AND description = ? AND created_at > datetime('now', '-2 minutes')
       LIMIT 1`,
   )
-    .bind(toiletId, description)
+    .bind(areaId, description)
     .first<{ id: string }>();
   return row?.id ?? null;
 }
@@ -180,16 +181,16 @@ export async function insert(
   env: Env,
   data: {
     id: string;
-    toilet_id: string;
+    area_id: string;
     description: string;
     photo_key: string;
     reporter_id: string | null;
   },
 ): Promise<void> {
   await env.DB.prepare(
-    `INSERT INTO reports (id, toilet_id, description, photo_key, reporter_id) VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO reports (id, area_id, description, photo_key, reporter_id) VALUES (?, ?, ?, ?, ?)`,
   )
-    .bind(data.id, data.toilet_id, data.description, data.photo_key, data.reporter_id)
+    .bind(data.id, data.area_id, data.description, data.photo_key, data.reporter_id)
     .run();
 }
 

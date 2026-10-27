@@ -96,7 +96,7 @@ export default function CleaningPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-nav bg-surface px-4 py-3 text-sm leading-relaxed text-ink-700 print:hidden">
+      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700 print:hidden">
         {t('clean.panel_description')}
       </p>
 
@@ -109,7 +109,7 @@ export default function CleaningPanel() {
               onClick={() => setView(v)}
               aria-pressed={view === v}
               className={`rounded-full px-3 py-1.5 text-body-sm font-semibold transition ${
-                view === v ? 'bg-surface text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
+                view === v ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
               }`}
             >
               {t(`clean.view_${v}`)}
@@ -268,7 +268,7 @@ function Recap({ recap, dateLabel, locale }: { recap: CleaningRecap; dateLabel: 
                 )}
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] table-fixed text-sm">
+                <table className="w-full min-w-[760px] table-fixed text-sm">
                   <thead>
                     <tr className="text-left text-xs text-ink-600">
                       <th className="w-2/5 px-4 py-2 font-semibold">{t('clean.col_area')}</th>

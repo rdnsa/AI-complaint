@@ -75,12 +75,12 @@ export default function ReportStatus() {
             </div>
 
             <div className="card mt-4 p-4">
-              <p className="text-sm font-semibold text-accent-600">{report.toilet_name}</p>
+              <p className="text-sm font-semibold text-accent-600">{report.location_name}</p>
               <p className="mt-1.5 whitespace-pre-wrap text-ink-900">{report.description}</p>
               {report.photo_url && (
                 <ZoomableImage
                   src={report.photo_url}
-                  caption={`${t('photo.report')} · ${report.toilet_name}`}
+                  caption={`${t('photo.report')} · ${report.location_name}`}
                   frameClassName="mt-3 w-full"
                   className="w-full"
                 />

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { wibDate } from '../adapters/clock';
 import { chatWithTools, type ToolAnswer, type ToolDefinition } from '../adapters/llm';
-import { CATEGORIES, PRIORITIES, STATUSES, TOILET_TYPES } from '../domain/types';
+import { CATEGORIES, PRIORITIES, STATUSES } from '../domain/types';
 import type { Env } from '../env';
 import * as analytics from '../repositories/analytics';
 import { GROUPINGS } from '../repositories/analytics';
@@ -60,15 +60,10 @@ const FILTER_PROPERTIES = {
     type: 'string',
     description: 'Tanggal akhir (inklusif) dalam format YYYY-MM-DD waktu WIB.',
   },
-  building: { type: 'string', description: 'Kode gedung satu huruf, A sampai J.' },
+  building: { type: 'string', description: 'Kode gedung satu huruf, A sampai J. Tidak berlaku untuk tempat di luar gedung seperti Lapang Voli.' },
   category: { type: 'string', enum: [...CATEGORIES] },
   priority: { type: 'string', enum: [...PRIORITIES] },
   status: { type: 'string', enum: [...STATUSES] },
-  type: {
-    type: 'string',
-    enum: [...TOILET_TYPES],
-    description: 'Jenis toilet: men = pria, women = wanita, accessible = disabilitas.',
-  },
 };
 
 const toolList = (groupings: Grouping[]): ToolDefinition[] => [
@@ -209,9 +204,10 @@ function systemPrompt(today: string, isSupervisor: boolean): string {
   const asker = isSupervisor
     ? 'Penanya adalah supervisor yang memantau laporan dan kerja petugas.'
     : 'Penanya adalah warga kampus (mahasiswa/dosen/tamu). Jangan menyebut nama petugas perorangan.';
-  return `Kamu adalah asisten analisis data untuk sistem pelaporan toilet kampus UPI Tasikmalaya.
+  return `Kamu adalah asisten analisis data untuk sistem pelaporan kebersihan dan fasilitas kampus UPI Tasikmalaya.
 ${asker}
-Hari ini: ${today} (WIB). Gedung berkode A sampai J; setiap laporan punya kategori
+Hari ini: ${today} (WIB). Laporan bisa tentang lantai sebuah gedung, halaman gedung, atau tempat di luar
+gedung seperti Lapang Voli. Gedung berkode A sampai J; setiap laporan punya kategori
 (${CATEGORIES.join(', ')}), prioritas (${PRIORITIES.join(', ')}), dan status (${STATUSES.join(', ')}).
 Kode-kode itu berbahasa Inggris: pakai persis kode tersebut sebagai argumen alat, tetapi dalam jawaban
 terjemahkan ke bahasa penanya (mis. resolved = selesai, in_progress = diproses, new = baru,
@@ -226,7 +222,7 @@ Cara bekerja:
 - Jawab ringkas: 2-5 kalimat, atau daftar pendek bila memang diminta daftar. Sebutkan angka konkret.
 - Jawab dalam bahasa yang dipakai penanya (Indonesia atau Inggris).
 - Teks polos saja, tanpa format Markdown (tanpa **, #, atau tabel). Daftar cukup dengan tanda "-".
-- Kalau pertanyaan di luar data sistem ini, katakan bahwa kamu hanya bisa menjawab soal laporan toilet.`;
+- Kalau pertanyaan di luar data sistem ini, katakan bahwa kamu hanya bisa menjawab soal laporan kebersihan dan fasilitas kampus.`;
 }
 
 export interface AskResult extends ToolAnswer {

@@ -57,7 +57,7 @@ export default function ActivityPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-nav bg-surface px-4 py-3 text-sm leading-relaxed text-ink-700">
+      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700">
         {t('activity.description')}
       </p>
 
@@ -105,7 +105,7 @@ export default function ActivityPanel() {
                 </p>
                 <p className="mt-1 italic text-ink-800">“{String(a.details.description ?? '')}”</p>
                 <p className="mt-1 text-xs text-ink-600">
-                  {String(a.details.toilet_name ?? '')} · {String(a.details.status ?? '')} ·{' '}
+                  {String(a.details.location_name ?? a.details.toilet_name ?? '')} · {String(a.details.status ?? '')} ·{' '}
                   {String(a.details.created_at ?? '')}
                 </p>
               </div>

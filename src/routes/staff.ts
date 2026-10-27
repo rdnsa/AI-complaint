@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { HTTP_CACHE } from '../adapters/memo';
 import type { AppEnv } from '../env';
 import * as accounts from '../services/user-service';
 
@@ -10,6 +11,9 @@ const app = new Hono<AppEnv>();
  * Staff do not sign in, so this list has to be readable without a session.
  * It carries names only — the same names already shown on resolved reports.
  */
-app.get('/', async (c) => c.json({ data: await accounts.activeStaff(c.env) }));
+app.get('/', async (c) => {
+  c.header('Cache-Control', HTTP_CACHE.staff);
+  return c.json({ data: await accounts.activeStaff(c.env) });
+});
 
 export default app;

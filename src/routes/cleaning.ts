@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { isValidDate } from '../adapters/clock';
 import { requireSupervisor } from '../adapters/session';
-import { CLEANING_TASKS } from '../domain/types';
+import { HTTP_CACHE } from '../adapters/memo';
+import { CLEANING_TASKS, type CleaningTask } from '../domain/types';
 import type { AppEnv } from '../env';
 import { readTimeFilter } from '../repositories/time-filter';
 import * as cleaning from '../services/cleaning-service';
@@ -19,8 +20,11 @@ const app = new Hono<AppEnv>();
 
 const AREA_ID = /^[A-Za-z0-9-]{1,30}$/;
 
-/** Public: every area, for the manual picker and the QR sheet. */
-app.get('/areas', async (c) => c.json({ data: await cleaning.listAreas(c.env) }));
+/** Public: every area, for the staff page's location picker and the QR sheet, plus the campus boundary. */
+app.get('/areas', async (c) => {
+  c.header('Cache-Control', HTTP_CACHE.locations);
+  return c.json({ data: await cleaning.listAreas(c.env), campus: cleaning.campus(c.env) });
+});
 
 /** Public: one area — what a cleaning QR points at — plus the campus boundary for the GPS check. */
 app.get('/areas/:id', async (c) => {
@@ -50,7 +54,16 @@ const SubmitSchema = z.object({
     .optional(),
 });
 
-const TASK_NAME = { sweep: 'Menyapu', mop: 'Mengepel', glass: 'Mengelap kaca', toilet: 'Membersihkan toilet' };
+const TASK_NAME: Record<CleaningTask, string> = {
+  sweep_mop: 'Menyapu & mengepel',
+  glass: 'Mengelap kaca jendela',
+  toilet: 'Membersihkan toilet',
+  trash: 'Membuang sampah',
+  gallon: 'Mengisi ulang galon',
+  tidy: 'Merapikan ruangan',
+  sweep: 'Menyapu',
+  mop: 'Mengepel',
+};
 
 /** Public: a staff member files a cleaning report for an area. */
 app.post('/reports', async (c) => {
@@ -103,6 +116,12 @@ app.post('/reports', async (c) => {
         result.duplicate ? 200 : 201,
       );
   }
+});
+
+/** Public: the latest staff reports, for the public board next to the complaints. */
+app.get('/reports/public', async (c) => {
+  c.header('Cache-Control', HTTP_CACHE.board);
+  return c.json({ data: await cleaning.publicReports(c.env, Math.min(Number(c.req.query('limit')) || 60, 200)) });
 });
 
 /** Supervisor: the reports, with the same time filter as the other lists. */

@@ -11,11 +11,12 @@ import {
 } from '../domain/types';
 import type { Env } from '../env';
 import * as cleaning from '../repositories/cleaning';
+import { memo } from '../adapters/memo';
 import { log } from './activity-service';
 
 /**
- * Cleaning reports: "on this floor I swept, mopped, wiped the glass, cleaned
- * the toilet", one live photo per task.
+ * Cleaning reports: "on this floor I swept and mopped, emptied the bins, refilled
+ * the gallon", one live photo per task. The staff page sends one task at a time.
  *
  * Built against what went wrong with WhatsApp reports, where an old photo could
  * stand in for today's work:
@@ -49,23 +50,33 @@ function parseTasks(json: string): CleaningTask[] {
   return CLEANING_TASKS.filter((t) => list.includes(t));
 }
 
+/** Old tasks ('sweep', 'mop') are not in the list; they sort after the current ones. */
+const taskOrder = (t: CleaningTask) => (CLEANING_TASKS as readonly string[]).indexOf(t) >>> 0;
+
 const toUTC = (d: Date) => d.toISOString().slice(0, 19).replace('T', ' ');
 
 export interface AreaDTO {
   id: string;
   name: string;
   building_code: string | null;
+  building_name: string | null;
   floor: number | null;
   tasks: CleaningTask[];
   staff: Array<{ id: string; name: string }>;
 }
 
-export async function listAreas(env: Env): Promise<AreaDTO[]> {
+/** The locations every page picks from; they change only when the seed is re-run. */
+export function listAreas(env: Env): Promise<AreaDTO[]> {
+  return memo('areas', 5 * 60_000, () => loadAreas(env));
+}
+
+async function loadAreas(env: Env): Promise<AreaDTO[]> {
   const [areas, assigned] = await Promise.all([cleaning.activeAreas(env), cleaning.assignments(env)]);
   return areas.map((a) => ({
     id: a.id,
     name: a.name,
     building_code: a.building_code,
+    building_name: a.building_name,
     floor: a.floor,
     tasks: parseTasks(a.tasks),
     staff: assigned.filter((s) => s.area_id === a.id).map((s) => ({ id: s.staff_id, name: s.staff_name })),
@@ -80,6 +91,7 @@ export async function getArea(env: Env, id: string): Promise<AreaDTO | null> {
     id: area.id,
     name: area.name,
     building_code: area.building_code,
+    building_name: area.building_name,
     floor: area.floor,
     tasks: parseTasks(area.tasks),
     staff: assigned.map((s) => ({ id: s.staff_id, name: s.staff_name })),
@@ -217,10 +229,14 @@ export async function submitReport(
 
 /** Indonesian labels for the activity log, which management reads as-is. */
 const TASK_LABEL: Record<CleaningTask, string> = {
+  sweep_mop: 'menyapu & mengepel',
+  glass: 'mengelap kaca jendela',
+  toilet: 'membersihkan toilet',
+  trash: 'membuang sampah',
+  gallon: 'mengisi ulang galon',
+  tidy: 'merapikan ruangan',
   sweep: 'menyapu',
   mop: 'mengepel',
-  glass: 'mengelap kaca',
-  toilet: 'membersihkan toilet',
 };
 
 function formatDistance(m: number): string {
@@ -237,8 +253,25 @@ export async function listReports(env: Env, filter: cleaning.CleaningFilter): Pr
     ...r,
     tasks: tasks
       .filter((t) => t.report_id === r.id)
-      .sort((a, b) => CLEANING_TASKS.indexOf(a.task) - CLEANING_TASKS.indexOf(b.task))
+      .sort((a, b) => taskOrder(a.task) - taskOrder(b.task))
       .map((t) => ({ task: t.task, photo_url: photoUrl(t.photo_key), photo_at: t.photo_at })),
+  }));
+}
+
+/**
+ * The staff reports for the public board: where, which tasks with their
+ * photos, and when. Like the complaint board, it names no staff member, and
+ * the GPS position and its flag stay with the supervisor.
+ */
+export async function publicReports(env: Env, limit: number) {
+  const rows = await listReports(env, { limit });
+  return rows.map((r) => ({
+    id: r.id,
+    area_id: r.area_id,
+    area_name: r.area_name,
+    note: r.note,
+    created_at: r.created_at,
+    tasks: r.tasks,
   }));
 }
 

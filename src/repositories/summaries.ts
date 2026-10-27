@@ -47,9 +47,9 @@ export async function dailyCounts(env: Env, date: string) {
     env.DB.prepare(`SELECT COUNT(*) AS n FROM reports WHERE status <> 'resolved'`),
     env.DB.prepare(
       `SELECT t.name AS location, COUNT(*) AS count
-         FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
+         FROM reports r JOIN location_info t ON t.id = COALESCE(r.area_id, r.toilet_id)
         WHERE r.created_at >= ? AND r.created_at < ?
-        GROUP BY r.toilet_id ORDER BY count DESC LIMIT 5`,
+        GROUP BY t.id ORDER BY count DESC LIMIT 5`,
     ).bind(start, end),
   ]);
 
@@ -85,9 +85,11 @@ export async function chartCounts(env: Env, days: number) {
         WHERE priority IS NOT NULL GROUP BY priority`,
     ),
     env.DB.prepare(
-      `SELECT t.building_code, t.building_name, COUNT(*) AS count
-         FROM reports r JOIN toilet_info t ON t.id = r.toilet_id
-        GROUP BY t.building_code ORDER BY count DESC LIMIT 10`,
+      // A place outside the buildings (Lapang Voli) is a bar of its own, under its name.
+      `SELECT COALESCE(t.building_code, t.name) AS building_code, COALESCE(t.building_name, t.name) AS building_name,
+              COUNT(*) AS count
+         FROM reports r JOIN location_info t ON t.id = COALESCE(r.area_id, r.toilet_id)
+        GROUP BY 1 ORDER BY count DESC LIMIT 10`,
     ),
     env.DB.prepare(
       `SELECT COUNT(*) AS count,
@@ -123,11 +125,11 @@ export async function advancedCounts(env: Env, days: number) {
          FROM reports GROUP BY day, hour`,
     ),
     env.DB.prepare(
-      `SELECT t.building_code, je.value AS category, COUNT(*) AS count
+      `SELECT COALESCE(t.building_code, t.name) AS building_code, je.value AS category, COUNT(*) AS count
          FROM reports r
-         JOIN toilet_info t ON t.id = r.toilet_id, json_each(r.categories) je
+         JOIN location_info t ON t.id = COALESCE(r.area_id, r.toilet_id), json_each(r.categories) je
         WHERE r.categories IS NOT NULL
-        GROUP BY t.building_code, je.value`,
+        GROUP BY 1, je.value`,
     ),
     env.DB.prepare(
       `SELECT priority,

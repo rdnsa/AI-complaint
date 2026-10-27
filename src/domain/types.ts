@@ -25,11 +25,8 @@ export type Priority = (typeof PRIORITIES)[number];
 export const STATUSES = ['new', 'in_progress', 'resolved'] as const;
 export type ReportStatus = (typeof STATUSES)[number];
 
-export const TOILET_TYPES = ['men', 'women', 'accessible'] as const;
-export type ToiletType = (typeof TOILET_TYPES)[number];
-
-/** What the vision model concluded about a staff proof photo. */
-export const PROOF_VERDICTS = ['clean', 'dirty', 'not_toilet'] as const;
+/** What the vision model concluded about a staff proof photo: 'wrong_place' when it does not show the reported location. */
+export const PROOF_VERDICTS = ['clean', 'dirty', 'wrong_place'] as const;
 export type ProofVerdict = (typeof PROOF_VERDICTS)[number];
 
 /** The verdict as stored on the report, together with the cost of obtaining it. */
@@ -43,7 +40,9 @@ export interface ProofVerification {
 /** A raw `reports` row as stored, joined with its location. */
 export interface ReportRow {
   id: string;
-  toilet_id: string;
+  /** Where: an area (floor, yard, court) since migration 0011, a toilet before it. */
+  area_id: string | null;
+  toilet_id: string | null;
   description: string;
   photo_key: string | null;
   proof_photo_key: string | null;
@@ -65,12 +64,12 @@ export interface ReportRow {
   reporter_id: string | null;
   created_at: string;
   updated_at: string;
-  // produced by the JOIN against the toilet_info view
-  toilet_name?: string;
-  building_code?: string;
-  building_name?: string;
-  floor?: number;
-  type?: string;
+  // produced by the JOIN against the location_info view
+  location_name?: string;
+  building_code?: string | null;
+  building_name?: string | null;
+  /** 0 is a building's yard, null a whole building or a place outside the buildings. */
+  floor?: number | null;
 }
 
 /** What the frontend receives: categories parsed, photo keys turned into URLs. */
@@ -126,7 +125,7 @@ export function workLogToDTO({ photo_key, ...rest }: WorkLogRow): WorkLogDTO {
 
 /**
  * A report may only be closed once evidence exists — and the evidence must
- * show a clean toilet, as judged by the vision model.
+ * show the reported location clean, as judged by the vision model.
  *
  * This is the one business rule strict enough to deserve its own function: the
  * HTTP layer, the service layer, and any future caller all decide the same way.
@@ -141,9 +140,13 @@ export function canResolve(
   return status !== 'resolved' || (Boolean(proofPhoto) && proofVerdict === 'clean');
 }
 
-/** The four tasks a cleaning report tracks, per the 2026 assignment letter. */
-export const CLEANING_TASKS = ['sweep', 'mop', 'glass', 'toilet'] as const;
-export type CleaningTask = (typeof CLEANING_TASKS)[number];
+/**
+ * The daily tasks a staff member can report, the same list on every area.
+ * Migration 0010 replaced the four tasks of the 2026 assignment letter with
+ * these six; 'sweep' and 'mop' (now one task) stay readable in old reports.
+ */
+export const CLEANING_TASKS = ['sweep_mop', 'glass', 'toilet', 'trash', 'gallon', 'tidy'] as const;
+export type CleaningTask = (typeof CLEANING_TASKS)[number] | 'sweep' | 'mop';
 
 /** 'ok' inside the campus, 'far' outside it, 'unknown' without a GPS position. */
 export type LocationStatus = 'ok' | 'far' | 'unknown';

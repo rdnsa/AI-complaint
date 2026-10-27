@@ -51,7 +51,7 @@ app.post('/', async (c) => {
       return c.json(
         {
           error:
-            result.verdict === 'not_toilet'
+            result.verdict === 'wrong_place'
               ? 'Foto tidak menunjukkan toilet. Ambil foto kondisi toilet yang sudah dibersihkan.'
               : 'Toilet pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang.',
           verdict: result.verdict,

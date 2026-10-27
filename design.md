@@ -1,4 +1,30 @@
 # Apple — Style Reference
+
+> **Kato applies a glassmorphism layer on top of this reference.** The type
+> scale, spacing, radii, Ink colours and the one blue still come from the
+> sections below; the surfaces do not. Where this file says "white card on
+> Studio Mist, flat and shadowless", Kato does the following instead:
+>
+> - **Ground:** soft grey, drifting from lavender-grey (top left) to sage (bottom
+>   right), with a few dark orbs fixed behind the page. The glass blurs them
+>   into soft shadows, which is what makes the panes read as glass
+>   (`--canvas`, `--aurora` in `web/src/index.css`). Dark theme: near-black,
+>   dim light orbs. Blue stays the only strong hue, on links and the primary pill.
+> - **Droplets:** two clear glass droplets in the side margins (`Ambient.tsx`,
+>   `.droplet`), on wide screens only.
+> - **Type:** page and section titles in a light weight with tight tracking.
+> - **Surfaces:** clear frosted glass (`.glass`): the surface colour at 42%
+>   opacity (45% in the dark theme), `blur(40px) saturate(140%)`, a reflection
+>   across the pane, a thick white rim with an inner glow, and a deep soft
+>   shadow. Cards
+>   (`.card`), inputs, the choice tiles, the neutral pill and the navigation bar
+>   are all glass. In Tailwind, `bg-glass` is that surface colour without the
+>   blur; `bg-surface` stays solid.
+> - **Primary action:** the solid Pricing Blue pill, no gradient, no glow.
+> - **Copy:** short. One line where one line will do; no paragraph that only
+>   explains the screen.
+> - **Full-screen layers** (camera, image viewer) render on `<body>` through a
+>   portal, because a backdrop filter traps fixed-position children inside it.
 > foldable device in a white gallery. Center product renders as the visual event, with typography and blue controls kept deliberately quiet around it.
 
 **Theme:** light

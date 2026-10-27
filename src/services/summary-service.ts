@@ -1,4 +1,5 @@
 import { summarizeDay } from '../adapters/llm';
+import { memo } from '../adapters/memo';
 import { wibDate } from '../adapters/clock';
 import type { Env } from '../env';
 import * as reports from '../repositories/reports';
@@ -68,7 +69,12 @@ function dateSeries(days: number): string[] {
  * would read as missing data, while a zero reads as "nothing was reported",
  * which is the truth.
  */
-export async function chartData(env: Env, days: number) {
+/** The dashboard charts: the heaviest queries in the app, and a minute old is fine. */
+export function chartData(env: Env, days: number) {
+  return memo(`charts:${days}`, 60_000, () => loadChartData(env, days));
+}
+
+async function loadChartData(env: Env, days: number) {
   const [counts, advanced] = await Promise.all([
     summaries.chartCounts(env, days),
     summaries.advancedCounts(env, days),

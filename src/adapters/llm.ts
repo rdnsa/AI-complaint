@@ -28,26 +28,29 @@ export interface Analysis {
 }
 
 const SYSTEM_PROMPT = `Kamu adalah asisten petugas kebersihan (OB) kampus.
-Tugasmu membaca keluhan pelapor (mahasiswa, dosen, staf, atau tamu) tentang toilet/WC kampus yang ditulis dengan bahasa sehari-hari,
-termasuk bahasa gaul dan singkatan, lalu mengubahnya menjadi tiket kerja yang terstruktur.
+Tugasmu membaca keluhan pelapor (mahasiswa, dosen, staf, atau tamu) tentang kebersihan dan fasilitas
+di lokasi mana pun di kampus — ruang kelas, koridor, toilet, masjid, halaman gedung, taman, selokan,
+atau lapangan — yang ditulis dengan bahasa sehari-hari, termasuk bahasa gaul dan singkatan, lalu
+mengubahnya menjadi tiket kerja yang terstruktur. Lokasi yang dilaporkan ikut diberikan sebagai konteks.
 
 KATEGORI yang boleh dipakai (pilih semua yang relevan, minimal satu). Tulis kodenya persis
 dalam bahasa Inggris, salah satu dari: cleanliness, supplies, damage, odor, flooding, other.
-- "cleanliness" : kotor, jorok, noda, sampah berserakan, lantai dekil, coretan
-- "supplies"    : sabun/tisu/pengharum habis, tidak ada gayung, tempat sampah tidak tersedia
-- "damage"      : kloset mampet, keran/flush rusak, pintu/kunci/lampu rusak, kaca pecah
-- "odor"        : bau tidak sedap, pesing, bau menyengat
-- "flooding"    : lantai becek, air tergenang, air meluap, bocor
+- "cleanliness" : kotor, berdebu, noda, sampah berserakan, lantai dekil, coretan, daun atau rumput liar menumpuk
+- "supplies"    : sabun/tisu habis, galon air minum kosong, tempat sampah tidak tersedia, alat kebersihan kurang
+- "damage"      : kloset/wastafel mampet, keran rusak, lampu/AC/pintu/kunci/meja/kursi rusak, kaca pecah, paving rusak
+- "odor"        : bau tidak sedap, pesing, bau sampah, bau menyengat
+- "flooding"    : lantai becek, air tergenang, atap bocor, selokan tersumbat atau meluap
 - "other"       : selain di atas
 
 ATURAN PRIORITAS (patuhi ketat). Tulis kodenya persis salah satu dari: high, medium, low.
-- "high"   : ada risiko keselamatan atau toilet praktis tidak bisa dipakai.
-             Contoh: air meluap, kloset mampet, lantai licin/becek parah, listrik/lampu mati total,
-             pintu tidak bisa dikunci, bau sangat menyengat, ada pecahan kaca, banyak masalah sekaligus.
-- "medium" : mengganggu kenyamanan tetapi toilet masih bisa dipakai.
-             Contoh: bau biasa, lantai kotor, sabun habis, tempat sampah penuh.
+- "high"   : ada risiko keselamatan atau lokasi praktis tidak bisa dipakai.
+             Contoh: air atau selokan meluap, kloset mampet, lantai licin/becek parah, kabel terbuka,
+             listrik/lampu mati total, pintu tidak bisa dikunci, pecahan kaca, bau sangat menyengat,
+             sampah menumpuk sampai menghalangi jalan, banyak masalah sekaligus.
+- "medium" : mengganggu kenyamanan tetapi lokasi masih bisa dipakai.
+             Contoh: ruangan atau lantai kotor, bau biasa, sabun habis, tempat sampah penuh, galon kosong.
 - "low"    : keluhan kecil atau bersifat antisipasi.
-             Contoh: tisu hampir habis, sedikit noda, cermin buram, saran perbaikan.
+             Contoh: tisu hampir habis, sedikit debu, daun berserakan sedikit, cermin buram, saran perbaikan.
 
 ATURAN PENULISAN:
 - "summary": ringkasan, satu kalimat netral berbahasa Indonesia maksimal 15 kata, tanpa kata kasar,
@@ -56,16 +59,20 @@ ATURAN PENULISAN:
   beberapa masalah, urutkan dari yang paling berisiko membuat orang celaka lebih dulu, lalu sisanya.
   Maksimal 2 kalimat.
 - Jangan mengarang masalah yang tidak disebut pelapor.
-- Jika teks tidak jelas atau bukan keluhan toilet, pakai categories ["other"], priority "low",
-  dan tulis apa adanya pada summary.
+- Jika teks tidak jelas atau bukan keluhan tentang kebersihan atau fasilitas kampus, pakai categories
+  ["other"], priority "low", dan tulis apa adanya pada summary.
 
 Jawab HANYA dengan objek JSON valid, tanpa penjelasan tambahan, dengan kunci bahasa Inggris persis seperti ini:
 {"categories":["cleanliness"],"priority":"medium","summary":"...","recommendation":"..."}`;
 
-/** Few-shot examples: they pin down the tone and how the priority rules are applied. */
+/**
+ * Few-shot examples: they pin down the tone and how the priority rules are
+ * applied, across the kinds of place a report can be about. Each one is shaped
+ * like the real message, location first.
+ */
 const FEW_SHOT: Array<{ user: string; assistant: Analysis }> = [
   {
-    user: 'WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.',
+    user: 'Lokasi: Gedung Dewi Sartika (Perkuliahan) - Lantai 2\nKeluhan: WC lantai 2 bau banget, lantainya becek, sama sabunnya habis.',
     assistant: {
       categories: ['odor', 'flooding', 'supplies'],
       priority: 'high',
@@ -75,22 +82,31 @@ const FEW_SHOT: Array<{ user: string; assistant: Analysis }> = [
     },
   },
   {
-    user: 'tisunya tinggal dikit kayaknya besok abis',
+    user: 'Lokasi: Gedung Ki Hajar Dewantara - Lantai 3\nKeluhan: galon di depan kelas udah kosong dari pagi',
     assistant: {
       categories: ['supplies'],
-      priority: 'low',
-      summary: 'Persediaan tisu menipis dan diperkirakan habis besok.',
-      recommendation: 'Siapkan stok tisu dan isi ulang pada jadwal pengecekan berikutnya.',
+      priority: 'medium',
+      summary: 'Galon air minum di depan kelas kosong sejak pagi.',
+      recommendation: 'Ganti galon air minum yang kosong dengan galon baru.',
     },
   },
   {
-    user: 'Airnya nggenang parah, hampir ke luar toilet. kloset yg pojok mampet',
+    user: 'Lokasi: Halaman Gedung Dr. Sutomo\nKeluhan: selokan depan lab mampet, airnya naik ke paving abis hujan, banyak sampah plastik',
     assistant: {
-      categories: ['flooding', 'damage'],
+      categories: ['flooding', 'cleanliness'],
       priority: 'high',
-      summary: 'Kloset pojok mampet sehingga air tergenang hampir keluar dari toilet.',
+      summary: 'Selokan depan lab tersumbat sampah plastik sehingga air meluap ke paving.',
       recommendation:
-        'Hentikan aliran air dan tangani kloset mampet segera sebelum air meluap ke koridor, lalu keringkan lantai.',
+        'Angkat sampah yang menyumbat selokan agar air kembali mengalir, lalu sapu sisa sampah dan genangan di paving.',
+    },
+  },
+  {
+    user: 'Lokasi: Lapang Voli\nKeluhan: daun kering lumayan banyak di pinggir lapangan',
+    assistant: {
+      categories: ['cleanliness'],
+      priority: 'low',
+      summary: 'Daun kering menumpuk di pinggir lapangan voli.',
+      recommendation: 'Sapu daun kering di pinggir lapangan pada jadwal pembersihan berikutnya.',
     },
   },
 ];
@@ -382,7 +398,7 @@ export async function summarizeDay(
     [
       {
         role: 'system',
-        content: `Kamu menyusun laporan harian kondisi toilet kampus untuk kepala bagian sarana prasarana.
+        content: `Kamu menyusun laporan harian kondisi kebersihan dan fasilitas kampus untuk kepala bagian sarana prasarana.
 Dari daftar keluhan hari itu, tentukan lokasi yang paling bermasalah dan pola masalah yang berulang.
 Prioritas pada daftar ditulis dengan kode bahasa Inggris: high = tinggi, medium = sedang, low = rendah.
 
@@ -416,7 +432,7 @@ const looseBool = z.preprocess((v) => {
 }, z.boolean());
 
 const ProofCheckSchema = z.object({
-  is_toilet: looseBool,
+  is_location: looseBool,
   clean: looseBool,
   confidence: z.coerce.number().min(0).max(1).optional(),
   reason: z.string().min(1),
@@ -428,19 +444,22 @@ export interface ProofCheck {
   confidence: number | null;
 }
 
-const PROOF_PROMPT = `Kamu adalah pengawas kebersihan toilet kampus. Petugas kebersihan mengunggah foto
-sebagai bukti bahwa sebuah keluhan sudah ditangani. Tugasmu menilai foto itu dengan jujur dan ketat.
+const PROOF_PROMPT = `Kamu adalah pengawas kebersihan kampus. Petugas kebersihan mengunggah foto
+sebagai bukti bahwa sebuah keluhan sudah ditangani. Lokasinya bisa di mana saja: ruang kelas, koridor,
+toilet, masjid, halaman gedung, taman, selokan, atau lapangan. Tugasmu menilai foto itu dengan jujur dan ketat.
 
 Jawab dua pertanyaan:
-1. "is_toilet": apakah foto ini benar-benar memperlihatkan bagian dalam toilet/kamar mandi/WC
-   (kloset, urinoir, wastafel, lantai kamar mandi, bilik)? Foto koridor, orang, layar, langit-langit,
-   foto gelap/blur yang tidak bisa dinilai, atau objek lain → false.
-2. "clean": apakah kondisi yang terlihat sudah layak pakai dan bersih?
-   TIDAK bersih bila terlihat: kotoran atau noda di kloset/lantai/dinding, sampah berserakan,
-   tisu bekas di lantai, genangan air atau lantai basah merata, tempat sampah meluap, coretan,
+1. "is_location": apakah foto ini benar-benar memperlihatkan tempat yang dikeluhkan? Cocokkan dengan
+   lokasi dan isi keluhan: keluhan toilet harus memperlihatkan bagian dalam toilet (kloset, urinoir,
+   wastafel, bilik); keluhan ruangan atau koridor memperlihatkan lantai, meja, atau jendela ruangan itu;
+   keluhan halaman, taman, selokan, atau lapangan memperlihatkan area luar tersebut. Foto orang, layar,
+   langit-langit saja, foto gelap/blur yang tidak bisa dinilai, atau tempat yang jelas berbeda → false.
+2. "clean": apakah kondisi yang terlihat sudah bersih dan layak pakai?
+   TIDAK bersih bila terlihat: sampah berserakan, kotoran atau noda di lantai/dinding/kloset,
+   genangan air atau lantai basah merata, tempat sampah meluap, selokan masih tersumbat, coretan,
    lumut/kerak tebal, atau bekas keluhan yang jelas belum ditangani.
-   Noda permanen kecil, keramik tua, atau lantai yang lembap tipis setelah dipel masih boleh
-   dianggap bersih.
+   Noda permanen kecil, lantai tua, sedikit daun yang baru jatuh, atau lantai yang lembap tipis
+   setelah dipel masih boleh dianggap bersih.
 
 Gunakan keluhan asli sebagai konteks: bila keluhannya terlihat pada foto (mis. sampah, genangan),
 periksa apakah hal itu sudah tidak ada. Keluhan yang tidak bisa dilihat dari foto (bau, sabun habis)
@@ -452,7 +471,7 @@ Jika ragu antara bersih dan kotor, pilih "clean": false. Jangan pernah mengarang
 
 Jawab HANYA dengan objek JSON valid dengan kunci bahasa Inggris persis seperti ini
 ("confidence" = tingkat keyakinan 0..1, "reason" = alasan):
-{"is_toilet":true,"clean":false,"confidence":0.8,"reason":"satu kalimat bahasa Indonesia, maksimal 25 kata, sebutkan apa yang terlihat"}`;
+{"is_location":true,"clean":false,"confidence":0.8,"reason":"satu kalimat bahasa Indonesia, maksimal 25 kata, sebutkan apa yang terlihat"}`;
 
 /**
  * Base64 without Node's Buffer. `btoa` wants a binary string, and building
@@ -469,7 +488,7 @@ function toBase64(bytes: ArrayBuffer): string {
 }
 
 /**
- * Feature #5: judge whether a proof photo actually shows a clean toilet.
+ * Feature #5: judge whether a proof photo actually shows the reported location, clean.
  *
  * The photo travels inline as a data URL. The bucket is private and the Worker
  * is the only thing that can read it, so a public URL was never an option.
@@ -503,7 +522,7 @@ export async function checkProofPhoto(
   );
 
   const parsed = ProofCheckSchema.parse(raw);
-  const verdict: ProofVerdict = !parsed.is_toilet ? 'not_toilet' : parsed.clean ? 'clean' : 'dirty';
+  const verdict: ProofVerdict = !parsed.is_location ? 'wrong_place' : parsed.clean ? 'clean' : 'dirty';
   return {
     verdict,
     reason: parsed.reason.trim().slice(0, 300),

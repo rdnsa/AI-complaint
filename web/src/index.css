@@ -1,5 +1,5 @@
 /* Inter stands in for SF Pro on platforms that do not ship it (design.md). */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -37,6 +37,31 @@
 
     --surface: 255 255 255; /* Gallery White */
     --launch: 182 68 0; /* Launch Orange */
+
+    /* Glass (design.md, "Glassmorphism"): a soft grey ground drifting from
+       lavender-grey to sage, a few dark orbs that the glass blurs into
+       shadows, and clear panels with a thick white rim. */
+    --canvas: 228 230 236;
+    --aurora:
+      radial-gradient(circle 72px at 86% 18%, rgb(18 20 26 / 0.92) 0 38%, rgb(18 20 26 / 0) 100%),
+      radial-gradient(circle 88px at 9% 74%, rgb(18 20 26 / 0.85) 0 38%, rgb(18 20 26 / 0) 100%),
+      radial-gradient(circle 34px at 62% 7%, rgb(18 20 26 / 0.55) 0 38%, rgb(18 20 26 / 0) 100%),
+      radial-gradient(circle 60px at 78% 92%, rgb(18 20 26 / 0.7) 0 38%, rgb(18 20 26 / 0) 100%),
+      radial-gradient(55% 45% at 50% 38%, rgb(248 249 251 / 0.95), transparent 72%),
+      radial-gradient(60% 55% at 0% 0%, rgb(203 205 220 / 0.95), transparent 72%),
+      radial-gradient(60% 60% at 100% 100%, rgb(204 225 217 / 0.95), transparent 72%);
+    --glass-alpha: 0.42;
+    --glass-blur: blur(40px) saturate(140%);
+    --glass-edge: 255 255 255 / 0.95;
+    /* A reflection across the pane: bright at the top-left, clearing, then a
+       little light again at the bottom edge. */
+    --glass-sheen: linear-gradient(150deg, rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.08) 45%, rgb(255 255 255 / 0.2) 100%);
+    --glass-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.35),
+      inset 0 1px 2px rgb(255 255 255 / 0.95),
+      inset 0 -10px 28px rgb(255 255 255 / 0.28),
+      0 1px 2px rgb(20 24 34 / 0.06),
+      0 30px 60px -26px rgb(20 24 34 / 0.3);
     color-scheme: light;
   }
 
@@ -58,22 +83,51 @@
     --accent-600: 41 151 255;
     --accent-700: 108 182 255;
 
-    --mist-50: 28 28 30;
-    --mist-100: 0 0 0;
-    --mist-200: 44 44 46;
-    --mist-300: 58 58 60;
+    /* Tints inside glass panels, neutral like the dark canvas. */
+    --mist-50: 28 28 32;
+    --mist-100: 22 22 26;
+    --mist-200: 46 46 52;
+    --mist-300: 64 64 72;
 
     --surface: 22 22 23;
     --launch: 255 146 48;
+
+    --canvas: 15 16 20;
+    --aurora:
+      radial-gradient(circle 72px at 86% 18%, rgb(230 232 240 / 0.22) 0 38%, rgb(230 232 240 / 0) 100%),
+      radial-gradient(circle 88px at 9% 74%, rgb(230 232 240 / 0.16) 0 38%, rgb(230 232 240 / 0) 100%),
+      radial-gradient(circle 60px at 78% 92%, rgb(230 232 240 / 0.12) 0 38%, rgb(230 232 240 / 0) 100%),
+      radial-gradient(60% 55% at 0% 0%, rgb(58 60 78 / 0.7), transparent 72%),
+      radial-gradient(60% 60% at 100% 100%, rgb(44 64 58 / 0.6), transparent 72%);
+    --glass-alpha: 0.45;
+    --glass-blur: blur(40px) saturate(140%);
+    --glass-edge: 255 255 255 / 0.16;
+    --glass-sheen: linear-gradient(150deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.01) 45%, rgb(255 255 255 / 0.04) 100%);
+    --glass-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.04),
+      inset 0 1px 1px rgb(255 255 255 / 0.18),
+      inset 0 -10px 28px rgb(255 255 255 / 0.03),
+      0 30px 60px -26px rgb(0 0 0 / 0.8);
     color-scheme: dark;
   }
 
   html {
     -webkit-text-size-adjust: 100%;
   }
-  /* Studio Mist behind white cards: surfaces separate by tone, never by shadow. */
+  /* The aurora sits on a fixed layer of its own, so it stays put while the
+     frosted surfaces scroll over it (background-attachment: fixed is ignored
+     on iOS). */
   body {
-    @apply bg-mist-100 font-sans text-body text-ink-900 antialiased;
+    @apply font-sans text-body text-ink-900 antialiased;
+    background-color: rgb(var(--canvas));
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--aurora);
   }
   #root {
     min-height: 100vh;
@@ -89,9 +143,41 @@
 }
 
 @layer components {
-  /* Feature card: white, 28px corners, no border, no shadow. */
+  /* Frosted glass: a translucent surface that blurs the aurora behind it, a
+     light edge, and a soft shadow. Note that a backdrop filter traps any
+     position: fixed layer inside it, so full-screen layers (Camera,
+     ImageViewer) are portalled to <body>. */
+  .glass {
+    background-color: rgb(var(--surface) / var(--glass-alpha));
+    background-image: var(--glass-sheen);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid rgb(var(--glass-edge));
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Clear glass droplets at the page edges (Ambient.tsx): a bright spot, a
+     rim of light, and a soft shadow, with nothing blurred behind them. */
+  .droplet {
+    position: fixed;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 48% 52% 50% 50% / 52% 48% 52% 48%;
+    background:
+      radial-gradient(circle at 30% 24%, rgb(255 255 255 / 0.95) 0 5%, rgb(255 255 255 / 0) 16%),
+      radial-gradient(circle at 68% 82%, rgb(255 255 255 / 0.55), rgb(255 255 255 / 0) 30%),
+      radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.04) 55%, rgb(110 118 138 / 0.28) 100%);
+    box-shadow:
+      inset -6px -10px 18px rgb(255 255 255 / 0.65),
+      inset 6px 8px 16px rgb(70 78 98 / 0.22),
+      0 22px 34px -14px rgb(20 24 34 / 0.3);
+    -webkit-backdrop-filter: blur(1px) saturate(130%);
+    backdrop-filter: blur(1px) saturate(130%);
+  }
+
+  /* Feature card: a glass panel with 28px corners. */
   .card {
-    @apply rounded-card bg-surface;
+    @apply glass rounded-card;
   }
 
   /* Pills: every button is fully rounded and flat. */
@@ -99,13 +185,13 @@
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-body-sm font-normal
            transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-40;
   }
-  /* Pricing Blue: the one filled conversion control per view. */
+  /* Pricing Blue: the one filled control per view. */
   .btn-primary {
     @apply btn bg-accent-500 text-white hover:bg-accent-600;
   }
-  /* Outlined Explore Pill: transparent, ink text, a thin steel outline. */
+  /* A glass pill with ink text. */
   .btn-neutral {
-    @apply btn border border-ink-600/60 bg-transparent text-ink-900 hover:border-ink-900;
+    @apply btn glass text-ink-900 hover:bg-glass/90;
   }
   .btn-dark {
     @apply btn bg-ink-900 text-surface hover:bg-ink-700;
@@ -117,9 +203,9 @@
 
   /* Rounded input: pill-shaped single lines, a softer rectangle for text areas. */
   .input {
-    @apply w-full rounded-full border border-ink-600/60 bg-surface px-5 py-3 text-body text-ink-900
-           outline-none transition placeholder:text-ink-600/70
-           focus:border-accent-500 focus:ring-4 focus:ring-accent-100;
+    @apply w-full rounded-full border border-ink-600/30 bg-glass/90 px-5 py-3 text-body text-ink-900
+           outline-none backdrop-blur-xl transition placeholder:text-ink-600/70
+           focus:border-accent-500 focus:ring-4 focus:ring-accent-500/20;
   }
   textarea.input {
     @apply rounded-nav;
@@ -134,10 +220,10 @@
            transition-colors duration-150;
   }
   .choice-off {
-    @apply choice border-mist-300 bg-surface text-ink-700 hover:border-ink-600;
+    @apply choice glass text-ink-700 hover:text-ink-900;
   }
   .choice-on {
-    @apply choice border-accent-500 bg-accent-50 text-ink-900 ring-1 ring-accent-500;
+    @apply choice border-accent-500 bg-accent-500/10 text-ink-900 ring-1 ring-accent-500 backdrop-blur-xl;
   }
 
   /* Section heading inside a page: the product-nav title from the type scale. */

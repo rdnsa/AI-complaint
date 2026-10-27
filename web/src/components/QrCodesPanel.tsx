@@ -1,15 +1,17 @@
 import QRCode from 'qrcode';
 import { useEffect, useMemo, useState } from 'react';
-import { api, type Building } from '../lib/api';
+import { api, type CleaningArea } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
+import { buildPlaces, partOf, placeKeyOf } from '../lib/places';
+import { useLocationLabels } from './LocationSelect';
 import { DownloadGlyph, PrintGlyph } from './Marks';
 
-/** One sticker: one QR code per floor of one building. */
+/** One sticker: one QR code per location (a floor, a building's yard, a court). */
 interface Sticker {
-  floorId: string;
-  code: string;
-  buildingName: string;
-  floor: number;
+  id: string;
+  placeKey: string;
+  place: string;
+  part: string;
   url: string;
   svg: string;
 }
@@ -19,36 +21,40 @@ interface Sticker {
  * supervisor does not need the command-line generator to replace a lost or
  * damaged sticker.
  *
- * Each code points at `<this site>/report/<building>-<floor>`, the same target
- * as `scripts/generate-qr.mjs`. Codes are drawn from the live location list,
- * so a floor added to the database appears here without any other step.
+ * Each code points at `<this site>/report/<location>`, the same target as
+ * `scripts/generate-qr.mjs`, and is one sticker for reporters and staff alike.
+ * Codes are drawn from the live location list — the same list every page picks
+ * from — so a location added to the database appears here without any other step.
  */
 export default function QrCodesPanel() {
   const { t } = useLanguage();
-  const [buildings, setBuildings] = useState<Building[]>([]);
+  const { placeLabel, partLabel } = useLocationLabels();
+  const [areas, setAreas] = useState<CleaningArea[]>([]);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
     api
-      .locations()
-      .then((r) => setBuildings(r.data))
-      .catch(() => setBuildings([]))
+      .cleaningAreas()
+      .then((r) => setAreas(r.data))
+      .catch(() => setAreas([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const places = useMemo(() => buildPlaces(areas), [areas]);
 
   useEffect(() => {
     let cancelled = false;
     const origin = window.location.origin;
-    const planned = buildings.flatMap((b) =>
-      b.floors.map((floor) => ({
-        floorId: `${b.code}-${floor}`,
-        code: b.code,
-        buildingName: b.name,
-        floor,
-        url: `${origin}/report/${b.code}-${floor}`,
-      })),
+    // In the dropdown's order: by building, then whole, yard, floors.
+    const planned = places.flatMap((p) =>
+      p.parts.flatMap((value) => {
+        const area = areas.find((a) => placeKeyOf(a) === p.key && partOf(a) === value);
+        return area
+          ? [{ id: area.id, placeKey: p.key, place: placeLabel(p), part: partLabel(p, value), url: `${origin}/report/${area.id}` }]
+          : [];
+      }),
     );
     // SVG stays sharp at any print size; 'M' error correction survives a scuffed sticker.
     Promise.all(
@@ -62,10 +68,10 @@ export default function QrCodesPanel() {
     return () => {
       cancelled = true;
     };
-  }, [buildings]);
+  }, [places]); // eslint-disable-line react-hooks/exhaustive-deps -- labels follow the language, not the list
 
   const shown = useMemo(
-    () => (filter ? stickers.filter((s) => s.code === filter) : stickers),
+    () => (filter ? stickers.filter((s) => s.placeKey === filter) : stickers),
     [stickers, filter],
   );
 
@@ -73,22 +79,22 @@ export default function QrCodesPanel() {
     const dataUrl = await QRCode.toDataURL(s.url, { errorCorrectionLevel: 'M', margin: 2, width: 1024 });
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = `qr-${s.floorId}.png`;
+    link.download = `qr-${s.id}.png`;
     link.click();
   }
 
   return (
     <div className="mt-6">
-      <p className="rounded-nav bg-surface px-4 py-3 text-sm leading-relaxed text-ink-700 print:hidden">
+      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700 print:hidden">
         {t('qr.description')}
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
         <select className="input !w-auto !py-2" value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="">{t('qr.all_buildings')}</option>
-          {buildings.map((b) => (
-            <option key={b.code} value={b.code}>
-              {t('common.building', { code: b.code })} · {b.name}
+          {places.map((p) => (
+            <option key={p.key} value={p.key}>
+              {placeLabel(p)}
             </option>
           ))}
         </select>
@@ -114,16 +120,14 @@ export default function QrCodesPanel() {
       <div className="print-sheet mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 print:grid-cols-3 print:gap-4">
         {shown.map((s) => (
           <article
-            key={s.floorId}
+            key={s.id}
             className="card flex flex-col items-center p-4 text-center print:break-inside-avoid print:rounded-xl print:border-2 print:border-black print:shadow-none"
           >
             <p className="text-nav font-semibold text-ink-600 print:text-black">
               {t('qr.sticker_heading')}
             </p>
-            <p className="mt-1 text-lg font-extrabold leading-tight text-ink-900 print:text-black">
-              {t('common.building', { code: s.code })} · {t('common.floor', { n: s.floor })}
-            </p>
-            <p className="text-xs text-ink-700 print:text-black">{s.buildingName}</p>
+            <p className="mt-1 text-lg font-extrabold leading-tight text-ink-900 print:text-black">{s.part}</p>
+            <p className="text-xs text-ink-700 print:text-black">{s.place}</p>
             {/* White ground in both themes: a QR code must be dark on light to scan. */}
             <div
               className="mt-3 w-full max-w-[180px] rounded-lg bg-white p-1.5"

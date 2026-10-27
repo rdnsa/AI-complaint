@@ -7,7 +7,6 @@ import askRoutes from './routes/ask';
 import authRoutes from './routes/auth';
 import cleaningRoutes from './routes/cleaning';
 import leaderboardRoutes from './routes/leaderboard';
-import locationRoutes from './routes/locations';
 import reportRoutes from './routes/reports';
 import staffRoutes from './routes/staff';
 import summaryRoutes from './routes/summary';
@@ -30,7 +29,6 @@ app.use('*', logger());
 app.get('/api/health', (c) => c.json({ ok: true, time: new Date().toISOString() }));
 
 app.route('/api/auth', authRoutes);
-app.route('/api/locations', locationRoutes);
 app.route('/api/reports', reportRoutes);
 app.route('/api/work-logs', workLogRoutes);
 app.route('/api/cleaning', cleaningRoutes);

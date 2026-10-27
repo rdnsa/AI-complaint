@@ -12,7 +12,7 @@ import {
   type ReportStatus,
 } from '../domain/types';
 import type { Env } from '../env';
-import * as locations from '../repositories/locations';
+import * as cleaning from '../repositories/cleaning';
 import * as reports from '../repositories/reports';
 import { log, REPORTER } from './activity-service';
 import { runAnalysis } from './analysis-service';
@@ -26,32 +26,33 @@ import { runAnalysis } from './analysis-service';
  */
 
 export type SubmitResult =
-  | { kind: 'ok'; id: string; toilet: string; duplicate: boolean }
+  | { kind: 'ok'; id: string; location: string; duplicate: boolean }
   | { kind: 'unknown-location' };
 
+/** A complaint about one location: a floor, a building's yard, or a place like Lapang Voli. */
 export async function submitReport(
   env: Env,
-  data: { toilet_id: string; description: string; photo_key: string },
+  data: { area_id: string; description: string; photo_key: string },
   reporter: { id: string; name: string } | null,
 ): Promise<SubmitResult> {
-  const toiletName = await locations.activeToiletName(env, data.toilet_id);
-  if (!toiletName) return { kind: 'unknown-location' };
+  const area = await cleaning.activeArea(env, data.area_id);
+  if (!area) return { kind: 'unknown-location' };
 
-  const duplicate = await reports.findDuplicate(env, data.toilet_id, data.description);
-  if (duplicate) return { kind: 'ok', id: duplicate, toilet: toiletName, duplicate: true };
+  const duplicate = await reports.findDuplicate(env, area.id, data.description);
+  if (duplicate) return { kind: 'ok', id: duplicate, location: area.name, duplicate: true };
 
   const id = crypto.randomUUID();
-  await reports.insert(env, { id, ...data, reporter_id: reporter?.id ?? null });
+  await reports.insert(env, { id, ...data, area_id: area.id, reporter_id: reporter?.id ?? null });
 
   await log(env, {
     action: 'report_created',
     report_id: id,
     actor: reporter?.name ?? REPORTER,
-    summary: `Laporan baru di ${toiletName}`,
-    details: { toilet_id: data.toilet_id, description: data.description },
+    summary: `Laporan baru di ${area.name}`,
+    details: { area_id: area.id, description: data.description },
   });
 
-  return { kind: 'ok', id, toilet: toiletName, duplicate: false };
+  return { kind: 'ok', id, location: area.name, duplicate: false };
 }
 
 export async function getReport(env: Env, id: string): Promise<ReportDTO | null> {
@@ -161,7 +162,7 @@ async function checkNewProof(
   let check;
   try {
     check = await checkProofPhoto(env, photo, {
-      location: row.toilet_name ?? row.toilet_id,
+      location: row.location_name ?? row.area_id ?? row.toilet_id ?? '',
       complaint: row.description,
       categories: row.categories ? (JSON.parse(row.categories) as Category[]) : [],
     });
@@ -173,7 +174,7 @@ async function checkNewProof(
       action: 'verification_failed',
       report_id: row.id,
       actor: staffName,
-      summary: `Pemeriksaan foto bukti gagal di ${row.toilet_name}`,
+      summary: `Pemeriksaan foto bukti gagal di ${row.location_name}`,
       details: { error: message.slice(0, 300), model: env.VISION_MODEL },
     });
     return { kind: 'verification-failed', message };
@@ -186,7 +187,7 @@ async function checkNewProof(
       action: 'proof_rejected',
       report_id: row.id,
       actor: staffName,
-      summary: `Foto bukti ditolak (${check.verdict}) di ${row.toilet_name}: ${check.reason}`,
+      summary: `Foto bukti ditolak (${check.verdict}) di ${row.location_name}: ${check.reason}`,
       details: {
         verdict: check.verdict,
         reason: check.reason,
@@ -235,7 +236,7 @@ export async function changeStatus(
     action: 'status_changed',
     report_id: id,
     actor: staffName,
-    summary: `Status ${before.status} → ${status} di ${before.toilet_name}`,
+    summary: `Status ${before.status} → ${status} di ${before.location_name}`,
     details: {
       from: before.status,
       to: status,
@@ -267,9 +268,9 @@ export async function deleteReport(env: Env, id: string, actor: string): Promise
     action: 'report_deleted',
     report_id: id,
     actor,
-    summary: `Menghapus laporan di ${row.toilet_name}`,
+    summary: `Menghapus laporan di ${row.location_name}`,
     details: {
-      toilet_name: row.toilet_name,
+      location_name: row.location_name,
       description: row.description,
       status: row.status,
       priority: row.priority,

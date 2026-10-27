@@ -177,7 +177,8 @@ export default function ChartsPanel() {
           {data.buildings.length ? (
             <BarChart
               data={data.buildings.map((b) => ({
-                label: `${b.building_code} · ${b.building_name}`,
+                // A place outside the buildings (Lapang Voli) carries its name in both fields.
+                label: b.building_code === b.building_name ? b.building_name : `${b.building_code} · ${b.building_name}`,
                 value: Number(b.count),
               }))}
             />

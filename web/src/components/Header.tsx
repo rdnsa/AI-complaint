@@ -24,7 +24,7 @@ function LanguageButton({ small = false }: { small?: boolean }) {
           onClick={() => setLanguage(p.code)}
           aria-pressed={language === p.code}
           className={`rounded-full text-nav font-semibold transition ${small ? 'px-2 py-1' : 'min-h-7 px-3'} ${
-            language === p.code ? 'bg-surface text-ink-900 shadow-subtle' : 'text-ink-600 hover:text-ink-900'
+            language === p.code ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-600 hover:text-ink-900'
           }`}
         >
           {p.label}
@@ -53,7 +53,7 @@ function ThemeButton({ small = false }: { small?: boolean }) {
     >
       <span
         aria-hidden
-        className={`grid place-items-center rounded-full bg-surface text-ink-900 shadow-subtle transition-transform duration-200 ${knob} ${
+        className={`grid place-items-center rounded-full bg-glass text-ink-900 shadow-subtle transition-transform duration-200 ${knob} ${
           dark ? shift : 'translate-x-0'
         }`}
       >
@@ -165,7 +165,7 @@ export default function Header({
 
   return (
     <>
-      <nav ref={bar} className="sticky top-0 z-50 border-b border-mist-200 bg-surface/80 backdrop-blur-xl backdrop-saturate-150 print:hidden">
+      <nav ref={bar} className="sticky top-0 z-50 border-b border-white/50 bg-glass/80 backdrop-blur-2xl backdrop-saturate-150 dark:border-white/10 print:hidden">
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-2">
             {!onHome && scrolled && <BackButton round />}
@@ -201,7 +201,8 @@ export default function Header({
         />
       </nav>
 
-      <header className="bg-surface">
+      {/* No ground of its own: the title sits straight on the aurora. */}
+      <header>
         {hero ? (
           // The landing stage enters in sequence: label, title, line, actions.
           <div className="mx-auto max-w-5xl px-4 pb-16 pt-14 text-center sm:pb-24 sm:pt-20">
@@ -211,7 +212,7 @@ export default function Header({
               </p>
             )}
             <h1
-              className="anim-rise-in mx-auto mt-3 max-w-4xl font-display text-[48px] font-semibold leading-[1.05] tracking-[-0.72px] text-ink-900 sm:text-hero"
+              className="anim-rise-in mx-auto mt-3 max-w-4xl font-display text-[52px] font-light leading-[1.02] tracking-[-0.04em] text-ink-900 sm:text-hero"
               style={delay(200)}
             >
               {title}
@@ -244,7 +245,7 @@ export default function Header({
               </div>
             )}
             <h1
-              className={`anim-fade-up font-display font-semibold text-ink-900 ${
+              className={`anim-fade-up font-display font-light tracking-[-0.03em] text-ink-900 ${
                 compact ? 'text-feature-sm' : 'text-feature-sm sm:text-feature'
               }`}
             >

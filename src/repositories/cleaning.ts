@@ -8,6 +8,7 @@ export interface AreaRow {
   id: string;
   name: string;
   building_code: string | null;
+  building_name: string | null;
   floor: number | null;
   tasks: string; // JSON array of CleaningTask
   sort_order: number;
@@ -15,17 +16,19 @@ export interface AreaRow {
 
 export async function activeAreas(env: Env): Promise<AreaRow[]> {
   const rows = await env.DB.prepare(
-    `SELECT id, name, building_code, floor, tasks, sort_order
-       FROM cleaning_areas WHERE active = 1
-      ORDER BY sort_order, id`,
+    `SELECT a.id, a.name, a.building_code, b.name AS building_name, a.floor, a.tasks, a.sort_order
+       FROM cleaning_areas a LEFT JOIN buildings b ON b.code = a.building_code
+      WHERE a.active = 1
+      ORDER BY a.sort_order, a.id`,
   ).all<AreaRow>();
   return rows.results;
 }
 
 export async function activeArea(env: Env, id: string): Promise<AreaRow | null> {
   return env.DB.prepare(
-    `SELECT id, name, building_code, floor, tasks, sort_order
-       FROM cleaning_areas WHERE id = ? AND active = 1`,
+    `SELECT a.id, a.name, a.building_code, b.name AS building_name, a.floor, a.tasks, a.sort_order
+       FROM cleaning_areas a LEFT JOIN buildings b ON b.code = a.building_code
+      WHERE a.id = ? AND a.active = 1`,
   )
     .bind(id)
     .first<AreaRow>();

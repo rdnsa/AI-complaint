@@ -50,7 +50,7 @@ export default function WorkLogPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-nav bg-surface px-4 py-3 text-sm leading-relaxed text-ink-700">
+      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700">
         {t('work.description')}
       </p>
 

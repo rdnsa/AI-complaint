@@ -6,9 +6,10 @@
  * ones. Components use `bg-mist-100` or `text-ink-900`; the theme switch
  * changes what those names resolve to.
  *
- * The palette follows design.md (an Apple-style product page): a white gallery
- * canvas, Studio Mist bands, near-black Ink type, and one blue kept for links
- * and compact action pills.
+ * The palette follows design.md (an Apple-style product page): near-black Ink
+ * type and one blue kept for links and action pills. On top of it sits the
+ * glass layer (design.md, "Glassmorphism"): a neutral ground with soft light
+ * and shade, and frosted, translucent surfaces in front of it.
  */
 const v = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 const scale = (name, steps) =>
@@ -27,8 +28,11 @@ export default {
         accent: scale('accent', [50, 100, 200, 300, 400, 500, 600, 700]),
         // Grounds: 50 Paper Frost, 100 Studio Mist, 200 Control Gray, 300 Hairline Silver.
         mist: scale('mist', [50, 100, 200, 300]),
-        // Card and input surface: Gallery White in the light theme.
+        // Solid surface: Gallery White in the light theme; also text on dark pills.
         surface: v('surface'),
+        // Frosted glass: the surface colour at the theme's glass opacity. Pair it
+        // with a backdrop blur (the .glass class does both).
+        glass: 'rgb(var(--surface) / calc(<alpha-value> * var(--glass-alpha)))',
         // Launch Orange, only for small bare status text such as "new".
         launch: v('launch'),
         // Colours that must not follow the theme (brand marks, photo overlays).
@@ -58,8 +62,8 @@ export default {
         nav: '20px',
       },
       boxShadow: {
-        // The only elevation mark in the system: a 1px ring, never a cast shadow.
-        subtle: 'rgb(230, 230, 232) 0px 0px 0px 1px',
+        // A 1px ring, for small chips; it follows the theme.
+        subtle: '0 0 0 1px rgb(var(--mist-200))',
       },
       spacing: {
         section: '90px',

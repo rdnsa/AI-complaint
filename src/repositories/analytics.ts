@@ -1,6 +1,6 @@
 import { wibDayRange } from '../adapters/clock';
 import type { Env } from '../env';
-import { CATEGORIES, PRIORITIES, STATUSES, TOILET_TYPES } from '../domain/types';
+import { CATEGORIES, PRIORITIES, STATUSES } from '../domain/types';
 
 /**
  * The aggregate queries behind the admin question-answering feature.
@@ -18,12 +18,11 @@ export interface AnalyticsFilter {
   category?: string;
   priority?: string;
   status?: string;
-  type?: string;
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Shared WHERE clause; `r` is reports, `t` is toilet_info. */
+/** Shared WHERE clause; `r` is reports, `t` is location_info. */
 function buildFilter(f: AnalyticsFilter): { clause: string; params: unknown[] } {
   const where: string[] = [];
   const params: unknown[] = [];
@@ -52,20 +51,20 @@ function buildFilter(f: AnalyticsFilter): { clause: string; params: unknown[] } 
     where.push('r.status = ?');
     params.push(f.status);
   }
-  if (f.type && (TOILET_TYPES as readonly string[]).includes(f.type)) {
-    where.push('t.type = ?');
-    params.push(f.type);
-  }
-
   return { clause: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
 }
 
 /** Groupings the model may ask for, mapped to the SQL expression behind each. */
 export const GROUPINGS = {
-  building: `t.building_code || ' - ' || t.building_name`,
-  toilet: `t.name`,
-  floor: `t.building_code || ' lantai ' || t.floor`,
-  type: `t.type`,
+  // A place outside the lettered buildings (Lapang Voli) stands for itself.
+  building: `COALESCE(t.building_code || ' - ' || t.building_name, t.name)`,
+  location: `t.name`,
+  // Floor 0 is a building's yard; no floor, the whole building.
+  floor: `CASE
+    WHEN t.building_code IS NULL THEN t.name
+    WHEN t.floor = 0 THEN 'Gedung ' || t.building_code || ' halaman'
+    WHEN t.floor IS NULL THEN 'Gedung ' || t.building_code
+    ELSE 'Gedung ' || t.building_code || ' lantai ' || t.floor END`,
   category: `je.value`,
   priority: `COALESCE(r.priority, 'belum dianalisis')`,
   status: `r.status`,
@@ -80,7 +79,7 @@ export const GROUPINGS = {
 } as const;
 export type Grouping = keyof typeof GROUPINGS;
 
-const FROM = `FROM reports r JOIN toilet_info t ON t.id = r.toilet_id`;
+const FROM = `FROM reports r JOIN location_info t ON t.id = COALESCE(r.area_id, r.toilet_id)`;
 
 /** Grouping by category needs the JSON array unrolled; every other grouping does not. */
 function source(groupBy: Grouping | undefined): string {

@@ -117,7 +117,7 @@ function Board({ session }: { session: Session }) {
               onClick={() => setTab(k)}
               aria-pressed={tab === k}
               className={`rounded-full px-2 py-2 text-nav font-semibold leading-tight transition sm:text-body-sm md:flex-1 md:px-3 ${
-                tab === k ? 'bg-surface text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
+                tab === k ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
               }`}
             >
               {t(`tab.${k}`)}
@@ -310,7 +310,7 @@ function ReportRow({
         )}
       </dl>
 
-      <p className="mt-2.5 font-bold text-ink-900">{r.toilet_name}</p>
+      <p className="mt-2.5 font-bold text-ink-900">{r.location_name}</p>
       <p className="mt-1 text-ink-800">{r.summary ?? r.description}</p>
 
       {r.summary && (
@@ -330,7 +330,7 @@ function ReportRow({
         {r.photo_url && (
           <ZoomableImage
             src={r.photo_url}
-            caption={`${t('photo.report')} · ${r.toilet_name}`}
+            caption={`${t('photo.report')} · ${r.location_name}`}
             className="max-h-44"
           />
         )}
@@ -338,7 +338,7 @@ function ReportRow({
           <figure className="m-0">
             <ZoomableImage
               src={r.proof_photo_url}
-              caption={`${t('dashboard.proof')} · ${r.toilet_name}`}
+              caption={`${t('dashboard.proof')} · ${r.location_name}`}
               frameClassName="ring-2 ring-emerald-400"
               className="max-h-44"
             />

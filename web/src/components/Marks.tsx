@@ -373,31 +373,3 @@ export function TrendGlyph({ direction, className = 'h-3.5 w-3.5' }: GlyphProps 
     </Glyph>
   );
 }
-
-/** Toilet types, drawn rather than typed: the ♂/♀/♿ characters change shape from phone to phone. */
-export function ToiletTypeGlyph({ type, className = 'h-6 w-6' }: GlyphProps & { type: 'men' | 'women' | 'accessible' }) {
-  return (
-    <Glyph className={className}>
-      {type === 'men' && (
-        <>
-          <circle cx="8.5" cy="11.5" r="4.5" />
-          <path d="M11.7 8.3 16 4M12 4h4v4" />
-        </>
-      )}
-      {type === 'women' && (
-        <>
-          <circle cx="10" cy="7.5" r="4.5" />
-          <path d="M10 12v6M7 15h6" />
-        </>
-      )}
-      {type === 'accessible' && (
-        <>
-          <circle cx="9" cy="3.6" r="1.4" fill="currentColor" stroke="none" />
-          <path d="M9 6.5v5h4.5l2 4.5" />
-          <path d="M9 9h3.5" />
-          <path d="M6.5 9.3a4.7 4.7 0 1 0 6.2 6.3" />
-        </>
-      )}
-    </Glyph>
-  );
-}

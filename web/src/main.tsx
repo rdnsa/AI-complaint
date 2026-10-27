@@ -1,23 +1,24 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { LanguageProvider } from './lib/i18n';
 import { SessionProvider } from './lib/session';
 import { ThemeProvider } from './lib/theme';
+import Ambient from './components/Ambient';
 import Home from './pages/Home';
-import Register from './pages/Register';
-import SupervisorDashboard from './pages/SupervisorDashboard';
-import Login from './pages/Login';
-import Leaderboard from './pages/Leaderboard';
-import ReportForm from './pages/ReportForm';
-import PublicReports from './pages/PublicReports';
-import StudentHome from './pages/StudentHome';
-import StaffHome from './pages/StaffHome';
-import StaffFloor from './pages/StaffFloor';
-import ReportStatus from './pages/ReportStatus';
-import CleaningAreas from './pages/CleaningAreas';
-import CleaningForm from './pages/CleaningForm';
 import './index.css';
+
+// Every page but the landing page loads on first visit, so the landing page
+// does not download the supervisor dashboard and its charts. The browser keeps
+// each chunk (see web/public/_headers).
+const Register = lazy(() => import('./pages/Register'));
+const SupervisorDashboard = lazy(() => import('./pages/SupervisorDashboard'));
+const Login = lazy(() => import('./pages/Login'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
+const ReportForm = lazy(() => import('./pages/ReportForm'));
+const PublicReports = lazy(() => import('./pages/PublicReports'));
+const StaffHome = lazy(() => import('./pages/StaffHome'));
+const ReportStatus = lazy(() => import('./pages/ReportStatus'));
 
 /**
  * Sends an old (Indonesian) URL to its new home, keeping the path params, the
@@ -44,19 +45,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <LanguageProvider>
       <SessionProvider>
         <BrowserRouter>
+        <Ambient />
+        <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<Home />} />
-          {/* QR target: one URL per floor, e.g. /report/A-1. Students report
-              here; staff switch to /staff/A-1 with the switch above the form. */}
-          <Route path="/report/:floorId" element={<ReportForm />} />
-          {/* Without a QR: students pick the building and floor here. */}
-          <Route path="/student" element={<StudentHome />} />
-          {/* Staff without sign-in: pick a name, resolve reports, log work. */}
+          {/* QR target: one URL per location, e.g. /report/C-2 or /report/C-HALAMAN.
+              Reporters report here; staff switch to /staff/C-2 with the switch
+              above the form. Without a QR (/student) the location is picked on
+              the same page. */}
+          <Route path="/report/:locationId" element={<ReportForm />} />
+          <Route path="/student" element={<ReportForm />} />
+          {/* Staff without sign-in: one page for complaints and daily tasks.
+              The location QR (/staff/C-2) and the staff sticker (/clean/<area>)
+              open it with the location already picked. */}
           <Route path="/staff" element={<StaffHome />} />
-          <Route path="/staff/:floorId" element={<StaffFloor />} />
-          {/* Cleaning reports per area: the area QR points at /clean/<area>. */}
-          <Route path="/clean" element={<CleaningAreas />} />
-          <Route path="/clean/:areaId" element={<CleaningForm />} />
+          <Route path="/staff/:locationId" element={<StaffHome />} />
+          <Route path="/clean/:areaId" element={<StaffHome />} />
+          <Route path="/clean" element={<Navigate to="/staff" replace />} />
           {/* The public report board, and the status page of a single report. */}
           <Route path="/reports" element={<PublicReports />} />
           <Route path="/reports/:id" element={<ReportStatus />} />
@@ -81,6 +86,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
         </BrowserRouter>
       </SessionProvider>
     </LanguageProvider>
