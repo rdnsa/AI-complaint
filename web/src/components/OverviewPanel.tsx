@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import AgingBars from './charts/AgingBars';
 import AreaChart from './charts/AreaChart';
 import BarChart from './charts/BarChart';
@@ -15,6 +15,7 @@ import { AGING_COLORS, CATEGORY_COLORS, PRIORITY_COLORS, SERIES, SINGLE, STATUS_
 import { api, type ChartData, type CleaningRecap, type DailyStats, type DailySummary } from '../lib/api';
 import { useLanguage, type Translate } from '../lib/i18n';
 import { Reveal } from '../lib/motion';
+import { usePolling } from '../lib/polling';
 
 const RANGES = [7, 14, 30, 90] as const;
 const HOUR_BUCKETS = [0, 3, 6, 9, 12, 15, 18, 21];
@@ -95,11 +96,7 @@ export default function OverviewPanel() {
     setLoading(false);
   }, [days]);
 
-  useEffect(() => {
-    load();
-    const timer = setInterval(load, 60_000);
-    return () => clearInterval(timer);
-  }, [load]);
+  usePolling(load, 60_000);
 
   const hours = useMemo(() => {
     const h = new Array<number>(24).fill(0);

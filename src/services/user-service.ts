@@ -1,5 +1,5 @@
 import { createSalt, hashPassword, verifyPassword } from '../adapters/password';
-import { forget, memo } from '../adapters/memo';
+import { cleaningChanged, forget, memo } from '../adapters/memo';
 import type { Role } from '../domain/types';
 import type { Env } from '../env';
 import * as users from '../repositories/users';
@@ -114,6 +114,7 @@ export function listManaged(env: Env) {
 function forgetStaff() {
   forget('staff');
   forget('areas');
+  cleaningChanged(); // who is assigned where is part of the recap
 }
 
 /** The staff dropdown, read on every staff page; dropped whenever an account changes. */

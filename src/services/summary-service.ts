@@ -1,5 +1,5 @@
 import { summarizeDay } from '../adapters/llm';
-import { memo } from '../adapters/memo';
+import { forget, memo } from '../adapters/memo';
 import { wibDate } from '../adapters/clock';
 import type { Env } from '../env';
 import * as reports from '../repositories/reports';
@@ -32,6 +32,7 @@ export async function generateDailySummary(env: Env, date: string): Promise<Summ
     highlights: result.highlights,
   });
 
+  forget('summary');
   await log(env, {
     action: 'daily_summary',
     actor: SYSTEM,
@@ -41,18 +42,22 @@ export async function generateDailySummary(env: Env, date: string): Promise<Summ
   return { date, report_count: list.length, ...result };
 }
 
-export async function storedSummary(env: Env, date: string) {
-  const row = await summaries.find(env, date);
-  if (!row) return { date, exists: false as const };
-  return {
-    ...row,
-    highlights: row.highlights ? (JSON.parse(row.highlights) as string[]) : [],
-    exists: true as const,
-  };
+/** Read on every dashboard refresh but written once a day (or by "rebuild", which drops it). */
+export function storedSummary(env: Env, date: string) {
+  return memo(`summary:${date}`, 60_000, async () => {
+    const row = await summaries.find(env, date);
+    if (!row) return { date, exists: false as const };
+    return {
+      ...row,
+      highlights: row.highlights ? (JSON.parse(row.highlights) as string[]) : [],
+      exists: true as const,
+    };
+  });
 }
 
-export async function dailyStats(env: Env, date: string) {
-  return { date, ...(await summaries.dailyCounts(env, date)) };
+/** The cards at the top of the dashboard: three counts, polled by every open dashboard. */
+export function dailyStats(env: Env, date: string) {
+  return memo(`stats:${date}`, 15_000, async () => ({ date, ...(await summaries.dailyCounts(env, date)) }));
 }
 
 /** The run of dates the charts cover, oldest first. */
@@ -131,7 +136,8 @@ async function loadChartData(env: Env, days: number) {
 
 export async function leaderboard(env: Env, reporterId: string | null) {
   return {
-    data: await summaries.reporterLeaderboard(env),
+    // The ranking is the same for everyone; only "me" is per person.
+    data: await memo('leaderboard', 30_000, () => summaries.reporterLeaderboard(env)),
     me: reporterId ? await summaries.reporterPosition(env, reporterId) : null,
   };
 }

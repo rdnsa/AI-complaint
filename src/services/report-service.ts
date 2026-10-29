@@ -11,6 +11,7 @@ import {
   type ReportRow,
   type ReportStatus,
 } from '../domain/types';
+import { reportsChanged } from '../adapters/memo';
 import type { Env } from '../env';
 import * as cleaning from '../repositories/cleaning';
 import * as reports from '../repositories/reports';
@@ -43,6 +44,7 @@ export async function submitReport(
 
   const id = crypto.randomUUID();
   await reports.insert(env, { id, ...data, area_id: area.id, reporter_id: reporter?.id ?? null });
+  reportsChanged();
 
   await log(env, {
     action: 'report_created',
@@ -231,6 +233,7 @@ export async function changeStatus(
   }
 
   await reports.updateStatus(env, id, status, staffName, proof);
+  reportsChanged();
 
   await log(env, {
     action: 'status_changed',
@@ -252,6 +255,7 @@ export async function requestReanalysis(env: Env, id: string): Promise<boolean> 
   const exists = await reports.findById(env, id);
   if (!exists) return false;
   await reports.markAnalysisPending(env, id);
+  reportsChanged();
   return true;
 }
 
@@ -282,6 +286,7 @@ export async function deleteReport(env: Env, id: string, actor: string): Promise
   });
 
   await reports.remove(env, id);
+  reportsChanged();
   await deletePhoto(env, row.photo_key, row.proof_photo_key);
   return true;
 }

@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { etag } from 'hono/etag';
 import { logger } from 'hono/logger';
 import { wibDate } from './adapters/clock';
 import type { AppEnv, Env } from './env';
@@ -25,6 +26,14 @@ import { generateDailySummary } from './services/summary-service';
 const app = new Hono<AppEnv>();
 
 app.use('*', logger());
+
+// Dashboards poll these every half minute. A validator lets the browser ask "has it changed?"
+// and get an empty 304 when it has not. Photos (/api/uploads) are left out: hashing an image
+// body would cost more than it saves.
+for (const prefix of ['summary', 'activity', 'cleaning', 'reports', 'work-logs', 'users', 'staff', 'leaderboard']) {
+  app.use(`/api/${prefix}`, etag({ weak: true }));
+  app.use(`/api/${prefix}/*`, etag({ weak: true }));
+}
 
 app.get('/api/health', (c) => c.json({ ok: true, time: new Date().toISOString() }));
 

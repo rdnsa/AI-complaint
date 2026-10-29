@@ -1,4 +1,5 @@
 import { analyzeComplaint } from '../adapters/llm';
+import { reportsChanged } from '../adapters/memo';
 import type { Env } from '../env';
 import * as reports from '../repositories/reports';
 import { log, SYSTEM } from './activity-service';
@@ -23,6 +24,8 @@ export async function runAnalysis(env: Env, reportId: string): Promise<void> {
       model: env.LLM_MODEL,
       ms: Date.now() - start,
     });
+    // The priority is what the dashboard counts, so its numbers just changed.
+    reportsChanged();
 
     await log(env, {
       action: 'analysis',
@@ -35,6 +38,7 @@ export async function runAnalysis(env: Env, reportId: string): Promise<void> {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`Analysis failed for report ${reportId}: ${message}`);
     await reports.saveAnalysisFailure(env, reportId, message, Date.now() - start);
+    reportsChanged();
 
     await log(env, {
       action: 'analysis_failed',

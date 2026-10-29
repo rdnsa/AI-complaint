@@ -1,9 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
-import AskPanel from '../components/AskPanel';
 import { StatusBadge } from '../components/Badges';
-import { ArrowGlyph, ChatMark, StaffMark, StudentMark } from '../components/Marks';
+import { ArrowGlyph, StaffMark, StudentMark } from '../components/Marks';
 import { api, type Report } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { Reveal } from '../lib/motion';
@@ -158,13 +157,6 @@ export default function Home() {
             {t('leaderboard.view')}
             <ArrowGlyph className="h-3.5 w-3.5" />
           </Link>
-        </Reveal>
-      </Band>
-
-      <Band id="ai" tone="white">
-        <BandHeading title={t('ask.title')} body={t('ask.tagline')} link={<ChatMark />} />
-        <Reveal className="card p-6 sm:p-8">
-          <AskPanel compact />
         </Reveal>
       </Band>
 

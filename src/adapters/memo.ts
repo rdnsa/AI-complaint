@@ -28,6 +28,22 @@ export function forget(prefix: string): void {
   for (const key of store.keys()) if (key.startsWith(prefix)) store.delete(key);
 }
 
+/**
+ * Dashboard numbers that a changed report makes stale. Called from every write
+ * to the reports table, so the supervisor sees their own action at once; other
+ * isolates catch up when their copy's few seconds run out.
+ */
+export function reportsChanged(): void {
+  forget('stats');
+  forget('charts');
+  forget('leaderboard');
+}
+
+/** The cleaning recap, after a staff member files a report or the assignments change. */
+export function cleaningChanged(): void {
+  forget('recap');
+}
+
 /** Cache-Control values, so every route states its freshness the same way. */
 export const HTTP_CACHE = {
   /** Changes when the location seed is re-run: rarely. */

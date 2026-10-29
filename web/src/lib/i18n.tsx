@@ -124,10 +124,10 @@ const ID = {
   'tab.accounts': 'Petugas & Supervisor',
   'tab.qr': 'QR lokasi',
   'home.section_roles': 'Pilih peran',
-  'ask.title': 'Chatbot AI',
+  'ask.title': 'Kato Bot',
   'ask.tagline': 'Tanya data laporan',
   'ask.try': 'Coba tanyakan',
-  'ask.ai_label': 'Jawaban Chatbot AI',
+  'ask.ai_label': 'Jawaban Kato Bot',
   'ask.description': 'Jawaban AI dari data laporan agregat.',
   'ask.placeholder': 'Tanya, contoh: lokasi mana paling sering dikeluhkan?',
   'ask.submit': 'Tanya',
@@ -140,6 +140,8 @@ const ID = {
   'ask.remaining': 'Sisa {n} pertanyaan hari ini',
   'ask.error': 'Gagal mendapatkan jawaban',
   'ask.clear': 'Mulai percakapan baru',
+  'ask.open': 'Buka Kato Bot',
+  'ask.close': 'Tutup Kato Bot',
   'action.question': 'Tanya data',
   'account.add_staff': 'Tambah petugas',
   'account.add_supervisor': 'Tambah akun supervisor',
@@ -214,7 +216,9 @@ const ID = {
   'ov.age_4': '> 3 h',
   'ov.days': '{n} hari',
   'ov.range': '{n} hr',
-  'tab.activity': 'Activity log',
+  'tab.activity': 'Log aktivitas',
+  'tab.logs': 'Log',
+  'sub.complaints': 'Keluhan',
   'charts.daily': 'Laporan 14 hari terakhir',
   'charts.received': 'Masuk',
   'charts.resolved': 'Selesai',
@@ -263,7 +267,7 @@ const ID = {
   'action.work_logged': 'Laporan pekerjaan',
   'dashboard.delete_confirm': 'Hapus laporan ini secara permanen? Tindakan ini tidak bisa dibatalkan.',
 
-  'tab.work_logs': 'Pekerjaan',
+  'tab.work_logs': 'Log pekerjaan',
   'qr.description': 'Satu QR per lokasi. Cetak dan tempel di lokasinya.',
   'qr.all_buildings': 'Semua lokasi',
   'qr.count': '{n} kode QR',
@@ -544,10 +548,10 @@ const EN: Record<Key, string> = {
   'tab.accounts': 'Staff & Supervisors',
   'tab.qr': 'Location QR',
   'home.section_roles': 'Choose your role',
-  'ask.title': 'AI Chatbot',
+  'ask.title': 'Kato Bot',
   'ask.tagline': 'Ask about the report data',
   'ask.try': 'Try asking',
-  'ask.ai_label': 'AI Chatbot answer',
+  'ask.ai_label': 'Kato Bot answer',
   'ask.description': 'AI answers from aggregate report data.',
   'ask.placeholder': 'Ask, e.g. which location gets the most complaints?',
   'ask.submit': 'Ask',
@@ -560,6 +564,8 @@ const EN: Record<Key, string> = {
   'ask.remaining': '{n} questions left today',
   'ask.error': 'Could not get an answer',
   'ask.clear': 'Start a new conversation',
+  'ask.open': 'Open Kato Bot',
+  'ask.close': 'Close Kato Bot',
   'action.question': 'Data question',
   'account.add_staff': 'Add staff',
   'account.add_supervisor': 'Add supervisor account',
@@ -635,6 +641,8 @@ const EN: Record<Key, string> = {
   'ov.days': '{n} days',
   'ov.range': '{n}d',
   'tab.activity': 'Activity log',
+  'tab.logs': 'Logs',
+  'sub.complaints': 'Complaints',
   'charts.daily': 'Reports over the last 14 days',
   'charts.received': 'Received',
   'charts.resolved': 'Resolved',
@@ -852,6 +860,20 @@ const STORAGE_KEY = 'language';
 
 export type Translate = (key: Key, values?: Record<string, string | number>) => string;
 
+function interpolate(text: string, values?: Record<string, string | number>): string {
+  if (!values) return text;
+  return text.replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? `{${name}}`));
+}
+
+/**
+ * A translator pinned to one language, whatever the visitor has selected. For
+ * what leaves the screen: a printed sticker cannot follow the language toggle,
+ * so it carries both languages.
+ */
+export function translatorFor(language: Language): Translate {
+  return (key, values) => interpolate(DICTIONARIES[language][key] ?? key, values);
+}
+
 const Context = createContext<{ language: Language; setLanguage: (l: Language) => void; t: Translate } | null>(
   null,
 );
@@ -882,9 +904,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const t = useCallback<Translate>(
     (key, values) => {
-      const text = DICTIONARIES[language][key] ?? key;
-      if (!values) return text;
-      return text.replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? `{${name}}`));
+      return interpolate(DICTIONARIES[language][key] ?? key, values);
     },
     [language],
   );

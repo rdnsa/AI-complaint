@@ -1,11 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import Header from '../components/Header';
-import ActivityPanel from '../components/ActivityPanel';
-import OverviewPanel from '../components/OverviewPanel';
-import WorkLogPanel from '../components/WorkLogPanel';
-import CleaningPanel from '../components/CleaningPanel';
-import QrCodesPanel from '../components/QrCodesPanel';
-import AccountsPanel from '../components/AccountsPanel';
+import { usePolling } from '../lib/polling';
 import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges';
 import { useNavigate } from 'react-router-dom';
 import { api, type Report, type Session } from '../lib/api';
@@ -15,6 +10,15 @@ import { useSession } from '../lib/session';
 import { CheckGlyph, InboxGlyph, SupervisorMark } from '../components/Marks';
 import ZoomableImage from '../components/ZoomableImage';
 import { Reveal } from '../lib/motion';
+
+// Each tab is its own chunk, fetched when it is first opened: the QR library and the
+// charts are not downloaded by a supervisor who only reads the report list.
+const OverviewPanel = lazy(() => import('../components/OverviewPanel'));
+const WorkLogPanel = lazy(() => import('../components/WorkLogPanel'));
+const CleaningPanel = lazy(() => import('../components/CleaningPanel'));
+const ActivityPanel = lazy(() => import('../components/ActivityPanel'));
+const AccountsPanel = lazy(() => import('../components/AccountsPanel'));
+const QrCodesPanel = lazy(() => import('../components/QrCodesPanel'));
 
 export default function SupervisorDashboard() {
   const { t } = useLanguage();
@@ -41,6 +45,39 @@ export default function SupervisorDashboard() {
   return <Board session={allowed} />;
 }
 
+const TABS = ['overview', 'reports', 'logs', 'accounts', 'qr'] as const;
+type Tab = (typeof TABS)[number];
+
+/** A small switch between the two lists a tab holds. */
+function SubTabs<K extends string>({
+  value,
+  onChange,
+  items,
+}: {
+  value: K;
+  onChange: (k: K) => void;
+  items: Array<{ key: K; label: string; badge?: number }>;
+}) {
+  return (
+    <div className="mt-4 inline-flex gap-1 rounded-full bg-mist-200 p-1" role="group">
+      {items.map((it) => (
+        <button
+          key={it.key}
+          type="button"
+          onClick={() => onChange(it.key)}
+          aria-pressed={value === it.key}
+          className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-body-sm font-semibold transition ${
+            value === it.key ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
+          }`}
+        >
+          {it.label}
+          {!!it.badge && <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] leading-none text-white">{it.badge}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Board({ session }: { session: Session }) {
   const { t } = useLanguage();
   const { logout } = useSession();
@@ -49,32 +86,33 @@ function Board({ session }: { session: Session }) {
   const [filter, setFilter] = useState({ status: '', priority: '' });
   const [time, setTime] = useState<TimeRange>(EMPTY_TIME_RANGE);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<
-    'overview' | 'reports' | 'cleaning' | 'work_logs' | 'activity' | 'accounts' | 'qr'
-  >('overview');
+  const [tab, setTab] = useState<Tab>('overview');
+  // Two tabs hold two related lists each, told apart by a small switch at their top.
+  const [reportsView, setReportsView] = useState<'complaints' | 'cleaning'>('complaints');
+  const [logsView, setLogsView] = useState<'activity' | 'work_logs'>('activity');
   // Today's cleaning reports filed off campus or without GPS: a red count on the tab.
   const [cleaningAlerts, setCleaningAlerts] = useState(0);
-  // The AI chatbot is on the home page, open to everyone; the QR stickers are a tab here.
-  const tabs = ['overview', 'reports', 'cleaning', 'work_logs', 'activity', 'accounts', 'qr'] as const;
+  // Kato Bot floats over every page; the QR stickers are a tab here.
 
-  const load = useCallback(async () => {
+  // The red count on the Cleaning tab is cheap and must stay current on every tab.
+  const loadAlerts = useCallback(async () => {
     const today = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const [r, alerts] = await Promise.all([
-      // A time filter can reach far back, so allow the full page the server permits.
-      api.reports({ ...filter, ...time, limit: '200' }),
-      api.cleaningReports({ from: today, to: today, alerts: '1' }).catch(() => ({ data: [] })),
-    ]);
+    const alerts = await api.cleaningReports({ from: today, to: today, alerts: '1' }).catch(() => ({ data: [] }));
     setCleaningAlerts(alerts.data.length);
+  }, []);
+
+  // The report list is the heavy one (up to 200 rows): only fetched while it is showing.
+  const load = useCallback(async () => {
+    // A time filter can reach far back, so allow the full page the server permits.
+    const r = await api.reports({ ...filter, ...time, limit: '200' });
     setReports(r.data);
     setLoading(false);
   }, [filter, time]);
 
-  useEffect(() => {
-    load();
-    // The dashboard lives on the wall of the staff room, so it refreshes itself.
-    const timer = setInterval(load, 30_000);
-    return () => clearInterval(timer);
-  }, [load]);
+  // The dashboard lives on the wall of the staff room, so it refreshes itself,
+  // but not while hidden in a background tab.
+  usePolling(loadAlerts, 60_000);
+  usePolling(load, 30_000, tab === 'reports' && reportsView === 'complaints');
 
   async function remove(id: string) {
     setReports((prev) => prev.filter((r) => r.id !== id));
@@ -103,33 +141,59 @@ function Board({ session }: { session: Session }) {
       />
 
       <main className="mx-auto max-w-6xl px-4">
-        {/* Seven tabs do not fit one phone row: a grid there, a single row from md up. */}
-        <nav className="mt-5 grid grid-cols-4 gap-1 rounded-nav bg-mist-200 p-1 md:flex md:rounded-full">
-          {tabs.map((k) => (
+        {/* Five tabs share one row, on a phone too: the long label gets the wider column and wraps to two lines. */}
+        <nav className="mt-5 grid grid-cols-[1.15fr_1fr_0.6fr_1.45fr_1fr] gap-1 rounded-nav bg-mist-200 p-1 md:rounded-full">
+          {TABS.map((k) => (
             <button
               key={k}
               onClick={() => setTab(k)}
               aria-pressed={tab === k}
-              className={`rounded-full px-2 py-2 text-nav font-semibold leading-tight transition sm:text-body-sm md:flex-1 md:px-3 ${
+              className={`relative rounded-full px-1 py-2 text-nav font-semibold leading-tight transition sm:text-body-sm md:px-3 ${
                 tab === k ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
               }`}
             >
               {t(`tab.${k}`)}
-              {k === 'cleaning' && cleaningAlerts > 0 && (
-                <span className="ml-1.5 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{cleaningAlerts}</span>
+              {/* Off-campus cleaning reports today: the count rides on the tab that holds them. */}
+              {k === 'reports' && cleaningAlerts > 0 && (
+                <span className="absolute -right-0.5 -top-1.5 grid min-w-5 place-content-center rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] leading-none text-white">
+                  {cleaningAlerts}
+                </span>
               )}
             </button>
           ))}
         </nav>
 
-        {tab === 'cleaning' && <CleaningPanel />}
-        {tab === 'work_logs' && <WorkLogPanel />}
-        {tab === 'overview' && <OverviewPanel />}
-        {tab === 'activity' && <ActivityPanel />}
-        {tab === 'accounts' && <AccountsPanel />}
-        {tab === 'qr' && <QrCodesPanel />}
-
         {tab === 'reports' && (
+          <SubTabs
+            value={reportsView}
+            onChange={setReportsView}
+            items={[
+              { key: 'complaints', label: t('sub.complaints') },
+              { key: 'cleaning', label: t('tab.cleaning'), badge: cleaningAlerts },
+            ]}
+          />
+        )}
+        {tab === 'logs' && (
+          <SubTabs
+            value={logsView}
+            onChange={setLogsView}
+            items={[
+              { key: 'activity', label: t('tab.activity') },
+              { key: 'work_logs', label: t('tab.work_logs') },
+            ]}
+          />
+        )}
+
+        <Suspense fallback={<p className="mt-6 text-ink-600">{t('common.loading')}</p>}>
+          {tab === 'overview' && <OverviewPanel />}
+          {tab === 'reports' && reportsView === 'cleaning' && <CleaningPanel />}
+          {tab === 'logs' && logsView === 'activity' && <ActivityPanel />}
+          {tab === 'logs' && logsView === 'work_logs' && <WorkLogPanel />}
+          {tab === 'accounts' && <AccountsPanel />}
+          {tab === 'qr' && <QrCodesPanel />}
+        </Suspense>
+
+        {tab === 'reports' && reportsView === 'complaints' && (
           <>
         <div className="mt-6 flex flex-wrap gap-2">
           <select

@@ -1,9 +1,8 @@
-import { useLanguage } from '../lib/i18n';
+import { useLanguage, type Translate } from '../lib/i18n';
 import type { Place } from '../lib/places';
 
-/** How a place and a part read everywhere: "Gedung C · Dewi Sartika", "Halaman", "Lantai 2". */
-export function useLocationLabels() {
-  const { t } = useLanguage();
+/** How a place and a part read in the language of `t`: "Gedung C · Dewi Sartika", "Halaman", "Lantai 2". */
+export function locationLabels(t: Translate) {
   const placeLabel = (p: Place) =>
     p.code ? [t('common.building', { code: p.code }), p.name].filter(Boolean).join(' · ') : p.name;
   const partLabel = (p: Place, value: string) =>
@@ -13,6 +12,12 @@ export function useLocationLabels() {
         ? t('location.yard')
         : t('common.floor', { n: value });
   return { placeLabel, partLabel };
+}
+
+/** The labels in the language the visitor has chosen. */
+export function useLocationLabels() {
+  const { t } = useLanguage();
+  return locationLabels(t);
 }
 
 /**

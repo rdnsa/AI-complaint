@@ -20,6 +20,15 @@ export default defineConfig({
   build: {
     outDir: `${rootDir}dist`,
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // React and the router change far less often than the app: their own file keeps
+        // its hash across deploys, so returning visitors keep it cached.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

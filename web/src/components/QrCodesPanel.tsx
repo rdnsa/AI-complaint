@@ -1,19 +1,35 @@
 import QRCode from 'qrcode';
 import { useEffect, useMemo, useState } from 'react';
 import { api, type CleaningArea } from '../lib/api';
-import { useLanguage } from '../lib/i18n';
+import { translatorFor, useLanguage } from '../lib/i18n';
 import { buildPlaces, partOf, placeKeyOf } from '../lib/places';
-import { useLocationLabels } from './LocationSelect';
+import { locationLabels, useLocationLabels } from './LocationSelect';
 import { DownloadGlyph, PrintGlyph } from './Marks';
 
 /** One sticker: one QR code per location (a floor, a building's yard, a court). */
 interface Sticker {
   id: string;
   placeKey: string;
-  place: string;
-  part: string;
+  /** [Indonesian, English]: a printed sticker cannot follow the language toggle, so it carries both. */
+  place: [string, string];
+  part: [string, string];
   url: string;
   svg: string;
+}
+
+const ID = translatorFor('id');
+const EN = translatorFor('en');
+const labelsId = locationLabels(ID);
+const labelsEn = locationLabels(EN);
+
+/** One line per language, or a single line when both read the same (a name such as "Lapang Voli"). */
+function Bilingual({ pair, className = '', second = '' }: { pair: [string, string]; className?: string; second?: string }) {
+  return (
+    <>
+      <p className={className}>{pair[0]}</p>
+      {pair[1] !== pair[0] && <p className={second}>{pair[1]}</p>}
+    </>
+  );
 }
 
 /**
@@ -28,7 +44,7 @@ interface Sticker {
  */
 export default function QrCodesPanel() {
   const { t } = useLanguage();
-  const { placeLabel, partLabel } = useLocationLabels();
+  const { placeLabel } = useLocationLabels();
   const [areas, setAreas] = useState<CleaningArea[]>([]);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +68,15 @@ export default function QrCodesPanel() {
       p.parts.flatMap((value) => {
         const area = areas.find((a) => placeKeyOf(a) === p.key && partOf(a) === value);
         return area
-          ? [{ id: area.id, placeKey: p.key, place: placeLabel(p), part: partLabel(p, value), url: `${origin}/report/${area.id}` }]
+          ? [
+              {
+                id: area.id,
+                placeKey: p.key,
+                place: [labelsId.placeLabel(p), labelsEn.placeLabel(p)] as [string, string],
+                part: [labelsId.partLabel(p, value), labelsEn.partLabel(p, value)] as [string, string],
+                url: `${origin}/report/${area.id}`,
+              },
+            ]
           : [];
       }),
     );
@@ -68,7 +92,7 @@ export default function QrCodesPanel() {
     return () => {
       cancelled = true;
     };
-  }, [places]); // eslint-disable-line react-hooks/exhaustive-deps -- labels follow the language, not the list
+  }, [places, areas]);
 
   const shown = useMemo(
     () => (filter ? stickers.filter((s) => s.placeKey === filter) : stickers),
@@ -123,18 +147,34 @@ export default function QrCodesPanel() {
             key={s.id}
             className="card flex flex-col items-center p-4 text-center print:break-inside-avoid print:rounded-xl print:border-2 print:border-black print:shadow-none"
           >
-            <p className="text-nav font-semibold text-ink-600 print:text-black">
-              {t('qr.sticker_heading')}
-            </p>
-            <p className="mt-1 text-lg font-extrabold leading-tight text-ink-900 print:text-black">{s.part}</p>
-            <p className="text-xs text-ink-700 print:text-black">{s.place}</p>
+            <Bilingual
+              pair={[ID('qr.sticker_heading'), EN('qr.sticker_heading')]}
+              className="text-nav font-semibold text-ink-600 print:text-black"
+              second="text-[11px] text-ink-600 print:text-black"
+            />
+            <div className="mt-1.5">
+              <Bilingual
+                pair={s.part}
+                className="text-lg font-extrabold leading-tight text-ink-900 print:text-black"
+                second="text-sm font-semibold leading-tight text-ink-700 print:text-black"
+              />
+            </div>
+            <div className="mt-0.5">
+              <Bilingual pair={s.place} className="text-xs text-ink-700 print:text-black" second="text-[11px] text-ink-600 print:text-black" />
+            </div>
             {/* White ground in both themes: a QR code must be dark on light to scan. */}
             <div
               className="mt-3 w-full max-w-[180px] rounded-lg bg-white p-1.5"
               // The SVG is generated locally from our own URL, not from user input.
               dangerouslySetInnerHTML={{ __html: s.svg }}
             />
-            <p className="mt-2 text-xs font-semibold text-ink-800 print:text-black">{t('qr.scan_hint')}</p>
+            <div className="mt-2">
+              <Bilingual
+                pair={[ID('qr.scan_hint'), EN('qr.scan_hint')]}
+                className="text-xs font-semibold text-ink-800 print:text-black"
+                second="text-[11px] text-ink-600 print:text-black"
+              />
+            </div>
             <p className="mt-0.5 break-all text-[10px] text-ink-600 print:text-black">{s.url}</p>
             <button
               type="button"

@@ -11,7 +11,7 @@ import {
 } from '../domain/types';
 import type { Env } from '../env';
 import * as cleaning from '../repositories/cleaning';
-import { memo } from '../adapters/memo';
+import { cleaningChanged, memo } from '../adapters/memo';
 import { log } from './activity-service';
 
 /**
@@ -197,6 +197,7 @@ export async function submitReport(
     },
     stamped,
   );
+  cleaningChanged();
 
   const taskList = stamped.map((t) => TASK_LABEL[t.task]).join(', ');
   await log(env, {
@@ -305,7 +306,12 @@ export interface RecapStaff {
   alerts: number;
 }
 
-export async function dailyRecap(env: Env, date: string = wibDate()) {
+/** The supervisor's recap, rebuilt from every area and report of the day: worth a few seconds' keeping. */
+export function dailyRecap(env: Env, date: string = wibDate()) {
+  return memo(`recap:${date}`, 20_000, () => loadRecap(env, date));
+}
+
+async function loadRecap(env: Env, date: string) {
   const [areas, assigned, reports] = await Promise.all([
     cleaning.activeAreas(env),
     cleaning.assignments(env),

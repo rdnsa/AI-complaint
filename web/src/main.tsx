@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import FloatingChat from './components/FloatingChat';
 import { LanguageProvider } from './lib/i18n';
 import { SessionProvider } from './lib/session';
 import { ThemeProvider } from './lib/theme';
@@ -85,6 +86,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
+        {/* Kato Bot floats over every page, so it is mounted here, once, and keeps its conversation as the route changes. */}
+        <FloatingChat />
         </BrowserRouter>
       </SessionProvider>
     </LanguageProvider>
