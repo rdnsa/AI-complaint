@@ -332,7 +332,7 @@ export const api = {
    * `kind` separates the reporter's condition photo, the staff proof photo,
    * and the photo on a staff work report.
    */
-  uploadPhoto: (file: File, kind: 'report' | 'proof' | 'work' | 'cleaning' = 'report') => {
+  uploadPhoto: (file: File, kind: 'report' | 'proof' | 'cleaning' = 'report') => {
     const fd = new FormData();
     fd.append('file', file);
     return req<{ key: string; url: string }>(`/api/uploads?kind=${kind}`, {
@@ -391,15 +391,6 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ status, ...extra }),
     }),
-  /** Takes a few seconds: the server runs the vision check before storing it. */
-  createWorkLog: (body: { staff_id: string; toilet_id: string; description: string; photo_key: string }) =>
-    req<{
-      id: string;
-      toilet: string;
-      duplicate: boolean;
-      verification: Verification | null;
-    }>('/api/work-logs', { method: 'POST', body: JSON.stringify(body) }),
-  /** Supervisor only: the work log, optionally filtered by `staff_id`. */
   workLogs: (filter: Record<string, string> = {}) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: WorkLog[] }>(`/api/work-logs?${q}`);

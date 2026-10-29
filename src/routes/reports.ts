@@ -101,7 +101,7 @@ app.get('/mine', async (c) => {
   return c.json({ data: await reports.reporterReports(c.env, session.id) });
 });
 
-/** Public: a student checks their own report through the confirmation link. */
+/** Public: a reporter checks their own report through the confirmation link. */
 app.get('/:id', async (c) => {
   const dto = await reports.getReport(c.env, c.req.param('id'));
   return dto ? c.json(dto) : c.json({ error: 'Laporan tidak ditemukan' }, 404);

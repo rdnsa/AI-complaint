@@ -67,7 +67,7 @@ export async function dashboardReports(env: Env, filter: reports.ReportFilter) {
 }
 
 /**
- * What staff need to fix a complaint: the student's text and condition photo,
+ * What staff need to fix a complaint: the reporter's text and condition photo,
  * the AI summary and advice. The reporter's account and the AI internals are
  * left out, since this list is readable without signing in.
  */
@@ -157,7 +157,7 @@ async function checkNewProof(
   staffName: string,
 ): Promise<ProofCheckResult> {
   // Only a photo uploaded as proof counts: closing is open to anyone who picks
-  // a staff name, so a student's condition photo must not be reusable here.
+  // a staff name, so a reporter's condition photo must not be reusable here.
   const photo = key.startsWith(`${FOLDER.proof}/`) ? await readPhoto(env, key) : null;
   if (!photo) return { kind: 'photo-not-found' };
 

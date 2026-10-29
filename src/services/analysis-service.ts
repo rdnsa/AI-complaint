@@ -8,7 +8,7 @@ import { log, SYSTEM } from './activity-service';
  * Analyses one report and stores the result.
  *
  * Invoked through `ctx.waitUntil()` after the response has been sent, so the
- * student never waits on the LLM. This function deliberately never throws:
+ * reporter never waits on the LLM. This function deliberately never throws:
  * a failure is recorded as ai_status='failed' so the report still shows up on
  * the dashboard (without AI labels) and staff can retry it by hand.
  */

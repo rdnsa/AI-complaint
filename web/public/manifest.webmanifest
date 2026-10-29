@@ -1,7 +1,7 @@
 {
-  "name": "Lapor WC Kampus — UPI Kampus Tasikmalaya",
-  "short_name": "Lapor WC",
-  "description": "Laporkan toilet kampus yang kotor atau rusak cukup dengan memindai QR di pintu. Tanpa login, langsung sampai ke petugas kebersihan.",
+  "name": "Kato Report — UPI Kampus Tasikmalaya",
+  "short_name": "Kato",
+  "description": "Laporkan kondisi kebersihan dan fasilitas kampus cukup dengan memindai QR di lokasi. Tanpa login, langsung sampai ke petugas kebersihan.",
   "lang": "id",
   "dir": "ltr",
   "start_url": "/",
@@ -18,7 +18,7 @@
     { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [
-    { "name": "Lapor sebagai mahasiswa", "short_name": "Lapor", "url": "/student", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Lapor kondisi kampus", "short_name": "Lapor", "url": "/student", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
     { "name": "Halaman petugas kebersihan", "short_name": "Petugas", "url": "/staff", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
     { "name": "Dashboard Supervisor", "short_name": "Supervisor", "url": "/supervisor", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
   ]

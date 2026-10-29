@@ -32,7 +32,7 @@ const ROLE_SIZE = 'h-14 w-14 rounded-[16px]';
 const SMALL_SIZE = 'h-10 w-10 rounded-xl';
 const LIGHT_TILE = 'bg-mist-100 ring-1 ring-inset ring-mist-200';
 
-/** Student: a mortarboard, the tassel ending in the accent dot. */
+/** Reporter (anyone on campus; the route is still /student): a mortarboard, the tassel ending in the accent dot. */
 export function StudentMark({ size = ROLE_SIZE, className = '' }: MarkProps) {
   return (
     <Tile size={size} className={`bg-accent-500 ring-1 ring-inset ring-black/5 ${className}`}>

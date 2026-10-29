@@ -3,11 +3,11 @@ import type { Env } from '../env';
 /**
  * Photo storage on R2.
  *
- * Three kinds of photo share one bucket, separated by prefix: 'report' for the
- * condition photo from a reporter, 'proof' for the proof-of-completion photo
- * from staff, 'work' for the photo on a staff work log, 'cleaning' for the
- * photo of one task on a cleaning report. Only these prefixes
- * (plus their pre-rename Indonesian equivalents) may ever be read back.
+ * Three kinds of photo are uploaded into one bucket, separated by prefix: 'report'
+ * for the condition photo from a reporter, 'proof' for the proof-of-completion
+ * photo from staff, 'cleaning' for the photo of one task on a cleaning report.
+ * 'work' (the older staff work log) is no longer written but stays readable. Only
+ * these prefixes (plus their pre-rename Indonesian equivalents) may ever be read back.
  */
 export const FOLDER = { report: 'report', proof: 'proof', work: 'work', cleaning: 'cleaning' } as const;
 export type PhotoKind = keyof typeof FOLDER;

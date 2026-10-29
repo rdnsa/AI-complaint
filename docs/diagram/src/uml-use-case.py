@@ -9,62 +9,73 @@ Jalankan: python3 uml-use-case.py > ../uml-use-case.svg
 import math
 import sys
 
-W, H = 1700, 1100
-BX0, BY0, BX1, BY1 = 290, 40, 1410, 1065          # batas sistem
-CL, CM, CR = 480, 850, 1220                         # kolom use case kiri, tengah, kanan
-RX, RY = 112, 25
-LEFT, RIGHT = 140, 1560
+W, H = 1760, 1300
+BX0, BY0, BX1, BY1 = 270, 40, 1490, 1272
+CL, CM, CR = 470, 880, 1290
+RX, RY = 140, 25
+RXC = {CL: 118, CM: 140, CR: 150}   # lebar elips per kolom
 
-# Kolom kiri: use case Pengunjung, Mahasiswa, dan Petugas (aktor di kiri).
+
+def rx_of(x):
+    return RXC[x]
+
+LEFT, RIGHT = 130, 1630
+
+# Kolom kiri: use case Pelapor dan Petugas (aktor di kiri).
 # Kolom kanan: use case Supervisor (aktor di kanan).
 # Kolom tengah: use case yang dipakai bersama atau di-include, serta yang
-# melibatkan layanan AI, supaya garis dari kedua sisi bisa menjangkaunya.
+# melibatkan layanan AI/GPS/penjadwal, supaya garis dari kedua sisi bisa menjangkaunya.
 uc = {  # id: (x, y, label)
-    'pub':     (CL, 165, 'Lihat Papan Laporan Publik'),
-    'rank':    (CL, 440, 'Lihat Papan Peringkat'),
-    'reg':     (CL, 510, 'Registrasi Akun'),
-    'lapor':   (CL, 650, 'Buat Laporan'),
-    'lacak':   (CL, 580, 'Lacak Status Laporan'),
-    'open':    (CL, 850, 'Lihat Laporan Terbuka'),
-    'work':    (CL, 930, 'Catat Pekerjaan'),
-    'done':    (CL, 1010, 'Selesaikan Laporan'),
-    'ask':     (CM, 105, 'Tanya Data (AI)'),
-    'sum':     (CM, 220, 'Buat Ringkasan Harian'),
-    'login':   (CM, 300, 'Login'),
-    'ai':      (CM, 540, 'Analisis Keluhan (AI)'),
-    'qr_scan': (CM, 780, 'Pindai QR Lantai'),
-    'vp':      (CM, 1010, 'Verifikasi Foto Bukti (AI)'),
-    're':      (CR, 470, 'Analisis Ulang Laporan'),
-    'dash':    (CR, 545, 'Pantau Dashboard & Grafik'),
-    'logs':    (CR, 620, 'Lihat Log Aktivitas & Pekerjaan'),
-    'acct':    (CR, 695, 'Kelola Akun & Petugas'),
-    'del':     (CR, 770, 'Hapus Laporan'),
-    'qr':      (CR, 845, 'Cetak Stiker QR'),
+    'lapor':   (CL, 560, 'Kirim Keluhan'),
+    'lacak':   (CL, 622, 'Lacak Status Keluhan'),
+    'pub':     (CL, 700, 'Lihat Papan Publik'),
+    'rank':    (CL, 762, 'Lihat Papan Peringkat'),
+    'reg':     (CL, 824, 'Registrasi Akun'),
+    'open':    (CL, 930, 'Lihat Keluhan Terbuka'),
+    'claim':   (CL, 992, 'Klaim Keluhan'),
+    'take':    (CL, 1054, 'Ambil Alih Keluhan'),
+    'done':    (CL, 1130, 'Selesaikan dg Foto Bukti'),
+    'daily':   (CL, 1215, 'Laporkan Tugas Harian'),
+    'ask':     (CM, 110, 'Tanya Kato Bot'),
+    'login':   (CM, 200, 'Login'),
+    'sum':     (CM, 290, 'Buat / Buat Ulang Ringkasan'),
+    'ai':      (CM, 400, 'Analisis Keluhan (AI)'),
+    'qr_scan': (CM, 720, 'Pindai QR / Pilih Lokasi'),
+    'gps':     (CM, 1215, 'Periksa Posisi GPS'),
+    'vp':      (CM, 1130, 'Verifikasi Foto Bukti (AI)'),
+    're':      (CR, 610, 'Analisis Ulang Keluhan'),
+    'dash':    (CR, 680, 'Pantau Dashboard & Statistik'),
+    'rep':     (CR, 750, 'Lihat Laporan Keluhan & Kebersihan'),
+    'logs':    (CR, 820, 'Lihat Log Aktivitas'),
+    'del':     (CR, 890, 'Hapus Keluhan'),
+    'acct':    (CR, 960, 'Kelola Akun & Petugas'),
+    'qr':      (CR, 1030, 'Cetak Stiker QR'),
 }
 actors = {  # id: (x, y, label, aktor sistem?)
-    'pgj':  (LEFT, 140, 'Pengunjung Umum', False),
-    'cron': (LEFT, 270, 'Penjadwal', True),
-    'mhs':  (LEFT, 440, 'Mahasiswa', False),
-    'ptg':  (LEFT, 930, 'Petugas Kebersihan', False),
-    'llm':  (RIGHT, 200, 'LLM Teks', True),
-    'spv':  (RIGHT, 470, 'Supervisor', False),
-    'vis':  (RIGHT, 1010, 'LLM Vision', True),
+    'plp':  (LEFT, 640, 'Pelapor\n(siapa saja)', False),
+    'ptg':  (LEFT, 1050, 'Petugas Kebersihan', False),
+    'cron': (RIGHT, 70, 'Penjadwal\n(Cron 17.00 WIB)', True),
+    'llm':  (RIGHT, 200, 'LLM Teks\n(DeepSeek)', True),
+    'spv':  (RIGHT, 640, 'Supervisor', False),
+    'vis':  (RIGHT, 1130, 'LLM Vision\n(Gemini)', True),
 }
 assoc = [
-    ('pgj', 'pub'), ('pgj', 'ask'),
+    ('plp', 'pub'), ('plp', 'rank'), ('plp', 'reg'), ('plp', 'lapor'), ('plp', 'lacak'),
+    ('plp', 'login'), ('plp', 'ask'),
+    ('ptg', 'open'), ('ptg', 'claim'), ('ptg', 'take'), ('ptg', 'done'), ('ptg', 'daily'),
     ('cron', 'sum'),
-    ('mhs', 'rank'), ('mhs', 'reg'), ('mhs', 'lapor'), ('mhs', 'lacak'), ('mhs', 'login'),
-    ('ptg', 'open'), ('ptg', 'work'), ('ptg', 'done'),
     ('llm', 'ask'), ('llm', 'sum'), ('llm', 'ai'),
-    ('spv', 'login'), ('spv', 'sum'), ('spv', 're'), ('spv', 'dash'), ('spv', 'logs'),
-    ('spv', 'acct'), ('spv', 'del'), ('spv', 'qr'),
+    ('spv', 'login'), ('spv', 'ask'), ('spv', 'sum'), ('spv', 'dash'), ('spv', 'rep'), ('spv', 're'),
+    ('spv', 'logs'), ('spv', 'acct'), ('spv', 'del'), ('spv', 'qr'),
     ('vis', 'vp'),
 ]
-# Stiker QR di pintu adalah titik masuk: mahasiswa memindainya untuk melapor,
-# petugas untuk melihat laporan di lantai itu dan mencatat pekerjaannya.
-includes = [('lapor', 'ai'), ('re', 'ai'), ('lapor', 'qr_scan'), ('open', 'qr_scan'),
-            ('work', 'qr_scan'), ('work', 'vp'), ('done', 'vp')]
-label_below = {('re', 'ai')}   # label di atas panah ini tertimpa garis LLM Teks
+# Stiker QR di lokasi adalah titik masuk: pelapor memindainya untuk melapor,
+# petugas untuk melihat keluhan, dan tugas harian dimulai dari lokasi yang sama.
+includes = [('lapor', 'ai'), ('re', 'ai'), 
+            ('lapor', 'qr_scan'), ('open', 'qr_scan'),
+            ('done', 'vp'), ('daily', 'gps')]
+extends = [('take', 'claim')]   # Ambil Alih memperluas Klaim
+label_below = {('re', 'ai')}
 
 out = []
 o = out.append
@@ -73,7 +84,7 @@ segments = []   # (x1, y1, x2, y2, use case di ujung) untuk pengecekan tabrakan
 
 def ellipse_edge(cx, cy, tx, ty):
     a = math.atan2(ty - cy, tx - cx)
-    k = 1 / math.sqrt((math.cos(a) / RX) ** 2 + (math.sin(a) / RY) ** 2)
+    k = 1 / math.sqrt((math.cos(a) / rx_of(cx)) ** 2 + (math.sin(a) / RY) ** 2)
     return cx + k * math.cos(a), cy + k * math.sin(a)
 
 
@@ -97,7 +108,7 @@ o('<defs>'
 o(f'<rect width="{W}" height="{H}" fill="#fff"/>')
 
 # batas sistem, dengan nama sistem di tab pojok kiri atas
-title = 'Sistem Pelaporan Toilet Kampus Berbasis AI'
+title = 'Kato Report: Sistem Pelaporan Kebersihan Kampus'
 tab_w = len(title) * 8.2 + 20
 o(f'<rect x="{BX0}" y="{BY0}" width="{BX1-BX0}" height="{BY1-BY0}" fill="#fff" stroke="#000" stroke-width="1.3"/>')
 o(f'<rect x="{BX0}" y="{BY0}" width="{tab_w:.0f}" height="26" fill="#fff" stroke="#000" stroke-width="1.3"/>')
@@ -109,7 +120,7 @@ for a, u in assoc:
     ax, ay = actor_anchor(a, ux)
     # berakhir di ujung kiri/kanan elips: semua ujung satu kolom segaris, jadi
     # garis yang menyebar ke beberapa use case tidak menyerempet elips lain
-    ex, ey = (ux - RX if ax < ux else ux + RX), uy
+    ex, ey = (ux - rx_of(ux) if ax < ux else ux + rx_of(ux)), uy
     segments.append((ax, ay, ex, ey, {u}))
     o(f'<line x1="{ax:.1f}" y1="{ay:.1f}" x2="{ex:.1f}" y2="{ey:.1f}" stroke="#000" stroke-width="1.1"/>')
 
@@ -129,16 +140,19 @@ for s, t in includes:
     else:
         o(f'<text x="{mx+6:.1f}" y="{my+4:.1f}" font-size="12">&lt;&lt;include&gt;&gt;</text>')
 
-# generalisasi: Mahasiswa adalah juga Pengunjung Umum
-_, y_m, *_ = actors['mhs']; _, y_p, *_ = actors['pgj']
-# lajur di kiri label aktor, masuk ke badan aktor supaya tidak menabrak namanya
-lane = LEFT - 85
-o(f'<polyline points="{LEFT-24},{y_m-22} {lane},{y_m-22} {lane},{y_p-22} {LEFT-24},{y_p-22}" '
-  f'fill="none" stroke="#000" stroke-width="1.1" marker-end="url(#gen)"/>')
+# <<extend>>: panah putus-putus dari use case tambahan ke use case yang diperluas
+for s_, t_ in extends:
+    sx, sy, _ = uc[s_]; tx, ty, _ = uc[t_]
+    x1, y1 = ellipse_edge(sx, sy, tx, ty); x2, y2 = ellipse_edge(tx, ty, sx, sy)
+    segments.append((x1, y1, x2, y2, {s_, t_}))
+    o(f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" stroke="#000" stroke-width="1.1" '
+      f'stroke-dasharray="5 4" marker-end="url(#open)"/>')
+    mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+    o(f'<text x="{mx+8:.1f}" y="{my+4:.1f}" font-size="12">&lt;&lt;extend&gt;&gt;</text>')
 
 for u, (x, y, label) in uc.items():
-    o(f'<ellipse cx="{x}" cy="{y}" rx="{RX}" ry="{RY}" fill="#fff" stroke="#000" stroke-width="1.1"/>')
-    o(f'<text x="{x}" y="{y+5}" font-size="13.5" text-anchor="middle">{esc(label)}</text>')
+    o(f'<ellipse cx="{x}" cy="{y}" rx="{rx_of(x)}" ry="{RY}" fill="#fff" stroke="#000" stroke-width="1.1"/>')
+    o(f'<text x="{x}" y="{y+5}" font-size="13" text-anchor="middle">{esc(label)}</text>')
 
 for k, (x, y, label, is_sys) in actors.items():
     head = (f'<rect x="{x-12}" y="{y-50}" width="24" height="20" fill="#fff"/>' if is_sys
@@ -148,7 +162,8 @@ for k, (x, y, label, is_sys) in actors.items():
       f'<line x1="{x-18}" y1="{y-18}" x2="{x+18}" y2="{y-18}"/>'
       f'<line x1="{x}" y1="{y+6}" x2="{x-14}" y2="{y+28}"/>'
       f'<line x1="{x}" y1="{y+6}" x2="{x+14}" y2="{y+28}"/></g>')
-    o(f'<text x="{x}" y="{y+46}" font-size="14" text-anchor="middle">{label}</text>')
+    for n, part in enumerate(label.split('\n')):
+        o(f'<text x="{x}" y="{y+46+16*n}" font-size="14" text-anchor="middle">{esc(part)}</text>')
 
 o('</svg>')
 print('\n'.join(out))
@@ -159,7 +174,7 @@ def hits_ellipse(x1, y1, x2, y2, cx, cy, pad=4):
     for i in range(1, 200):
         t = i / 200
         px, py = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t
-        if ((px - cx) / (RX + pad)) ** 2 + ((py - cy) / (RY + pad)) ** 2 < 1:
+        if ((px - cx) / (rx_of(cx) + pad)) ** 2 + ((py - cy) / (RY + pad)) ** 2 < 1:
             return True
     return False
 

@@ -1,0 +1,57 @@
+---
+title: UML Sequence Diagram — Petugas Melaporkan Tugas Harian dengan Foto dan GPS
+---
+sequenceDiagram
+  autonumber
+  actor P as Petugas Kebersihan
+  participant UI as Aplikasi Web (React)
+  participant API as API Worker (Hono)
+  participant CS as CleaningService
+  participant R2 as Penyimpanan Foto (R2)
+  participant DB as Database (D1)
+
+  P->>UI: Buka /staff (atau stiker /clean/<id>), tab Tugas harian, pilih lokasi
+  UI->>API: GET /api/cleaning/areas
+  API->>DB: SELECT cleaning_areas
+  DB-->>API: lokasi + enam tugas + batas kampus (cache 5 menit)
+  API-->>UI: daftar lokasi
+  P->>UI: Pilih nama (nama terakhir jadi isian awal)
+  UI->>UI: Baca posisi GPS ponsel (bila diizinkan), bandingkan dengan radius kampus
+  loop satu per satu untuk setiap tugas (dari enam tugas harian)
+    P->>UI: Foto dari kamera langsung (+ catatan bila perlu)
+    UI->>API: POST /api/uploads?kind=cleaning (foto tugas)
+    API->>R2: simpan foto
+    R2-->>API: photo_key
+    API-->>UI: photo_key
+    opt GPS di luar radius kampus atau tidak terbaca
+      UI-->>P: Peringatan, "Tetap kirim (supervisor diberi tahu)"
+    end
+    P->>UI: Kirim
+    UI->>UI: Baca posisi GPS terbaru
+    UI->>API: POST /api/cleaning/reports {staff_id, area_id, tasks[1], note, position}
+    API->>DB: cek petugas aktif
+    API->>CS: submitReport()
+    CS->>DB: cek lokasi aktif & foto yang sudah dipakai
+    alt foto sama persis sudah terkirim (kirim ganda)
+      CS-->>API: ID laporan lama (duplicate)
+    else lokasi / tugas / foto tidak valid
+      CS->>R2: hapus foto (bila perlu)
+      CS-->>API: unknown-area / task-not-here / photo-not-found / photo-reused
+      API-->>UI: 400 / 404 / 422 + pesan
+    else foto lebih dari 3 jam sejak diterima server
+      CS->>R2: hapus foto
+      CS-->>API: photo-too-old
+      API-->>UI: 422 ambil foto baru
+    else foto sah
+      CS->>R2: baca waktu terima setiap foto
+      CS->>CS: hitung jarak ke pusat kampus, status lokasi (ok / far / unknown)
+      CS->>DB: INSERT cleaning_reports + cleaning_report_tasks
+      CS->>DB: INSERT activity_log (cleaning_reported)
+      opt status lokasi far / unknown
+        CS->>DB: INSERT activity_log (cleaning_out_of_range)
+      end
+      CS-->>API: ok {id, location_status, distance_m}
+      API-->>UI: 201
+      UI-->>P: Laporan terkirim (peringatan bila di luar kampus / tanpa GPS)
+    end
+  end

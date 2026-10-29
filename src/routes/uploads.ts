@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import {
   ALLOWED_TYPES,
-  FOLDER,
   getPhoto,
   isAllowedKey,
   MAX_BYTES,
@@ -10,6 +9,9 @@ import {
 } from '../adapters/storage';
 import { photoUrl } from '../domain/types';
 import type { AppEnv } from '../env';
+
+/** The kinds of photo the app uploads today. */
+const UPLOADABLE: readonly PhotoKind[] = ['report', 'proof', 'cleaning'];
 
 const app = new Hono<AppEnv>();
 
@@ -32,8 +34,9 @@ app.post('/', async (c) => {
     return c.json({ error: `Ukuran foto maksimal ${MAX_BYTES / 1024 / 1024} MB` }, 413);
   }
 
+  // 'work' (the older work log) is still readable but nothing uploads to it any more.
   const requested = c.req.query('kind') ?? '';
-  const kind: PhotoKind = Object.hasOwn(FOLDER, requested) ? (requested as PhotoKind) : 'report';
+  const kind: PhotoKind = UPLOADABLE.includes(requested as PhotoKind) ? (requested as PhotoKind) : 'report';
   const key = await savePhoto(c.env, file, kind);
 
   return c.json({ key, url: photoUrl(key) }, 201);

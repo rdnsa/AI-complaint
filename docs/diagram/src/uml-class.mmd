@@ -1,22 +1,21 @@
 ---
-title: UML Class Diagram — Model Domain Sistem AI Complaint
+title: UML Class Diagram — Model Domain Kato Report
 ---
 classDiagram
   direction LR
 
-  class Building {
-    +code : String «PK»
-    +name : String
-    +sortOrder : Integer
-  }
-  class Toilet {
+  class CleaningArea {
     +id : String «PK»
-    +buildingCode : String «FK»
+    +name : String
+    +buildingCode : String
     +floor : Integer
-    +type : ToiletType
+    +tasks : CleaningTask[]
+    +sortOrder : Integer
     +active : Boolean
-    +createdAt : DateTime
-    +displayName() String
+  }
+  class CleaningAssignment {
+    +areaId : String «FK»
+    +staffId : String «FK»
   }
   class User {
     +id : String «PK»
@@ -30,11 +29,14 @@ classDiagram
     +login(username, password) Session
     +registerReporter(username, name, password)
     +addStaff(name)
+    +addSupervisor(username, name, password)
     +updateAccount(data)
+    +deleteAccount(id)
   }
   class Report {
     +id : String «PK»
-    +toiletId : String «FK»
+    +areaId : String «FK»
+    +toiletId : String «FK» (data lama)
     +reporterId : String «FK»
     +description : String
     +photoKey : String
@@ -50,23 +52,32 @@ classDiagram
     +proofVerdict : ProofVerdict
     +proofReason : String
     +createdAt : DateTime
-    +submit(toiletId, description, photoKey)
+    +submit(areaId, description, photoKey)
     +runAnalysis()
     +changeStatus(status, staff, proofPhotoKey)
     +canResolve() Boolean
+    +requestReanalysis()
     +delete(actor)
   }
-  class WorkLog {
+  class CleaningReport {
     +id : String «PK»
-    +toiletId : String «FK»
+    +areaId : String «FK»
     +staffId : String «FK»
     +staffName : String
-    +description : String
-    +photoKey : String
-    +proofVerdict : ProofVerdict
-    +proofReason : String
+    +note : String
+    +latitude : Real
+    +longitude : Real
+    +accuracyM : Real
+    +distanceM : Real
+    +locationStatus : LocationStatus
     +createdAt : DateTime
-    +submit(toiletId, description, photoKey)
+    +submit(areaId, tasks, note, position)
+  }
+  class CleaningReportTask {
+    +reportId : String «FK»
+    +task : CleaningTask
+    +photoKey : String «unik»
+    +photoAt : DateTime
   }
   class DailySummary {
     +date : Date «PK»
@@ -86,66 +97,36 @@ classDiagram
     +details : JSON
     +log(action, actor, summary)$
   }
-
-  class Role {
-    <<enumeration>>
-    supervisor
-    staff
-    reporter
+  class WorkLog {
+    <<data lama, baca-saja>>
+    +id : String «PK»
+    +toiletId : String «FK»
+    +staffId : String «FK»
+    +staffName : String
+    +description : String
+    +photoKey : String
+    +proofVerdict : ProofVerdict
   }
-  class ReportStatus {
-    <<enumeration>>
-    new
-    in_progress
-    resolved
-  }
-  class Priority {
-    <<enumeration>>
-    low
-    medium
-    high
-  }
-  class Category {
-    <<enumeration>>
-    cleanliness
-    supplies
-    damage
-    odor
-    flooding
-    other
-  }
-  class ProofVerdict {
-    <<enumeration>>
-    clean
-    dirty
-    not_toilet
-  }
-  class AiStatus {
-    <<enumeration>>
-    pending
-    ok
-    failed
-  }
-  class ToiletType {
-    <<enumeration>>
-    men
-    women
-    accessible
+  class Toilet {
+    <<data lama>>
+    +id : String «PK»
+    +buildingCode : String
+    +floor : Integer
+    +type : String
+    +active : Boolean
   }
 
-  Building "1" *-- "1..*" Toilet : memiliki
-  Toilet "1" <-- "0..*" Report : dilaporkan pada
+  note "Daftar nilai tetap (enumeration)\nRole: supervisor | staff | reporter\nReportStatus: new | in_progress | resolved\nPriority: low | medium | high\nCategory: cleanliness | supplies | damage | odor | flooding | other\nProofVerdict: clean | dirty | wrong_place\nAiStatus: pending | ok | failed\nCleaningTask: sweep_mop | glass | toilet | trash | gallon | tidy\n(data lama: sweep, mop)\nLocationStatus: ok | far | unknown"
+
+  CleaningArea "1" <-- "0..*" Report : dilaporkan pada
+  Toilet "0..1" <-- "0..*" Report : dilaporkan pada (data lama)
   User "0..1" <-- "0..*" Report : dibuat oleh (pelapor)
+  CleaningArea "1" <-- "0..*" CleaningReport : dikerjakan di
+  User "1" <-- "0..*" CleaningReport : dilaporkan oleh (petugas)
+  CleaningReport "1" *-- "1..6" CleaningReportTask : memuat
+  CleaningArea "1" <-- "0..*" CleaningAssignment : ditugaskan di
+  User "1" <-- "0..*" CleaningAssignment : petugas
   Toilet "1" <-- "0..*" WorkLog : dikerjakan di
-  User "1" <-- "0..*" WorkLog : dicatat oleh (petugas)
+  User "1" <-- "0..*" WorkLog : dicatat oleh
   Report "0..1" <.. "0..*" ActivityLog : mencatat
   DailySummary ..> Report : merangkum
-
-  User ..> Role
-  Toilet ..> ToiletType
-  Report ..> ReportStatus
-  Report ..> Priority
-  Report ..> Category
-  Report ..> ProofVerdict
-  Report ..> AiStatus
-  WorkLog ..> ProofVerdict

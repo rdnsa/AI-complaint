@@ -95,7 +95,7 @@ export function toDTO(row: ReportRow): ReportDTO {
   };
 }
 
-/** A staff work report ("I cleaned this toilet"), joined with its location. */
+/** An older staff work report ("I cleaned this toilet"), joined with its toilet. Read-only history. */
 export interface WorkLogRow {
   id: string;
   toilet_id: string;

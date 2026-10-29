@@ -212,7 +212,7 @@
     @apply mb-2 block text-body-sm font-semibold text-ink-900;
   }
 
-  /* Toilet type choice on the forms: single-choice tiles big enough for a thumb. */
+  /* Single-choice tiles big enough for a thumb (the Complaints / Daily tasks switch). */
   .choice {
     @apply flex flex-1 flex-col items-center gap-1 rounded-nav border px-3 py-3.5 text-body-sm font-semibold
            transition-colors duration-150;

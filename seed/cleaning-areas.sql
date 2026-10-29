@@ -2,9 +2,11 @@
 --
 -- Source: "Penempatan Lokasi Kerja PHL dan OB 2026" (the Director's assignment
 -- letter, one page per staff member). These areas are the only locations the
--- staff page offers. Every area gets one QR code pointing at /clean/<id>; the
--- staff member scans it, picks their name, and photographs and sends each task
--- done.
+-- staff page offers, and the locations reporters pick from. Every area gets one
+-- QR code, printed from the dashboard's "QR lokasi" tab, pointing at /report/<id>
+-- (reporters report there; staff switch to /staff/<id>). /clean/<id> still opens
+-- the daily tasks of the area directly. Staff pick their name when they act, and
+-- photograph and send each task done.
 --
 -- Safe to re-run: areas are upserted, staff are only added when no active staff
 -- member of that name exists yet, and the assignments are rebuilt from scratch.
