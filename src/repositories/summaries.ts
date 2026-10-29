@@ -114,9 +114,8 @@ export async function chartCounts(env: Env, days: number) {
  * about pattern and effectiveness rather than about volume.
  */
 export async function advancedCounts(env: Env, days: number) {
-  const [hourByDay, matrix, resolutionByPriority, dailyByPriority, trend] = await env.DB.batch<
-    Record<string, unknown>
-  >([
+  const [hourByDay, matrix, resolutionByPriority, dailyByPriority, trend, statuses, aging] =
+    await env.DB.batch<Record<string, unknown>>([
     env.DB.prepare(
       // Day of week (0 = Sunday) and hour, both shifted into WIB.
       `SELECT CAST(strftime('%w', created_at, '+7 hours') AS INTEGER) AS day,
@@ -161,9 +160,25 @@ export async function advancedCounts(env: Env, days: number) {
       `-${days} days`,
       `-${days} days`,
     ),
+    env.DB.prepare(
+      `SELECT status, COUNT(*) AS count FROM reports
+        WHERE created_at >= datetime('now', ?) GROUP BY status`,
+    ).bind(`-${days} days`),
+    env.DB.prepare(
+      // How long the reports still open have been waiting, in five bands.
+      `SELECT SUM(h < 2)               AS b0,
+              SUM(h >= 2 AND h < 8)    AS b1,
+              SUM(h >= 8 AND h < 24)   AS b2,
+              SUM(h >= 24 AND h < 72)  AS b3,
+              SUM(h >= 72)             AS b4
+         FROM (SELECT (julianday('now') - julianday(created_at)) * 24 AS h
+                 FROM reports WHERE status <> 'resolved')`,
+    ),
   ]);
 
   return {
+    statuses: statuses.results as Array<{ status: string; count: number }>,
+    aging: [0, 1, 2, 3, 4].map((i) => Number((aging.results[0] as Record<string, number | null>)?.[`b${i}`] ?? 0)),
     hourByDay: hourByDay.results as Array<{ day: number; hour: number; count: number }>,
     matrix: matrix.results as Array<{ building_code: string; category: string; count: number }>,
     resolutionByPriority: resolutionByPriority.results as Array<{

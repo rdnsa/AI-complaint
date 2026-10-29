@@ -111,6 +111,9 @@ export interface ChartData {
   buildings: Array<{ building_code: string; building_name: string; count: number }>;
   resolution: { count: number; minutes: number | null };
   hourByDay: Array<{ day: number; hour: number; count: number }>;
+  statuses: Array<{ status: string; count: number }>;
+  /** Open reports by how long they have waited: <2h, 2–8h, 8–24h, 1–3d, 3d+. */
+  aging: number[];
   matrix: Array<{ building_code: string; category: string; count: number }>;
   resolutionByPriority: Array<{ priority: string; count: number; minutes: number | null }>;
   trend: {
@@ -431,7 +434,7 @@ export const api = {
   reanalyze: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reanalyze`, { method: 'POST' }),
   deleteReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 
-  charts: () => req<ChartData>('/api/summary/charts'),
+  charts: (days = 14) => req<ChartData>(`/api/summary/charts?days=${days}`),
   activity: (filter: Record<string, string> = {}) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: ActivityEntry[] }>(`/api/activity?${q}`);

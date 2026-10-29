@@ -67,15 +67,13 @@ a complaint, a daily task and a sticker always name a place the same way.
   Halaman** — a floor, the building's yard, or the whole building/area
 - Staff work log (older): cleaners recorded which toilets they cleaned, with an
   AI-checked photo; kept read-only in the supervisor dashboard
-- Daily cleaning tasks per location (`/staff`, or `/clean/<area>` from a staff
-  sticker): six tasks, the same everywhere — sweep & mop, wipe the windows,
+- Daily cleaning tasks per location (`/staff`, or `/clean/<area>` by direct link): six tasks, the same everywhere — sweep & mop, wipe the windows,
   clean the toilet, empty the bins, refill the water gallon, tidy the room —
   each photographed and sent on its own. Photos are stamped with name,
   area, server time and GPS; a photo older than three hours or already used is
   refused; a report filed outside `CAMPUS_RADIUS_M` of the campus (or without
   GPS) is accepted but flagged to the supervisor. The supervisor's **Kebersihan**
-  tab shows a printable daily recap per staff member (done ✓ / not done ✗) and
-  prints the area QR stickers. Areas and assignments live in
+  tab shows a printable daily recap per staff member (done ✓ / not done ✗). Areas and assignments live in
   `seed/cleaning-areas.sql` (`npm run db:seed:cleaning`)
 - Photos only from the live in-page camera, never from the gallery
 - Time filters (date range and WIB hour window) and exact timestamps in the

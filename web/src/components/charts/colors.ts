@@ -63,3 +63,23 @@ export const INK = {
   gridline: 'rgb(var(--mist-200))',
   surface: 'rgb(var(--surface))',
 };
+
+/** A report's life: waiting, being worked on, done. */
+export const STATUS_COLORS: Record<string, string> = {
+  new: '#D97706',
+  in_progress: '#0071E3',
+  resolved: '#0E9F6E',
+};
+
+/** Six problem categories, told apart by hue; each also carries a printed label. */
+export const CATEGORY_COLORS: Record<string, string> = {
+  cleanliness: '#0071E3',
+  supplies: '#5E5CE6',
+  damage: '#FF9F0A',
+  odor: '#30B0C7',
+  flooding: '#AF52DE',
+  other: '#8E8E93',
+};
+
+/** Open-report age bands, from fresh to neglected. */
+export const AGING_COLORS = ['#0E9F6E', '#7BC043', '#F5B301', '#E8710A', '#B91C1C'] as const;

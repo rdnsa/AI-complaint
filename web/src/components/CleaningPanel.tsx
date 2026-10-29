@@ -1,16 +1,14 @@
-import QRCode from 'qrcode';
 import { useCallback, useEffect, useState } from 'react';
 import {
   api,
   CLEANING_TASKS,
-  type CleaningArea,
   type CleaningRecap,
   type CleaningReport,
   type LocationStatus,
   type StaffOption,
 } from '../lib/api';
 import { useFormatTime, useLanguage } from '../lib/i18n';
-import { CheckGlyph, DownloadGlyph, PinGlyph, PrintGlyph } from './Marks';
+import { CheckGlyph, PinGlyph, PrintGlyph } from './Marks';
 import ZoomableImage from './ZoomableImage';
 
 /**
@@ -47,7 +45,7 @@ function formatDistance(m: number | null): string {
 
 export default function CleaningPanel() {
   const { t, language } = useLanguage();
-  const [view, setView] = useState<'recap' | 'reports' | 'qr'>('recap');
+  const [view, setView] = useState<'recap' | 'reports'>('recap');
   const [date, setDate] = useState(todayWIB);
   const [recap, setRecap] = useState<CleaningRecap | null>(null);
   const [reports, setReports] = useState<CleaningReport[]>([]);
@@ -102,7 +100,7 @@ export default function CleaningPanel() {
 
       <div className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
         <div className="flex gap-1 rounded-full bg-mist-200 p-1">
-          {(['recap', 'reports', 'qr'] as const).map((v) => (
+          {(['recap', 'reports'] as const).map((v) => (
             <button
               key={v}
               type="button"
@@ -117,28 +115,26 @@ export default function CleaningPanel() {
           ))}
         </div>
 
-        {view !== 'qr' && (
-          <div className="flex items-center gap-1">
-            <button type="button" className="btn-neutral !px-3 !py-2" onClick={() => setDate((d) => shiftDate(d, -1))}>
-              ‹
-            </button>
-            <input
-              type="date"
-              className="input !w-auto !py-2"
-              value={date}
-              max={todayWIB()}
-              onChange={(e) => e.target.value && setDate(e.target.value)}
-            />
-            <button
-              type="button"
-              className="btn-neutral !px-3 !py-2"
-              disabled={date >= todayWIB()}
-              onClick={() => setDate((d) => shiftDate(d, 1))}
-            >
-              ›
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          <button type="button" className="btn-neutral !px-3 !py-2" onClick={() => setDate((d) => shiftDate(d, -1))}>
+            ‹
+          </button>
+          <input
+            type="date"
+            className="input !w-auto !py-2"
+            value={date}
+            max={todayWIB()}
+            onChange={(e) => e.target.value && setDate(e.target.value)}
+          />
+          <button
+            type="button"
+            className="btn-neutral !px-3 !py-2"
+            disabled={date >= todayWIB()}
+            onClick={() => setDate((d) => shiftDate(d, 1))}
+          >
+            ›
+          </button>
+        </div>
 
         {view === 'recap' && (
           <button type="button" onClick={() => window.print()} className="btn-primary ml-auto !py-2 text-sm">
@@ -149,7 +145,7 @@ export default function CleaningPanel() {
       </div>
 
       {/* The alert stays above every view: it is the one thing the supervisor must not miss. */}
-      {view !== 'qr' && !!recap?.totals.alerts && (
+      {!!recap?.totals.alerts && (
         <button
           type="button"
           onClick={() => {
@@ -166,7 +162,7 @@ export default function CleaningPanel() {
         </button>
       )}
 
-      {loading && view !== 'qr' && <p className="mt-4 text-ink-600">{t('common.loading')}</p>}
+      {loading && <p className="mt-4 text-ink-600">{t('common.loading')}</p>}
 
       {view === 'recap' && recap && <Recap recap={recap} dateLabel={dateLabel} locale={locale} />}
 
@@ -196,7 +192,6 @@ export default function CleaningPanel() {
         </>
       )}
 
-      {view === 'qr' && <AreaStickers />}
     </div>
   );
 }
@@ -382,94 +377,5 @@ function ReportCard({ report: r }: { report: CleaningReport }) {
         ))}
       </div>
     </article>
-  );
-}
-
-/** One printable sticker per cleaning area, pointing at /clean/<id>. */
-function AreaStickers() {
-  const { t } = useLanguage();
-  const [areas, setAreas] = useState<CleaningArea[]>([]);
-  const [svgs, setSvgs] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  const origin = window.location.origin;
-
-  useEffect(() => {
-    api
-      .cleaningAreas()
-      .then((r) => setAreas(r.data))
-      .catch(() => setAreas([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all(
-      areas.map(
-        async (a) =>
-          [a.id, await QRCode.toString(`${origin}/clean/${a.id}`, { type: 'svg', errorCorrectionLevel: 'M', margin: 1 })] as const,
-      ),
-    ).then((done) => {
-      if (!cancelled) setSvgs(Object.fromEntries(done));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [areas, origin]);
-
-  async function downloadPng(id: string) {
-    const dataUrl = await QRCode.toDataURL(`${origin}/clean/${id}`, { errorCorrectionLevel: 'M', margin: 2, width: 1024 });
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = `qr-kebersihan-${id}.png`;
-    link.click();
-  }
-
-  return (
-    <div className="mt-4">
-      <div className="flex flex-wrap items-center gap-2 print:hidden">
-        <p className="text-sm text-ink-700">{t('clean.qr_description')}</p>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          disabled={!areas.length}
-          className="btn-primary ml-auto !py-2 text-sm"
-        >
-          <PrintGlyph />
-          {t('qr.print')}
-        </button>
-      </div>
-      {loading && <p className="mt-4 text-ink-600">{t('common.loading')}</p>}
-      <div className="print-sheet mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 print:grid-cols-3 print:gap-4">
-        {areas.map((a) => (
-          <article
-            key={a.id}
-            className="card flex flex-col items-center p-4 text-center print:break-inside-avoid print:rounded-xl print:border-2 print:border-black print:shadow-none"
-          >
-            <p className="text-nav font-semibold text-ink-600 print:text-black">{t('clean.sticker_heading')}</p>
-            <p className="mt-1 text-lg font-extrabold leading-tight text-ink-900 print:text-black">{a.name}</p>
-            <p className="text-xs text-ink-700 print:text-black">
-              {a.tasks.map((task) => t(`task.${task}`)).join(' · ')}
-            </p>
-            <div
-              className="mt-3 w-full max-w-[180px] rounded-lg bg-white p-1.5"
-              // Generated locally from our own URL, not from user input.
-              dangerouslySetInnerHTML={{ __html: svgs[a.id] ?? '' }}
-            />
-            <p className="mt-2 text-xs font-semibold text-ink-800 print:text-black">{t('clean.sticker_hint')}</p>
-            <p className="mt-0.5 break-all text-[10px] text-ink-600 print:text-black">
-              {origin}/clean/{a.id}
-            </p>
-            <button
-              type="button"
-              onClick={() => downloadPng(a.id)}
-              className="btn-neutral mt-3 !px-3 !py-1.5 text-xs print:hidden"
-            >
-              <DownloadGlyph className="h-3.5 w-3.5" />
-              {t('qr.download_png')}
-            </button>
-          </article>
-        ))}
-      </div>
-    </div>
   );
 }

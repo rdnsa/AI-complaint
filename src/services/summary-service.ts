@@ -112,6 +112,8 @@ async function loadChartData(env: Env, days: number) {
     ...counts,
     daily,
     dailyByPriority,
+    statuses: advanced.statuses,
+    aging: advanced.aging,
     hourByDay: advanced.hourByDay,
     matrix: advanced.matrix,
     resolutionByPriority: advanced.resolutionByPriority,

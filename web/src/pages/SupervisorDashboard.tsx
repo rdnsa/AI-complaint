@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Header from '../components/Header';
 import ActivityPanel from '../components/ActivityPanel';
-import ChartsPanel from '../components/ChartsPanel';
+import OverviewPanel from '../components/OverviewPanel';
 import WorkLogPanel from '../components/WorkLogPanel';
 import CleaningPanel from '../components/CleaningPanel';
 import QrCodesPanel from '../components/QrCodesPanel';
@@ -53,12 +53,12 @@ function Board({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [tab, setTab] = useState<
-    'reports' | 'cleaning' | 'work_logs' | 'charts' | 'activity' | 'accounts' | 'qr'
-  >('reports');
+    'overview' | 'reports' | 'cleaning' | 'work_logs' | 'activity' | 'accounts' | 'qr'
+  >('overview');
   // Today's cleaning reports filed off campus or without GPS: a red count on the tab.
   const [cleaningAlerts, setCleaningAlerts] = useState(0);
   // The AI chatbot is on the home page, open to everyone; the QR stickers are a tab here.
-  const tabs = ['reports', 'cleaning', 'work_logs', 'charts', 'activity', 'accounts', 'qr'] as const;
+  const tabs = ['overview', 'reports', 'cleaning', 'work_logs', 'activity', 'accounts', 'qr'] as const;
 
   const load = useCallback(async () => {
     const today = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -109,7 +109,7 @@ function Board({ session }: { session: Session }) {
         }
       />
 
-      <main className="mx-auto max-w-5xl px-4">
+      <main className="mx-auto max-w-6xl px-4">
         {/* Seven tabs do not fit one phone row: a grid there, a single row from md up. */}
         <nav className="mt-5 grid grid-cols-4 gap-1 rounded-nav bg-mist-200 p-1 md:flex md:rounded-full">
           {tabs.map((k) => (
@@ -131,7 +131,7 @@ function Board({ session }: { session: Session }) {
 
         {tab === 'cleaning' && <CleaningPanel />}
         {tab === 'work_logs' && <WorkLogPanel />}
-        {tab === 'charts' && <ChartsPanel />}
+        {tab === 'overview' && <OverviewPanel />}
         {tab === 'activity' && <ActivityPanel />}
         {tab === 'accounts' && <AccountsPanel />}
         {tab === 'qr' && <QrCodesPanel />}

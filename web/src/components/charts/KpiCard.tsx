@@ -1,6 +1,7 @@
 import Sparkline from './Sparkline';
 import { INK } from './colors';
 import { TrendGlyph } from '../Marks';
+import CountUp from './CountUp';
 
 /**
  * A headline number with its recent shape and its direction of travel.
@@ -38,7 +39,7 @@ export default function KpiCard({
 
       <div className="mt-1 flex items-baseline gap-1.5">
         <span className="text-3xl font-extrabold tracking-tight" style={{ color: INK.primary }}>
-          {value}
+          {typeof value === 'number' ? <CountUp value={value} /> : value}
         </span>
         {unit && <span className="text-sm font-semibold text-ink-600">{unit}</span>}
       </div>
