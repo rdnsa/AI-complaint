@@ -109,7 +109,7 @@ app.get('/:id', async (c) => {
 
 /**
  * Supervisor: the dashboard list, with filters. Time: `from`/`to` (WIB
- * dates, inclusive) and `hour_from`/`hour_to` (WIB hours 0–23, inclusive).
+ * dates, inclusive) and `hour_from`/`hour_to` (WIB time of day, `HH:MM` or a bare hour, inclusive).
  */
 app.get('/', requireSupervisor, async (c) => {
   const q = c.req.query();

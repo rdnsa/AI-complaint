@@ -1,6 +1,7 @@
 import * as activity from '../repositories/activity';
 import type { ActivityAction } from '../repositories/activity';
 import type { Env } from '../env';
+import type { TimeFilter } from '../repositories/time-filter';
 
 /** Actors that are not a named staff member. */
 export const REPORTER = 'reporter';
@@ -39,7 +40,7 @@ export async function log(
 /** The log as management reads it, with the JSON detail already parsed. */
 export async function history(
   env: Env,
-  filter: { action?: string; report_id?: string; limit?: number },
+  filter: { action?: string; report_id?: string; limit?: number } & TimeFilter,
 ) {
   const rows = await activity.find(env, filter);
   return rows.map((row) => ({ ...row, details: row.details ? JSON.parse(row.details) : null }));

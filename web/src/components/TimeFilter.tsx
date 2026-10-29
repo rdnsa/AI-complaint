@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../lib/i18n';
+import ClockPicker from './ClockPicker';
 import { ClockGlyph } from './Marks';
 
 /** The query values the report and work-report lists understand. WIB, inclusive. */
@@ -35,12 +36,10 @@ function presetRange(p: Preset): Pick<TimeRange, 'from' | 'to'> {
   }
 }
 
-const HOURS = Array.from({ length: 24 }, (_, h) => h);
-
 /**
  * "When" for the supervisor: quick ranges for the everyday questions (today,
- * this week), exact dates when needed, and an hour window for shift checks
- * such as "what came in between 07:00 and 12:00".
+ * this week), exact dates when needed, and a time-of-day window, picked on a
+ * clock face, for shift checks such as "what came in between 07:30 and 12:00".
  */
 export default function TimeFilter({
   value,
@@ -59,8 +58,9 @@ export default function TimeFilter({
 
   const active = value.from || value.to || value.hour_from || value.hour_to;
 
+  // z-20: the clock popover opens over the list below, which has its own stacking layers.
   return (
-    <div className="card mt-4 space-y-3 p-3">
+    <div className="card relative z-20 mt-4 space-y-3 p-3">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="mr-1 flex items-center gap-1.5 text-nav font-semibold text-ink-600">
           <ClockGlyph className="h-3.5 w-3.5" />
@@ -120,36 +120,16 @@ export default function TimeFilter({
             </label>
           </>
         )}
-        <label className="text-xs text-ink-700">
-          <span className="mb-1 block font-semibold">{t('time.from_hour')}</span>
-          <select
-            className="input !w-auto !py-1.5"
-            value={value.hour_from}
-            onChange={(e) => onChange({ ...value, hour_from: e.target.value })}
-          >
-            <option value="">—</option>
-            {HOURS.map((h) => (
-              <option key={h} value={h}>
-                {String(h).padStart(2, '0')}.00
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-xs text-ink-700">
-          <span className="mb-1 block font-semibold">{t('time.to_hour')}</span>
-          <select
-            className="input !w-auto !py-1.5"
-            value={value.hour_to}
-            onChange={(e) => onChange({ ...value, hour_to: e.target.value })}
-          >
-            <option value="">—</option>
-            {HOURS.map((h) => (
-              <option key={h} value={h}>
-                {String(h).padStart(2, '0')}.59
-              </option>
-            ))}
-          </select>
-        </label>
+        <ClockPicker
+          label={t('time.from_hour')}
+          value={value.hour_from}
+          onChange={(hour_from) => onChange({ ...value, hour_from })}
+        />
+        <ClockPicker
+          label={t('time.to_hour')}
+          value={value.hour_to}
+          onChange={(hour_to) => onChange({ ...value, hour_to })}
+        />
         <span className="pb-2 text-xs text-ink-600">WIB</span>
       </div>
     </div>

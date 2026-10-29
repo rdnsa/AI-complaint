@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, type ActivityEntry } from '../lib/api';
-import { useLanguage, useRelativeTime } from '../lib/i18n';
+import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
+import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from './TimeFilter';
 
 const ACTIONS = [
   'report_created',
@@ -37,19 +38,22 @@ const COLORS: Record<string, string> = {
 export default function ActivityPanel() {
   const { t } = useLanguage();
   const relativeTime = useRelativeTime();
+  const formatTime = useFormatTime();
   const [data, setData] = useState<ActivityEntry[]>([]);
   const [action, setAction] = useState('');
+  const [time, setTime] = useState<TimeRange>(EMPTY_TIME_RANGE);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      setData((await api.activity(action ? { action } : {})).data);
+      // A time window can reach far back, so ask for the most the server gives.
+      setData((await api.activity({ ...(action ? { action } : {}), ...time, limit: '300' })).data);
     } catch {
       setData([]);
     } finally {
       setLoading(false);
     }
-  }, [action]);
+  }, [action, time]);
 
   useEffect(() => {
     load();
@@ -74,8 +78,13 @@ export default function ActivityPanel() {
         ))}
       </select>
 
+      <TimeFilter value={time} onChange={setTime} />
+
       <ol className="mt-4 space-y-2">
         {loading && <p className="text-ink-600">{t('common.loading')}</p>}
+        {!loading && !!data.length && (
+          <p className="text-xs text-ink-600">{t('time.count', { n: data.length })}</p>
+        )}
         {!loading && !data.length && (
           <p className="card p-10 text-center text-ink-600">{t('activity.empty')}</p>
         )}
@@ -91,7 +100,9 @@ export default function ActivityPanel() {
                 {t(`action.${a.action}`)}
               </span>
               <span className="text-sm font-semibold text-ink-900">{a.actor}</span>
-              <span className="ml-auto text-xs text-ink-600">{relativeTime(a.created_at)}</span>
+              <span className="ml-auto text-right text-xs text-ink-600" title={relativeTime(a.created_at)}>
+                {formatTime(a.created_at)}
+              </span>
             </div>
 
             <p className="mt-1.5 text-sm text-ink-800">{a.summary}</p>

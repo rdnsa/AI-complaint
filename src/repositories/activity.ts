@@ -1,4 +1,5 @@
 import type { Env } from '../env';
+import { buildTimeFilter, type TimeFilter } from './time-filter';
 
 export type ActivityAction =
   | 'report_created'
@@ -62,10 +63,11 @@ export async function insert(
 
 export async function find(
   env: Env,
-  filter: { action?: string; report_id?: string; limit?: number },
+  filter: { action?: string; report_id?: string; limit?: number } & TimeFilter,
 ): Promise<ActivityRow[]> {
-  const where: string[] = [];
-  const params: unknown[] = [];
+  const time = buildTimeFilter('created_at', filter);
+  const where: string[] = [...time.where];
+  const params: unknown[] = [...time.params];
 
   if (filter.action && (ACTIVITY_ACTIONS as string[]).includes(filter.action)) {
     where.push('action = ?');
