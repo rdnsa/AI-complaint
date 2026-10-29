@@ -73,4 +73,26 @@ app.patch('/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+app.delete('/:id', async (c) => {
+  const result = await accounts.deleteAccount(c.env, c.req.param('id'), c.get('session'));
+  switch (result.kind) {
+    case 'not-found':
+      return c.json({ error: 'Akun tidak ditemukan' }, 404);
+    case 'self':
+      return c.json({ error: 'Akun yang sedang dipakai tidak bisa dihapus.' }, 400);
+    case 'last-supervisor':
+      return c.json({ error: 'Supervisor aktif terakhir tidak bisa dihapus.' }, 400);
+    case 'has-records':
+      return c.json(
+        {
+          error: `Akun ini punya ${result.records} catatan (laporan atau pekerjaan). Nonaktifkan saja agar riwayatnya tetap utuh.`,
+          records: result.records,
+        },
+        409,
+      );
+    default:
+      return c.json({ ok: true });
+  }
+});
+
 export default app;

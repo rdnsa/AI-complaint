@@ -67,7 +67,7 @@ export default function AccountsPanel() {
                 >
                   {editing === u.id ? t('account.cancel') : t('account.edit')}
                 </button>
-                {/* The signed-in supervisor must not be able to lock themselves out. */}
+                {/* The signed-in supervisor can neither deactivate nor delete their own account. */}
                 {u.id !== session?.id && (
                   <button
                     onClick={async () => {
@@ -77,6 +77,24 @@ export default function AccountsPanel() {
                     className="btn-neutral !py-1.5 text-xs"
                   >
                     {u.active ? t('account.deactivate') : t('account.activate')}
+                  </button>
+                )}
+                {u.id !== session?.id && (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(t('account.delete_confirm', { name: u.name }))) return;
+                      setError(null);
+                      try {
+                        await api.deleteUser(u.id);
+                      } catch (err) {
+                        // An account with history is refused; the message says to deactivate it.
+                        setError(err instanceof Error ? err.message : 'Gagal menghapus');
+                      }
+                      load();
+                    }}
+                    className="btn !py-1.5 text-xs text-red-700 hover:bg-red-50"
+                  >
+                    {t('account.delete')}
                   </button>
                 )}
               </div>

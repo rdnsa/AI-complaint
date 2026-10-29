@@ -179,3 +179,40 @@ export async function updateAccount(
 
   return { kind: 'ok' };
 }
+
+export type DeleteResult =
+  | { kind: 'ok' }
+  | { kind: 'not-found' }
+  | { kind: 'self' }
+  | { kind: 'last-supervisor' }
+  | { kind: 'has-records'; records: number };
+
+/**
+ * Deletes a staff name or a supervisor account.
+ *
+ * An account that already has work behind it (work logs, cleaning reports,
+ * reports) is refused: removing it would orphan that history or erase it, and
+ * the supervisor can deactivate it instead, which hides the name just as well.
+ * The activity log keeps naming the person in plain text either way.
+ */
+export async function deleteAccount(env: Env, id: string, supervisor: Identity): Promise<DeleteResult> {
+  const target = await users.findBrief(env, id);
+  // Reporters are not managed here; they never appear in this list.
+  if (!target || target.role === 'reporter') return { kind: 'not-found' };
+  if (id === supervisor.id) return { kind: 'self' };
+  if (target.role === 'supervisor' && (await users.otherActiveSupervisors(env, id)) === 0) {
+    return { kind: 'last-supervisor' };
+  }
+
+  const records = await users.countRecords(env, id);
+  if (records > 0) return { kind: 'has-records', records };
+
+  await users.remove(env, id);
+  forgetStaff();
+  await log(env, {
+    action: 'user_changed',
+    actor: supervisor.name,
+    summary: `Menghapus ${target.role === 'staff' ? 'petugas' : 'akun'} ${target.username ?? target.name}`,
+  });
+  return { kind: 'ok' };
+}

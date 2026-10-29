@@ -363,6 +363,7 @@ export const api = {
     req<ManagedAccount>('/api/users', { method: 'POST', body: JSON.stringify(body) }).finally(forgetStaff),
   updateUser: (id: string, body: { name?: string; password?: string; active?: boolean }) =>
     req<{ ok: boolean }>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).finally(forgetStaff),
+  deleteUser: (id: string) => req<{ ok: boolean }>(`/api/users/${id}`, { method: 'DELETE' }).finally(forgetStaff),
 
   leaderboard: () =>
     req<{ data: LeaderboardRow[]; me: { rank: number; reports: number } | null }>('/api/leaderboard'),

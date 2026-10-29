@@ -27,6 +27,33 @@ function duration(minutes: number | null, t: Translate): string {
     : t('charts.minutes', { n: Math.round(minutes) });
 }
 
+/** A small "!" that says, on hover, focus or tap, when the thing beside it is refreshed. */
+function InfoTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        type="button"
+        aria-label={text}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        onBlur={() => setOpen(false)}
+        className="grid h-[18px] w-[18px] place-content-center rounded-full text-[11px] font-bold leading-none text-ink-600 ring-1 ring-ink-600/50 transition hover:text-ink-900 hover:ring-ink-900 focus-visible:ring-2 focus-visible:ring-accent-500"
+      >
+        !
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          className="absolute left-1/2 top-full z-30 mt-2 w-max max-w-[240px] -translate-x-1/2 rounded-lg bg-ink-900 px-3 py-2 text-xs font-normal leading-snug text-surface shadow-lg"
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function Tile({ title, children, className = '' }: { title: string; children: ReactNode; className?: string }) {
   return (
     <Reveal className={className}>
@@ -45,7 +72,7 @@ function Tile({ title, children, className = '' }: { title: string; children: Re
  */
 export default function OverviewPanel() {
   const { t } = useLanguage();
-  const [days, setDays] = useState<(typeof RANGES)[number]>(14);
+  const [days, setDays] = useState<(typeof RANGES)[number]>(90);
   const [data, setData] = useState<ChartData | null>(null);
   const [stats, setStats] = useState<DailyStats | null>(null);
   const [recap, setRecap] = useState<CleaningRecap | null>(null);
@@ -145,7 +172,10 @@ export default function OverviewPanel() {
       <Reveal>
         <section className="card overflow-hidden">
           <div className="flex items-center justify-between gap-3 px-5 pt-5">
-            <h3 className="section-title">{t('dashboard.summary')}</h3>
+            <h3 className="section-title flex items-center gap-2">
+              {t('dashboard.summary')}
+              <InfoTip text={t('dashboard.summary_schedule')} />
+            </h3>
             <button
               className="btn-neutral !px-3 !py-1.5 text-xs"
               disabled={generating}

@@ -97,3 +97,37 @@ export async function update(
     .bind(...params, id)
     .run();
 }
+
+/**
+ * How many records point at this account. Work logs, cleaning reports and
+ * reports are history the system keeps; an account with any of it is not
+ * deleted, only deactivated.
+ */
+export async function countRecords(env: Env, id: string): Promise<number> {
+  const row = await env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM work_logs        WHERE staff_id    = ?1)
+          + (SELECT COUNT(*) FROM cleaning_reports WHERE staff_id    = ?1)
+          + (SELECT COUNT(*) FROM reports          WHERE reporter_id = ?1) AS n`,
+  )
+    .bind(id)
+    .first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
+/** Active supervisors other than `exceptId`: the sign-in that must always be left over. */
+export async function otherActiveSupervisors(env: Env, exceptId: string): Promise<number> {
+  const row = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM users WHERE role = 'supervisor' AND active = 1 AND id <> ?`,
+  )
+    .bind(exceptId)
+    .first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
+/** Removes the account and the area assignments that only exist for it. */
+export async function remove(env: Env, id: string): Promise<void> {
+  await env.DB.batch([
+    env.DB.prepare(`DELETE FROM cleaning_assignments WHERE staff_id = ?`).bind(id),
+    env.DB.prepare(`DELETE FROM users WHERE id = ?`).bind(id),
+  ]);
+}
