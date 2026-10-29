@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, type ActivityEntry } from '../lib/api';
 import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from './TimeFilter';
+import Select from './Select';
 
 const ACTIONS = [
   'report_created',
@@ -65,10 +66,10 @@ export default function ActivityPanel() {
         {t('activity.description')}
       </p>
 
-      <select
+      <Select
         className="input mt-4 !w-auto !py-2"
         value={action}
-        onChange={(e) => setAction(e.target.value)}
+        onChange={setAction}
       >
         <option value="">{t('activity.all')}</option>
         {ACTIONS.map((a) => (
@@ -76,7 +77,7 @@ export default function ActivityPanel() {
             {t(`action.${a}`)}
           </option>
         ))}
-      </select>
+      </Select>
 
       <TimeFilter value={time} onChange={setTime} />
 

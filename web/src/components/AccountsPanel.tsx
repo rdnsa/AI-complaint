@@ -3,6 +3,7 @@ import { api, type ManagedAccount } from '../lib/api';
 import PasswordInput from './PasswordInput';
 import { useLanguage } from '../lib/i18n';
 import { useSession } from '../lib/session';
+import Select from './Select';
 
 /**
  * The supervisor maintains two lists here: the staff names that appear on the
@@ -154,14 +155,14 @@ function AddForm({
     <form onSubmit={submit} className="card p-4">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h3 className="section-title">{role === 'staff' ? t('account.add_staff') : t('account.add_supervisor')}</h3>
-        <select
+        <Select
           className="input ml-auto !w-auto !py-1.5 text-sm"
           value={role}
-          onChange={(e) => setRole(e.target.value as 'staff' | 'supervisor')}
+          onChange={(v) => setRole(v as 'staff' | 'supervisor')}
         >
           <option value="staff">{t('account.role_staff')}</option>
           <option value="supervisor">{t('account.role_supervisor')}</option>
-        </select>
+        </Select>
       </div>
       {role === 'staff' && <p className="mb-3 text-xs text-ink-600">{t('account.staff_no_login')}</p>}
       <div className={`grid gap-3 ${role === 'supervisor' ? 'sm:grid-cols-3' : ''}`}>

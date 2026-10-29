@@ -134,6 +134,10 @@ const StatusChangeSchema = z.object({
 /**
  * Staff: mark a report as being worked on, or as resolved.
  *
+ * Claiming ("I'm on it") is not a lock: until a proof photo closes the report, any other
+ * staff member may claim it in turn, and the handover is logged. A resolved report
+ * cannot be reopened.
+ *
  * Staff do not sign in; they send the `staff_id` picked on the dropdown,
  * which must belong to an active staff member. A signed-in supervisor may act
  * under their own name instead. Closing needs a proof photo, and the photo is
@@ -167,6 +171,8 @@ app.patch('/:id', async (c) => {
   switch (result.kind) {
     case 'not-found':
       return c.json({ error: 'Laporan tidak ditemukan' }, 404);
+    case 'already-resolved':
+      return c.json({ error: 'Laporan ini sudah selesai.' }, 409);
     case 'photo-not-found':
       return c.json({ error: 'Foto bukti tidak ditemukan. Unggah ulang.' }, 400);
     case 'proof-missing':

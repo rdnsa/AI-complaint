@@ -17,10 +17,10 @@ import { Reveal } from '../lib/motion';
 type Tab = 'complaints' | 'daily';
 
 /**
- * The one page for cleaning staff, without sign-in: the location (building,
- * then floor or yard), then "Keluhan" (complaints waiting there) or "Tugas
- * harian" (the six daily tasks, each photographed and sent on its own), and
- * the staff member's name.
+ * The one page for cleaning staff, without sign-in: first "Keluhan" (every
+ * complaint waiting, with building and floor as an optional filter) or "Tugas
+ * harian" (the six daily tasks, each photographed and sent on its own, for a
+ * location and a named person).
  *
  * Both QR codes land here with the location already picked: the location QR
  * (/staff/C-2, after the reporter/staff switch) and the staff sticker
@@ -101,20 +101,7 @@ export default function StaffHome() {
 
         <CampusMap />
 
-        <div className="mt-6">
-          <LocationSelect
-            places={places}
-            placeKey={placeKey}
-            part={part}
-            onChange={(key, next) => {
-              setPlaceKey(key);
-              setPart(next);
-              setUnknownQr(false);
-            }}
-          />
-        </div>
-
-        <nav className="mt-4 grid grid-cols-2 gap-2">
+        <nav className="mt-6 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setTab('complaints')}
@@ -143,10 +130,29 @@ export default function StaffHome() {
         </nav>
 
         <div className="mt-4">
-          <StaffPicker staffList={staffList} selected={selected} onSelect={select} />
+          <LocationSelect
+            places={places}
+            placeKey={placeKey}
+            part={part}
+            // Complaints: the place only narrows the list. Daily tasks: it says where the round is.
+            filter={tab === 'complaints'}
+            onChange={(key, next) => {
+              setPlaceKey(key);
+              setPart(next);
+              setUnknownQr(false);
+            }}
+          />
         </div>
 
-        {selected && tab === 'complaints' && (
+        {/* Complaints ask who is acting at the moment of acting (see ComplaintCard); only the
+            daily round, which belongs to one person, needs the name up front. */}
+        {tab === 'daily' && (
+          <div className="mt-4">
+            <StaffPicker staffList={staffList} selected={selected} onSelect={select} />
+          </div>
+        )}
+
+        {tab === 'complaints' && (
           <section className="mt-4 space-y-3">
             {!complaints.length && (
               <p className="card p-8 text-center text-ink-700">
@@ -155,7 +161,13 @@ export default function StaffHome() {
             )}
             {complaints.map((r) => (
               <Reveal key={r.id}>
-                <ComplaintCard report={r} staff={selected} onChanged={loadOpen} />
+                <ComplaintCard
+                  report={r}
+                  staff={selected}
+                  staffList={staffList}
+                  onSelectStaff={select}
+                  onChanged={loadOpen}
+                />
               </Reveal>
             ))}
           </section>

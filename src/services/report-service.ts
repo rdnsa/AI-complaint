@@ -113,6 +113,7 @@ export async function publicBoard(env: Env, filter: reports.ReportFilter) {
 export type StatusChangeResult =
   | { kind: 'ok'; status: ReportStatus; verification: ProofVerification | null }
   | { kind: 'not-found' }
+  | { kind: 'already-resolved' }
   | { kind: 'photo-not-found' }
   | { kind: 'proof-missing' }
   | { kind: 'proof-rejected'; verdict: Exclude<ProofVerdict, 'clean'>; reason: string }
@@ -220,6 +221,18 @@ export async function changeStatus(
   const before = await reports.findById(env, id);
   if (!before) return { kind: 'not-found' };
 
+  // Closed is closed: reopening it would also wipe the proof photo it was closed with.
+  if (before.status === 'resolved' && status !== 'resolved') return { kind: 'already-resolved' };
+
+  // Claiming what you already hold changes nothing, so it is neither written nor logged twice.
+  if (status === 'in_progress' && before.status === 'in_progress' && before.staff_name === staffName) {
+    return { kind: 'ok', status, verification: null };
+  }
+
+  // Another staff member taking over a claim that never reached a proof photo.
+  const handedOverFrom =
+    status === 'in_progress' && before.status === 'in_progress' && before.staff_name ? before.staff_name : null;
+
   // A new photo must pass the vision check before anything else changes.
   let proof = existingProof(before);
   if (newProofPhoto) {
@@ -239,10 +252,13 @@ export async function changeStatus(
     action: 'status_changed',
     report_id: id,
     actor: staffName,
-    summary: `Status ${before.status} → ${status} di ${before.location_name}`,
+    summary: handedOverFrom
+      ? `${staffName} mengambil alih laporan di ${before.location_name} dari ${handedOverFrom}`
+      : `Status ${before.status} → ${status} di ${before.location_name}`,
     details: {
       from: before.status,
       to: status,
+      handed_over_from: handedOverFrom,
       proof_photo: proof?.key ?? null,
       verification: proof?.verification ?? null,
     },

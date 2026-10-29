@@ -8,6 +8,7 @@ import { buildPlaces, reportIsAt } from '../lib/places';
 import { CheckGlyph, ReportsMark, StaffMark, StudentMark } from '../components/Marks';
 import ZoomableImage from '../components/ZoomableImage';
 import { Reveal } from '../lib/motion';
+import Select from '../components/Select';
 
 type Tab = 'reporters' | 'staff';
 
@@ -121,26 +122,26 @@ function ReporterList({ isHere }: { isHere: IsHere }) {
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <select
+        <Select
           className="input !w-auto !py-2"
           value={filter.status}
-          onChange={(e) => setFilter((f) => ({ ...f, status: e.target.value }))}
+          onChange={(v) => setFilter((f) => ({ ...f, status: v }))}
         >
           <option value="">{t('dashboard.all_statuses')}</option>
           <option value="new">{t('status.new')}</option>
           <option value="in_progress">{t('status.in_progress')}</option>
           <option value="resolved">{t('status.resolved')}</option>
-        </select>
-        <select
+        </Select>
+        <Select
           className="input !w-auto !py-2"
           value={filter.priority}
-          onChange={(e) => setFilter((f) => ({ ...f, priority: e.target.value }))}
+          onChange={(v) => setFilter((f) => ({ ...f, priority: v }))}
         >
           <option value="">{t('dashboard.all_priorities')}</option>
           <option value="high">{t('priority_short.high')}</option>
           <option value="medium">{t('priority_short.medium')}</option>
           <option value="low">{t('priority_short.low')}</option>
-        </select>
+        </Select>
       </div>
 
       <div className="mt-4 space-y-3">

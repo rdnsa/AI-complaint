@@ -5,6 +5,7 @@ import { translatorFor, useLanguage } from '../lib/i18n';
 import { buildPlaces, partOf, placeKeyOf } from '../lib/places';
 import { locationLabels, useLocationLabels } from './LocationSelect';
 import { DownloadGlyph, PrintGlyph } from './Marks';
+import Select from './Select';
 
 /** One sticker: one QR code per location (a floor, a building's yard, a court). */
 interface Sticker {
@@ -114,14 +115,14 @@ export default function QrCodesPanel() {
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
-        <select className="input !w-auto !py-2" value={filter} onChange={(e) => setFilter(e.target.value)}>
+        <Select className="input !w-auto !py-2" value={filter} onChange={setFilter}>
           <option value="">{t('qr.all_buildings')}</option>
           {places.map((p) => (
             <option key={p.key} value={p.key}>
               {placeLabel(p)}
             </option>
           ))}
-        </select>
+        </Select>
         <span className="text-xs text-ink-600">{t('qr.count', { n: shown.length })}</span>
         <button
           type="button"

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import AgingBars from './charts/AgingBars';
 import AreaChart from './charts/AreaChart';
 import BarChart from './charts/BarChart';
@@ -14,6 +14,7 @@ import Treemap from './charts/Treemap';
 import { AGING_COLORS, CATEGORY_COLORS, PRIORITY_COLORS, SERIES, SINGLE, STATUS_COLORS } from './charts/colors';
 import { api, type ChartData, type CleaningRecap, type DailyStats, type DailySummary } from '../lib/api';
 import { useLanguage, type Translate } from '../lib/i18n';
+import { buildPlaces } from '../lib/places';
 import { Reveal } from '../lib/motion';
 import { usePolling } from '../lib/polling';
 
@@ -29,13 +30,13 @@ function duration(minutes: number | null, t: Translate): string {
 }
 
 /** A small "!" that says, on hover, focus or tap, when the thing beside it is refreshed. */
-function InfoTip({ text }: { text: string }) {
+function InfoTip({ label, children }: { label: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <span className="relative inline-flex" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button
         type="button"
-        aria-label={text}
+        aria-label={label}
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
         onBlur={() => setOpen(false)}
@@ -46,20 +47,53 @@ function InfoTip({ text }: { text: string }) {
       {open && (
         <span
           role="tooltip"
-          className="absolute left-1/2 top-full z-30 mt-2 w-max max-w-[240px] -translate-x-1/2 rounded-lg bg-ink-900 px-3 py-2 text-xs font-normal leading-snug text-surface shadow-lg"
+          className="absolute left-0 top-full z-30 mt-2 max-h-64 w-max max-w-[260px] overflow-y-auto rounded-lg bg-ink-900 px-3 py-2 text-left text-xs font-normal leading-snug text-surface shadow-lg"
         >
-          {text}
+          {children}
         </span>
       )}
     </span>
   );
 }
 
-function Tile({ title, children, className = '' }: { title: string; children: ReactNode; className?: string }) {
+/** What each building letter on the charts stands for, one line per building. */
+function BuildingKey({ items, title }: { items: Array<{ code: string | null; name: string }>; title: string }) {
+  if (!items.length) return null;
   return (
-    <Reveal className={className}>
+    <>
+      <span className="mb-1 block font-semibold opacity-70">{title}</span>
+      <ul className="space-y-0.5">
+        {items.map((b) => (
+          <li key={`${b.code}-${b.name}`} className="flex gap-2">
+            {b.code && <b className="w-4 shrink-0 text-center">{b.code}</b>}
+            <span>{b.name}</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function Tile({
+  title,
+  hint,
+  children,
+  className = '',
+}: {
+  title: string;
+  /** A small "!" after the title, for what the picture needs explained. */
+  hint?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    // Raised while its tip is open: the glass tiles each have their own layer, and the next one would cover it.
+    <Reveal className={`relative hover:z-20 focus-within:z-20 ${className}`}>
       <section className="card h-full p-5">
-        <h3 className="section-title mb-4">{title}</h3>
+        <h3 className="section-title mb-4 flex items-center gap-2">
+          {title}
+          {hint}
+        </h3>
         {children}
       </section>
     </Reveal>
@@ -78,6 +112,7 @@ export default function OverviewPanel() {
   const [stats, setStats] = useState<DailyStats | null>(null);
   const [recap, setRecap] = useState<CleaningRecap | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [places, setPlaces] = useState<ReturnType<typeof buildPlaces>>([]);
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -97,6 +132,14 @@ export default function OverviewPanel() {
   }, [days]);
 
   usePolling(load, 60_000);
+
+  // Which building is "A", "B" and so on: the same list the location pickers use (cached for 5 minutes).
+  useEffect(() => {
+    api
+      .cleaningAreas()
+      .then((r) => setPlaces(buildPlaces(r.data)))
+      .catch(() => setPlaces([]));
+  }, []);
 
   const hours = useMemo(() => {
     const h = new Array<number>(24).fill(0);
@@ -158,6 +201,17 @@ export default function OverviewPanel() {
   const buildingsPresent = [...new Set(data.matrix.map((m) => m.building_code))].sort();
   const categoriesPresent = CATEGORY_ORDER.filter((c) => data.matrix.some((m) => m.category === c));
 
+  // The key for the building letters: every building of the campus, or, until that list arrives,
+  // the ones that have reports.
+  const keyItems = places.length
+    ? places.map((p) => ({ code: p.code, name: p.name }))
+    : data.buildings.filter((b) => b.building_code !== b.building_name).map((b) => ({ code: b.building_code, name: b.building_name }));
+  const buildingHint = keyItems.length ? (
+    <InfoTip label={t('ov.building_key')}>
+      <BuildingKey items={keyItems} title={t('ov.building_key')} />
+    </InfoTip>
+  ) : null;
+
   const staff = (recap?.staff ?? [])
     .filter((s) => s.expected > 0 || s.reports > 0)
     .map((s) => ({ id: s.staff_id, name: s.staff_name, done: s.done, expected: s.expected, alerts: s.alerts }));
@@ -171,7 +225,7 @@ export default function OverviewPanel() {
           <div className="flex items-center justify-between gap-3 px-5 pt-5">
             <h3 className="section-title flex items-center gap-2">
               {t('dashboard.summary')}
-              <InfoTip text={t('dashboard.summary_schedule')} />
+              <InfoTip label={t('dashboard.summary_schedule')}>{t('dashboard.summary_schedule')}</InfoTip>
             </h3>
             <button
               className="btn-neutral !px-3 !py-1.5 text-xs"
@@ -310,7 +364,7 @@ export default function OverviewPanel() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <Tile title={t('ov.buildings')}>
+        <Tile title={t('ov.buildings')} hint={buildingHint}>
           <Treemap items={buildingItems} />
         </Tile>
         <Tile title={t('ov.aging')}>
@@ -319,7 +373,7 @@ export default function OverviewPanel() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <Tile title={`${t('ov.buildings')} × ${t('ov.problems')}`}>
+        <Tile title={`${t('ov.buildings')} × ${t('ov.problems')}`} hint={buildingHint}>
           {buildingsPresent.length ? (
             <Heatmap
               data={data.matrix.map((m) => ({ row: m.building_code, column: m.category, value: Number(m.count) }))}

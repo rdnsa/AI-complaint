@@ -5,6 +5,7 @@ import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from './TimeFilter';
 import { CheckGlyph, DropGlyph } from './Marks';
 import ZoomableImage from './ZoomableImage';
 import { Reveal } from '../lib/motion';
+import Select from './Select';
 
 /**
  * The supervisor's view of the staff work log: which toilets have been
@@ -54,10 +55,10 @@ export default function WorkLogPanel() {
         {t('work.description')}
       </p>
 
-      <select
+      <Select
         className="input mt-4 !w-auto !py-2"
         value={staffId}
-        onChange={(e) => setStaffId(e.target.value)}
+        onChange={setStaffId}
       >
         <option value="">{t('work.all_staff')}</option>
         {staffList.map((p) => (
@@ -65,7 +66,7 @@ export default function WorkLogPanel() {
             {p.name}
           </option>
         ))}
-      </select>
+      </Select>
 
       <TimeFilter value={time} onChange={setTime} />
 

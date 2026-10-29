@@ -10,6 +10,7 @@ import {
 import { useFormatTime, useLanguage } from '../lib/i18n';
 import { CheckGlyph, PinGlyph, PrintGlyph } from './Marks';
 import ZoomableImage from './ZoomableImage';
+import Select from './Select';
 
 /**
  * The supervisor's view of the cleaning reports, built for the decision
@@ -169,14 +170,14 @@ export default function CleaningPanel() {
       {view === 'reports' && (
         <>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <select className="input !w-auto !py-2" value={staffId} onChange={(e) => setStaffId(e.target.value)}>
+            <Select className="input !w-auto !py-2" value={staffId} onChange={setStaffId}>
               <option value="">{t('work.all_staff')}</option>
               {staffList.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>
               ))}
-            </select>
+            </Select>
             <label className="flex items-center gap-2 text-sm text-ink-800">
               <input type="checkbox" checked={alertsOnly} onChange={(e) => setAlertsOnly(e.target.checked)} />
               {t('clean.alerts_only')}

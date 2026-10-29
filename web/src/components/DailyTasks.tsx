@@ -94,18 +94,13 @@ export default function DailyTasks({
   campus: Campus;
   staff: StaffOption;
 }) {
-  const { t } = useLanguage();
   const { gps, locate } = useCampusGps(campus);
   // One task open at a time, like the sketch: the list stays short on a phone.
   const [open, setOpen] = useState<CleaningTask | null>(null);
-  const notAssigned = !area.staff.some((s) => s.id === staff.id);
 
   return (
     <div className="mt-4 space-y-3">
       <GpsCard gps={gps} campus={campus} onRetry={locate} />
-      {notAssigned && (
-        <p className="rounded-nav bg-amber-50 px-4 py-3 text-body-sm text-amber-900">{t('clean.not_assigned')}</p>
-      )}
       {CLEANING_TASKS.map((task) => (
         <TaskItem
           key={task}

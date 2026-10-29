@@ -1,6 +1,7 @@
 import type { StaffOption } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
 import { PersonGlyph } from './Marks';
+import Select from './Select';
 
 /**
  * "Who are you?" for cleaning staff: one large dropdown instead of a sign-in.
@@ -28,11 +29,11 @@ export default function StaffPicker({
         <PersonGlyph className="h-5 w-5" />
         {t('staff.who_are_you')}
       </label>
-      <select
+      <Select
         id="staff-picker"
         className="input mt-2 !py-3 text-base font-semibold"
         value={selected?.id ?? ''}
-        onChange={(e) => onSelect(e.target.value)}
+        onChange={onSelect}
       >
         <option value="">{t('staff.pick_name')}</option>
         {staffList.map((p) => (
@@ -40,7 +41,7 @@ export default function StaffPicker({
             {p.name}
           </option>
         ))}
-      </select>
+      </Select>
       {!staffList.length && <p className="mt-2 text-sm text-amber-900">{t('staff.list_empty')}</p>}
     </div>
   );
