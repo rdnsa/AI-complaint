@@ -12,7 +12,7 @@ import StackedBarChart from './charts/StackedBarChart';
 import StaffRings from './charts/StaffRings';
 import Treemap from './charts/Treemap';
 import { AGING_COLORS, CATEGORY_COLORS, PRIORITY_COLORS, SERIES, SINGLE, STATUS_COLORS } from './charts/colors';
-import { api, type ChartData, type CleaningRecap, type DailyStats } from '../lib/api';
+import { api, type ChartData, type CleaningRecap, type DailyStats, type DailySummary } from '../lib/api';
 import { useLanguage, type Translate } from '../lib/i18n';
 import { Reveal } from '../lib/motion';
 
@@ -49,18 +49,22 @@ export default function OverviewPanel() {
   const [data, setData] = useState<ChartData | null>(null);
   const [stats, setStats] = useState<DailyStats | null>(null);
   const [recap, setRecap] = useState<CleaningRecap | null>(null);
+  const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     const today = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const [d, s, r] = await Promise.all([
+    const [d, s, r, sum] = await Promise.all([
       api.charts(days).catch(() => null),
       api.stats().catch(() => null),
       api.cleaningRecap(today).catch(() => null),
+      api.summary().catch(() => null),
     ]);
     setData(d);
     setStats(s);
     setRecap(r);
+    setSummary(sum);
     setLoading(false);
   }, [days]);
 
@@ -137,6 +141,60 @@ export default function OverviewPanel() {
 
   return (
     <div className="mt-6 space-y-4">
+      {/* The day in words, next to the day in shapes: the AI's summary and where reports came from. */}
+      <Reveal>
+        <section className="card overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-5 pt-5">
+            <h3 className="section-title">{t('dashboard.summary')}</h3>
+            <button
+              className="btn-neutral !px-3 !py-1.5 text-xs"
+              disabled={generating}
+              onClick={async () => {
+                setGenerating(true);
+                try {
+                  setSummary(await api.generateSummary());
+                } catch {
+                  /* leave the previous summary on screen */
+                } finally {
+                  setGenerating(false);
+                }
+              }}
+            >
+              {generating ? t('dashboard.generating') : t('dashboard.regenerate')}
+            </button>
+          </div>
+
+          <div className="grid gap-6 p-5 lg:grid-cols-[1.6fr_1fr]">
+            <div>
+              {summary?.exists ? (
+                <>
+                  <p className="leading-relaxed text-ink-900">{summary.summary}</p>
+                  {!!summary.highlights?.length && (
+                    <ul className="mt-3 space-y-1.5">
+                      {summary.highlights.map((h) => (
+                        <li key={h} className="flex gap-2 text-sm text-ink-700">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500" />
+                          {h}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-ink-600">{t('dashboard.summary_empty')}</p>
+              )}
+            </div>
+
+            {!!stats?.top_locations.length && (
+              <div>
+                <p className="mb-2 text-nav font-semibold text-ink-600">{t('dashboard.top_locations')}</p>
+                <BarChart data={stats.top_locations.map((l) => ({ label: l.location, value: Number(l.count) }))} />
+              </div>
+            )}
+          </div>
+        </section>
+      </Reveal>
+
       <div className="flex justify-end">
         <div className="inline-flex gap-1 rounded-full bg-mist-200 p-1" role="group">
           {RANGES.map((n) => (
@@ -148,7 +206,7 @@ export default function OverviewPanel() {
                 days === n ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
               }`}
             >
-              {n}
+              {t('ov.range', { n })}
             </button>
           ))}
         </div>

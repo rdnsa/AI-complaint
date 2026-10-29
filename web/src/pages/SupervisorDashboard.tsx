@@ -8,7 +8,7 @@ import QrCodesPanel from '../components/QrCodesPanel';
 import AccountsPanel from '../components/AccountsPanel';
 import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges';
 import { useNavigate } from 'react-router-dom';
-import { api, type DailyStats, type DailySummary, type Report, type Session } from '../lib/api';
+import { api, type Report, type Session } from '../lib/api';
 import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from '../components/TimeFilter';
 import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSession } from '../lib/session';
@@ -46,12 +46,9 @@ function Board({ session }: { session: Session }) {
   const { logout } = useSession();
   const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
-  const [stats, setStats] = useState<DailyStats | null>(null);
-  const [summary, setSummary] = useState<DailySummary | null>(null);
   const [filter, setFilter] = useState({ status: '', priority: '' });
   const [time, setTime] = useState<TimeRange>(EMPTY_TIME_RANGE);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [tab, setTab] = useState<
     'overview' | 'reports' | 'cleaning' | 'work_logs' | 'activity' | 'accounts' | 'qr'
   >('overview');
@@ -62,17 +59,13 @@ function Board({ session }: { session: Session }) {
 
   const load = useCallback(async () => {
     const today = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const [r, s, sum, alerts] = await Promise.all([
+    const [r, alerts] = await Promise.all([
       // A time filter can reach far back, so allow the full page the server permits.
       api.reports({ ...filter, ...time, limit: '200' }),
-      api.stats().catch(() => null),
-      api.summary().catch(() => null),
       api.cleaningReports({ from: today, to: today, alerts: '1' }).catch(() => ({ data: [] })),
     ]);
     setCleaningAlerts(alerts.data.length);
     setReports(r.data);
-    setStats(s);
-    setSummary(sum);
     setLoading(false);
   }, [filter, time]);
 
@@ -138,71 +131,6 @@ function Board({ session }: { session: Session }) {
 
         {tab === 'reports' && (
           <>
-        {stats && (
-          <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard label={t('dashboard.stat_total')} value={stats.today.total ?? 0} />
-            <StatCard label={t('dashboard.stat_high')} value={stats.today.high ?? 0} tone="red" />
-            <StatCard label={t('dashboard.stat_unresolved')} value={stats.unresolved} tone="amber" />
-            <StatCard label={t('dashboard.stat_ai_failed')} value={stats.today.ai_failed ?? 0} />
-          </div>
-        )}
-
-        <section className="card mt-4 overflow-hidden">
-          <div className="flex items-center justify-between gap-3 border-b border-mist-200 bg-mist-50 px-4 py-3">
-            <h2 className="section-title">{t('dashboard.summary')}</h2>
-            <button
-              className="btn-neutral !px-3 !py-1.5 text-xs"
-              disabled={generating}
-              onClick={async () => {
-                setGenerating(true);
-                try {
-                  setSummary(await api.generateSummary());
-                } catch {
-                  /* leave the previous summary on screen */
-                } finally {
-                  setGenerating(false);
-                }
-              }}
-            >
-              {generating ? t('dashboard.generating') : t('dashboard.regenerate')}
-            </button>
-          </div>
-
-          <div className="p-4">
-            {summary?.exists ? (
-              <>
-                <p className="leading-relaxed text-ink-900">{summary.summary}</p>
-                {!!summary.highlights?.length && (
-                  <ul className="mt-3 space-y-1.5">
-                    {summary.highlights.map((h) => (
-                      <li key={h} className="flex gap-2 text-sm text-ink-700">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500" />
-                        {h}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-ink-600">{t('dashboard.summary_empty')}</p>
-            )}
-
-            {!!stats?.top_locations.length && (
-              <div className="mt-4 border-t border-mist-200 pt-3">
-                <p className="section-title">{t('dashboard.top_locations')}</p>
-                <ul className="mt-2 space-y-1 text-sm">
-                  {stats.top_locations.map((l) => (
-                    <li key={l.location} className="flex justify-between gap-3">
-                      <span className="truncate text-ink-700">{l.location}</span>
-                      <span className="font-bold text-ink-900">{l.count}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </section>
-
         <div className="mt-6 flex flex-wrap gap-2">
           <select
             className="input !w-auto !py-2"
@@ -249,21 +177,6 @@ function Board({ session }: { session: Session }) {
           </>
         )}
       </main>
-    </div>
-  );
-}
-
-function StatCard({ label, value, tone }: { label: string; value: number; tone?: 'red' | 'amber' }) {
-  const color =
-    tone === 'red' && value > 0
-      ? 'text-red-700'
-      : tone === 'amber' && value > 0
-        ? 'text-amber-700'
-        : 'text-ink-900';
-  return (
-    <div className="card p-4">
-      <p className="text-nav font-semibold text-ink-600">{label}</p>
-      <p className={`mt-1 text-3xl font-extrabold tracking-tight ${color}`}>{value}</p>
     </div>
   );
 }
