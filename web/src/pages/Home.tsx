@@ -40,7 +40,7 @@ function Band({ id, tone, children }: { id?: string; tone: 'white' | 'mist'; chi
       id={id}
       className={`scroll-mt-14 ${tone === 'white' ? 'border-y border-white/50 bg-glass/70 backdrop-blur-2xl dark:border-white/10' : ''}`}
     >
-      <div className="mx-auto max-w-5xl px-4 py-16 sm:py-section">{children}</div>
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:py-14">{children}</div>
     </section>
   );
 }
@@ -67,14 +67,15 @@ function RoleDoor({ to, mark, title, body }: { to: string; mark: ReactNode; titl
   return (
     <Link
       to={to}
-      className="card group flex flex-col gap-6 p-7 transition-transform duration-500 [transition-timing-function:var(--ease-out-quint)] hover:-translate-y-1"
+      className="card group flex flex-col gap-5 p-6 transition-transform sm:gap-6 sm:p-7 duration-500 [transition-timing-function:var(--ease-out-quint)] hover:-translate-y-1"
     >
       {mark}
       <span className="flex-1">
-        <span className="block font-display text-[24px] font-semibold leading-[1.17] text-ink-900">{title}</span>
+        <span className="block font-display text-[22px] font-semibold leading-[1.17] text-ink-900 sm:text-[24px]">{title}</span>
         <span className="mt-2 block text-body text-ink-600">{body}</span>
       </span>
-      <span className="flex items-center gap-1 text-body text-accent-600 group-hover:underline">
+      {/* Looks like a button, but the whole card is the link. */}
+      <span className="btn-neutral self-start px-6 group-hover:bg-glass/90">
         {t('nav.open')}
         <ArrowGlyph className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
       </span>
@@ -98,34 +99,36 @@ export default function Home() {
   }, [session]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24">
       <Header hero kicker={`UPI ${t('header.campus')}`} title={t('app.title')} description={t('app.subtitle')}>
         {/* The roles are the cards just below; the hero carries the other ways in, as pills. */}
         {/* The account; the public boards sit under the role cards below. */}
-        <div className="mx-auto flex max-w-xl flex-col gap-6">
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-3">
           {session ? (
-            <div className="flex flex-col gap-3">
+            <>
               <p className="text-body-sm text-ink-600">{t('session.hello', { name: session.name })}</p>
-              <div className={`grid gap-3 ${session.role === 'supervisor' ? 'grid-cols-2' : ''}`}>
+              <div className="flex flex-wrap justify-center gap-3">
                 {session.role === 'supervisor' && (
-                  <Link to="/supervisor" className="btn-primary w-full py-3">
+                  <Link to="/supervisor" className="btn-primary min-w-36">
                     {t('nav.to_supervisor_dashboard')}
                   </Link>
                 )}
-                <button type="button" onClick={logout} className="btn-neutral w-full py-3">
+                <button type="button" onClick={logout} className="btn-neutral min-w-36">
                   {t('session.logout')}
                 </button>
               </div>
-            </div>
+            </>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              <Link to="/login" className="btn-dark w-full py-3">
-                {t('session.login')}
-              </Link>
-              <Link to="/register" className="btn-primary w-full py-3">
-                {t('session.register')}
-              </Link>
-            </div>
+            <>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link to="/register" className="btn-primary min-w-36">
+                  {t('session.register')}
+                </Link>
+                <Link to="/login" className="btn-neutral min-w-36">
+                  {t('session.login')}
+                </Link>
+              </div>
+            </>
           )}
         </div>
       </Header>
@@ -143,12 +146,13 @@ export default function Home() {
 
       {/* Two doors, neither needs a sign-in, then the public boards. The supervisor signs in above. */}
       <Band id="roles" tone="mist">
-        <BandHeading title={t('home.section_roles')} body={t('register.description')} />
+        <BandHeading title={t('home.section_roles')} body={t('home.section_roles_body')} />
         <Reveal stagger className="grid gap-5 sm:grid-cols-2">
           <RoleDoor to="/student" mark={<StudentMark />} title={t('role.student')} body={t('role.student_body')} />
           <RoleDoor to="/staff" mark={<StaffMark />} title={t('role.staff')} body={t('role.staff_body')} />
         </Reveal>
-        <Reveal stagger delay={150} className="mt-5 grid gap-3 sm:grid-cols-2">
+        {/* The public boards, stacked under the two doors. */}
+        <Reveal stagger delay={150} className="mx-auto mt-6 flex max-w-md flex-col gap-3">
           <Link to="/reports" className="btn-neutral w-full py-3">
             {t('nav.all_reports')}
             <ArrowGlyph className="h-3.5 w-3.5" />
@@ -159,7 +163,6 @@ export default function Home() {
           </Link>
         </Reveal>
       </Band>
-
     </div>
   );
 }

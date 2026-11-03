@@ -205,7 +205,7 @@ export default function Header({
       <header>
         {hero ? (
           // The landing stage enters in sequence: label, title, line, actions.
-          <div className="mx-auto max-w-5xl px-4 pb-16 pt-14 text-center sm:pb-24 sm:pt-20">
+          <div className="mx-auto max-w-5xl px-4 pb-6 pt-14 text-center sm:pb-10 sm:pt-20">
             {kicker && (
               <p className="anim-fade-up font-display text-kicker font-semibold text-ink-900" style={delay(100)}>
                 {kicker}
