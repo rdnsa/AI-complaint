@@ -72,7 +72,7 @@ export default function TimeFilter({
             type="button"
             onClick={() => choosePreset(p)}
             aria-pressed={preset === p}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition ${
+            className={`rounded-full px-3 py-2 text-xs font-semibold ring-1 transition sm:py-1.5 ${
               preset === p
                 ? 'bg-ink-800 text-surface ring-ink-800'
                 : 'bg-glass text-ink-700 ring-mist-300 hover:bg-mist-50'

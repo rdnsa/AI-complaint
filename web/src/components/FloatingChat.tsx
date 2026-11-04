@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { ChatGlyph } from './Marks';
@@ -6,7 +7,11 @@ import { useLanguage } from '../lib/i18n';
 // The chat itself is fetched the first time the launcher is opened, not with the landing page.
 const AskPanel = lazy(() => import('./AskPanel'));
 
-const SIZE = 56; // the launcher, a circle
+// The launcher, a circle: smaller on a phone, where it floats over the content.
+const SIZE = window.innerWidth < 640 ? 48 : 56;
+/** Pages with a send button pinned to the bottom of the screen; the launcher stays above it. */
+const PINNED_BAR = /^\/(report|student)(\/|$)/;
+const PINNED_BAR_HEIGHT = 84;
 const MARGIN = 12; // never closer than this to the screen edge
 const GAP = 12; // between the launcher and the window
 const STORAGE_KEY = 'chat-anchor';
@@ -59,6 +64,7 @@ function saveAnchor(a: Anchor) {
  * stays mounted while closed, so closing it does not lose the thread.
  */
 export default function FloatingChat() {
+  const { pathname } = useLocation();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [everOpened, setEverOpened] = useState(false);
@@ -83,7 +89,7 @@ export default function FloatingChat() {
   }, [open]);
 
   const W = window.innerWidth;
-  const H = window.innerHeight;
+  const H = window.innerHeight - (PINNED_BAR.test(pathname) ? PINNED_BAR_HEIGHT : 0);
   const rest: Point = {
     x:
       anchor.side === 'r'
@@ -253,7 +259,7 @@ export default function FloatingChat() {
             <path d="M5 5l10 10M15 5L5 15" />
           </svg>
         ) : (
-          <ChatGlyph className="h-8 w-8 drop-shadow-[0_2px_6px_rgb(var(--accent-500)/0.45)]" />
+          <ChatGlyph className="h-7 w-7 sm:h-8 sm:w-8 drop-shadow-[0_2px_6px_rgb(var(--accent-500)/0.45)]" />
         )}
       </button>
     </>,

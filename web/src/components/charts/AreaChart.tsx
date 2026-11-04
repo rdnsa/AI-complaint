@@ -8,8 +8,9 @@ export interface DailyPoint {
   resolved: number;
 }
 
-const W = 640;
-const H = 230;
+const NARROW = window.innerWidth < 640;
+const W = NARROW ? 360 : 640;
+const H = NARROW ? 200 : 230;
 const L = 28;
 const R = 10;
 const T = 16;
@@ -83,7 +84,7 @@ export default function AreaChart({
 
   const peak = data.reduce((best, d, i) => (d.total > data[best].total ? i : best), 0);
   const ticks = [0, Math.round(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
-  const step = Math.ceil(data.length / 6);
+  const step = Math.ceil(data.length / (NARROW ? 4 : 6));
   const band = (W - L - R) / (data.length - 1);
   const active = hot === null ? null : data[hot];
 

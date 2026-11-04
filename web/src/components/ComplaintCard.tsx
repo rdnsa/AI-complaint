@@ -111,7 +111,7 @@ export default function ComplaintCard({
 
   if (done) {
     return (
-      <article className="card p-6 text-ink-900">
+      <article className="card p-4 sm:p-6 text-ink-900">
         <p className="flex items-center gap-1.5 font-bold">
           <CheckGlyph />
           {t('staff.report_resolved')}
@@ -124,7 +124,7 @@ export default function ComplaintCard({
   const busy = stage !== 'idle';
 
   return (
-    <article className="card p-6">
+    <article className="card p-4 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge value={r.priority} />
         <StatusBadge value={r.status} />

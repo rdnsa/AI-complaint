@@ -66,7 +66,7 @@ function SubTabs<K extends string>({
           type="button"
           onClick={() => onChange(it.key)}
           aria-pressed={value === it.key}
-          className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-body-sm font-semibold transition ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-body-sm sm:py-1.5 font-semibold transition ${
             value === it.key ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
           }`}
         >
@@ -132,7 +132,7 @@ function Board({ session }: { session: Session }) {
               await logout();
               navigate('/login', { replace: true });
             }}
-            className="rounded-full px-3 py-1 text-nav text-ink-900 ring-1 ring-ink-600/60 transition hover:ring-ink-900"
+            className="relative after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-[''] rounded-full px-3 py-1 text-nav text-ink-900 ring-1 ring-ink-600/60 transition hover:ring-ink-900"
           >
             {t('dashboard.logout')}
           </button>
@@ -247,7 +247,7 @@ function ReportRow({
   const formatTime = useFormatTime();
 
   return (
-    <article className="card p-6">
+    <article className="card p-4 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <PriorityBadge value={r.priority} />
         <StatusBadge value={r.status} />

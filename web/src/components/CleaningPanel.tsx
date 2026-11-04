@@ -96,19 +96,19 @@ export default function CleaningPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700 print:hidden">
+      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700 max-sm:hidden print:hidden">
         {t('clean.panel_description')}
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 print:hidden">
-        <div className="flex gap-1 rounded-full bg-mist-200 p-1">
+        <div className="flex gap-1 rounded-full bg-mist-200 p-1 max-sm:w-full">
           {(['recap', 'reports'] as const).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => setView(v)}
               aria-pressed={view === v}
-              className={`rounded-full px-3 py-1.5 text-body-sm font-semibold transition ${
+              className={`rounded-full px-3 py-2 text-body-sm font-semibold transition max-sm:flex-1 sm:py-1.5 ${
                 view === v ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
               }`}
             >
@@ -117,13 +117,13 @@ export default function CleaningPanel() {
           ))}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
           <button type="button" className="btn-neutral !px-3 !py-2" onClick={() => setDate((d) => shiftDate(d, -1))}>
             ‹
           </button>
           <input
             type="date"
-            className="input !w-auto !py-2"
+            className="input min-w-0 flex-1 !py-2 max-sm:!px-3 max-sm:!text-sm sm:!w-auto sm:flex-none"
             value={date}
             max={todayWIB()}
             onChange={(e) => e.target.value && setDate(e.target.value)}
@@ -139,9 +139,9 @@ export default function CleaningPanel() {
         </div>
 
         {view === 'recap' && (
-          <button type="button" onClick={() => window.print()} className="btn-primary ml-auto !py-2 text-sm">
+          <button type="button" onClick={() => window.print()} aria-label={t('clean.print_report')} className="btn-primary !py-2 text-sm max-sm:!px-3 sm:ml-auto">
             <PrintGlyph />
-            {t('clean.print_report')}
+            <span className="max-sm:hidden">{t('clean.print_report')}</span>
           </button>
         )}
       </div>
@@ -240,7 +240,9 @@ function Recap({ recap, dateLabel, locale }: { recap: CleaningRecap; dateLabel: 
 
       {!recap.areas.length && <p className="card mt-4 p-10 text-center text-ink-600">{t('clean.recap_empty')}</p>}
       {!!recap.areas.length && (
-        <div className="card mt-4 overflow-x-auto print:border print:border-black">
+        // The card clips and the div inside it scrolls. On one element, the glass rim scrolled along as a stray line down the table.
+        <div className="card mt-4 overflow-hidden print:overflow-visible print:border print:border-black">
+          <div className="overflow-x-auto overflow-y-hidden [scrollbar-width:none] lg:overflow-hidden print:overflow-visible [&::-webkit-scrollbar]:hidden">
           <table className="w-full min-w-[820px] table-fixed text-sm">
             <thead>
               <tr className="bg-mist-50 text-left text-xs text-ink-600">
@@ -291,6 +293,7 @@ function Recap({ recap, dateLabel, locale }: { recap: CleaningRecap; dateLabel: 
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
       <p className="mt-3 text-xs text-ink-600">{t('clean.recap_legend')}</p>
@@ -336,7 +339,7 @@ function ReportCard({ report: r }: { report: CleaningReport }) {
   const formatTime = useFormatTime();
 
   return (
-    <article className={`card p-6 ${r.location_status === 'ok' ? '' : 'ring-2 ring-red-300'}`}>
+    <article className={`card p-4 sm:p-6 ${r.location_status === 'ok' ? '' : 'ring-2 ring-red-300'}`}>
       <div className="flex flex-wrap items-center gap-2">
         <LocationBadge status={r.location_status} distance={r.distance_m} />
         <span className="text-sm font-semibold text-ink-900">{r.staff_name}</span>

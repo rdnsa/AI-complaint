@@ -120,7 +120,7 @@ function Tile({
   return (
     // Raised while its tip is open: the glass tiles each have their own layer, and the next one would cover it.
     <Reveal className={`relative hover:z-20 focus-within:z-20 ${className}`}>
-      <section className="card h-full p-5">
+      <section className="card h-full p-4 sm:p-5">
         <h3 className="section-title mb-4 flex items-center gap-2">
           {title}
           {hint}
@@ -246,21 +246,21 @@ export default function OverviewPanel() {
     <div className="mt-6 space-y-4">
       {/* Above everything, because everything below answers for these dates. */}
       <div className="card flex flex-wrap items-end gap-3 p-3">
-        <label className="text-xs text-ink-700">
+        <label className="min-w-0 flex-1 text-xs text-ink-700 sm:flex-none">
           <span className="mb-1 block font-semibold">{t('time.from_date')}</span>
           <input
             type="date"
-            className="input !w-auto !py-1.5"
+            className="input !w-full !py-1.5 max-sm:!px-3 max-sm:!text-sm sm:!w-auto"
             value={shown.from}
             max={shown.to || today}
             onChange={(e) => pick({ ...shown, from: e.target.value })}
           />
         </label>
-        <label className="text-xs text-ink-700">
+        <label className="min-w-0 flex-1 text-xs text-ink-700 sm:flex-none">
           <span className="mb-1 block font-semibold">{t('time.to_date')}</span>
           <input
             type="date"
-            className="input !w-auto !py-1.5"
+            className="input !w-full !py-1.5 max-sm:!px-3 max-sm:!text-sm sm:!w-auto"
             value={shown.to}
             min={shown.from || undefined}
             max={today}
@@ -281,7 +281,7 @@ export default function OverviewPanel() {
         )}
         <button
           type="button"
-          className="btn-neutral !px-3 !py-1.5 ml-auto text-xs"
+          className="btn-neutral !px-3 !py-1.5 text-xs max-sm:w-full sm:ml-auto"
           disabled={exporting || problem !== null}
           onClick={exportData}
         >
@@ -325,7 +325,7 @@ export default function OverviewPanel() {
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="!mt-10 !mb-6 flex items-center gap-4 font-display text-2xl font-semibold text-ink-900">
+    <h2 className="!mt-10 !mb-6 flex items-center gap-4 font-display text-xl font-semibold text-ink-900 sm:text-2xl">
       <span aria-hidden className="h-px flex-1 bg-mist-200" />
       {children}
       <span aria-hidden className="h-px flex-1 bg-mist-200" />
@@ -416,7 +416,10 @@ function Headline({ title, dial, children }: { title: string; dial: ReactNode; c
       <InView className="flex h-full flex-col">
         <h3 className="section-title mb-3">{title}</h3>
         <div className="grid flex-1 gap-3 sm:grid-cols-[minmax(0,200px)_1fr]">
-          <section className="card grid place-content-center p-4">{dial}</section>
+          <section className="card flex items-center justify-center p-4">
+            {/* A phone has the full width to give, and the dial would fill the whole first screen. */}
+            <div className="w-40 sm:w-full">{dial}</div>
+          </section>
           <div className="grid grid-cols-2 gap-3">{children}</div>
         </div>
       </InView>

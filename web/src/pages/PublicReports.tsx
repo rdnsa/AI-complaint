@@ -150,7 +150,7 @@ function ReporterList({ isHere }: { isHere: IsHere }) {
 
         {shown.map((r) => (
           <Reveal key={r.id}>
-            <article className="card p-6">
+            <article className="card p-4 sm:p-6">
               <div className="flex flex-wrap items-center gap-2">
                 <PriorityBadge value={r.priority} />
                 <StatusBadge value={r.status} />
@@ -220,7 +220,7 @@ function StaffList({ isHere }: { isHere: IsHere }) {
 
         {shown.map((r) => (
           <Reveal key={r.id}>
-            <article className="card p-6">
+            <article className="card p-4 sm:p-6">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-ink-800">
                   <StaffMark size="h-6 w-6 rounded-md" />

@@ -23,7 +23,7 @@ function LanguageButton({ small = false }: { small?: boolean }) {
           key={p.code}
           onClick={() => setLanguage(p.code)}
           aria-pressed={language === p.code}
-          className={`rounded-full text-nav font-semibold transition ${small ? 'px-2 py-1' : 'min-h-7 px-3'} ${
+          className={`relative after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-[''] rounded-full text-nav font-semibold transition ${small ? 'px-2 py-1' : 'min-h-7 px-3'} ${
             language === p.code ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-600 hover:text-ink-900'
           }`}
         >
@@ -49,7 +49,7 @@ function ThemeButton({ small = false }: { small?: boolean }) {
       onClick={() => setDark(!dark)}
       aria-label={dark ? t('theme.to_light') : t('theme.to_dark')}
       title={dark ? t('theme.to_light') : t('theme.to_dark')}
-      className={`relative shrink-0 rounded-full bg-mist-100 p-0.5 transition ${size}`}
+      className={`relative shrink-0 rounded-full bg-mist-100 p-0.5 transition after:absolute after:inset-x-0 after:-inset-y-2.5 after:content-[''] ${size}`}
     >
       <span
         aria-hidden
@@ -205,7 +205,7 @@ export default function Header({
       <header>
         {hero ? (
           // The landing stage enters in sequence: label, title, line, actions.
-          <div className="mx-auto max-w-5xl px-4 pb-6 pt-14 text-center sm:pb-10 sm:pt-20">
+          <div className="mx-auto max-w-5xl px-4 pb-6 pt-10 text-center sm:pb-10 sm:pt-20">
             {kicker && (
               <p className="anim-fade-up font-display text-kicker font-semibold text-ink-900" style={delay(100)}>
                 {kicker}
@@ -233,14 +233,18 @@ export default function Header({
             )}
           </div>
         ) : (
-          <div className={`mx-auto max-w-5xl px-4 ${compact ? 'pb-8 pt-5' : 'pb-12 pt-8 sm:pb-16'}`}>
+          <div className={`mx-auto max-w-5xl px-4 ${compact ? 'pb-2 pt-3 sm:pb-8 sm:pt-5' : 'pb-6 pt-4 sm:pb-16 sm:pt-8'}`}>
             {!onHome && (
-              <div className="mb-4">
+              <div className="mb-2 sm:mb-4">
                 <BackButton />
               </div>
             )}
             {mark && (
-              <div className="anim-fade-up mb-4" style={delay(60)}>
+              // On a phone the mark gives way to the page itself: smaller, and gone where every pixel is work.
+              <div
+                className={`anim-fade-up mb-3 sm:mb-4 [&>*]:max-sm:!h-11 [&>*]:max-sm:!w-11 [&>*]:max-sm:!rounded-xl ${compact ? 'max-sm:hidden' : ''}`}
+                style={delay(60)}
+              >
                 {mark}
               </div>
             )}

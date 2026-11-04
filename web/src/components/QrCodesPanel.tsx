@@ -110,7 +110,7 @@ export default function QrCodesPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700 print:hidden">
+      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700 max-sm:hidden print:hidden">
         {t('qr.description')}
       </p>
 

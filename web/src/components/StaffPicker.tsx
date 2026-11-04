@@ -20,7 +20,7 @@ export default function StaffPicker({
 
   return (
     <div
-      className={`card p-6 ${selected ? '' : 'ring-2 ring-accent-500'}`}
+      className={`card p-4 sm:p-6 ${selected ? '' : 'ring-2 ring-accent-500'}`}
     >
       <label
         htmlFor="staff-picker"
