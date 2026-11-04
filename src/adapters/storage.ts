@@ -6,7 +6,7 @@ import type { Env } from '../env';
  * Three kinds of photo are uploaded into one bucket, separated by prefix: 'report'
  * for the condition photo from a reporter, 'proof' for the proof-of-completion
  * photo from staff, 'cleaning' for the photo of one task on a cleaning report.
- * 'work' (the older staff work log) is no longer written but stays readable. Only
+ * 'work' (from the old work log, since removed) is no longer written but stays readable. Only
  * these prefixes (plus their pre-rename Indonesian equivalents) may ever be read back.
  */
 export const FOLDER = { report: 'report', proof: 'proof', work: 'work', cleaning: 'cleaning' } as const;

@@ -172,7 +172,7 @@ export default function CleaningPanel() {
         <>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Select className="input !w-auto !py-2" value={staffId} onChange={setStaffId}>
-              <option value="">{t('work.all_staff')}</option>
+              <option value="">{t('clean.all_staff')}</option>
               {staffList.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}

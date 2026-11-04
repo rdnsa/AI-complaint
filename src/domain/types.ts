@@ -95,34 +95,6 @@ export function toDTO(row: ReportRow): ReportDTO {
   };
 }
 
-/** An older staff work report ("I cleaned this toilet"), joined with its toilet. Read-only history. */
-export interface WorkLogRow {
-  id: string;
-  toilet_id: string;
-  staff_id: string;
-  staff_name: string;
-  description: string;
-  photo_key: string;
-  proof_verdict: ProofVerdict;
-  proof_reason: string | null;
-  proof_model: string | null;
-  proof_ms: number | null;
-  created_at: string;
-  toilet_name?: string;
-  building_code?: string;
-  building_name?: string;
-  floor?: number;
-  type?: string;
-}
-
-export interface WorkLogDTO extends Omit<WorkLogRow, 'photo_key'> {
-  photo_url: string | null;
-}
-
-export function workLogToDTO({ photo_key, ...rest }: WorkLogRow): WorkLogDTO {
-  return { ...rest, photo_url: photoUrl(photo_key) };
-}
-
 /**
  * A report may only be closed once evidence exists — and the evidence must
  * show the reported location clean, as judged by the vision model.

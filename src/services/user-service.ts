@@ -189,8 +189,7 @@ export type DeleteResult =
 /**
  * Deletes a staff name or a supervisor account.
  *
- * An account that already has work behind it (work logs, cleaning reports,
- * reports) is refused: removing it would orphan that history or erase it, and
+ * An account that already has work behind it (cleaning reports, reports) is refused: removing it would orphan that history or erase it, and
  * the supervisor can deactivate it instead, which hides the name just as well.
  * The activity log keeps naming the person in plain text either way.
  */

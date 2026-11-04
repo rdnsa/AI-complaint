@@ -1,8 +1,8 @@
 import { wibDayRange, isValidDate } from '../adapters/clock';
 
 /**
- * The time filter shared by the report and work-log lists, so the
- * supervisor's "when" means the same thing on both tabs.
+ * The time filter shared by the report, cleaning and activity lists, so the
+ * supervisor's "when" means the same thing on every tab.
  *
  * Dates are WIB and inclusive at both ends. The time of day is WIB too, to the
  * minute, and inclusive: `hour_from=07:30&hour_to=12:15` covers 07:30:00 to

@@ -93,16 +93,6 @@ classDiagram
     +details : JSON
     +log(action, actor, summary)$
   }
-  class WorkLog {
-    <<data lama, baca-saja>>
-    +id : String «PK»
-    +toiletId : String «FK»
-    +staffId : String «FK»
-    +staffName : String
-    +description : String
-    +photoKey : String
-    +proofVerdict : ProofVerdict
-  }
   class Toilet {
     <<data lama>>
     +id : String «PK»
@@ -120,7 +110,5 @@ classDiagram
   CleaningArea "1" <-- "0..*" CleaningReport : dikerjakan di
   User "1" <-- "0..*" CleaningReport : dilaporkan oleh (petugas)
   CleaningReport "1" *-- "1..6" CleaningReportTask : memuat
-  Toilet "1" <-- "0..*" WorkLog : dikerjakan di
-  User "1" <-- "0..*" WorkLog : dicatat oleh
   Report "0..1" <.. "0..*" ActivityLog : mencatat
   DailySummary ..> Report : merangkum

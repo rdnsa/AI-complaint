@@ -99,14 +99,13 @@ export async function update(
 }
 
 /**
- * How many records point at this account. Work logs, cleaning reports and
- * reports are history the system keeps; an account with any of it is not
+ * How many records point at this account. Cleaning reports and reports are
+ * history the system keeps; an account with any of it is not
  * deleted, only deactivated.
  */
 export async function countRecords(env: Env, id: string): Promise<number> {
   const row = await env.DB.prepare(
-    `SELECT (SELECT COUNT(*) FROM work_logs        WHERE staff_id    = ?1)
-          + (SELECT COUNT(*) FROM cleaning_reports WHERE staff_id    = ?1)
+    `SELECT (SELECT COUNT(*) FROM cleaning_reports WHERE staff_id    = ?1)
           + (SELECT COUNT(*) FROM reports          WHERE reporter_id = ?1) AS n`,
   )
     .bind(id)

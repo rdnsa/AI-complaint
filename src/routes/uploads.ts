@@ -34,7 +34,7 @@ app.post('/', async (c) => {
     return c.json({ error: `Ukuran foto maksimal ${MAX_BYTES / 1024 / 1024} MB` }, 413);
   }
 
-  // 'work' (the older work log) is still readable but nothing uploads to it any more.
+  // 'work' (from the old work log, since removed) is still readable but nothing uploads to it any more.
   const requested = c.req.query('kind') ?? '';
   const kind: PhotoKind = UPLOADABLE.includes(requested as PhotoKind) ? (requested as PhotoKind) : 'report';
   const key = await savePhoto(c.env, file, kind);

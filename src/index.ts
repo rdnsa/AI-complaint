@@ -13,7 +13,6 @@ import staffRoutes from './routes/staff';
 import summaryRoutes from './routes/summary';
 import uploadRoutes from './routes/uploads';
 import userRoutes from './routes/users';
-import workLogRoutes from './routes/work-logs';
 import { generateDailySummary } from './services/summary-service';
 
 /**
@@ -30,7 +29,7 @@ app.use('*', logger());
 // Dashboards poll these every half minute. A validator lets the browser ask "has it changed?"
 // and get an empty 304 when it has not. Photos (/api/uploads) are left out: hashing an image
 // body would cost more than it saves.
-for (const prefix of ['summary', 'activity', 'cleaning', 'reports', 'work-logs', 'users', 'staff', 'leaderboard']) {
+for (const prefix of ['summary', 'activity', 'cleaning', 'reports', 'users', 'staff', 'leaderboard']) {
   app.use(`/api/${prefix}`, etag({ weak: true }));
   app.use(`/api/${prefix}/*`, etag({ weak: true }));
 }
@@ -39,7 +38,6 @@ app.get('/api/health', (c) => c.json({ ok: true, time: new Date().toISOString() 
 
 app.route('/api/auth', authRoutes);
 app.route('/api/reports', reportRoutes);
-app.route('/api/work-logs', workLogRoutes);
 app.route('/api/cleaning', cleaningRoutes);
 app.route('/api/staff', staffRoutes);
 app.route('/api/uploads', uploadRoutes);

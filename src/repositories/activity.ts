@@ -13,7 +13,6 @@ export type ActivityAction =
   | 'proof_rejected'
   | 'verification_failed'
   | 'question'
-  | 'work_logged'
   | 'cleaning_reported'
   | 'cleaning_out_of_range';
 
@@ -29,7 +28,6 @@ const ACTIVITY_ACTIONS: ActivityAction[] = [
   'proof_rejected',
   'verification_failed',
   'question',
-  'work_logged',
   'cleaning_reported',
   'cleaning_out_of_range',
 ];

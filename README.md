@@ -37,8 +37,8 @@ floor of a building, a building's yard, a whole building, or a place like
 Lapang Voli. The same locations appear on every page, so a complaint, a daily
 task and a sticker always name a place the same way. The system is no longer
 toilet-only: any location's cleanliness can be reported. The `toilets` table
-and its `work_logs` survive only as legacy data that older reports still point
-at; queries read both through the `location_info` view.
+survives only as legacy data that older reports still point at; queries read
+both through the `location_info` view.
 
 ---
 
@@ -68,9 +68,9 @@ at; queries read both through the `location_info` view.
 - Mandatory condition photo from reporters, mandatory proof photo from staff
 - Immutable activity log for management oversight
 - Supervisor dashboard in five tabs: **Ringkasan** (Overview), **Laporan**
-  (Complaints / Cleaning), **Log** (Activity log / Work log, the latter legacy),
+  (Complaints / Cleaning), **Activity log**,
   **Petugas & Supervisor** (accounts), **QR lokasi** (stickers). Overview opens
-  with the AI daily summary, then a 7/14/30/90-day range (default 90) over a
+  with the AI daily summary, then a date range (default the last 30 days, up to 366) over a
   gauge, KPI cards with sparklines, area, donut, radial, treemap, aging-bar,
   heatmap and stacked-bar charts
 - Status tracking for reporters without an account
@@ -97,10 +97,8 @@ at; queries read both through the `location_info` view.
     per area (done ✓ with who and when / not reported ✗), plus what each person
     did. Staff do not own areas: whoever is free does the work. Areas live in
     `seed/cleaning-areas.sql` (`npm run db:seed:cleaning`)
-- Staff work log (older, toilet-based): kept read-only under **Log → Log
-  pekerjaan**; nothing writes to it any more (`POST /api/work-logs` is gone)
 - Photos only from the live in-page camera, never from the gallery
-- Time filters on the complaint list, work log and activity log: presets (all,
+- Time filters on the complaint list and activity log: presets (all,
   today, yesterday, 7 days, 30 days, date range) plus a WIB time window chosen
   on a dial clock to the minute; windows crossing midnight (22:00–06:00) work;
   exact timestamps throughout
@@ -124,7 +122,7 @@ Two models, never for the same job — the split follows the input type. Daily-t
 | On failure | report is kept unlabelled, can be re-analysed | the close is refused (`502`); staff retry |
 | Code | `analyzeComplaint()`, `summarizeDay()`, `chatWithTools()` in `src/adapters/llm.ts` | `checkProofPhoto()` in the same file |
 | Config | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | `VISION_BASE_URL`, `VISION_MODEL`, `VISION_API_KEY` |
-| Stored in | `reports.categories/priority/summary/recommendation/ai_*`, `daily_summaries` | `reports.proof_*` (and the legacy `work_logs.proof_*`); `activity_log` rows `proof_rejected`, `verification_failed` |
+| Stored in | `reports.categories/priority/summary/recommendation/ai_*`, `daily_summaries` | `reports.proof_*`; `activity_log` rows `proof_rejected`, `verification_failed` |
 | Cost | paid, very cheap | Google AI Studio free tier |
 
 Both go through the same `chatJSON()` helper because both providers speak the
@@ -139,7 +137,7 @@ Three parties, and only the supervisor ever signs in.
 |---|---|---|---|
 | **Reporter** | nobody — or self-registers at `/register` to appear on the leaderboard | no (optional) | report a dirty spot or broken facility at any location, with a live-camera photo |
 | **Cleaning staff** | the supervisor adds a **name** in the dashboard | **no** — picks their name from a dropdown at the moment they act | claim and resolve complaints (proof photo checked by the vision model), take over a colleague's claim, and send the daily tasks |
-| **Supervisor** (SPV) | ships with the database (`admin` / `Admin123!`); can add more | yes | monitor reports, cleaning recap, charts and the activity log; read the legacy work log; manage staff names and supervisor accounts (add, rename, change password, deactivate, delete) |
+| **Supervisor** (SPV) | ships with the database (`admin` / `Admin123!`); can add more | yes | monitor reports, cleaning recap, charts and the activity log; manage staff names and supervisor accounts (add, rename, change password, deactivate, delete) |
 
 Kato Bot is open to everyone; QR stickers are made in the supervisor dashboard.
 
@@ -283,13 +281,13 @@ Every check is logged, so usage can be counted without opening Google's console:
 npx wrangler d1 execute kato --remote --command "
 SELECT date(created_at) AS day, action, COUNT(*) AS count
   FROM activity_log
- WHERE action IN ('proof_rejected','verification_failed','work_logged')
+ WHERE action IN ('proof_rejected','verification_failed')
     OR (action='status_changed' AND (details LIKE '%\"verdict\":\"clean\"%'
                                       OR details LIKE '%\"hasil\":\"bersih\"%'))
  GROUP BY day, action ORDER BY day DESC"
 ```
 
-`status_changed` rows with `verdict: clean` (and legacy `work_logged` rows) are accepted
+`status_changed` rows with `verdict: clean` are accepted
 photos, `proof_rejected` rejected ones, `verification_failed` failed calls;
 together they are the day's request count. An `LLM HTTP 429` in the log means the daily quota ran out.
 
@@ -362,7 +360,7 @@ Reports filed before migration 0011 point at a legacy toilet
 | `GET` | `/api/reports/:id` | one report |
 | `PATCH` | `/api/reports/:id` | staff: `{status, staff_id, proof_photo_key?}`; claiming (`in_progress`) is not a lock and may be taken over; closing needs a proof photo, checked by the vision model (`422` when the place still looks dirty or is the wrong place, `502` when the check fails); a resolved report answers `409` |
 | `GET` | `/api/staff` | the names on the staff dropdown |
-| `POST` | `/api/uploads?kind=report\|proof\|work\|cleaning` | upload a photo |
+| `POST` | `/api/uploads?kind=report\|proof\|cleaning` | upload a photo |
 | `GET` | `/api/uploads/:key` | serve a photo from R2 |
 | `GET` | `/api/leaderboard` | leaderboard |
 | `GET` | `/api/ask` | the daily question budget |
@@ -377,7 +375,6 @@ Reports filed before migration 0011 point at a legacy toilet
 | `DELETE` | `/api/reports/:id` | delete permanently, logged with a full copy |
 | `GET` | `/api/cleaning/reports` | daily-task reports; filters `staff_id, area_id, alerts=1, from, to, hour_from, hour_to` |
 | `GET` | `/api/cleaning/recap?date=` | one WIB day per area: tasks reported, by whom, and gaps; plus work per staff member |
-| `GET` | `/api/work-logs` | legacy staff work log (read-only); filters `staff_id, toilet_id, building, from, to, hour_from, hour_to` |
 | `GET` | `/api/summary?date=` | the stored daily summary |
 | `GET` | `/api/summary/stats?date=` | counters for the day |
 | `GET` | `/api/summary/charts?from=&to=` | chart data for a WIB date range (max 366 days), including `statuses` and `aging` |
@@ -429,20 +426,19 @@ src/
     password.ts          PBKDF2 hashing
     clock.ts             UTC ↔ WIB day conversion
     memo.ts              in-memory cache and the Cache-Control presets (HTTP_CACHE)
-  repositories/          reports, cleaning, work-logs (legacy, read-only), users,
+  repositories/          reports, cleaning, users,
                          activity, summaries,
                          time-filter (the shared date/hour filter),
                          analytics (the aggregate queries the question tools run)
   services/
     report-service.ts    filing, claiming/closing (changeStatus), deleting a report
     cleaning-service.ts  daily-task reports: photo, GPS and duplicate checks, recap
-    work-log-service.ts  listWorkLogs only: the legacy work log
     analysis-service.ts  per-report analysis, run after the response is sent
     summary-service.ts   daily summary, statistics, charts, leaderboard
     ask-service.ts       tool definitions, system prompt and daily budget for questions
     user-service.ts      registration, sign-in, account management and deletion
     activity-service.ts  writing and reading the audit trail
-  routes/                auth, reports, cleaning, work-logs (GET only), staff, uploads,
+  routes/                auth, reports, cleaning, staff, uploads,
                          summary, activity, users, leaderboard, ask
 
 web/src/
@@ -462,7 +458,7 @@ web/src/
   components/FloatingChat.tsx, AskPanel.tsx    Kato Bot: draggable floating icon and its chat
   components/ComplaintCard.tsx, DailyTasks.tsx, StaffPicker.tsx   staff page
   components/OverviewPanel.tsx, CleaningPanel.tsx, ActivityPanel.tsx,
-             WorkLogPanel.tsx, AccountsPanel.tsx, QrCodesPanel.tsx   dashboard tabs
+             AccountsPanel.tsx, QrCodesPanel.tsx   dashboard tabs
   components/charts/     validated palette (colors.ts) and the chart set: AreaChart, BarChart,
                          StackedBarChart, Donut, RadialGauge, RadialBars, HourClock, StaffRings,
                          Treemap, Heatmap, AgingBars, Sparkline, KpiCard, CountUp
@@ -470,7 +466,7 @@ web/src/
                          Register, Leaderboard, SupervisorDashboard
   ../public/peta-lokasi-gedung.jpg    campus building map
 
-migrations/              D1 schema, applied in order (0001–0012)
+migrations/              D1 schema, applied in order (0001–0013)
 seed/cleaning-areas.sql  the current location list and staff names
 seed/toilets.sql         legacy toilet list that older reports point at
 scripts/generate-qr.mjs  QR codes and the A4 print sheet
@@ -489,7 +485,7 @@ docs/                    technical reference and general guide (HTML + PDF)
   work on `workers.dev`).
 - **HTTP**: `Cache-Control` presets per route (`HTTP_CACHE`), and weak ETags
   (`hono/etag`) on the GET routes of summary, activity, cleaning, reports,
-  work-logs, users, staff and leaderboard, so a poll that finds nothing new
+  users, staff and leaderboard, so a poll that finds nothing new
   gets an empty `304`. Photos are excluded.
 - **Frontend**: polling stops while the tab is hidden, the report list polls
   only while its tab is shown, every page and dashboard tab (and Kato Bot) is a

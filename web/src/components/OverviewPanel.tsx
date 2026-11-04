@@ -28,7 +28,7 @@ interface DateRange {
   to: string;
 }
 
-const DEFAULT_DAYS = 90;
+const DEFAULT_DAYS = 30;
 const MAX_RANGE_DAYS = 366;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_BUCKETS = [0, 3, 6, 9, 12, 15, 18, 21];

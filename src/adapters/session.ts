@@ -66,6 +66,6 @@ function requireRole(...allowed: Role[]): MiddlewareHandler<AppEnv> {
 /**
  * Only the supervisor signs in to manage anything. Cleaning staff never hold a
  * session: they pick their name on the floor page instead (see `staff_id`
- * in the report and work-log routes).
+ * in the report and cleaning routes).
  */
 export const requireSupervisor = requireRole('supervisor');

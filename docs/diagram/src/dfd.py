@@ -14,7 +14,6 @@ STORES = {
     'D2': 'Lokasi (cleaning_areas)',
     'D3': 'Laporan (reports)',
     'D4': 'Kebersihan (cleaning_reports)',
-    'D5': 'Log Lama (work_logs)',
     'D6': 'Ringkasan Harian (daily_summaries)',
     'D7': 'Log Aktivitas (activity_log)',
     'D8': 'Foto (R2 bucket)',
@@ -132,8 +131,7 @@ def level1():
     d.process('p8', 560, 1715, '8.0', 'Pantau &\nKelola Laporan')
     store(d, 'd1c', 1000, 1330, 'D1', dup=True)
     for key, y, code in [('d2c', 1475, 'D2'), ('d3c', 1560, 'D3'), ('d4c', 1645, 'D4'),
-                         ('d5c', 1730, 'D5'), ('d6c', 1815, 'D6'), ('d7c', 1900, 'D7'),
-                         ('d8c', 1985, 'D8')]:
+                         ('d6c', 1730, 'D6'), ('d7c', 1815, 'D7'), ('d8c', 1900, 'D8')]:
         store(d, key, 0, y, code, dup=True, left=880)
 
     d.flow('plp_c', 'p1', 'data registrasi & login')
@@ -149,7 +147,6 @@ def level1():
     d.flow('d3c', 'p8', 'keluhan', t=0.3)
     d.flow('p8', 'd3c', 'hapus keluhan', t=0.85)
     d.flow('d4c', 'p8', 'laporan kebersihan', t=0.35, side=-1)
-    d.flow('d5c', 'p8', 'log lama', t=0.35, side=-1)
     d.flow('d6c', 'p8', 'ringkasan harian', t=0.35, side=-1)
     d.flow('d7c', 'p8', 'log aktivitas', t=0.35, side=-1)
     d.flow('p8', 'd8c', 'hapus foto', t=0.65, side=-1)
@@ -467,8 +464,7 @@ def l2_8():
     store(d, 'd6', 0, 385, 'D6', left=left)
     store(d, 'd4', 0, 520, 'D4', left=left)
     store(d, 'd2b', 0, 600, 'D2', dup=True, left=left)
-    store(d, 'd7', 0, 740, 'D7', left=left)
-    store(d, 'd5', 0, 820, 'D5', left=left)
+    store(d, 'd7', 0, 780, 'D7', left=left)
     store(d, 'd3c', 0, 920, 'D3', dup=True, left=left)
     store(d, 'd7b', 0, 1040, 'D7', dup=True, left=left)
     store(d, 'd8', 0, 1160, 'D8', left=left)
@@ -486,9 +482,8 @@ def l2_8():
     d.flow('d4', 'c', 'laporan kebersihan', side=-1)
     d.flow('d2b', 'c', 'daftar area', side=1)
     d.flow('spv2', 'e', 'jenis aksi,\nfilter waktu', t=0.55)
-    d.flow('e', 'spv2', 'log aktivitas\n& log lama', t=0.45)
+    d.flow('e', 'spv2', 'log aktivitas', t=0.45)
     d.flow('d7', 'e', 'log aktivitas', side=1)
-    d.flow('d5', 'e', 'log pekerjaan lama', side=-1)
     d.flow('spv3', 'f', 'perintah hapus', t=0.55)
     d.flow('d3c', 'f', 'salinan keluhan', t=0.22, side=-1)
     d.flow('f', 'd3c', 'hapus keluhan', t=0.5)

@@ -6,7 +6,6 @@ import Select from './Select';
 
 const ACTIONS = [
   'report_created',
-  'work_logged',
   'cleaning_reported',
   'cleaning_out_of_range',
   'status_changed',
@@ -22,7 +21,6 @@ const ACTIONS = [
 
 const COLORS: Record<string, string> = {
   report_created: 'bg-accent-50 text-accent-700 ring-accent-200',
-  work_logged: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
   cleaning_reported: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
   cleaning_out_of_range: 'bg-red-50 text-red-800 ring-red-200',
   status_changed: 'bg-accent-50 text-accent-600 ring-accent-100',
@@ -62,12 +60,8 @@ export default function ActivityPanel() {
 
   return (
     <div className="mt-6">
-      <p className="rounded-nav bg-glass px-4 py-3 text-sm leading-relaxed text-ink-700">
-        {t('activity.description')}
-      </p>
-
       <Select
-        className="input mt-4 !w-auto !py-2"
+        className="input !w-auto !py-2"
         value={action}
         onChange={setAction}
       >

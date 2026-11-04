@@ -27,8 +27,6 @@ export interface LeaderboardRow {
 export type Priority = 'low' | 'medium' | 'high';
 export type ReportStatus = 'new' | 'in_progress' | 'resolved';
 
-/** A toilet's type, only on the older work logs. */
-export type ToiletType = 'men' | 'women' | 'accessible';
 /** 'wrong_place': the photo does not show the reported location. */
 export type ProofVerdict = 'clean' | 'dirty' | 'wrong_place';
 export type Category = 'cleanliness' | 'supplies' | 'damage' | 'odor' | 'flooding' | 'other';
@@ -65,24 +63,6 @@ export interface Report {
 export interface StaffOption {
   id: string;
   name: string;
-}
-
-/** A staff work report: which toilet was cleaned, by whom, with an AI-checked photo. */
-export interface WorkLog {
-  id: string;
-  toilet_id: string;
-  toilet_name: string;
-  building_code: string;
-  building_name: string;
-  floor: number;
-  type: ToiletType;
-  staff_id: string;
-  staff_name: string;
-  description: string;
-  photo_url: string | null;
-  proof_verdict: ProofVerdict;
-  proof_reason: string | null;
-  created_at: string;
 }
 
 /** A report on the public board: no raw text, no photo, no staff name. */
@@ -157,7 +137,6 @@ export type ActivityAction =
   | 'proof_rejected'
   | 'verification_failed'
   | 'question'
-  | 'work_logged'
   | 'cleaning_reported'
   | 'cleaning_out_of_range';
 
@@ -423,10 +402,6 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ status, ...extra }),
     }),
-  workLogs: (filter: Record<string, string> = {}) => {
-    const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
-    return req<{ data: WorkLog[] }>(`/api/work-logs?${q}`);
-  },
 
   // --- cleaning reports per area ---
   serverTime: () => req<{ ok: boolean; time: string }>('/api/health'),

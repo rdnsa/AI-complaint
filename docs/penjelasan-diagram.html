@@ -68,7 +68,7 @@
   <li>Siapa saja yang terlibat</li>
   <li>Tiga jenis diagram: DFD, UML, dan BPMN</li>
   <li>Cara membaca simbol DFD</li>
-  <li>Delapan &ldquo;lemari arsip&rdquo; (data store)</li>
+  <li>Tujuh &ldquo;lemari arsip&rdquo; (data store)</li>
   <li>DFD Level 0 &mdash; Diagram Konteks</li>
   <li>DFD Level 1 &mdash; Sembilan proses utama</li>
   <li>DFD Level 2 &mdash; Rincian setiap proses (9.1&ndash;9.9)</li>
@@ -263,8 +263,8 @@ yang paling umum diajarkan. Hanya ada lima simbol:</p>
 </div>
 
 <!-- ================================================================ 6 -->
-<h2 class="pecah">6. Delapan &ldquo;lemari arsip&rdquo; (data store)</h2>
-<p>Sistem menyimpan datanya di delapan tempat. Tujuh berupa tabel di basis data, satu berupa
+<h2 class="pecah">6. Tujuh &ldquo;lemari arsip&rdquo; (data store)</h2>
+<p>Sistem menyimpan datanya di tujuh tempat. Enam berupa tabel di basis data, satu berupa
 tempat penyimpanan foto. Nama dalam kurung adalah nama tabel sebenarnya di basis data.</p>
 <table>
   <tr><th style="width:24%">Data store</th><th>Isinya</th><th style="width:30%">Contoh satu baris</th></tr>
@@ -272,9 +272,8 @@ tempat penyimpanan foto. Nama dalam kurung adalah nama tabel sebenarnya di basis
   <tr><td><strong>D2 Lokasi</strong> (cleaning_areas)</td><td>Daftar lokasi: lantai gedung, halaman gedung, gedung utuh, atau tempat di luar gedung. Tiap lokasi punya kode (yang dibawa QR), nama, enam tugas harian yang berlaku, dan urutan tampil. Pencarian memakai view <code>location_info</code>, yang menggabungkan lokasi baru dengan data lama <code>buildings</code> dan <code>toilets</code>.</td><td>C-2 &middot; Gedung C (Perkuliahan) &ndash; Lantai 2</td></tr>
   <tr><td><strong>D3 Laporan</strong> (reports)</td><td>Setiap keluhan: teks asli, foto kondisi, lokasi (<code>area_id</code>, atau <code>toilet_id</code> untuk data lama), status, petugas yang memegang, hasil analisis AI (kategori, prioritas, ringkasan, saran), serta foto bukti dan penilaian AI atas foto itu.</td><td>&ldquo;lantai becek&rdquo; &middot; genangan &middot; prioritas sedang &middot; status in_progress</td></tr>
   <tr><td><strong>D4 Laporan Kebersihan</strong> (cleaning_reports)</td><td>Laporan tugas harian: lokasi, petugas, catatan, posisi GPS, jarak ke pusat kampus, dan status lokasi (<em>ok</em>, <em>far</em>, <em>unknown</em>). Tabel <code>cleaning_report_tasks</code> menyimpan tiap tugas beserta fotonya dan waktu server menerima foto itu.</td><td>Siti &middot; C-2 &middot; membuang sampah &middot; 08.15 &middot; ok</td></tr>
-  <tr><td><strong>D5 Log Lama</strong> (work_logs)</td><td>Catatan pekerjaan versi lama (per toilet, dengan foto yang dinilai bersih). Sekarang <strong>baca-saja</strong>: tidak ada lagi yang menambah, tetapi supervisor masih bisa melihatnya.</td><td>Siti membersihkan B-1-WOMEN &middot; 08.15</td></tr>
   <tr><td><strong>D6 Ringkasan Harian</strong> (daily_summaries)</td><td>Satu paragraf ringkasan per hari dan poin-poin sorotannya.</td><td>29-10-2026 &middot; 7 keluhan &middot; &ldquo;Gedung C paling banyak&hellip;&rdquo;</td></tr>
-  <tr><td><strong>D7 Log Aktivitas</strong> (activity_log)</td><td>&ldquo;Buku besar&rdquo; semua kejadian penting (14 jenis): keluhan masuk, analisis, perubahan status dan pengambilalihan, foto ditolak, login, perubahan akun, penghapusan, pertanyaan, laporan kebersihan, laporan di luar kampus. Hanya ditambah, tidak pernah diubah atau dihapus.</td><td>14.02 &middot; Budi &middot; mengambil alih keluhan dari Siti</td></tr>
+  <tr><td><strong>D7 Log Aktivitas</strong> (activity_log)</td><td>&ldquo;Buku besar&rdquo; semua kejadian penting (13 jenis): keluhan masuk, analisis, perubahan status dan pengambilalihan, foto ditolak, login, perubahan akun, penghapusan, pertanyaan, laporan kebersihan, laporan di luar kampus. Hanya ditambah, tidak pernah diubah atau dihapus.</td><td>14.02 &middot; Budi &middot; mengambil alih keluhan dari Siti</td></tr>
   <tr><td><strong>D8 Foto</strong> (R2 bucket)</td><td>Berkas foto: foto kondisi dari pelapor, foto bukti, dan foto tugas harian. Foto bukti yang ditolak AI dan foto tugas yang terlalu lama langsung dihapus.</td><td>proof/3f2a&hellip;.jpg</td></tr>
 </table>
 
@@ -311,7 +310,7 @@ berhenti adalah penutupan keluhan, sebab bukti yang belum diperiksa tidak dihitu
 <!-- ================================================================ 8 -->
 <h2 class="pecah">8. DFD Level 1 &mdash; Sembilan proses utama</h2>
 <p>Level 1 &ldquo;membuka tutup&rdquo; kotak di Level 0. Proses tunggal &ldquo;0&rdquo; dipecah menjadi
-<strong>sembilan proses</strong>, dan kedelapan data store mulai terlihat. Semua entitas dan aliran dari
+<strong>sembilan proses</strong>, dan ketujuh data store mulai terlihat. Semua entitas dan aliran dari
 Level 0 tetap ada; sekarang terlihat proses mana yang menanganinya.</p>
 <p>Banyak proses membaca atau menulis <strong>D3 Laporan</strong>, jantung sistem ini. Supaya garis
 tidak bersilangan, diagram memakai <strong>salinan simbol</strong> (lihat Bagian 5): setiap proses
@@ -331,7 +330,7 @@ proses 8.0 (Tampilkan Log). Bila pencatatan gagal, tindakan yang dicatat tetap b
 
 <div class="halaman-besar">
   <img src="diagram/dfd-level-1.svg" alt="DFD Level 1">
-  <p style="font-size:9pt;color:#7A3628;margin:2mm 0 0">Gambar 2. DFD Level 1: sembilan proses, delapan data store. Simbol bergaris tegak ganda atau bergaris miring di sudut adalah salinan.</p>
+  <p style="font-size:9pt;color:#7A3628;margin:2mm 0 0">Gambar 2. DFD Level 1: sembilan proses, tujuh data store. Simbol bergaris tegak ganda atau bergaris miring di sudut adalah salinan.</p>
 </div>
 
 <h3>Penjelasan setiap proses</h3>
@@ -370,7 +369,7 @@ daftar saat bekerja.</p>
   <tr><td class="no">1.1 Registrasi Pelapor</td><td>Pelapor mengisi nama pengguna (minimal 3 karakter), nama, dan kata sandi (minimal 8 karakter). Sistem memastikan nama pengguna belum dipakai, lalu menyimpan akun dengan kata sandi yang sudah diacak. Pendaftaran mandiri selalu menghasilkan akun <em>pelapor</em>, tidak pernah supervisor.</td><td>Data pendaftaran (Pelapor); cek nama pengguna (D1)</td><td>Akun baru (D1); identitas baru (1.3)</td></tr>
   <tr><td class="no">1.2 Verifikasi Login</td><td>Mencocokkan kata sandi dengan versi acaknya di D1. Akun nonaktif dan akun petugas ditolak. &ldquo;Nama tidak dikenal&rdquo; dan &ldquo;kata sandi salah&rdquo; sengaja diberi pesan yang sama, supaya orang iseng tidak bisa menebak nama pengguna mana yang ada. Login supervisor dicatat di D7.</td><td>Kredensial (Pelapor, Supervisor); data akun (D1)</td><td>Identitas terverifikasi (1.3); log login (D7)</td></tr>
   <tr><td class="no">1.3 Buat Sesi</td><td>Memberi &ldquo;tiket masuk&rdquo; berupa cookie bertanda tangan digital, sehingga pengguna tidak perlu login ulang setiap membuka halaman. Tanda tangan itu mencegah orang memalsukan tiketnya.</td><td>Identitas (1.1, 1.2)</td><td>Sesi (Pelapor, Supervisor)</td></tr>
-  <tr><td class="no">1.4 Kelola Akun &amp; Petugas</td><td>Supervisor menambah nama petugas atau akun supervisor lain, mengganti nama atau kata sandi, menonaktifkan, atau <strong>menghapus</strong> akun. Aturan pengamannya: akun yang sudah punya riwayat (keluhan, laporan kebersihan, log pekerjaan) tidak bisa dihapus (ditolak dengan kode 409; gunakan nonaktifkan), supervisor tidak bisa menghapus atau menonaktifkan dirinya sendiri, supervisor aktif terakhir tidak bisa dihapus, dan petugas tidak bisa diberi kata sandi. Setiap perubahan dicatat di D7.</td><td>Perintah (Supervisor); daftar akun dan jumlah riwayat (D1)</td><td>Akun diperbarui atau dihapus (D1); daftar akun, penolakan (Supervisor); log (D7)</td></tr>
+  <tr><td class="no">1.4 Kelola Akun &amp; Petugas</td><td>Supervisor menambah nama petugas atau akun supervisor lain, mengganti nama atau kata sandi, menonaktifkan, atau <strong>menghapus</strong> akun. Aturan pengamannya: akun yang sudah punya riwayat (keluhan, laporan kebersihan) tidak bisa dihapus (ditolak dengan kode 409; gunakan nonaktifkan), supervisor tidak bisa menghapus atau menonaktifkan dirinya sendiri, supervisor aktif terakhir tidak bisa dihapus, dan petugas tidak bisa diberi kata sandi. Setiap perubahan dicatat di D7.</td><td>Perintah (Supervisor); daftar akun dan jumlah riwayat (D1)</td><td>Akun diperbarui atau dihapus (D1); daftar akun, penolakan (Supervisor); log (D7)</td></tr>
 </table>
 
 <!-- 9.2 -->
@@ -466,9 +465,9 @@ Diagram menggambarkan Supervisor tiga kali hanya agar garis tidak saling menyila
 <table>
   <tr><th style="width:16%">Sub-proses</th><th>Penjelasan</th><th style="width:19%">Masuk</th><th style="width:19%">Keluar</th></tr>
   <tr><td class="no">8.1 Tampilkan Daftar Keluhan</td><td>Tab Laporan &rsaquo; Keluhan. Menampilkan keluhan dengan waktu masuk dan waktu selesai yang tepat. Bisa disaring menurut status, prioritas, dan filter waktu: preset (semua, hari ini, kemarin, 7 hari, 30 hari, rentang tanggal) ditambah jam dari/sampai berketelitian satu menit (WIB; jendela yang melewati tengah malam, misalnya 22.00&ndash;06.00, didukung).</td><td>Filter (Supervisor); keluhan (D3)</td><td>Daftar keluhan (Supervisor)</td></tr>
-  <tr><td class="no">8.2 Hitung Statistik &amp; Grafik</td><td>Tab Ringkasan. Menghitung angka dan grafik untuk rentang 7/14/30/90 hari (bawaan 90): tingkat penyelesaian, keluhan masuk lawan selesai, status, prioritas, kategori, gedung, umur keluhan terbuka, waktu penyelesaian, serta pola hari dan jam. Hari tanpa keluhan diisi angka nol, bukan dilewati, supaya grafik tidak menyesatkan. Kartu ringkasan AI hari ini dibaca dari D6.</td><td>Rentang hari (Supervisor); keluhan (D3); ringkasan tersimpan (D6)</td><td>Grafik, KPI, ringkasan harian (Supervisor)</td></tr>
+  <tr><td class="no">8.2 Hitung Statistik &amp; Grafik</td><td>Tab Ringkasan. Menghitung angka dan grafik untuk rentang tanggal (bawaan 30 hari terakhir): tingkat penyelesaian, keluhan masuk lawan selesai, status, prioritas, kategori, gedung, umur keluhan terbuka, waktu penyelesaian, serta pola hari dan jam. Hari tanpa keluhan diisi angka nol, bukan dilewati, supaya grafik tidak menyesatkan. Kartu ringkasan AI hari ini dibaca dari D6.</td><td>Rentang hari (Supervisor); keluhan (D3); ringkasan tersimpan (D6)</td><td>Grafik, KPI, ringkasan harian (Supervisor)</td></tr>
   <tr><td class="no">8.3 Tampilkan Laporan Kebersihan</td><td>Tab Laporan &rsaquo; Kebersihan. Menampilkan <strong>rekap harian per lokasi</strong>: tugas mana yang sudah dikirim, jam berapa, dan oleh siapa; tugas yang belum dikirim adalah celah pada lokasi itu, karena petugas tidak punya lokasi tetap. Dilengkapi daftar laporan dengan foto dan <strong>peringatan</strong> untuk laporan di luar kampus atau tanpa GPS.</td><td>Filter (Supervisor); laporan kebersihan (D4); lokasi (D2)</td><td>Rekap, laporan, peringatan GPS (Supervisor)</td></tr>
-  <tr><td class="no">8.4 Tampilkan Log</td><td>Tab Log. <em>Log aktivitas</em> (D7) adalah jejak audit yang tidak terhapus, bisa disaring menurut jenis aksi dan waktu, dengan waktu persis. <em>Log pekerjaan</em> (D5) adalah data lama yang hanya bisa dibaca.</td><td>Jenis aksi &amp; filter waktu (Supervisor); D7; D5</td><td>Log aktivitas &amp; log lama (Supervisor)</td></tr>
+  <tr><td class="no">8.4 Tampilkan Log</td><td>Tab Log aktivitas (D7) adalah jejak audit yang tidak terhapus, bisa disaring menurut jenis aksi dan waktu, dengan waktu persis.</td><td>Jenis aksi &amp; filter waktu (Supervisor); D7</td><td>Log aktivitas (Supervisor)</td></tr>
   <tr><td class="no">8.5 Hapus Keluhan</td><td>Satu-satunya tindakan yang benar-benar menghapus data keluhan. Karena itu, <strong>salinan lengkap keluhan disimpan dulu ke D7</strong> sebelum keluhannya dihapus dari D3 dan fotonya dari D8. Pimpinan tetap bisa melihat keluhan yang hilang dan siapa yang menghapusnya.</td><td>Perintah (Supervisor); salinan (D3)</td><td>Salinan + log (D7); hapus (D3, D8)</td></tr>
   <tr><td class="no">8.6 Buat Stiker QR</td><td>Tab QR lokasi. Membuat satu stiker QR per lokasi dari daftar lokasi aktif. QR mengarah ke <code>/report/&lt;kode&gt;</code>, stikernya dwibahasa (Indonesia dan Inggris), siap cetak di kertas A4 atau diunduh sebagai PNG. Yang mencetak dan menempelnya adalah supervisor.</td><td>Daftar lokasi (D2)</td><td>Stiker QR (Supervisor)</td></tr>
 </table>
@@ -541,7 +540,7 @@ dirancang</em>. Dokumen ini memuat tiga jenis diagram UML, masing-masing untuk p
   <tr><td>Analisis Ulang Keluhan</td><td>Mengulang analisis yang gagal. Menjalankan Analisis Keluhan (AI).</td></tr>
   <tr><td>Pantau Dashboard &amp; Statistik</td><td>Ringkasan, grafik, dan angka-angka ringkas.</td></tr>
   <tr><td>Lihat Laporan Keluhan &amp; Kebersihan</td><td>Daftar keluhan dengan filter waktu; rekap harian per petugas dan peringatan GPS.</td></tr>
-  <tr><td>Lihat Log Aktivitas</td><td>Menelusuri siapa melakukan apa (dan log pekerjaan lama).</td></tr>
+  <tr><td>Lihat Log Aktivitas</td><td>Menelusuri siapa melakukan apa.</td></tr>
   <tr><td>Hapus Keluhan, Kelola Akun &amp; Petugas, Cetak Stiker QR</td><td>Menghapus keluhan (salinannya tetap di log); menambah, mengubah, menonaktifkan, atau menghapus akun dan nama petugas; mencetak stiker QR per lokasi.</td></tr>
 </table>
 <table>
@@ -550,11 +549,11 @@ dirancang</em>. Dokumen ini memuat tiga jenis diagram UML, masing-masing untuk p
   <tr><td><strong>LLM Vision</strong></td><td>Verifikasi Foto Bukti (AI)</td></tr>
   <tr><td><strong>Penjadwal</strong></td><td>Buat Ringkasan Harian (setiap pukul 17.00 WIB)</td></tr>
 </table>
-<p>Tugas harian tidak digambar sebagai include &ldquo;Pindai QR / Pilih Lokasi&rdquo; karena lokasinya bisa dipilih manual maupun lewat stiker <code>/clean/&lt;kode&gt;</code>. &ldquo;Lihat Log Pekerjaan&rdquo; tidak digambar sebagai use case terpisah karena kini hanya membaca data lama (bagian dari Lihat Log Aktivitas).</p>
+<p>Tugas harian tidak digambar sebagai include &ldquo;Pindai QR / Pilih Lokasi&rdquo; karena lokasinya bisa dipilih manual maupun lewat stiker <code>/clean/&lt;kode&gt;</code>.</p>
 
 <!-- ================================================================ 12 -->
 <h2 class="pecah">12. Class Diagram</h2>
-<figure><img src="diagram/uml-class.svg" alt="UML Class" style="max-height:215mm"><figcaption>Gambar 13. Class diagram: sepuluh kelas data (tiga di antaranya data lama atau baca-saja) dan daftar nilai tetap (enumeration) dalam satu kotak catatan.</figcaption></figure>
+<figure><img src="diagram/uml-class.svg" alt="UML Class" style="max-height:215mm"><figcaption>Gambar 13. Class diagram: sembilan kelas data (satu di antaranya data lama) dan daftar nilai tetap (enumeration) dalam satu kotak catatan.</figcaption></figure>
 
 <h3>Cara membaca simbolnya</h3>
 <p>Setiap <strong>kotak</strong> adalah satu <em>kelas</em>, yaitu satu jenis &ldquo;formulir&rdquo; yang
@@ -587,8 +586,7 @@ dicatat sistem. Kotak dibagi tiga bagian dari atas ke bawah:</p>
   <tr><td><strong>CleaningReportTask</strong></td><td>Tugas yang dikerjakan dalam satu laporan kebersihan, dengan foto dan waktu server menerima foto itu. Kunci foto bersifat <em>unik</em>: satu foto tidak bisa membuktikan dua tugas atau dua laporan.</td></tr>
   <tr><td><strong>DailySummary</strong><br>(Ringkasan Harian)</td><td>Satu per tanggal: jumlah keluhan, paragraf ringkasan, poin sorotan.</td></tr>
   <tr><td><strong>ActivityLog</strong><br>(Log Aktivitas)</td><td>Buku catatan kejadian: kapan, apa, siapa, kalimat ringkas, dan rincian. Rujukannya ke keluhan dibuat <em>longgar</em> (garis putus-putus, 0..1) dengan sengaja: bila keluhan dihapus, catatannya tetap ada. Justru keluhan yang dihapus itulah yang paling perlu bisa ditelusuri.</td></tr>
-  <tr><td><strong>WorkLog</strong> &laquo;data lama, baca-saja&raquo;</td><td>Catatan kerja rutin versi lama (per toilet, dengan foto yang dinilai bersih). Tidak diisi lagi; hanya dibaca supervisor di tab Log.</td></tr>
-  <tr><td><strong>Toilet</strong> &laquo;data lama&raquo;</td><td>Kode unik seperti <code>A-2-MEN</code> (gedung A, lantai 2, pria). Dirujuk oleh keluhan dan log pekerjaan lama. Tabel <code>buildings</code> (gedung A&ndash;J) yang melengkapinya tidak digambar terpisah; kodenya muncul sebagai <code>buildingCode</code>.</td></tr>
+  <tr><td><strong>Toilet</strong> &laquo;data lama&raquo;</td><td>Kode unik seperti <code>A-2-MEN</code> (gedung A, lantai 2, pria). Dirujuk oleh keluhan lama. Tabel <code>buildings</code> (gedung A&ndash;J) yang melengkapinya tidak digambar terpisah; kodenya muncul sebagai <code>buildingCode</code>.</td></tr>
 </table>
 
 <h3>Hubungan antarkelas</h3>
@@ -598,7 +596,6 @@ dicatat sistem. Kotak dibagi tiga bagian dari atas ke bawah:</p>
   <li><strong>CleaningArea 1 &mdash; 0..* CleaningReport</strong> dan <strong>User 1 &mdash; 0..* CleaningReport</strong>: setiap laporan kebersihan dibuat untuk satu lokasi oleh satu petugas.</li>
   <li><strong>CleaningReport 1 &mdash; 1..6 CleaningReportTask</strong>: satu laporan memuat satu sampai enam tugas (komposisi). Antarmuka mengirim satu tugas per kiriman.</li>
   <li><strong>ActivityLog 0..* &mdash; 0..1 Report</strong>: satu keluhan bisa punya banyak catatan kejadian.</li>
-  <li><strong>Toilet 1 &mdash; 0..* WorkLog</strong> dan <strong>User 1 &mdash; 0..* WorkLog</strong>: log lama tercatat di satu toilet oleh satu petugas.</li>
 </ul>
 
 <h3>Arti setiap daftar pilihan (enumeration)</h3>
@@ -767,7 +764,7 @@ ke diagram lain.</p>
   <tr><td>Cookie / Sesi</td><td>&ldquo;Tiket masuk&rdquo; kecil yang disimpan peramban (browser) supaya pengguna tidak perlu login berulang kali.</td></tr>
   <tr><td>Cron / Penjadwal</td><td>Pengatur waktu yang menjalankan tugas otomatis pada jam tertentu.</td></tr>
   <tr><td>Dashboard</td><td>Halaman ringkasan untuk memantau keadaan, berisi daftar, angka, dan grafik.</td></tr>
-  <tr><td>Data lama</td><td>Tabel dan catatan sebelum migrasi 0011 (<code>toilets</code>, <code>buildings</code>, <code>work_logs</code>) yang masih disimpan tetapi tidak diisi lagi.</td></tr>
+  <tr><td>Data lama</td><td>Tabel dan catatan sebelum migrasi 0011 (<code>toilets</code>, <code>buildings</code>) yang masih disimpan tetapi tidak diisi lagi.</td></tr>
   <tr><td>Data store</td><td>Tempat data disimpan (di DFD digambar sebagai kotak terbuka di sisi kanan).</td></tr>
   <tr><td>GPS</td><td>Posisi ponsel (lintang, bujur) yang dibandingkan dengan pusat dan radius kampus.</td></tr>
   <tr><td>Hash</td><td>Pengacakan satu arah. Kata sandi diubah menjadi kode yang tidak bisa dikembalikan ke aslinya.</td></tr>

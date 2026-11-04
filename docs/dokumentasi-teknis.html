@@ -141,7 +141,7 @@ kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
   <tr><th>Hal</th><th>Nilai</th><th>Sumber</th></tr>
   <tr><td>Penangan HTTP</td><td>37 (36 titik akhir API + <span class="mono">/api/health</span>) dalam 11 modul route</td><td class="mono">src/index.ts, src/routes/*.ts</td></tr>
   <tr><td>Migrasi D1</td><td>11 (0001&ndash;0011)</td><td class="mono">migrations/</td></tr>
-  <tr><td>Tabel dan view</td><td>10 tabel (<span class="mono">buildings, toilets, users, reports, work_logs, cleaning_areas, cleaning_reports, cleaning_report_tasks, daily_summaries, activity_log</span>) dan 2 view (<span class="mono">toilet_info, location_info</span>)</td><td class="mono">migrations/0008, 0009, 0011</td></tr>
+  <tr><td>Tabel dan view</td><td>9 tabel (<span class="mono">buildings, toilets, users, reports, cleaning_areas, cleaning_reports, cleaning_report_tasks, daily_summaries, activity_log</span>) dan 2 view (<span class="mono">toilet_info, location_info</span>)</td><td class="mono">migrations/0008, 0009, 0011</td></tr>
   <tr><td>Lokasi aktif (area kebersihan)</td><td>29: 9 halaman gedung (A&ndash;I), 19 lantai, 1 tempat di luar gedung (Lapang Voli)</td><td class="mono">seed/cleaning-areas.sql</td></tr>
   <tr><td>Toilet aktif (data lama)</td><td>26, di gedung A, B, C, G, H, I</td><td class="mono">seed/toilets.sql</td></tr>
   <tr><td>Nama petugas di seed</td><td>11</td><td class="mono">seed/cleaning-areas.sql</td></tr>
@@ -228,7 +228,7 @@ lokasi) tetap berbahasa Indonesia.</p>
 <pre>src/
   index.ts                 composition root: routes, ETag lemah, fallback SPA, penangan cron
   env.ts                   binding infrastruktur dan konfigurasi (Env, AppEnv)
-  domain/types.ts          enum, ReportRow/ReportDTO, WorkLogRow/WorkLogDTO, CleaningReportRow/DTO,
+  domain/types.ts          enum, ReportRow/ReportDTO, CleaningReportRow/DTO,
                            photoUrl(), toDTO(), canResolve(), distanceMeters(), locationStatus()
   adapters/
     llm.ts                 prompt, few-shot, validasi keluaran, postChat() (failover kunci), chatJSON(),
@@ -241,22 +241,20 @@ lokasi) tetap berbahasa Indonesia.</p>
   repositories/
     reports.ts             keluhan: daftar dashboard, publik, terbuka, milik pelapor, kembar, analisis
     cleaning.ts            area, laporan kebersihan, angka grafik, foto terpakai
-    work-logs.ts           laporan pekerjaan lama (read-mostly)
     time-filter.ts         filter waktu bersama (from, to, hour_from, hour_to; WIB, inklusif)
     users.ts               akun SPV/pelapor dan nama petugas
-    activity.ts            jejak audit (activity_log) dan 14 jenis aksinya
+    activity.ts            jejak audit (activity_log) dan 13 jenis aksinya
     summaries.ts           ringkasan harian, kartu angka, data grafik, papan peringkat
     analytics.ts           query agregat untuk Kato Bot (GROUPINGS, filter terikat)
   services/
     report-service.ts      kirim, ubah status (+ verifikasi bukti), hapus keluhan
     analysis-service.ts    analisis satu keluhan, dijalankan setelah respons dikirim
     cleaning-service.ts    daftar area, kirim laporan kebersihan, rekap harian (dailyRecap)
-    work-log-service.ts    log pekerjaan lama (hanya baca)
     summary-service.ts     ringkasan harian, statistik, data grafik, papan peringkat
     ask-service.ts         definisi alat, prompt sistem, anggaran harian, pencatatan Kato Bot
     user-service.ts        masuk, daftar, tambah/ubah/nonaktif/hapus akun
     activity-service.ts    tulis (log) dan baca (history) jejak audit
-  routes/                  auth, reports, work-logs, cleaning, staff, uploads, summary,
+  routes/                  auth, reports, cleaning, staff, uploads, summary,
                            activity, users, leaderboard, ask
 
 web/src/
@@ -275,7 +273,7 @@ web/src/
   components/              Header, Camera, FloatingChat, AskPanel, Select, ClockPicker, TimeFilter,
                            LocationSelect, RoleSwitch, StaffPicker, ComplaintCard, DailyTasks, Tracker,
                            Badges, CampusMap, ImageViewer, ZoomableImage, PasswordInput, Marks
-                           panel dashboard: OverviewPanel, CleaningPanel, ActivityPanel, WorkLogPanel,
+                           panel dashboard: OverviewPanel, CleaningPanel, ActivityPanel,
                            AccountsPanel, QrCodesPanel
     charts/                AgingBars, AreaChart, BarChart, CountUp, Donut, Heatmap, HourClock, KpiCard,
                            RadialBars, RadialGauge, Sparkline, StackedBarChart, StaffRings, Treemap,
@@ -297,7 +295,7 @@ AI, kalimat jejak audit, nama lokasi) tetap bahasa Indonesia.</p>
 
 <div class="catatan">
   <strong>Data lama dan data baru berdampingan.</strong> Sistem dimulai sebagai pelaporan toilet. Tabel <span class="mono">toilets</span>
-  dan <span class="mono">buildings</span> masih ada, begitu pula <span class="mono">work_logs</span> yang menunjuk toilet, dan laporan lama
+  dan <span class="mono">buildings</span> masih ada, dan laporan lama
   tetap menunjuk toilet (<span class="mono">reports.toilet_id</span>). Laporan baru menunjuk <strong>area kebersihan</strong>
   (<span class="mono">reports.area_id</span>). Kedua jenis lokasi dibaca lewat satu view, <span class="mono">location_info</span>, sehingga tidak ada
   query yang perlu membedakan. Yang berubah hanya di mana lokasi <em>baru</em> didaftarkan (<span class="mono">seed/cleaning-areas.sql</span>).
@@ -385,15 +383,6 @@ AI, kalimat jejak audit, nama lokasi) tetap bahasa Indonesia.</p>
 (<span class="mono">admin &rarr; spv &rarr; supervisor</span>) lewat migrasi 0007 dan 0008; kata sandi awalnya tertulis di komentar migrasi 0004 dan
 <strong>harus diganti</strong> pada masuk pertama.</p>
 
-<h3>work_logs (laporan pekerjaan lama)</h3>
-<table class="kolom">
-  <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
-  <tr><td>id, toilet_id, staff_id, staff_name</td><td></td><td><span class="mono">toilet_id</span> menunjuk <span class="mono">toilets</span>; <span class="mono">staff_id</span> ke <span class="mono">users</span></td></tr>
-  <tr><td>description, photo_key</td><td>TEXT</td><td>Apa yang dikerjakan, dalam kata petugas; foto (<span class="mono">work/&hellip;</span> atau <span class="mono">kerja/&hellip;</span> pada data lama)</td></tr>
-  <tr><td>proof_verdict, proof_reason, proof_model, proof_ms</td><td></td><td>Selalu <span class="mono">clean</span> pada data tersimpan</td></tr>
-  <tr><td>created_at</td><td>TEXT</td><td>Indeks pada <span class="mono">created_at</span>, <span class="mono">toilet_id</span>, dan <span class="mono">staff_id</span></td></tr>
-</table>
-
 <h3>daily_summaries dan activity_log</h3>
 <table class="kolom">
   <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
@@ -403,7 +392,7 @@ AI, kalimat jejak audit, nama lokasi) tetap bahasa Indonesia.</p>
   <tr><td colspan="3"><strong>activity_log</strong>: sengaja <em>tanpa foreign key</em> ke <span class="mono">reports</span></td></tr>
   <tr><td>id</td><td>INTEGER PK AUTOINCREMENT</td><td></td></tr>
   <tr><td>created_at</td><td>TEXT</td><td>UTC</td></tr>
-  <tr><td>action</td><td>TEXT</td><td>Salah satu dari 14 jenis (bab 11)</td></tr>
+  <tr><td>action</td><td>TEXT</td><td>Salah satu dari 13 jenis (bab 11)</td></tr>
   <tr><td>report_id</td><td>TEXT, NULL</td><td>Tetap tercatat walau keluhannya sudah dihapus</td></tr>
   <tr><td>actor</td><td>TEXT</td><td>Nama seseorang, atau <span class="mono">reporter</span> / <span class="mono">system</span> / <span class="mono">visitor</span></td></tr>
   <tr><td>summary, details</td><td>TEXT, TEXT (JSON)</td><td>Satu kalimat yang langsung terbaca; rincian terstruktur (mis. salinan keluhan yang dihapus)</td></tr>
@@ -435,6 +424,7 @@ bernilai NULL dan <span class="mono">building_order</span> bernilai 999 bila tid
   <tr><td class="mono">0010_daily_tasks.sql</td><td>Satu daftar enam tugas di semua area (<span class="mono">sweep</span> + <span class="mono">mop</span> menjadi <span class="mono">sweep_mop</span>; ditambah <span class="mono">trash, gallon, tidy</span>); <span class="mono">CHECK</span> tugas dibangun ulang tetapi tetap menerima nilai lama</td></tr>
   <tr><td class="mono">0011_report_locations.sql</td><td>Keluhan atas lokasi mana pun: <span class="mono">area_id</span> + <span class="mono">toilet_id</span> (tepat satu), <span class="mono">not_toilet</span> &rarr; <span class="mono">wrong_place</span>, view <span class="mono">location_info</span>; <span class="mono">reports</span> dibangun ulang karena SQLite tidak dapat melepas NOT NULL atau mengubah CHECK</td></tr>
   <tr><td class="mono">0012_drop_cleaning_assignments.sql</td><td>Menghapus <span class="mono">cleaning_assignments</span>: petugas tidak punya area tetap; rekap dihitung per area</td></tr>
+  <tr><td class="mono">0013_drop_work_logs.sql</td><td>Menghapus <span class="mono">work_logs</span>; tabelnya kosong dan tidak ada lagi yang menulis ke sana</td></tr>
 </table>
 <p>Migrasi diterapkan dengan <span class="mono">npm run db:local</span> / <span class="mono">npm run db:remote</span> (<span class="mono">wrangler d1 migrations apply kato</span>). Pola yang berulang:
 SQLite tidak dapat mengubah <span class="mono">CHECK</span> atau <span class="mono">NOT NULL</span>, jadi tabel dibangun ulang, anak dahulu; D1 tidak dapat mematikan foreign key, hanya menundanya
@@ -514,7 +504,7 @@ lama tidak boleh tertinggal: QR yang sudah tidak terdaftar akan ditolak sistem b
 <h3>Foto hanya dari kamera langsung</h3>
 <p>Setiap foto di aplikasi (keluhan, bukti penyelesaian, tugas harian) diambil dengan komponen <span class="mono">Camera</span> (<span class="mono">getUserMedia</span>, kamera belakang
 sebagai pilihan), tanpa <span class="mono">&lt;input type="file"&gt;</span> dan tanpa pilihan galeri. Bingkai diperkecil (sisi terpanjang maksimal 1600 piksel), dikodekan JPEG kualitas 0,85,
-dan diunggah ke <span class="mono">POST /api/uploads?kind=&hellip;</span> (<span class="mono">report</span>, <span class="mono">proof</span>, <span class="mono">work</span>, <span class="mono">cleaning</span>). Tanpa HTTPS atau tanpa kamera, tidak ada foto.
+dan diunggah ke <span class="mono">POST /api/uploads?kind=&hellip;</span> (<span class="mono">report</span>, <span class="mono">proof</span>, <span class="mono">cleaning</span>). Tanpa HTTPS atau tanpa kamera, tidak ada foto.
 <strong>Kejujuran batas:</strong> larangan galeri adalah sifat <em>frontend</em>. Server tidak dapat membedakan unggahan kamera dari unggahan lain (hanya memeriksa tipe JPEG/PNG/WebP dan ukuran 5 MB), sehingga
 pertahanan sisi server terhadap foto lama adalah batas umur dan pemakaian tunggal (bab 7) serta pemeriksaan model vision (bab 9).</p>
 
@@ -662,10 +652,6 @@ status = distance === null ? 'unknown'
 </ol>
 <p>Sisi lain data yang sama: <span class="mono">GET /api/cleaning/reports</span> (SPV; filter <span class="mono">staff_id, area_id, alerts=1</span>, filter waktu; maks. 500) memberi daftar laporan dengan foto dan penanda GPS;
 <span class="mono">GET /api/cleaning/reports/public</span> menampilkannya di papan publik <em>tanpa nama petugas dan tanpa GPS</em> (bab 13). Dashboard tab Laporan &rarr; <em>Kebersihan</em> menampilkan rekap dan daftar itu; hitungan merah pada tab menunjukkan peringatan hari ini.</p>
-
-<h3>Laporan pekerjaan lama (work log)</h3>
-<p>Sebelum tugas harian, petugas mengirim &ldquo;Sudah saya bersihkan&rdquo; per <em>toilet</em> dengan foto yang diperiksa model vision. Data itu (tabel <span class="mono">work_logs</span>) tetap dibaca SPV di dashboard, tab Log &rarr; <em>Log pekerjaan</em>
-(<span class="mono">GET /api/work-logs</span>, filter petugas, toilet, gedung, dan waktu). Tidak ada lagi yang menulis ke tabel itu: antarmuka petugas tidak mengirimnya, dan rute <span class="mono">POST /api/work-logs</span> sudah dihapus dari server. Pekerjaan harian kini dicatat sebagai laporan kebersihan (bagian di atas); <span class="mono">work-log-service.ts</span> hanya berisi pembacanya.</p>
 
 <h2 class="pecah">8. Analisis LLM teks, ringkasan harian, dan Kato Bot</h2>
 <p>Model teks (DeepSeek) mengerjakan tiga hal: menganalisis tiap keluhan, menyusun ringkasan harian, dan menjawab pertanyaan lewat Kato Bot. Semuanya lewat <span class="mono">src/adapters/llm.ts</span>.</p>
@@ -828,7 +814,7 @@ bucket tidak menumpuk foto bukti palsu; riwayat penolakan hidup di jejak audit, 
   <tr><th>Golongan</th><th>Rute</th><th>Cara identitas</th></tr>
   <tr><td>Publik, tanpa identitas</td><td><span class="mono">POST /api/reports</span> (sesi <span class="mono">reporter</span> opsional mengikat laporan), <span class="mono">GET /api/reports/public|open|:id</span>, <span class="mono">GET /api/reports/mine</span>, <span class="mono">GET /api/cleaning/areas[/:id]</span>, <span class="mono">GET /api/cleaning/reports/public</span>, <span class="mono">GET /api/staff</span>, <span class="mono">GET /api/leaderboard</span>, <span class="mono">POST|GET /api/ask</span>, <span class="mono">POST /api/uploads</span>, <span class="mono">GET /api/uploads/*</span>, <span class="mono">GET /api/health</span></td><td>&mdash;</td></tr>
   <tr><td>Petugas tanpa login</td><td><span class="mono">PATCH /api/reports/:id</span> (klaim, ambil alih, selesai), <span class="mono">POST /api/cleaning/reports</span></td><td><span class="mono">staff_id</span> di body, harus petugas aktif; <span class="mono">PATCH</span> juga menerima sesi supervisor</td></tr>
-  <tr><td>Hanya supervisor</td><td><span class="mono">GET /api/reports</span>, <span class="mono">POST /api/reports/:id/reanalyze</span>, <span class="mono">DELETE /api/reports/:id</span>, <span class="mono">GET /api/cleaning/reports</span>, <span class="mono">GET /api/cleaning/recap</span>, <span class="mono">GET /api/work-logs</span>, <span class="mono">GET /api/activity</span>, <span class="mono">GET /api/summary</span>, <span class="mono">/stats</span>, <span class="mono">/charts</span>, <span class="mono">POST /api/summary/generate</span>, seluruh <span class="mono">/api/users</span></td><td>Cookie sesi, peran <span class="mono">supervisor</span></td></tr>
+  <tr><td>Hanya supervisor</td><td><span class="mono">GET /api/reports</span>, <span class="mono">POST /api/reports/:id/reanalyze</span>, <span class="mono">DELETE /api/reports/:id</span>, <span class="mono">GET /api/cleaning/reports</span>, <span class="mono">GET /api/cleaning/recap</span>, <span class="mono">GET /api/activity</span>, <span class="mono">GET /api/summary</span>, <span class="mono">/stats</span>, <span class="mono">/charts</span>, <span class="mono">POST /api/summary/generate</span>, seluruh <span class="mono">/api/users</span></td><td>Cookie sesi, peran <span class="mono">supervisor</span></td></tr>
 </table>
 <p>Seperti papan publik, daftar terbuka untuk petugas (<span class="mono">/open</span>) membuang akun pelapor dan internal AI (bab 6). Pengecualian: <span class="mono">GET /api/reports/:id</span> (halaman status) mengembalikan seluruh DTO, termasuk <span class="mono">reporter_id</span>, <span class="mono">staff_name</span>, dan <span class="mono">ai_error</span>; satu-satunya pengamannya adalah UUID yang tidak dapat ditebak (bab 23). <span class="mono">GET /api/reports/mine</span> mengembalikan daftar kosong, bukan 401, bagi yang bukan <span class="mono">reporter</span>. Kato Bot menilai peran dari sesi (bab 8): sesi bukan <span class="mono">reporter</span> = SPV.</p>
 
@@ -848,7 +834,7 @@ bucket tidak menumpuk foto bukti palsu; riwayat penolakan hidup di jejak audit, 
   <tr><td>Tambah petugas</td><td><span class="mono">POST /api/users {role:"staff", name}</span></td><td>Nama 2&ndash;60 karakter, tanpa username dan sandi (&ldquo;Petugas cukup nama, tanpa login&rdquo;). Jejak <span class="mono">user_changed</span>: &ldquo;Menambah petugas &hellip;&rdquo;</td></tr>
   <tr><td>Tambah supervisor</td><td><span class="mono">POST /api/users {role:"supervisor", username, name, password}</span></td><td>Username 3&ndash;30 <span class="mono">[a-zA-Z0-9._-]</span>, sandi 8&ndash;200; username dipakai &rarr; 409; sandi di-<em>hash</em> dengan garam baru</td></tr>
   <tr><td>Ubah</td><td><span class="mono">PATCH /api/users/:id {name?, password?, active?}</span></td><td>Minimal satu bidang. <span class="mono">password</span> mengganti hash <em>dan</em> garam; petugas tidak punya sandi (400). Akun yang sedang dipakai tidak bisa dinonaktifkan (400, <em>self-lockout</em>). Nonaktif = tidak bisa masuk (SPV) atau hilang dari dropdown (petugas)</td></tr>
-  <tr><td>Hapus</td><td><span class="mono">DELETE /api/users/:id</span></td><td>Hanya SPV atau petugas (pelapor &rarr; 404). Ditolak: akun sendiri (400), <strong>SPV aktif terakhir</strong> (400), dan akun yang <strong>punya catatan</strong> (409, memuat jumlahnya: pesan &ldquo;Akun ini punya N catatan (laporan atau pekerjaan). Nonaktifkan saja agar riwayatnya tetap utuh.&rdquo;). Catatan dihitung dari <span class="mono">work_logs.staff_id</span> + <span class="mono">cleaning_reports.staff_id</span> + <span class="mono">reports.reporter_id</span>. Bila lolos, akun dihapus. Antarmuka meminta konfirmasi &ldquo;Hapus &hellip; secara permanen?&rdquo;</td></tr>
+  <tr><td>Hapus</td><td><span class="mono">DELETE /api/users/:id</span></td><td>Hanya SPV atau petugas (pelapor &rarr; 404). Ditolak: akun sendiri (400), <strong>SPV aktif terakhir</strong> (400), dan akun yang <strong>punya catatan</strong> (409, memuat jumlahnya: pesan &ldquo;Akun ini punya N catatan (laporan atau pekerjaan). Nonaktifkan saja agar riwayatnya tetap utuh.&rdquo;). Catatan dihitung dari <span class="mono">cleaning_reports.staff_id</span> + <span class="mono">reports.reporter_id</span>. Bila lolos, akun dihapus. Antarmuka meminta konfirmasi &ldquo;Hapus &hellip; secara permanen?&rdquo;</td></tr>
 </table>
 <p>Setiap perubahan akun menulis <span class="mono">user_changed</span> dengan kalimat terbaca (&ldquo;Mengubah petugas X: nama, dinonaktifkan&rdquo;, &ldquo;Menghapus akun budi&rdquo;) dan memanggil <span class="mono">forgetStaff()</span>, yang membuang cache daftar petugas. Keluhan menyimpan nama petugas sebagai <em>teks</em> (<span class="mono">reports.staff_name</span>), bukan FK, sehingga keluhan yang pernah ditangani petugas tidak menghalangi penghapusan namanya; jejak audit juga menyebut nama secara polos. Alasan membedakan hapus dan nonaktif: hapus hanya untuk salah ketik atau akun uji tanpa riwayat; yang punya riwayat dinonaktifkan agar riwayat tidak yatim.</p>
 <div class="peringatan">
@@ -891,21 +877,20 @@ bucket tidak menumpuk foto bukti palsu; riwayat penolakan hidup di jejak audit, 
 </ul>
 
 <h3>Jenis aksi (<span class="mono">ActivityAction</span>)</h3>
-<p>Empat belas nilai, didefinisikan di <span class="mono">repositories/activity.ts</span>. Daftar yang sama dipakai untuk memvalidasi filter <span class="mono">action</span> di API.</p>
+<p>Tiga belas nilai, didefinisikan di <span class="mono">repositories/activity.ts</span>. Daftar yang sama dipakai untuk memvalidasi filter <span class="mono">action</span> di API.</p>
 <table>
   <tr><th class="mono">action</th><th>Pelaku (<span class="mono">actor</span>)</th><th>Kapan ditulis</th><th>Isi <span class="mono">details</span></th></tr>
   <tr><td class="mono">report_created</td><td>nama pelapor berakun, atau <span class="mono">reporter</span></td><td>Keluhan baru diterima (kiriman kembar tidak dicatat dua kali)</td><td>area_id, description</td></tr>
   <tr><td class="mono">analysis</td><td class="mono">system</td><td>Analisis teks selesai (<span class="mono">runAnalysis</span>)</td><td>categories, priority, model</td></tr>
   <tr><td class="mono">analysis_failed</td><td class="mono">system</td><td>Analisis teks gagal</td><td>error (maks. 300 karakter)</td></tr>
   <tr><td class="mono">status_changed</td><td>nama petugas yang dipilih saat bertindak, atau SPV</td><td>Keluhan diklaim, diambil alih, atau diselesaikan</td><td>from, to, handed_over_from (nama pemegang sebelumnya atau null), proof_photo, verification {verdict, reason, model, ms} atau null</td></tr>
-  <tr><td class="mono">proof_rejected</td><td>petugas</td><td>Foto bukti dinilai <span class="mono">dirty</span> atau <span class="mono">wrong_place</span></td><td>verdict, reason, confidence, model, ms. Jalur lama laporan pekerjaan menambah description dan <span class="mono">report_id</span> NULL</td></tr>
+  <tr><td class="mono">proof_rejected</td><td>petugas</td><td>Foto bukti dinilai <span class="mono">dirty</span> atau <span class="mono">wrong_place</span></td><td>verdict, reason, confidence, model, ms</td></tr>
   <tr><td class="mono">verification_failed</td><td>petugas</td><td>Layanan vision tidak dapat dihubungi atau responsnya rusak</td><td>error (maks. 300 karakter), model</td></tr>
   <tr><td class="mono">report_deleted</td><td>SPV</td><td>Keluhan dihapus</td><td>salinan: location_name, description, status, priority, categories (teks JSON), summary, created_at, had_photo</td></tr>
   <tr><td class="mono">login</td><td>SPV</td><td>Masuk ke dashboard berhasil</td><td>tidak ada</td></tr>
   <tr><td class="mono">daily_summary</td><td class="mono">system</td><td>Ringkasan harian disusun (cron atau tombol &ldquo;Buat ulang&rdquo;)</td><td>tidak ada; <span class="mono">summary</span> memuat tanggal dan jumlah laporan</td></tr>
   <tr><td class="mono">user_changed</td><td>SPV</td><td>Nama petugas atau akun SPV ditambah, diubah (nama, sandi, aktif/nonaktif), atau <strong>dihapus</strong></td><td>tidak ada; <span class="mono">summary</span> menyebut apa yang berubah</td></tr>
   <tr><td class="mono">question</td><td>nama penanya, atau <span class="mono">visitor</span></td><td>Kato Bot menjawab satu pertanyaan</td><td>question, tools [{name, arguments}], tokens {prompt, completion, cache_hit}, model, ms, ip (sidik SHA-256 dipotong 8 bita; hanya untuk non-SPV, dipakai membatasi 20 pertanyaan per alamat)</td></tr>
-  <tr><td class="mono">work_logged</td><td>petugas</td><td>Laporan pekerjaan versi lama (jalur tulisnya sudah dihapus; hanya baris lama yang tersisa)</td><td>work_log_id, toilet_id, description, verification</td></tr>
   <tr><td class="mono">cleaning_reported</td><td>petugas</td><td>Laporan kebersihan (satu tugas harian dengan fotonya) diterima</td><td>cleaning_report_id, area_id, tasks[], note. <span class="mono">report_id</span> NULL</td></tr>
   <tr><td class="mono">cleaning_out_of_range</td><td>petugas</td><td>Sebagai tambahan <span class="mono">cleaning_reported</span> bila status lokasi <span class="mono">far</span> atau <span class="mono">unknown</span></td><td>cleaning_report_id, area_id, latitude, longitude, accuracy_m, distance_m</td></tr>
 </table>
@@ -921,7 +906,7 @@ Setiap baris dikembalikan dengan <span class="mono">details</span> yang sudah di
 
 <h3>Filter waktu bersama (<span class="mono">repositories/time-filter.ts</span>)</h3>
 <p>Satu fungsi, <span class="mono">buildTimeFilter(kolom, filter)</span>, menyusun klausa <span class="mono">WHERE</span> untuk kolom <span class="mono">created_at</span> dan dipakai
-oleh empat daftar: keluhan (<span class="mono">GET /api/reports</span>), laporan pekerjaan lama (<span class="mono">GET /api/work-logs</span>), jejak audit (<span class="mono">GET /api/activity</span>),
+oleh tiga daftar: keluhan (<span class="mono">GET /api/reports</span>), jejak audit (<span class="mono">GET /api/activity</span>),
 dan laporan kebersihan (<span class="mono">GET /api/cleaning/reports</span>). Agar arti &ldquo;kapan&rdquo; sama di semua tab, tidak ada daftar yang menulis aturan waktunya sendiri.
 <span class="mono">readTimeFilter(query)</span> membaca parameter dari <em>query string</em>.</p>
 <table>
@@ -1063,7 +1048,7 @@ Peringkat berdasar jumlah, tetapi jumlah yang <em>selesai</em> ditampilkan berda
 dan <span class="mono">routes/uploads.ts</span>.</p>
 <table>
   <tr><th>Aspek</th><th>Penerapan</th></tr>
-  <tr><td>Folder (<span class="mono">FOLDER</span>)</td><td>Empat jenis foto, dipisah menurut awalan kunci: <span class="mono">report/</span> (foto keadaan dari pelapor), <span class="mono">proof/</span> (foto bukti penyelesaian keluhan), <span class="mono">cleaning/</span> (foto satu tugas harian), <span class="mono">work/</span> (foto laporan pekerjaan versi lama; tidak lagi dibuat, tetap dapat dibaca)</td></tr>
+  <tr><td>Folder (<span class="mono">FOLDER</span>)</td><td>Empat jenis foto, dipisah menurut awalan kunci: <span class="mono">report/</span> (foto keadaan dari pelapor), <span class="mono">proof/</span> (foto bukti penyelesaian keluhan), <span class="mono">cleaning/</span> (foto satu tugas harian), <span class="mono">work/</span> (foto versi lama; tidak lagi dibuat, tetap dapat dibaca)</td></tr>
   <tr><td>Memilih jenis</td><td><span class="mono">POST /api/uploads?kind=report | proof | cleaning</span>. Nilai tak dikenal, kosong, atau <span class="mono">work</span> (jenis lama) menjadi <span class="mono">report</span>. Server memeriksa awalan itu lagi saat foto dipakai: keluhan hanya menerima <span class="mono">report/</span>, penutupan hanya <span class="mono">proof/</span> dan laporan kebersihan hanya <span class="mono">cleaning/</span>. Foto satu jenis tidak dapat dipakai sebagai jenis lain</td></tr>
   <tr><td>Kunci objek</td><td><span class="mono">&lt;folder&gt;/<wbr>&lt;YYYY-MM-DD&gt;/<wbr>&lt;uuid&gt;.&lt;jpg|png|webp&gt;</span>. Tanggalnya tanggal UTC saat diunggah; awalan tanggal memudahkan penelusuran dan pembersihan per periode</td></tr>
   <tr><td>Awalan lama</td><td><span class="mono">laporan/</span>, <span class="mono">bukti/</span>, <span class="mono">kerja/</span>: objek dari sebelum penggantian nama tetap dapat disajikan dan dihapus, tetapi tidak ada yang baru ditulis ke sana</td></tr>
@@ -1138,13 +1123,6 @@ Path API lama berbahasa Indonesia (<span class="mono">/api/lokasi</span>, <span 
 </ol>
 <p>Nilai <span class="mono">new</span> diterima server tetapi tidak dikirim oleh antarmuka mana pun. Setelah penulisan berhasil, cache statistik, grafik, dan papan peringkat di isolate itu dibuang (<span class="mono">reportsChanged()</span>).</p>
 
-<h3>Log pekerjaan versi lama, hanya baca (<span class="mono">/api/work-logs</span>)</h3>
-<table>
-  <tr><th>Metode, jalur, siapa</th><th>Permintaan</th><th>Respons</th><th>Galat</th></tr>
-  <tr><td class="mono">GET /api/work-logs<br><span class="kecil">SPV</span></td><td><span class="mono">?staff_id, toilet_id, building, from, to, hour_from, hour_to, date, limit</span> (bawaan 100, maks. 200)</td><td><span class="mono">{data:[WorkLog]}</span>, terbaru dulu</td><td>401/403</td></tr>
-</table>
-<p>Hanya pembacaan yang tersisa; dipakai tab Log &rarr; Log pekerjaan. Jalur tulisnya (<span class="mono">POST</span>) dan fungsi kliennya (<span class="mono">createWorkLog</span>) dihapus karena tidak ada lagi yang memakainya; pekerjaan harian dicatat lewat <span class="mono">POST /api/cleaning/reports</span>.</p>
-
 <h3>Lokasi dan laporan kebersihan (<span class="mono">/api/cleaning</span>)</h3>
 <table>
   <tr><th>Metode, jalur, siapa</th><th>Permintaan</th><th>Respons</th><th>Galat</th></tr>
@@ -1178,11 +1156,11 @@ Path API lama berbahasa Indonesia (<span class="mono">/api/lokasi</span>, <span 
 </table>
 <h4>Aturan <span class="mono">DELETE /api/users/:id</span></h4>
 <p>Urutan pemeriksaan di <span class="mono">deleteAccount()</span> (<span class="mono">services/user-service.ts</span>): akun tak ada atau berperan pelapor &rarr; 404; akun sendiri &rarr; 400; SPV aktif terakhir &rarr; 400;
-akun yang masih dirujuk <span class="mono">work_logs.staff_id</span>, <span class="mono">cleaning_reports.staff_id</span>, atau <span class="mono">reports.reporter_id</span> &rarr; <strong>409</strong> dengan jumlahnya di bidang <span class="mono">records</span>
+akun yang masih dirujuk <span class="mono">cleaning_reports.staff_id</span> atau <span class="mono">reports.reporter_id</span> &rarr; <strong>409</strong> dengan jumlahnya di bidang <span class="mono">records</span>
 dan saran menonaktifkan. Bila lolos, akun dihapus, cache nama petugas dibuang, dan <span class="mono">user_changed</span> dicatat.
 Menonaktifkan (<span class="mono">PATCH active:false</span>) menyembunyikan nama sama efektifnya dan menjaga riwayat. Perhatikan: keluhan yang diklaim atau diselesaikan petugas hanya menyimpan <em>nama</em> (<span class="mono">reports.staff_name</span>), jadi tidak ikut dihitung sebagai &ldquo;catatan&rdquo;.</p>
 <h4>Header pada GET tertentu</h4>
-<p>ETag lemah dipasang pada <span class="mono">GET</span> di bawah <span class="mono">/api/summary, /api/activity, /api/cleaning, /api/reports, /api/work-logs, /api/users, /api/staff, /api/leaderboard</span>; permintaan dengan
+<p>ETag lemah dipasang pada <span class="mono">GET</span> di bawah <span class="mono">/api/summary, /api/activity, /api/cleaning, /api/reports, /api/users, /api/staff, /api/leaderboard</span>; permintaan dengan
 <span class="mono">If-None-Match</span> yang cocok dijawab 304 tanpa isi. Foto dikecualikan karena ETag-nya datang dari R2. <span class="mono">Cache-Control</span> per rute ada di bab 17.</p>
 <h2 class="pecah">16. Antarmuka pengguna</h2>
 <p>Frontend adalah aplikasi React 18 satu halaman (Vite, Tailwind, React Router 6) di <span class="mono">web/src/</span>, disajikan oleh Worker yang sama dengan API. Titik masuknya
@@ -1219,21 +1197,20 @@ bentuk <span class="mono">&lt;gedung&gt;-&lt;lantai&gt;</span> dari stiker pintu
 </table>
 
 <h3>Dashboard SPV (<span class="mono">/supervisor</span>)</h3>
-<p>Lima tab dalam satu baris (juga di ponsel; tab dengan label panjang mendapat kolom lebih lebar): <strong>Ringkasan</strong> (halaman awal), <strong>Laporan</strong>, <strong>Log</strong>,
+<p>Lima tab dalam satu baris (juga di ponsel; tab dengan label panjang mendapat kolom lebih lebar): <strong>Ringkasan</strong> (halaman awal), <strong>Laporan</strong>, <strong>Log aktivitas</strong>,
 <strong>Petugas &amp; Supervisor</strong>, <strong>QR lokasi</strong>. Dua tab memuat dua daftar yang dibedakan oleh sakelar kecil (<span class="mono">SubTabs</span>). Tiap tab adalah <em>chunk</em> sendiri yang diunduh saat pertama dibuka.
 Lencana merah di tab Laporan menghitung laporan kebersihan hari ini yang berlokasi di luar kampus atau tanpa GPS (<span class="mono">GET /api/cleaning/reports?alerts=1</span> untuk hari ini, tiap 60 detik di semua tab).</p>
 <table>
   <tr><th>Tab / sub-tab</th><th>Isi</th></tr>
-  <tr><td>Ringkasan</td><td><span class="mono">OverviewPanel</span>: kartu ringkasan AI hari ini di paling atas (tombol &ldquo;Buat ulang&rdquo;, tanda &ldquo;!&rdquo; berisi jadwal 17.00 WIB, dan batang lokasi terbanyak hari ini); pemilih rentang 7/14/30/90 hari (bawaan 90); pengukur tingkat penyelesaian dan empat kartu angka; grafik area, donat status; cincin kemajuan kebersihan per petugas; jam radial; cincin kategori; donat prioritas; treemap gedung (tanda &ldquo;!&rdquo; menerangkan kode gedung); kolom umur; peta panas gedung &times; kategori; batang waktu selesai per prioritas; peta panas hari &times; jam; komposisi prioritas per hari. Pemetaan visual ke data ada di bab 12. Memuat ulang tiap 60 detik</td></tr>
+  <tr><td>Ringkasan</td><td><span class="mono">OverviewPanel</span>: kartu ringkasan AI hari ini di paling atas (tombol &ldquo;Buat ulang&rdquo;, tanda &ldquo;!&rdquo; berisi jadwal 17.00 WIB, dan batang lokasi terbanyak hari ini); pemilih rentang tanggal (bawaan 30 hari terakhir, maksimum 366 hari); pengukur tingkat penyelesaian dan empat kartu angka; grafik area, donat status; cincin kemajuan kebersihan per petugas; jam radial; cincin kategori; donat prioritas; treemap gedung (tanda &ldquo;!&rdquo; menerangkan kode gedung); kolom umur; peta panas gedung &times; kategori; batang waktu selesai per prioritas; peta panas hari &times; jam; komposisi prioritas per hari. Pemetaan visual ke data ada di bab 12. Memuat ulang tiap 60 detik</td></tr>
   <tr><td>Laporan &rsaquo; Keluhan</td><td>Filter status dan prioritas (<span class="mono">Select</span>), <strong>filter waktu</strong>, hitungan &ldquo;<em>n</em> data ditampilkan&rdquo;, dan kartu keluhan (di bawah). Memuat paling banyak 200 baris; memuat ulang tiap 30 detik <em>hanya</em> saat sub-tab ini sedang tampil</td></tr>
   <tr><td>Laporan &rsaquo; Kebersihan</td><td><span class="mono">CleaningPanel</span>. <em>Rekap harian</em>: pilih tanggal (maju/mundur sehari), satu tabel area &times; enam tugas (jam pertama tugas dilaporkan, nama yang mengerjakan, tanda untuk laporan yang berlokasi di luar kampus atau tanpa GPS), daftar pekerjaan per petugas tanpa target, tiga angka ringkas, spanduk peringatan, dan tombol cetak. <em>Laporan &amp; foto</em>: filter petugas dan &ldquo;hanya yang ditandai&rdquo;, setiap laporan dengan foto per tugas, jam server, jarak dari kampus, dan tautan peta. Memuat ulang tiap 30 detik</td></tr>
-  <tr><td>Log &rsaquo; Log aktivitas</td><td><span class="mono">ActivityPanel</span>: pilih jenis aksi (13 pilihan), filter waktu, hingga 300 baris dengan waktu persis WIB. Salinan keluhan yang dihapus dibentangkan langsung (bab 11)</td></tr>
-  <tr><td>Log &rsaquo; Log pekerjaan</td><td><span class="mono">WorkLogPanel</span>: data lama (laporan pekerjaan sebelum laporan kebersihan), hanya dibaca. Filter petugas aktif dan filter waktu, hingga 200 baris</td></tr>
+  <tr><td>Log</td><td><span class="mono">ActivityPanel</span>: pilih jenis aksi (12 pilihan), filter waktu, hingga 300 baris dengan waktu persis WIB. Salinan keluhan yang dihapus dibentangkan langsung (bab 11)</td></tr>
   <tr><td>Petugas &amp; Supervisor</td><td><span class="mono">AccountsPanel</span>: tambah nama petugas (nama saja), tambah akun SPV (username, nama, sandi), ubah nama, ganti sandi SPV, aktifkan/nonaktifkan, dan <strong>hapus</strong> dengan konfirmasi. Hapus hanya berhasil untuk akun tanpa riwayat (409 bila punya catatan); akun sendiri tidak bisa dinonaktifkan atau dihapus, dan SPV aktif terakhir tidak bisa dihapus</td></tr>
   <tr><td>QR lokasi</td><td><span class="mono">QrCodesPanel</span>: satu stiker per lokasi, disaring per gedung. Kode dibuat di peramban dengan pustaka <span class="mono">qrcode</span> (SVG, koreksi galat M) dan menunjuk <span class="mono">&lt;situs ini&gt;/report/&lt;id area&gt;</span>. Stiker memuat judul dan petunjuk <strong>dwibahasa</strong> (Indonesia dan Inggris sekaligus, karena stiker cetak tidak dapat mengikuti sakelar bahasa). Cetak A4 (tiga stiker per baris) atau unduh PNG 1024 px per lokasi (<span class="mono">qr-&lt;id&gt;.png</span>)</td></tr>
 </table>
 <h4>Filter waktu</h4>
-<p><span class="mono">TimeFilter.tsx</span>, dipakai tab Keluhan, Log aktivitas, dan Log pekerjaan. Preset <strong>Semua, Hari ini, Kemarin, 7 hari, 30 hari, Pilih tanggal&hellip;</strong> (menampilkan &ldquo;Dari tanggal&rdquo; / &ldquo;Sampai tanggal&rdquo;),
+<p><span class="mono">TimeFilter.tsx</span>, dipakai tab Keluhan dan Log aktivitas. Preset <strong>Semua, Hari ini, Kemarin, 7 hari, 30 hari, Pilih tanggal&hellip;</strong> (menampilkan &ldquo;Dari tanggal&rdquo; / &ldquo;Sampai tanggal&rdquo;),
 ditambah dua pemilih jam &ldquo;Dari jam&rdquo; dan &ldquo;Sampai jam&rdquo; bergaya jam dial (<span class="mono">ClockPicker</span>, di bawah), dan keterangan WIB. Preset dihitung menurut hari WIB apa pun zona waktu perangkatnya
 (<span class="mono">todayWIB()</span>: UTC+7 dari jam peranti). &ldquo;Hapus filter waktu&rdquo; mengembalikan ke Semua. Nilai dikirim sebagai <span class="mono">from, to, hour_from, hour_to</span> (bab 11).</p>
 <h4>Kartu keluhan di dashboard</h4>
@@ -1354,7 +1331,7 @@ keluhan baru, perubahan status, analisis AI selesai atau gagal, analisis ulang, 
 <p>Rute lain (keluhan, jejak audit, akun, statistik, ringkasan, peringkat, Kato Bot) tidak memberi <span class="mono">Cache-Control</span> sehingga peramban tidak menahannya selain lewat ETag.</p>
 
 <h3>3. ETag lemah</h3>
-<p><span class="mono">src/index.ts</span> memasang <span class="mono">etag({weak: true})</span> (<span class="mono">hono/etag</span>) pada <span class="mono">/api/summary</span>, <span class="mono">/activity</span>, <span class="mono">/cleaning</span>, <span class="mono">/reports</span>, <span class="mono">/work-logs</span>, <span class="mono">/users</span>, <span class="mono">/staff</span>,
+<p><span class="mono">src/index.ts</span> memasang <span class="mono">etag({weak: true})</span> (<span class="mono">hono/etag</span>) pada <span class="mono">/api/summary</span>, <span class="mono">/activity</span>, <span class="mono">/cleaning</span>, <span class="mono">/reports</span>, <span class="mono">/users</span>, <span class="mono">/staff</span>,
 dan <span class="mono">/leaderboard</span> (beserta anak jalurnya). Dashboard memuat ulang tiap setengah menit; bila isinya sama, peramban mengirim <span class="mono">If-None-Match</span> dan mendapat <strong>304 tanpa isi</strong>. Foto dikecualikan: ETag-nya datang dari R2 dan menghitung <em>hash</em> isi gambar
 lebih mahal daripada manfaatnya. Batasannya perlu dipahami: ETag menghemat <em>byte yang dikirim</em>, bukan kerja server; Worker tetap menjalankan penangannya (dan query, kecuali kena cache memori) sebelum membandingkan. Pada rute yang sudah di-cache memori, hasil kedua mekanisme ini bertumpuk.
 Terverifikasi di lingkungan lokal: <span class="mono">GET /api/staff</span>, <span class="mono">/api/reports/public</span>, dan <span class="mono">/api/cleaning/areas</span> mengirim ETag dan <span class="mono">Cache-Control</span> di atas, dan <span class="mono">If-None-Match</span> yang cocok dijawab 304.</p>
@@ -1446,7 +1423,7 @@ dan <em>binding</em> ke sumber daya Cloudflare. Tipenya ada di <span class="mono
   <tr><td>5 MB</td><td class="mono">adapters/storage.ts</td><td><span class="mono">MAX_BYTES</span> unggahan foto</td></tr>
   <tr><td>12 jam</td><td class="mono">adapters/session.ts</td><td>Masa berlaku sesi SPV</td></tr>
   <tr><td>100.000 putaran</td><td class="mono">adapters/password.ts</td><td>PBKDF2-SHA256 dengan garam per pengguna</td></tr>
-  <tr><td>2 menit</td><td class="mono">repositories/reports.ts, work-logs.ts</td><td>Jendela deteksi kiriman kembar</td></tr>
+  <tr><td>2 menit</td><td class="mono">repositories/reports.ts</td><td>Jendela deteksi kiriman kembar</td></tr>
   <tr><td>30 detik</td><td class="mono">adapters/llm.ts</td><td>Batas waktu tiap panggilan ke model (<span class="mono">AbortSignal.timeout</span>)</td></tr>
   <tr><td>TTL cache</td><td class="mono">services/*.ts</td><td>Bab 17</td></tr>
 </table>
@@ -1632,7 +1609,7 @@ SELECT je.value AS category, COUNT(*) FROM reports, json_each(categories) je GRO
   <tr><td><span class="mono">db:remote</span> gagal dengan <span class="mono">code 7403</span></td><td>Galat sesaat di sisi Cloudflare</td><td>Jalankan ulang; migrasi per berkas bersifat atomik</td></tr>
   <tr><td>QR menjawab &ldquo;Kode lokasi tidak dikenal&rdquo;</td><td>Area itu dinonaktifkan oleh seed, atau QR dari daftar lama yang idnya sudah tidak ada</td><td>Periksa <span class="mono">/api/cleaning/areas</span>; perbarui seed, jalankan <span class="mono">db:seed:cleaning:remote</span>, cetak ulang dari tab QR lokasi. Stiker lama <span class="mono">/lapor/&hellip;</span> dan bentuk <span class="mono">&lt;gedung&gt;-&lt;lantai&gt;</span> tetap dikenali</td></tr>
   <tr><td>Daftar lokasi atau nama petugas belum berubah setelah seed atau pengubahan akun</td><td>Cache area 5 menit dan nama 60 detik per isolate, ditambah cache peramban</td><td>Tunggu beberapa menit; muat ulang</td></tr>
-  <tr><td>Menghapus akun ditolak 409</td><td>Akun punya laporan kebersihan, laporan pekerjaan lama, atau keluhan sebagai pelapor</td><td>Gunakan Nonaktifkan; sesuai rancangan</td></tr>
+  <tr><td>Menghapus akun ditolak 409</td><td>Akun punya laporan kebersihan atau keluhan sebagai pelapor</td><td>Gunakan Nonaktifkan; sesuai rancangan</td></tr>
   <tr><td>Foto tidak tampil</td><td>Seharusnya tidak terjadi (disajikan dari <em>origin</em> sendiri); periksa awalan kunci</td><td>Hanya <span class="mono">report/ proof/ work/ cleaning/ laporan/ bukti/ kerja/</span> yang disajikan</td></tr>
   <tr><td>Ikon Kato Bot menutupi tombol di halaman</td><td>Ikon melayang di semua halaman</td><td>Seret ke tempat lain (posisi tersimpan di <span class="mono">localStorage</span> <span class="mono">chat-anchor</span>); hapus kunci itu untuk mengembalikannya ke kanan bawah</td></tr>
   <tr><td>Skrip atau alat lama memanggil <span class="mono">/api/lokasi</span> dan mendapat 404</td><td>Path API lama tidak dialihkan</td><td>Ganti ke path baru (bab 15)</td></tr>
@@ -1700,7 +1677,7 @@ Biayanya: foto tugas harian tidak diperiksa isinya oleh model, jadi foto yang ba
 <p><span class="mono">&lt;select&gt;</span> bawaan memilih arah sendiri: ke atas bila merasa sempit, di tengah layar pada ponsel, dan CSS tidak dapat mengubahnya, sehingga pilihan sering terpotong atau menutupi isian lain. <span class="mono">Select</span> buatan sendiri selalu membuka ke bawah dan, bila kurang ruang, menggulir atau memperpanjang halaman sementara.
 Biayanya: ratusan baris kode dan perilaku aksesibilitas (papan ketik, ARIA) yang kini ditanggung sendiri, bukan peramban.</p>
 <h3>Hapus akun hanya bila tanpa riwayat</h3>
-<p>Menghapus akun yang punya pekerjaan di belakangnya akan membuat riwayat yatim atau terhapus. Aturannya: akun dengan laporan kebersihan, laporan pekerjaan lama, atau keluhan sebagai pelapor ditolak (409) dan disarankan dinonaktifkan, yang menyembunyikan nama sama efektifnya. Akun sendiri dan SPV aktif terakhir tidak dapat dihapus.
+<p>Menghapus akun yang punya pekerjaan di belakangnya akan membuat riwayat yatim atau terhapus. Aturannya: akun dengan laporan kebersihan atau keluhan sebagai pelapor ditolak (409) dan disarankan dinonaktifkan, yang menyembunyikan nama sama efektifnya. Akun sendiri dan SPV aktif terakhir tidak dapat dihapus.
 Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (hanya nonaktif), dan keluhan yang hanya diklaim petugas tidak dihitung sebagai riwayat (bab 23).</p>
 <h3>Ketukan diproses saat pointer diangkat</h3>
 <p>Pada ikon Kato Bot yang dapat diseret, menunggu <span class="mono">click</span> setelah sentuhan yang bergeser sedikit tidak andal; bendera yang menunggu menelan satu <span class="mono">click</span> dapat menelan ketukan <em>berikutnya</em> (&ldquo;harus ketuk dua kali&rdquo;). Maka tekan tanpa menggeser melewati ambang diproses langsung saat jari diangkat (<span class="mono">pointerup</span>);
@@ -1727,7 +1704,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Keluhan terbuka dan catatan petugas dapat dibaca tanpa login</td><td><span class="mono">GET /api/reports/open</span> memuat teks asli dan foto keadaan pelapor; catatan bebas petugas tampil di papan publik</td><td>Batasi ke lokasi yang dipindai, atau token per stiker; saring catatan</td></tr>
   <tr><td>Ringkasan harian hanya satu per hari dan hanya soal keluhan</td><td>Tidak mencakup laporan kebersihan; keluhan sesudah 17.00 tidak ikut sampai &ldquo;Buat ulang&rdquo; ditekan; menimpa ringkasan sebelumnya</td><td>Ringkasan mingguan, atau gabungkan rekap kebersihan</td></tr>
   <tr><td>Cakupan waktu grafik tidak seragam</td><td>Pemilih 7/14/30/90 hari hanya memengaruhi deret harian, status, dan tren; kategori, prioritas, gedung, jam, dan waktu selesai menghitung sepanjang waktu, sehingga donat tidak saling cocok pada rentang pendek</td><td>Beri semua visual jendela yang sama, atau beri label &ldquo;sepanjang waktu&rdquo;</td></tr>
-  <tr><td>Maks. 200 baris per tampilan keluhan dan log pekerjaan (300 untuk jejak audit, 500 untuk laporan kebersihan)</td><td>Rentang panjang tidak tampil utuh; hitungan &ldquo;<em>n</em> data ditampilkan&rdquo; adalah baris yang dimuat, bukan seluruhnya</td><td>Paginasi atau hitungan agregat dari server</td></tr>
+  <tr><td>Maks. 200 baris per tampilan keluhan (300 untuk jejak audit, 500 untuk laporan kebersihan)</td><td>Rentang panjang tidak tampil utuh; hitungan &ldquo;<em>n</em> data ditampilkan&rdquo; adalah baris yang dimuat, bukan seluruhnya</td><td>Paginasi atau hitungan agregat dari server</td></tr>
   <tr><td>Filter jam tanpa indeks; jendela malam per hari kalender</td><td>Bagian jam dihitung per baris pada rentang tanggal; &ldquo;22.00&ndash;06.00&rdquo; tidak menyambung satu malam melintasi dua tanggal</td><td>Kolom turunan berindeks bila volume menuntut</td></tr>
   <tr><td>Hapus akun tidak menghitung keluhan yang diklaim</td><td>Petugas yang hanya pernah mengklaim atau menutup keluhan dapat dihapus; namanya tetap tertulis di <span class="mono">reports.staff_name</span> dan jejak audit</td><td>Hitung <span class="mono">reports.staff_name</span> atau simpan <span class="mono">staff_id</span></td></tr>
   <tr><td><span class="mono">resolved</span> dikirim ulang pada keluhan yang sudah selesai tidak ditolak</td><td>Menimpa <span class="mono">resolved_at</span> dan nama penyelesai (dan foto bukti bila disertakan; foto lama tidak dihapus dari R2). UI tidak melakukannya, tetapi API terbuka</td><td>Tolak 409 atau abaikan bila sudah selesai</td></tr>
@@ -1863,6 +1840,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td class="mono">0010_daily_tasks.sql</td><td>Enam tugas harian yang sama di setiap area; <span class="mono">sweep</span>/<span class="mono">mop</span> tetap sah untuk data lama</td></tr>
   <tr><td class="mono">0011_report_locations.sql</td><td><span class="mono">reports.area_id</span> berdampingan dengan <span class="mono">toilet_id</span>; view <span class="mono">location_info</span>; <span class="mono">not_toilet</span> menjadi <span class="mono">wrong_place</span></td></tr>
   <tr><td class="mono">0012_drop_cleaning_assignments.sql</td><td>Menghapus <span class="mono">cleaning_assignments</span>: petugas tidak punya area tetap; rekap dihitung per area</td></tr>
+  <tr><td class="mono">0013_drop_work_logs.sql</td><td>Menghapus <span class="mono">work_logs</span>; tabelnya kosong dan tidak ada lagi yang menulis ke sana</td></tr>
 </table>
 
 <h3>C. Perintah yang berguna</h3>
@@ -1891,7 +1869,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Status lokasi laporan kebersihan</td><td class="mono">ok, far, unknown</td><td class="mono">cleaning_reports.location_status</td></tr>
   <tr><td>Tugas harian</td><td class="mono">sweep_mop, glass, toilet, trash, gallon, tidy</td><td class="mono">cleaning_report_tasks.task (data lama juga: sweep, mop)</td></tr>
   <tr><td>Jenis foto / awalan kunci</td><td class="mono">report, proof, cleaning, work (lama: laporan, bukti, kerja)</td><td class="mono">adapters/storage.ts</td></tr>
-  <tr><td>Jenis aksi jejak audit</td><td colspan="2">Empat belas nilai, bab 11</td></tr>
+  <tr><td>Jenis aksi jejak audit</td><td colspan="2">Tiga belas nilai, bab 11</td></tr>
 </table>
 
 <h3>E. Penyimpanan di peramban</h3>
@@ -1926,7 +1904,6 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Laporan kebersihan, tugas harian</td><td><span class="mono">cleaning_reports</span>, <span class="mono">cleaning_report_tasks</span>; <span class="mono">/api/cleaning/reports</span>; awalan <span class="mono">cleaning/</span>; aksi <span class="mono">cleaning_reported</span></td></tr>
   <tr><td>Di luar kampus / tanpa GPS</td><td><span class="mono">location_status</span> <span class="mono">far</span> / <span class="mono">unknown</span>; aksi <span class="mono">cleaning_out_of_range</span></td></tr>
   <tr><td>Rekap harian per petugas</td><td><span class="mono">GET /api/cleaning/recap</span>; <span class="mono">dailyRecap()</span></td></tr>
-  <tr><td>Laporan pekerjaan (versi lama)</td><td><span class="mono">work_logs</span>; <span class="mono">/api/work-logs</span>; awalan <span class="mono">work/</span> (lama <span class="mono">kerja/</span>); aksi <span class="mono">work_logged</span>. Tab &ldquo;Log pekerjaan&rdquo;</td></tr>
   <tr><td>Jejak audit, log aktivitas</td><td><span class="mono">activity_log</span> (<span class="mono">action</span>, <span class="mono">actor</span>, <span class="mono">summary</span>, <span class="mono">details</span>); <span class="mono">/api/activity</span></td></tr>
   <tr><td>Ringkasan harian</td><td><span class="mono">daily_summaries</span> (<span class="mono">date</span>, <span class="mono">report_count</span>); <span class="mono">/api/summary</span></td></tr>
   <tr><td>Grafik, statistik</td><td><span class="mono">/api/summary/charts</span>, <span class="mono">/api/summary/stats</span></td></tr>

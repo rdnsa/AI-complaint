@@ -15,7 +15,6 @@ import Select from '../components/Select';
 // Each tab is its own chunk, fetched when it is first opened: the QR library and the
 // charts are not downloaded by a supervisor who only reads the report list.
 const OverviewPanel = lazy(() => import('../components/OverviewPanel'));
-const WorkLogPanel = lazy(() => import('../components/WorkLogPanel'));
 const CleaningPanel = lazy(() => import('../components/CleaningPanel'));
 const ActivityPanel = lazy(() => import('../components/ActivityPanel'));
 const AccountsPanel = lazy(() => import('../components/AccountsPanel'));
@@ -88,9 +87,8 @@ function Board({ session }: { session: Session }) {
   const [time, setTime] = useState<TimeRange>(EMPTY_TIME_RANGE);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('overview');
-  // Two tabs hold two related lists each, told apart by a small switch at their top.
+  // The Reports tab holds two related lists, told apart by a small switch at its top.
   const [reportsView, setReportsView] = useState<'complaints' | 'cleaning'>('cleaning');
-  const [logsView, setLogsView] = useState<'activity' | 'work_logs'>('activity');
   // Today's cleaning reports filed off campus or without GPS: a red count on the tab.
   const [cleaningAlerts, setCleaningAlerts] = useState(0);
   // Kato Bot floats over every page; the QR stickers are a tab here.
@@ -142,8 +140,8 @@ function Board({ session }: { session: Session }) {
       />
 
       <main className="mx-auto max-w-6xl px-4">
-        {/* Five tabs share one row, on a phone too: the long label gets the wider column and wraps to two lines. */}
-        <nav className="mt-5 grid grid-cols-[1.15fr_1fr_0.6fr_1.45fr_1fr] gap-1 rounded-nav bg-mist-200 p-1 md:rounded-full">
+        {/* Five tabs share one row, on a phone too: the long labels get the wider columns and wrap to two lines. */}
+        <nav className="mt-5 grid grid-cols-[1.1fr_1fr_1.1fr_1.45fr_1fr] gap-1 rounded-nav bg-mist-200 p-1 md:rounded-full">
           {TABS.map((k) => (
             <button
               key={k}
@@ -174,22 +172,11 @@ function Board({ session }: { session: Session }) {
             ]}
           />
         )}
-        {tab === 'logs' && (
-          <SubTabs
-            value={logsView}
-            onChange={setLogsView}
-            items={[
-              { key: 'activity', label: t('tab.activity') },
-              { key: 'work_logs', label: t('tab.work_logs') },
-            ]}
-          />
-        )}
 
         <Suspense fallback={<p className="mt-6 text-ink-600">{t('common.loading')}</p>}>
           {tab === 'overview' && <OverviewPanel />}
           {tab === 'reports' && reportsView === 'cleaning' && <CleaningPanel />}
-          {tab === 'logs' && logsView === 'activity' && <ActivityPanel />}
-          {tab === 'logs' && logsView === 'work_logs' && <WorkLogPanel />}
+          {tab === 'logs' && <ActivityPanel />}
           {tab === 'accounts' && <AccountsPanel />}
           {tab === 'qr' && <QrCodesPanel />}
         </Suspense>

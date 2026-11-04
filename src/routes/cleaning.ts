@@ -12,7 +12,7 @@ import * as accounts from '../services/user-service';
 /**
  * HTTP layer for cleaning reports per area.
  *
- * Like the work log, staff do not sign in: they pick their name, and the id is
+ * Staff do not sign in: they pick their name, and the id is
  * checked against the active staff. The proof is the photos and the position.
  */
 
