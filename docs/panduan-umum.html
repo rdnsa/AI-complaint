@@ -52,7 +52,7 @@
   .pecah { page-break-before: always; }
 </style></head><body>
 <div class="sampul">
-  <span class="lencana">Panduan untuk Pengguna &amp; Pimpinan &middot; Edisi 29 Oktober 2026</span>
+  <span class="lencana">Panduan untuk Pengguna &amp; Pimpinan &middot; Edisi 4 November 2026</span>
   <h1>Kato Report</h1>
   <p class="sub">Sistem pelaporan kebersihan kampus &middot; UPI Kampus Tasikmalaya &middot; Jln. Dadaha No. 18<br>
   Dokumen ini menjelaskan apa yang sudah dibuat dan cara memakainya, tanpa istilah teknis.</p>
@@ -110,7 +110,7 @@ halaman Gedung A sampai I, serta Lapang Voli.</p>
   </div>
   <div class="kartu">
     <div class="angka">0 akun</div>
-    <div class="angka-ket">yang dibutuhkan pelapor untuk melapor dan petugas untuk bekerja; hanya SPV yang login</div>
+    <div class="angka-ket">yang dibutuhkan pelapor untuk melapor dan petugas untuk bekerja; hanya SPV yang wajib login</div>
   </div>
 </div>
 
@@ -121,7 +121,7 @@ halaman Gedung A sampai I, serta Lapang Voli.</p>
   <tr><td>Dipahami AI</td><td>Kecerdasan buatan (teks)</td><td>Beberapa detik setelah terkirim: jenis masalah, tingkat prioritas, ringkasan rapi, dan perintah kerja untuk petugas.</td></tr>
   <tr><td>Dikerjakan</td><td>Petugas</td><td>Di tab <strong>Keluhan</strong>, petugas melihat semua keluhan yang belum selesai, yang mendesak lebih dulu. Ia menekan <span class="tombol netral">Saya kerjakan sekarang</span> lalu memilih namanya; pelapor melihat statusnya berubah. Bila petugas itu tidak sempat menyelesaikannya, petugas lain boleh menekan <span class="tombol netral">Ambil alih</span>.</td></tr>
   <tr><td>Foto bukti diperiksa AI</td><td>Kecerdasan buatan (foto)</td><td>Setelah dibereskan, petugas menekan <span class="tombol">Sudah beres &mdash; foto buktinya</span> dan memotret lokasinya. Foto dinilai: benar tempat yang dikeluhkan? sudah bersih? Bila belum, ditolak beserta alasannya.</td></tr>
-  <tr><td>Selesai</td><td>Sistem</td><td>Hanya setelah foto dinilai bersih, laporan berstatus selesai. Foto tampil di papan umum dengan tanda &ldquo;Diverifikasi AI: bersih&rdquo;. Laporan yang sudah selesai tidak bisa dibuka kembali.</td></tr>
+  <tr><td>Selesai</td><td>Sistem</td><td>Hanya setelah foto dinilai bersih, laporan berstatus selesai. Foto tampil di papan umum berbingkai hijau dengan tulisan &ldquo;Selesai ditangani&rdquo;. Laporan yang sudah selesai tidak bisa dibuka kembali.</td></tr>
   <tr><td>Dipantau</td><td>SPV</td><td>Di dashboard terlihat semua laporan dengan jam masuk dan jam selesainya, serta siapa yang menanganinya.</td></tr>
   <tr><td>Direkap</td><td>Sistem</td><td>Setiap pukul 17.00 WIB, satu paragraf ringkasan hari itu untuk pimpinan.</td></tr>
 </table>
@@ -134,7 +134,7 @@ menutup keluhan pelapor; keluhan hanya selesai lewat tombol foto bukti pada kelu
 <p>Sistem memakai dua layanan <strong>kecerdasan buatan (AI)</strong> untuk tiga pekerjaan:
 <strong>memahami tulisan keluhan</strong>, <strong>memeriksa foto bukti</strong>, dan <strong>Kato Bot</strong> yang menjawab
 pertanyaan tentang data laporan. Tempat yang memakai AI ditandai jelas di aplikasi: &ldquo;Hasil analisis&rdquo; pada laporan,
-&ldquo;Diverifikasi AI: bersih&rdquo; pada foto bukti, &ldquo;Penilaian AI&rdquo; pada foto yang ditolak, dan &ldquo;Jawaban Kato Bot&rdquo; pada jawaban chat.</p>
+&ldquo;Diverifikasi AI: bersih&rdquo; pada foto bukti di dashboard SPV, &ldquo;Penilaian AI&rdquo; pada foto yang ditolak, dan &ldquo;Jawaban Kato Bot&rdquo; pada jawaban chat.</p>
 <table>
   <tr><th></th><th>DeepSeek</th><th>Google Gemini</th></tr>
   <tr><td>Yang dibaca</td><td>Tulisan pelapor, dan angka-angka data laporan</td><td>Foto bukti penyelesaian keluhan dari petugas</td></tr>
@@ -170,7 +170,7 @@ dikenali sebagai genangan dan kebersihan berprioritas tinggi; <em>&ldquo;daun ke
 <div class="hasil">
   <strong>Foto:</strong> lantai dan sudut yang dikeluhkan kering dan bersih<br>
   <strong>Putusan:</strong> diterima<br>
-  <strong>Yang terjadi:</strong> laporan berstatus selesai; foto tampil di papan umum bertanda &ldquo;Diverifikasi AI: bersih&rdquo;.
+  <strong>Yang terjadi:</strong> laporan berstatus selesai; foto tampil di papan umum berbingkai hijau, dan di dashboard SPV bertanda &ldquo;Diverifikasi AI: bersih&rdquo;.
 </div>
 <p>Kalau foto bukan tempat yang dikeluhkan (misalnya foto dinding, foto gelap, atau foto orang), putusannya &ldquo;Foto bukan lokasi yang dilaporkan.&rdquo;
 Keluhan yang tidak bisa dilihat dari foto (bau, sabun habis) tidak dijadikan alasan menolak. Bila pemeriksa ragu antara bersih dan kotor, ia memilih kotor.</p>
@@ -204,7 +204,7 @@ Petugas tidak pernah login, cukup memilih namanya dari daftar.</p>
   <tr>
     <td><strong>SPV</strong><br>(pengawas)</td>
     <td>Ya, dengan username dan password. Satu akun bawaan sudah tersedia; SPV dapat menambah akun SPV lain</td>
-    <td>Memantau semua laporan dan pekerjaan petugas, membaca grafik dan log, mengelola nama petugas dan akun SPV, mencetak stiker QR, menghapus laporan spam, meminta analisis ulang</td>
+    <td>Memantau semua laporan dan pekerjaan petugas, membaca grafik dan log, mengekspor data ke Excel, mengelola nama petugas dan akun SPV, mencetak stiker QR, menghapus laporan spam, meminta analisis ulang</td>
   </tr>
   <tr>
     <td><strong>Pimpinan</strong></td>
@@ -291,7 +291,7 @@ Petugas tidak pernah login, cukup memilih namanya dari daftar.</p>
     <h3>Kirim, lalu pantau</h3>
     <p>Tekan <span class="tombol">Kirim laporan</span> (tombol ini baru bisa ditekan setelah lokasi dipilih dan foto diambil).
     Halaman &ldquo;Laporan kamu sudah masuk&rdquo;
-    langsung muncul dan dalam beberapa detik menampilkan &ldquo;Hasil analisis&rdquo;. Di bawahnya ada &ldquo;Status penanganan&rdquo;:
+    langsung muncul dan dalam beberapa detik menampilkan &ldquo;Hasil analisis&rdquo;. Di atasnya ada &ldquo;Status penanganan&rdquo;:
     <em>Laporan diterima &rarr; Sedang dikerjakan petugas (beserta nama petugas) &rarr; Selesai ditangani</em>. Halaman ini memperbarui dirinya
     sendiri selama terbuka. <strong>Simpan tautan halaman ini</strong> bila melapor tanpa akun;
     itulah satu-satunya jalan kembali ke laporanmu.</p>
@@ -439,7 +439,7 @@ adalah membuka halaman petugas.</p>
     <h3>Di luar kampus atau tanpa GPS: tetap bisa kirim, tetapi ditandai</h3>
     <p>Bila HP menilai kamu di luar kampus atau lokasi tidak terbaca, muncul peringatan &ldquo;Kamu terlalu jauh dari kampus&rdquo; atau &ldquo;Lokasi kamu tidak terbaca&rdquo;
     dengan dua pilihan: <span class="tombol">Batal, saya cek lokasi dulu</span> atau <span class="tombol netral">Tetap kirim (supervisor diberi tahu)</span>.
-    Bila tetap dikirim, laporan diterima tetapi <strong>ditandai</strong> kepada SPV (&ldquo;Dikirim dari &hellip; di luar kampus; ditandai.&rdquo; atau &ldquo;Dikirim tanpa GPS; ditandai.&rdquo;).
+    Bila tetap dikirim, laporan diterima tetapi <strong>ditandai</strong> kepada SPV; di kartu tugasmu tertulis &ldquo;Dikirim dari &hellip; di luar kampus; ditandai.&rdquo; atau &ldquo;Dikirim tanpa GPS; ditandai.&rdquo;
     Penandaan bukan hukuman, melainkan agar SPV bisa menanyakan keadaannya.</p>
   </div>
 </div>
@@ -480,13 +480,13 @@ di dashboard tidak ada tombol untuk menandai laporan selesai.</p>
 <h3>Lima tab di Dashboard Supervisor</h3>
 <table>
   <tr><th>Tab</th><th>Isinya</th></tr>
-  <tr><td><strong>Ringkasan</strong></td><td>Halaman awal. Laporan kerja petugas lebih dulu, lalu keluhan beserta ringkasan AI hari ini (dibahas di bagian 8).</td></tr>
-  <tr><td><strong>Laporan</strong></td><td>Dua sub-tab: <em>Kebersihan</em> (terbuka lebih dulu; rekap harian dan foto tugas harian petugas) dan <em>Keluhan</em> (daftar laporan dari pelapor). Angka merah pada tab menandai laporan kebersihan hari ini yang dikirim dari luar kampus atau tanpa GPS.</td></tr>
+  <tr><td><strong>Ringkasan</strong></td><td>Halaman awal, satu halaman penuh: pilihan tanggal, angka utama, lalu bagian Laporan Petugas dan bagian Keluhan yang dibuka dengan ringkasan AI (dibahas di bagian 8).</td></tr>
+  <tr><td><strong>Laporan</strong></td><td>Dua bagian, dipilih dengan sakelar kecil: <em>Kebersihan</em> (paling kiri dan terbuka lebih dulu; rekap harian dan foto tugas harian petugas) dan <em>Keluhan</em> (daftar laporan dari pelapor). Angka merah pada tab dan pada pilihan <em>Kebersihan</em> menandai laporan kebersihan hari ini yang dikirim dari luar kampus atau tanpa GPS.</td></tr>
   <tr><td><strong>Log aktivitas</strong></td><td>Jejak semua kejadian yang tidak bisa dihapus.</td></tr>
   <tr><td><strong>Petugas &amp; Supervisor</strong></td><td>Menambah, mengubah, menonaktifkan, dan menghapus nama petugas serta akun SPV.</td></tr>
   <tr><td><strong>QR lokasi</strong></td><td>Mencetak atau mengunduh stiker QR setiap lokasi.</td></tr>
 </table>
-<p>Daftar di dashboard menyegarkan diri tiap 30 detik, dan berhenti menyegarkan saat tab browser tidak sedang dilihat. <strong>Kato Bot</strong> tidak ada di dashboard sebagai tab;
+<p>Kedua daftar di tab Laporan menyegarkan diri tiap 30 detik; daftar Keluhan berhenti menyegarkan saat tab browser tidak sedang dilihat. Log aktivitas diperbarui saat tabnya dibuka atau saringannya diubah. <strong>Kato Bot</strong> tidak ada di dashboard sebagai tab;
 ia ikon melayang yang ada di setiap halaman (bagian 9). Bila SPV sedang masuk, Kato Bot boleh menjawab per nama petugas, misalnya
 <em>&ldquo;Petugas siapa yang paling banyak menyelesaikan laporan minggu ini?&rdquo;</em>.</p>
 
@@ -518,37 +518,39 @@ ia ikon melayang yang ada di setiap halaman (bagian 9). Bila SPV sedang masuk, K
 
 <h3>Tab Laporan &rarr; Kebersihan</h3>
 <p>Dua tampilan, dipilih dengan sakelar kecil: <span class="tombol netral">Rekap harian</span> dan <span class="tombol netral">Laporan &amp; foto</span>.
-Pilih harinya dengan tanggal atau tombol panah (hari ini adalah yang terbaru).</p>
+Pilih harinya dengan tanggal atau tombol panah (hari ini adalah yang terbaru). Yang terbuka lebih dulu adalah rekap hari ini.</p>
 <ul>
-  <li><strong>Rekap harian</strong>: tabel semua lokasi dan tugas. Tanda &#10003; dengan jam pertama dikirim dan nama yang mengerjakan,
-  &#10007; untuk yang belum dikirim, dan &ldquo;&ndash;&rdquo; untuk yang bukan tugas di lokasi itu. Sel kuning = hanya dikirim dari luar kampus atau tanpa GPS. Di bawah tabel ada daftar
-  yang dikerjakan tiap petugas (jumlah tugas dan lokasi), tanpa target. Tombol <span class="tombol netral">Cetak rekap</span> mencetak halaman rekap.</li>
+  <li><strong>Rekap harian</strong>: tiga angka (<em>Tugas terlaksana</em>, <em>Laporan masuk</em>, <em>Ditandai</em>), lalu tabel semua lokasi dan tugas. Tanda &#10003; dengan jam pertama dilaporkan dan nama yang mengerjakan (&times;n bila dilaporkan lebih dari sekali),
+  &#10007; berarti belum dilaporkan, dan &ldquo;&ndash;&rdquo; untuk yang bukan tugas di lokasi itu. Sel kuning = hanya dilaporkan dari luar kampus atau tanpa GPS. Di bawah tabel ada daftar
+  <em>Yang dikerjakan petugas</em> (jumlah tugas dan area), tanpa target. Tombol <span class="tombol netral">Cetak rekap</span> mencetak halaman rekap; di ponsel tombol ini hanya berupa ikon pencetak.</li>
   <li><strong>Laporan &amp; foto</strong>: setiap kiriman beserta foto tiap tugasnya, jam foto, nama petugas, dan status lokasi: &ldquo;Di kampus&rdquo;, &ldquo;n m dari kampus&rdquo;, atau &ldquo;Tanpa GPS&rdquo;
-  (dengan tautan &ldquo;Lihat di peta&rdquo;). Bisa disaring per petugas (&ldquo;Semua petugas&rdquo;) dan dengan kotak <em>Hanya yang ditandai</em>.</li>
-  <li><strong>Pita merah di atas</strong> (&ldquo;n laporan dikirim di luar kampus atau tanpa GPS&rdquo;) membuka daftar yang ditandai dengan satu ketukan.
+  (dengan tautan &ldquo;Lihat di peta&rdquo; bila posisinya terbaca), serta catatan petugas bila ada. Bisa disaring per petugas (&ldquo;Semua petugas&rdquo;) dan dengan kotak <em>Hanya yang ditandai</em>.</li>
+  <li><strong>Dibuka dari gelembung petugas di tab Ringkasan</strong>: <em>Laporan &amp; foto</em> langsung tersaring ke nama itu dan ke tanggal yang dipilih di Ringkasan (paling banyak 500 kiriman). Rentangnya tampil sebagai label di tempat pilihan hari, misalnya &ldquo;1 Okt 2026 &ndash; 30 Okt 2026&rdquo;.
+  Tanda &times; pada label menghapus rentang itu, dan daftar kembali ke satu hari; nama petugas tetap tersaring sampai diganti. <em>Rekap harian</em> tetap satu hari. Pindah tab, atau beralih ke <em>Keluhan</em>, mengembalikan semuanya ke tampilan biasa.</li>
+  <li><strong>Pita merah di atas</strong> (&ldquo;n laporan dikirim di luar kampus atau tanpa GPS&rdquo;) menghitung hari yang dipilih dan membuka daftar yang ditandai dengan satu ketukan. Pita ini disembunyikan selama label rentang tampil, karena hitungannya hanya untuk satu hari.
   <em>Cara menangani</em>: lihat fotonya dan petanya, tanyakan ke petugasnya, dan catat. Sistem tidak menolak kiriman itu, hanya menandainya.</li>
 </ul>
 <div class="catatan">
-  <strong>Petugas tidak punya lokasi tetap.</strong> Di lapangan siapa pun yang sempat boleh mengerjakan tugas di lokasi mana pun, dan laporannya mencatat siapa yang mengerjakan.
+  <strong>Petugas tidak punya lokasi tetap maupun target.</strong> Rekap disusun per lokasi, dengan siapa mengerjakan apa. Di lapangan siapa pun yang sempat boleh mengerjakan tugas di lokasi mana pun, dan laporannya mencatat siapa yang mengerjakan.
   Karena itu &#10007; berarti lokasi itu belum dilaporkan, bukan kelalaian orang tertentu.
 </div>
 
 <h3>Tab Log aktivitas</h3>
-<p><strong>Log aktivitas</strong> adalah catatan urut waktu setiap kejadian, dengan jam persis (WIB) dan nama pelaku. Bisa disaring per jenis (<em>Semua aktivitas</em>) dan dengan saringan waktu.
-Tidak ada tombol untuk mengubah atau menghapus catatan ini, bagi siapa pun. Untuk tindakan petugas, yang tercatat adalah <strong>nama yang dipilih</strong>.</p>
+<p><strong>Log aktivitas</strong> adalah catatan urut waktu setiap kejadian, dengan jam persis (WIB) dan nama pelaku. Bisa disaring per jenis (<em>Semua aktivitas</em>) dan dengan saringan waktu; paling banyak 300 catatan tampil sekaligus.
+Tidak ada tombol untuk mengubah atau menghapus catatan ini, bagi siapa pun. Untuk tindakan petugas, yang tercatat adalah <strong>nama yang dipilih</strong>. Semua jenis di tabel ini ada di pilihan saringan, kecuali <em>Kelola akun</em>: catatannya tetap tampil di daftar, tetapi tidak bisa dipilih sendiri.</p>
 <table>
   <tr><th>Jenis catatan</th><th>Artinya</th></tr>
-  <tr><td>Laporan masuk</td><td>Laporan baru diterima, dengan lokasi dan teksnya.</td></tr>
+  <tr><td>Laporan masuk</td><td>Laporan baru diterima, dengan lokasinya. Teks keluhan ada pada kartu laporannya di tab Laporan &rarr; Keluhan.</td></tr>
   <tr><td>Laporan kebersihan</td><td>Petugas mengirim tugas harian.</td></tr>
   <tr><td>Lapor di luar kampus</td><td>Tugas harian dikirim dari luar kampus atau tanpa GPS, dengan jaraknya.</td></tr>
-  <tr><td>Ubah status</td><td>Nama petugas yang mengklaim, mengambil alih (&ldquo;X mengambil alih &hellip; dari Y&rdquo;), atau menyelesaikan; untuk penutupan, ikut tercatat putusan pemeriksa foto.</td></tr>
+  <tr><td>Ubah status</td><td>Nama petugas yang mengklaim, mengambil alih (&ldquo;X mengambil alih &hellip; dari Y&rdquo;), atau menyelesaikan. Putusan pemeriksa foto ikut disimpan, tetapi tidak ditampilkan di tab ini.</td></tr>
   <tr><td>Bukti ditolak</td><td>Foto bukti yang tidak lolos beserta alasan pemeriksa. Berguna untuk melihat pola: nama mana yang sering ditolak, alasan apa yang berulang.</td></tr>
   <tr><td>Penghapusan</td><td>Laporan yang dihapus SPV; <strong>isinya dibentangkan utuh</strong> di sini, beserta nama penghapus dan waktunya.</td></tr>
   <tr><td>Analisis / Analisis gagal</td><td>Hasil pemahaman otomatis, atau kegagalannya.</td></tr>
   <tr><td>Verifikasi gagal</td><td>Layanan pemeriksa foto tidak dapat dihubungi saat itu.</td></tr>
   <tr><td>Supervisor masuk</td><td>Siapa login ke dashboard dan kapan.</td></tr>
   <tr><td>Ringkasan harian</td><td>Ringkasan disusun (otomatis atau manual).</td></tr>
-  <tr><td>Tanya data</td><td>Setiap pertanyaan ke Kato Bot beserta data yang ditariknya.</td></tr>
+  <tr><td>Tanya data</td><td>Setiap pertanyaan ke Kato Bot. Data yang ditariknya ikut disimpan, tetapi tidak ditampilkan di tab ini.</td></tr>
   <tr><td>Kelola akun</td><td>Nama petugas atau akun SPV ditambah, diubah, dinonaktifkan, atau dihapus.</td></tr>
 </table>
 
@@ -624,60 +626,77 @@ Stiker yang dicetak untuk lokasi yang kemudian dihapus dari daftar akan memuncul
 
 <h2>8. Panduan pimpinan: membaca dashboard</h2>
 <p>Pimpinan memakai akun SPV. Halaman pertama dashboard, tab <strong>Ringkasan</strong>, menjawab pertanyaan pengelolaan, bukan sekadar menampilkan angka.
+Semuanya ada dalam satu halaman, tanpa sakelar: pilihan tanggal di paling atas, lalu angka utama, bagian <strong>Laporan Petugas</strong>, dan bagian <strong>Keluhan</strong>.
 Halaman ini menyegarkan diri tiap menit selama dibuka.</p>
 
-<h3>Ringkasan hari ini (kartu pertama bagian Keluhan)</h3>
-<p>Setiap pukul 17.00 WIB sistem menyusun satu paragraf: berapa laporan masuk, lokasi mana yang paling
+<h3>Rentang tanggal, Ekspor Excel, dan angka utama</h3>
+<p>Di paling atas ada pilihan <strong>Dari tanggal</strong> dan <strong>Sampai tanggal</strong> (bawaannya 30 hari terakhir, maksimum 366 hari). Setelah tanggal diganti, muncul tautan <em>Hapus filter waktu</em> untuk kembali ke 30 hari terakhir.
+Bila tanggalnya tidak bisa dipakai, tertulis &ldquo;Tanggal awal tidak boleh setelah tanggal akhir.&rdquo; atau &ldquo;Rentang paling panjang 366 hari.&rdquo;
+<strong>Semua grafik mengikuti rentang ini, kecuali kartu ringkasan AI</strong>, yang selalu untuk satu hari; lihat tabel berikut agar tidak salah baca.</p>
+<p>Di samping tanggal ada tombol <span class="tombol netral">Ekspor Excel</span>. Berkas yang tersimpan memuat empat sheet untuk rentang yang sama: <em>Ringkasan</em> (angka di balik grafik keluhan), <em>Harian</em>,
+<em>Laporan</em> (setiap keluhan, termasuk tulisan asli pelapor dan nama petugas), dan <em>Kebersihan</em> (angka utama, jenis pekerjaan, jumlah per gedung, daftar area yang belum ada laporan, rincian per petugas, dan jumlah per hari). Foto tidak ikut.</p>
+<p>Di bawahnya, angka utama keduanya berdampingan: <strong>Laporan Petugas di kiri, Keluhan di kanan</strong> (bertumpuk bila layarnya sempit, seperti di ponsel). Panah persen membandingkan jumlah laporan dalam rentang dengan rentang sama panjang tepat sebelumnya, dan tidak tampil bila rentang sebelumnya kosong.
+Tanda <strong>&ldquo;!&rdquo;</strong> pada judul kartu <em>Gedung</em>, <em>Gedung &times; Masalah</em>, dan <em>Gedung &times; Pekerjaan</em> membuka daftar kode gedung
+(A, B, C, &hellip;) beserta namanya, supaya huruf pada grafik dapat dibaca.</p>
+
+<h3>Bagian Laporan Petugas</h3>
+<p>Laporan kerja petugas adalah fokus utama, jadi tampil lebih dulu; keluhan menyusul di halaman yang sama. Petugas tidak punya lokasi tetap maupun target, jadi tidak ada nilai per orang. Yang perlu ditindaklanjuti adalah lokasi yang belum ada laporannya. Urutan di tabel mengikuti urutan di layar.</p>
+<table>
+  <tr><th>Bagian</th><th>Pertanyaan yang dijawab</th><th>Mengikuti rentang?</th></tr>
+  <tr><td>Lingkaran &ldquo;Terlapor&rdquo; (angka utama)</td><td>Berapa persen lokasi yang punya setidaknya satu laporan dalam rentang?</td><td>Ya</td></tr>
+  <tr><td>Kartu &ldquo;Laporan kebersihan&rdquo;</td><td>Berapa kiriman tugas harian yang masuk; garis kecil menunjukkan tren harian, dan panah persen naik berwarna hijau.</td><td>Ya</td></tr>
+  <tr><td>Kartu &ldquo;Area terlapor&rdquo;</td><td>Berapa lokasi yang sudah ada laporannya dari seluruh lokasi, misalnya 20/29.</td><td>Ya</td></tr>
+  <tr><td>Kartu &ldquo;Petugas melapor&rdquo;</td><td>Berapa orang yang mengirim laporan.</td><td>Ya</td></tr>
+  <tr><td>Kartu &ldquo;Ditandai&rdquo;</td><td>Berapa laporan yang dikirim dari luar kampus atau tanpa GPS.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Dikerjakan per petugas&rdquo;</td><td>Siapa mengerjakan berapa tugas: makin besar gelembung makin banyak tugas, tanpa target. Lencana merah menghitung laporan yang ditandai. Ketuk gelembung untuk membuka laporan petugas itu (lihat di bawah tabel).</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Jenis pekerjaan&rdquo;</td><td>Jumlah dan porsi tiap tugas dari enam tugas harian.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Peta area&rdquo;</td><td>Satu baris per gedung, satu kotak per lantai dan halaman (H); makin gelap makin banyak laporan. Kotak putus-putus berarti <em>belum ada laporan</em>. Arahkan kursor atau ketuk untuk melihat nama lokasinya.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Lokasi saat melapor&rdquo;</td><td>Berapa laporan dari kampus, dari luar kampus, dan tanpa GPS.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Kalender laporan&rdquo;</td><td>Satu kotak per hari; makin gelap makin banyak laporan. Hari tanpa laporan langsung terlihat.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Jam masuk&rdquo;</td><td>Jam berapa dalam sehari (WIB) laporan petugas paling sering masuk.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Gedung &times; Pekerjaan&rdquo;</td><td>Tugas apa yang dilaporkan di gedung mana.</td><td>Ya</td></tr>
+</table>
+<p>Bila tidak ada laporan dalam rentang, rincian di bawah angka utama diganti tulisan &ldquo;Belum ada laporan kebersihan.&rdquo;</p>
+<p><strong>Membuka laporan satu petugas.</strong> Ketuk gelembungnya: dashboard pindah ke tab Laporan &rarr; Kebersihan &rarr; <em>Laporan &amp; foto</em>, tersaring ke nama itu dan ke tanggal yang sedang dipilih di Ringkasan. Rinciannya ada di bagian 7.</p>
+
+<h3>Bagian Keluhan</h3>
+<p><strong>Kartu ringkasan AI</strong> adalah kartu pertama bagian ini. Judulnya <em>Ringkasan hari ini</em> bila <em>Sampai tanggal</em> adalah hari ini; bila bukan, <em>Ringkasan</em> diikuti tanggalnya. Setiap pukul 17.00 WIB sistem menyusun satu paragraf: berapa laporan masuk, lokasi mana yang paling
 bermasalah, pola apa yang berulang, dan sampai empat tindakan paling mendesak. Tanda <strong>&ldquo;!&rdquo;</strong> kecil di samping judulnya
 menjelaskan jadwal itu (&ldquo;Diperbarui otomatis setiap hari pukul 17.00 WIB.&rdquo;). Bisa disusun ulang
-kapan saja dengan tombol <span class="tombol netral">Buat ulang</span>. Hari tanpa laporan ditulis apa adanya. Sebelum pukul 17.00 hari itu,
-kartu berisi &ldquo;Belum ada ringkasan. Dibuat otomatis pukul 17.00 WIB.&rdquo; Di sampingnya ada grafik batang <em>Lokasi terbanyak hari ini</em>.
+kapan saja dengan tombol <span class="tombol netral">Buat ulang</span>. Hari tanpa laporan ditulis apa adanya. Bila tanggal itu belum punya ringkasan (misalnya hari ini sebelum pukul 17.00),
+kartu berisi &ldquo;Belum ada ringkasan. Dibuat otomatis pukul 17.00 WIB.&rdquo; Untuk tanggal yang sudah lewat, ringkasan tidak dibuat lagi secara otomatis, jadi tekan <em>Buat ulang</em>.
 Ringkasan hanya mencakup keluhan pelapor, bukan tugas harian.</p>
-
-<h3>Rentang waktu dan tanda &ldquo;!&rdquo;</h3>
-<p>Di atas halaman ada pilihan <strong>Dari tanggal</strong> dan <strong>Sampai tanggal</strong> (bawaannya 30 hari terakhir, maksimum 366 hari). <strong>Tidak semua grafik mengikuti rentang ini</strong>;
-lihat tabel berikut agar tidak salah baca. Tanda <strong>&ldquo;!&rdquo;</strong> pada judul kartu <em>Gedung</em> dan <em>Gedung &times; Masalah</em> membuka daftar kode gedung
-(A, B, C, &hellip;) beserta namanya, supaya huruf pada grafik dapat dibaca.</p>
 
 <table>
   <tr><th>Bagian</th><th>Pertanyaan yang dijawab</th><th>Mengikuti rentang?</th></tr>
-  <tr><td>Lingkaran &ldquo;Selesai&rdquo;</td><td>Dari laporan yang masuk dalam rentang, berapa persen yang sudah selesai ditangani?</td><td>Ya</td></tr>
-  <tr><td>Kartu &ldquo;Hari ini&rdquo;</td><td>Berapa laporan masuk hari ini; panah persen membandingkan laporan masuk dalam rentang dengan rentang sama sebelumnya (naik atau turun).</td><td>Angka: tidak (hari ini). Persen: ya</td></tr>
-  <tr><td>Kartu &ldquo;Prioritas tinggi&rdquo;</td><td>Berapa laporan prioritas tinggi hari ini; garis kecil menunjukkan tren harian.</td><td>Angka: tidak. Garis: ya</td></tr>
-  <tr><td>Kartu &ldquo;Belum selesai&rdquo;</td><td>Berapa laporan yang masih terbuka saat ini di seluruh kampus.</td><td>Tidak</td></tr>
-  <tr><td>Kartu &ldquo;Waktu selesai&rdquo;</td><td>Rata-rata lama dari laporan masuk sampai selesai, dari semua laporan yang pernah selesai.</td><td>Tidak</td></tr>
-  <tr><td>Grafik area &ldquo;(n) hari&rdquo;</td><td>Garis masuk dan selesai per hari. Bila garis selesai tertinggal jauh, tumpukan pekerjaan bertambah.</td><td>Ya</td></tr>
+  <tr><td>Lingkaran &ldquo;Selesai&rdquo; (angka utama)</td><td>Dari laporan yang masuk dalam rentang, berapa persen yang sudah selesai ditangani?</td><td>Ya</td></tr>
+  <tr><td>Kartu &ldquo;Total laporan&rdquo;</td><td>Berapa keluhan masuk; garis kecil menunjukkan tren harian, dan panah persen naik berwarna merah.</td><td>Ya</td></tr>
+  <tr><td>Kartu &ldquo;Prioritas tinggi&rdquo;</td><td>Berapa keluhan berprioritas tinggi; garis kecil menunjukkan tren harian.</td><td>Ya</td></tr>
+  <tr><td>Kartu &ldquo;Belum selesai&rdquo;</td><td>Dari keluhan yang masuk dalam rentang, berapa yang masih terbuka.</td><td>Ya. Keluhan lebih lama yang masih terbuka tidak terhitung</td></tr>
+  <tr><td>Kartu &ldquo;Waktu selesai&rdquo;</td><td>Rata-rata lama dari laporan masuk sampai selesai, dari keluhan dalam rentang yang sudah selesai; jumlahnya tertulis di bawah angka.</td><td>Ya</td></tr>
+  <tr><td>Kartu ringkasan AI</td><td>Apa yang terjadi pada satu hari (dijelaskan di atas).</td><td><strong>Tidak.</strong> Selalu satu hari, yaitu <em>Sampai tanggal</em></td></tr>
+  <tr><td>&ldquo;Lokasi terbanyak&rdquo; (di samping ringkasan AI)</td><td>Lima lokasi yang paling banyak dikeluhkan.</td><td>Ya: seluruh rentang, bukan hanya hari ringkasan</td></tr>
+  <tr><td>Grafik &ldquo;(n) hari&rdquo;</td><td>Garis masuk dan selesai per hari; &ldquo;selesai&rdquo; berarti keluhan yang masuk pada hari itu dan kini sudah selesai. Bila garis selesai tertinggal jauh, tumpukan pekerjaan bertambah. Rentang satu hari tampil sebagai dua batang.</td><td>Ya</td></tr>
   <tr><td>Lingkaran &ldquo;Status&rdquo;</td><td>Berapa yang baru, diproses, dan selesai.</td><td>Ya</td></tr>
-    <tr><td>&ldquo;Jam masuk&rdquo;</td><td>Jam berapa dalam sehari (24 jam, WIB) keluhan paling sering masuk.</td><td>Tidak (semua data)</td></tr>
-  <tr><td>&ldquo;Masalah&rdquo;</td><td>Jenis masalah yang paling sering: kebersihan, perlengkapan, kerusakan, bau, genangan, lainnya.</td><td>Tidak (semua data)</td></tr>
-  <tr><td>&ldquo;Prioritas&rdquo;</td><td>Perbandingan prioritas tinggi, sedang, rendah.</td><td>Tidak (semua data)</td></tr>
-  <tr><td>&ldquo;Gedung&rdquo;</td><td>Gedung atau tempat mana yang paling sering dilaporkan (sampai 10 teratas).</td><td>Tidak (semua data)</td></tr>
-  <tr><td>&ldquo;Lama menunggu&rdquo;</td><td>Laporan yang masih terbuka sudah menunggu berapa lama: kurang dari 2 jam, 2&ndash;8 jam, 8&ndash;24 jam, 1&ndash;3 hari, lebih dari 3 hari. Batang yang panjang di sisi lama berarti ada keluhan mengendap.</td><td>Tidak (keadaan saat ini)</td></tr>
-  <tr><td>&ldquo;Gedung &times; Masalah&rdquo;</td><td>Masalah apa yang menempel pada gedung tertentu; bau yang berulang di satu gedung menunjuk ke masalah saluran, bukan ke kelalaian petugas.</td><td>Tidak (semua data)</td></tr>
-  <tr><td>&ldquo;Waktu selesai&rdquo; per prioritas</td><td>Ujian nyata: laporan prioritas tinggi <em>seharusnya</em> selesai lebih cepat daripada yang rendah. Bila tidak, urutan kerja tidak diikuti.</td><td>Tidak (semua data)</td></tr>
-  <tr><td>&ldquo;Kapan keluhan masuk&rdquo;</td><td>Peta hari &times; jam (WIB, per tiga jam). Dasar untuk menyusun jadwal ronde: bila keluhan menumpuk Senin pagi, ronde harus lebih pagi.</td><td>Tidak (semua data)</td></tr>
+  <tr><td>&ldquo;Jam masuk&rdquo;</td><td>Jam berapa dalam sehari (24 jam, WIB) keluhan paling sering masuk.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Masalah&rdquo;</td><td>Jenis masalah yang paling sering: kebersihan, perlengkapan, kerusakan, bau, genangan, lainnya.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Prioritas&rdquo;</td><td>Perbandingan prioritas tinggi, sedang, rendah.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Gedung&rdquo;</td><td>Gedung atau tempat mana yang paling sering dilaporkan (sampai 10 teratas).</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Lama menunggu&rdquo;</td><td>Keluhan yang masih terbuka sudah menunggu berapa lama: kurang dari 2 jam, 2&ndash;8 jam, 8&ndash;24 jam, 1&ndash;3 hari, lebih dari 3 hari. Batang yang panjang di sisi lama berarti ada keluhan mengendap.</td><td>Ya. Keluhan lebih lama yang masih terbuka tidak terhitung</td></tr>
+  <tr><td>&ldquo;Gedung &times; Masalah&rdquo;</td><td>Masalah apa yang menempel pada gedung tertentu; bau yang berulang di satu gedung menunjuk ke masalah saluran, bukan ke kelalaian petugas.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Waktu selesai&rdquo; per prioritas</td><td>Ujian nyata: laporan prioritas tinggi <em>seharusnya</em> selesai lebih cepat daripada yang rendah. Bila tidak, urutan kerja tidak diikuti.</td><td>Ya</td></tr>
+  <tr><td>&ldquo;Kapan keluhan masuk&rdquo;</td><td>Peta hari &times; jam (WIB, per tiga jam). Dasar untuk menyusun jadwal ronde: bila keluhan menumpuk Senin pagi, ronde harus lebih pagi.</td><td>Ya</td></tr>
   <tr><td>&ldquo;Komposisi prioritas per hari&rdquo;</td><td>Apakah beban yang <em>berat</em> bertambah, atau hanya jumlahnya yang naik?</td><td>Ya</td></tr>
 </table>
-
-<h3>Bagian Laporan Petugas</h3>
-<p>Laporan kerja petugas adalah fokus utama, jadi tampil paling atas; keluhan menyusul di halaman yang sama. Angka utama keduanya berdampingan, lalu bagian <strong>Laporan Petugas</strong> mengikuti tanggal yang dipilih:</p>
-<ul>
-  <li><strong>Kalender laporan</strong>: satu kotak per hari; makin gelap makin banyak laporan.</li>
-  <li><strong>Lokasi saat melapor</strong>: laporan dari kampus, dari luar kampus, dan tanpa GPS.</li>
-  <li><strong>Peta area</strong>: satu baris per gedung, satu kotak per lantai dan halaman (H). Kotak putus-putus berarti <em>belum ada laporan</em>; arahkan kursor atau ketuk untuk melihat nama lokasinya.</li>
-  <li><strong>Jenis pekerjaan</strong>: jumlah dan porsi tiap tugas.</li>
-  <li><strong>Dikerjakan per petugas</strong>: makin besar gelembung makin banyak tugas, tanpa target; lencana merah menghitung laporan yang ditandai. Ketuk gelembung untuk membuka laporan petugas itu, dengan foto, pada rentang tanggal yang sama.</li>
-  <li><strong>Jam masuk</strong> dan <strong>Gedung &times; Pekerjaan</strong>: kapan dan di mana pekerjaan dilaporkan.</li>
-</ul>
-<p>Ekspor Excel memuat sheet Kebersihan untuk rentang yang sama.</p>
+<p>Untuk melihat <strong>semua</strong> keluhan yang masih terbuka, termasuk yang lebih lama dari rentang, buka tab Laporan &rarr; Keluhan dengan saringan Waktu <em>Semua</em>; yang baru dan diproses tampil paling atas.</p>
 
 <h3>Tab Laporan dan tab Log aktivitas</h3>
 <p>Untuk melihat kerja rutin petugas, bukan hanya reaksi terhadap keluhan, buka <strong>Laporan &rarr; Kebersihan</strong>. Contoh pemakaian:</p>
 <ul>
   <li>Pilih hari ini pada <em>Rekap harian</em>: lokasi dan tugas yang belum terkirim (&#10007;) terlihat jelas, begitu juga siapa yang sudah mengerjakan apa.</li>
-  <li>Buka <em>Laporan &amp; foto</em> dan pilih satu nama: terlihat lokasi, tugas, jam foto, dan fotonya.</li>
+  <li>Buka <em>Laporan &amp; foto</em> dan pilih satu nama, atau ketuk gelembungnya di tab Ringkasan untuk melihat rentang tanggal sekaligus: terlihat lokasi, tugas, jam foto, dan fotonya.</li>
   <li>Bandingkan dengan <em>Laporan &rarr; Keluhan</em>: lokasi yang sering dikeluhkan tetapi jarang tercatat dibersihkan menunjuk ke jadwal ronde yang perlu diubah.</li>
-  <li>Pakai tab <em>Log</em> dengan saringan jenis dan jam untuk menelusuri satu kejadian: siapa mengambil alih, foto mana yang ditolak dan mengapa, laporan mana yang dihapus.</li>
+  <li>Pakai tab <em>Log aktivitas</em> dengan saringan jenis dan jam untuk menelusuri satu kejadian: siapa mengambil alih, foto mana yang ditolak dan mengapa, laporan mana yang dihapus.</li>
 </ul>
 
 <h3>Papan peringkat sebagai alat mendorong partisipasi</h3>
@@ -721,8 +740,8 @@ yang membuahkan perbaikan. Kampus dapat memakainya untuk apresiasi berkala.</p>
 <h3>Batas pertanyaan</h3>
 <ul>
   <li><strong>50 pertanyaan per hari</strong> untuk seluruh kampus. Setelah jawaban pertama tertulis &ldquo;Sisa (n) pertanyaan hari ini&rdquo;. Batas dihitung ulang tiap hari (WIB).</li>
-  <li><strong>20 pertanyaan per hari dari satu perangkat</strong> bagi pengunjung tanpa akun SPV, supaya satu orang tidak menghabiskan jatah semua. SPV yang login tidak kena batas per perangkat, tetapi tetap memakai jatah 50 itu.</li>
-  <li>Bila batas tercapai, muncul &ldquo;Batas (n) pertanyaan per hari sudah tercapai.&rdquo; Coba lagi besok.</li>
+  <li><strong>20 pertanyaan per hari dari satu perangkat</strong> bagi pengunjung tanpa akun SPV, supaya satu orang tidak menghabiskan jatah semua. Perangkat dikenali dari alamat internetnya, jadi perangkat yang memakai jaringan Wi-Fi yang sama bisa terhitung satu. SPV yang login tidak kena batas per perangkat, tetapi tetap memakai jatah 50 itu.</li>
+  <li>Bila batas tercapai, muncul &ldquo;Batas (n) pertanyaan per hari sudah tercapai.&rdquo; atau &ldquo;Batas 20 pertanyaan per hari dari perangkat ini sudah tercapai.&rdquo; Coba lagi besok.</li>
 </ul>
 <h3>Yang tidak bisa dijawab</h3>
 <ul>
@@ -737,8 +756,8 @@ yang membuahkan perbaikan. Kampus dapat memakainya untuk apresiasi berkala.</p>
 <table>
   <tr><th>Halaman</th><th>Yang ditampilkan</th><th>Yang sengaja tidak ditampilkan</th></tr>
   <tr><td><strong>Laporan Masuk</strong> (<em>/reports</em>; tombol &ldquo;Lihat semua laporan yang masuk&rdquo; di halaman depan)</td>
-    <td>Dua tab. <em>Dari pelapor</em>: semua keluhan dengan lokasi, jenis masalah, prioritas, ringkasan rapi, status, kapan masuk dan selesai, foto bukti bila selesai, serta hitungan &ldquo;x dari y selesai&rdquo;; bisa disaring gedung/lantai, status, dan prioritas.
-    <em>Dari petugas</em>: kiriman tugas harian terbaru (lokasi, tugas, foto, jam foto, catatan).</td>
+    <td>Dua tab. <em>Dari pelapor</em>: 100 keluhan pertama (yang baru dan diproses lebih dulu, lalu yang terbaru) dengan lokasi, jenis masalah, prioritas, ringkasan rapi, status, kapan masuk dan selesai, foto bukti bila selesai, serta hitungan &ldquo;x dari y selesai&rdquo; untuk seluruh laporan; bisa disaring gedung/lantai, status, dan prioritas.
+    <em>Dari petugas</em>: 60 kiriman tugas harian terbaru (lokasi, tugas, foto, jam foto, catatan), bisa disaring gedung/lantai.</td>
     <td>Tulisan asli pelapor, foto keadaan dari pelapor, dan nama petugas pada teks. Posisi GPS dan penandaan luar kampus hanya untuk SPV (catatan: foto tugas harian memuat cap nama dan koordinat di gambarnya; lihat bagian 12).</td></tr>
   <tr><td><strong>Papan Peringkat Pelapor</strong> (<em>/leaderboard</em>)</td><td>20 pelapor teratas dengan jumlah laporan dan jumlah selesai; pelapor yang login melihat posisinya sendiri.</td><td>Laporan tanpa akun.</td></tr>
   <tr><td><strong>Halaman status</strong> (<em>/reports/&hellip;</em>)</td><td>Satu laporan lengkap bagi pemegang tautannya, termasuk hasil analisis dan nama petugas yang menangani.</td><td>&mdash;</td></tr>
@@ -769,12 +788,12 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <h3>3. Foto bukti dari petugas diperiksa kecerdasan buatan</h3>
   <p>Bila tempatnya masih terlihat kotor, atau fotonya bukan tempat yang dikeluhkan, foto ditolak beserta alasannya dan tidak disimpan. Bila layanan pemeriksanya sedang
   gangguan, foto <em>tidak</em> diloloskan begitu saja; keluhan ditunda sampai bisa diperiksa. Foto bukti yang diterima ditampilkan
-  terbuka dengan tanda &ldquo;Diverifikasi AI&rdquo;, sehingga siapa pun dapat menilai sendiri.</p>
+  terbuka di papan umum, sehingga siapa pun dapat menilai sendiri; tanda &ldquo;Diverifikasi AI&rdquo; tampil di dashboard SPV.</p>
 </div>
 
 <div class="kartu">
   <h3>4. Daftar laporan terbuka untuk siapa saja</h3>
-  <p>Seluruh laporan beserta statusnya dapat dibaca tanpa login, sehingga keluhan yang dibiarkan terlihat oleh semua orang.</p>
+  <p>Laporan beserta statusnya dapat dibaca tanpa login, dan yang belum selesai tampil paling atas, sehingga keluhan yang dibiarkan terlihat oleh semua orang.</p>
 </div>
 
 <div class="kartu">
@@ -789,7 +808,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <h3>6. Keluhan bisa diambil alih supaya tidak mengendap</h3>
   <p>Mengerjakan sebuah keluhan bukan kunci. Bila petugas yang mengklaimnya tidak sempat menyelesaikan, petugas lain boleh menekan
   <span class="tombol netral">Ambil alih</span>. Pengambilalihan tercatat di log (siapa mengambil dari siapa), dan klaim ulang oleh orang yang sama tidak dicatat dua kali.
-  Pimpinan melihat keluhan yang mengendap pada kartu &ldquo;Lama menunggu&rdquo;.</p>
+  Pimpinan melihat keluhan yang mengendap pada kartu &ldquo;Lama menunggu&rdquo;, untuk keluhan yang masuk dalam rentang tanggal yang dipilih.</p>
 </div>
 
 <div class="kartu">
@@ -812,7 +831,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 <h2 class="pecah">12. Privasi dan data</h2>
 <table>
   <tr><th>Data</th><th>Disimpan?</th><th>Siapa yang bisa melihat</th></tr>
-  <tr><td>Teks keluhan asli</td><td>Ya</td><td>SPV. Selama keluhan <strong>belum selesai</strong>, juga siapa saja yang membuka halaman petugas (tanpa login, karena petugas membutuhkannya), dan pemegang tautan laporan itu. Tidak tampil di papan umum.</td></tr>
+  <tr><td>Teks keluhan asli</td><td>Ya</td><td>SPV, termasuk di berkas Ekspor Excel. Selama keluhan <strong>belum selesai</strong>, juga siapa saja yang membuka halaman petugas (tanpa login, karena petugas membutuhkannya), dan pemegang tautan laporan itu. Tidak tampil di papan umum.</td></tr>
   <tr><td>Foto keadaan dari pelapor</td><td>Ya</td><td>SPV, pemegang tautan laporan itu, dan selama keluhan belum selesai juga siapa saja yang membuka halaman petugas. Tidak tampil di papan umum. Tidak dikirim ke AI.</td></tr>
   <tr><td>Foto bukti penyelesaian keluhan</td><td>Hanya yang lolos pemeriksaan</td><td>Siapa saja, di papan umum. Foto yang ditolak dihapus.</td></tr>
   <tr><td>Foto tugas harian</td><td>Ya</td><td>SPV, dan di papan umum pada tab &ldquo;Dari petugas&rdquo;. Tidak dikirim ke AI. Foto ini dicap nama petugas, tugas, lokasi, jam, dan koordinat GPS <strong>di dalam gambarnya</strong>, jadi cap itu ikut terlihat oleh siapa pun yang membuka fotonya.</td></tr>
@@ -834,7 +853,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 
 <h2 class="pecah">13. Pertanyaan yang sering diajukan</h2>
 <h3>Pelapor</h3>
-<p><strong>Apakah petugas tahu siapa saya?</strong> Tidak, kecuali kamu melapor dengan akun, itu pun hanya nama yang kamu daftarkan, dan namanya hanya terlihat oleh SPV.</p>
+<p><strong>Apakah petugas tahu siapa saya?</strong> Tidak, kecuali kamu melapor dengan akun, itu pun hanya nama yang kamu daftarkan, dan namanya hanya terlihat oleh SPV dan di papan peringkat.</p>
 <p><strong>Kenapa tidak bisa memilih foto dari galeri?</strong> Supaya foto menunjukkan keadaan saat itu. Semua foto diambil dengan kamera langsung lewat tombol <em>Buka kamera</em>.</p>
 <p><strong>Kamera tidak mau terbuka.</strong> Izinkan kamera untuk situs ini di pengaturan browser lalu tekan <em>Coba lagi</em>; buka situs dengan Chrome (Android) atau Safari (iPhone) lewat alamat yang diawali https://; tutup aplikasi lain yang sedang memakai kamera. Lihat juga bagian 5 dan 14.</p>
 <p><strong>Apakah hanya toilet yang bisa dilaporkan?</strong> Tidak. Lantai gedung, halaman, selokan, taman, atau Lapang Voli juga bisa, selama lokasinya ada di daftar.</p>
@@ -865,8 +884,9 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 <p><strong>Bisakah jejak dihapus?</strong> Tidak. Petugas tidak bisa menghapus apa pun. Penghapusan laporan oleh SPV justru menyalin isinya ke log aktivitas, dan log itu tidak dapat diubah dari aplikasi.</p>
 <p><strong>Kenapa penghapusan akun petugas ditolak?</strong> Karena akun itu sudah punya riwayat (laporan atau pekerjaan). Pakai <em>Nonaktifkan</em>; namanya hilang dari pilihan tetapi riwayatnya utuh.</p>
 <p><strong>Apakah stiker QR harus dicetak ulang setelah pembaruan?</strong> Tidak. Stiker lama tetap berfungsi. Cetak ulang hanya untuk stiker yang hilang atau rusak, atau untuk lokasi baru, dari tab <em>QR lokasi</em>.</p>
-<p><strong>Kenapa sebagian grafik tidak berubah saat saya mengganti rentang hari?</strong> Karena hanya sebagian grafik yang mengikuti rentang (lihat tabel di bagian 8).</p>
-<p><strong>Kenapa petugas tidak punya target di rekap?</strong> Petugas tidak punya lokasi tetap; siapa pun boleh mengerjakan apa pun. Rekap menunjukkan lokasi yang belum dilaporkan dan yang sudah dikerjakan tiap petugas (bagian 7).</p>
+<p><strong>Kenapa ringkasan AI tidak ikut berubah saat saya mengganti rentang tanggal?</strong> Karena ringkasan itu dibuat per hari; yang tampil adalah hari pada <em>Sampai tanggal</em>. Semua grafik lain mengikuti rentang (lihat tabel di bagian 8).</p>
+<p><strong>Kenapa &ldquo;Belum selesai&rdquo; lebih kecil daripada jumlah keluhan yang masih terbuka?</strong> Karena kartu itu hanya menghitung keluhan yang masuk dalam rentang tanggal. Keluhan yang lebih lama ada di tab Laporan &rarr; Keluhan dengan saringan Waktu <em>Semua</em>.</p>
+<p><strong>Kenapa petugas tidak punya target di rekap?</strong> Petugas tidak punya lokasi tetap; siapa pun boleh mengerjakan apa pun. Rekap menunjukkan, per lokasi, apa yang belum dilaporkan dan siapa mengerjakan apa (bagian 7).</p>
 <p><strong>Seberapa akurat kecerdasan buatannya?</strong> Untuk teks, lama proses dan hasil tiap laporan tersimpan dan dapat dibandingkan dengan penilaian manusia. Untuk foto, putusan bersifat perkiraan: bisa salah tolak atau salah terima, dan alasannya selalu tercatat sehingga dapat diperiksa. Angka akurasi yang sesungguhnya belum diukur dalam dokumen ini.</p>
 
 <h2>14. Bila ada masalah</h2>
@@ -891,6 +911,8 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <tr><td>Kato Bot: &ldquo;Batas (n) pertanyaan per hari sudah tercapai.&rdquo;</td><td>Jatah 50 pertanyaan/hari (atau 20 per perangkat) habis</td><td>Coba lagi besok; bila jatah perlu dinaikkan, hubungi pengelola sistem</td></tr>
   <tr><td>Kato Bot: &ldquo;Model tidak dapat menjawab saat ini. Coba lagi sebentar.&rdquo;</td><td>Layanan pemahaman teks sedang gangguan</td><td>Coba lagi beberapa saat kemudian</td></tr>
   <tr><td>Ringkasan hari ini kosong setelah pukul 17.00</td><td>Penyusunan otomatis gagal</td><td>Tekan <em>Buat ulang</em></td></tr>
+  <tr><td>Di tab Ringkasan: &ldquo;Tanggal awal tidak boleh setelah tanggal akhir.&rdquo; atau &ldquo;Rentang paling panjang 366 hari.&rdquo;</td><td>Tanggal yang dipilih tidak bisa dipakai; grafik tetap menampilkan rentang terakhir yang sah</td><td>Perbaiki tanggalnya; tombol <em>Ekspor Excel</em> bisa ditekan lagi setelah tanggalnya benar</td></tr>
+  <tr><td>&ldquo;Gagal mengekspor. Coba lagi.&rdquo;</td><td>Data untuk berkas Excel gagal diambil</td><td>Tekan <em>Ekspor Excel</em> sekali lagi</td></tr>
   <tr><td>SPV lupa password</td><td>&mdash;</td><td>SPV lain mengatur password baru di tab Petugas &amp; Supervisor; bila tidak ada SPV lain, perlu pengelola sistem</td></tr>
   <tr><td>Semua yang login tiba-tiba harus masuk lagi</td><td>Pembaruan sistem, atau kunci sesi diganti pengelola</td><td>Wajar dan hanya sekali; masuk kembali</td></tr>
 </table>
@@ -932,7 +954,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <tr><td>Foto keadaan</td><td>Foto dari pelapor saat melapor</td></tr>
   <tr><td>Kamera langsung</td><td>Kamera yang menyala di dalam halaman; satu-satunya cara mengambil foto, galeri tidak bisa dipakai</td></tr>
   <tr><td>Diverifikasi AI</td><td>Foto bukti yang dinilai benar tempatnya dan bersih oleh pemeriksa foto</td></tr>
-  <tr><td>SPV (supervisor)</td><td>Pengawas: satu-satunya pengguna yang login, memantau laporan dan kerja petugas</td></tr>
+  <tr><td>SPV (supervisor)</td><td>Pengawas: satu-satunya pengguna yang wajib login, memantau laporan dan kerja petugas</td></tr>
   <tr><td>Kato Bot</td><td>Asisten AI berbentuk ikon melayang di semua halaman, yang menjawab pertanyaan tentang data keluhan</td></tr>
   <tr><td>Prioritas</td><td>Rendah / sedang / tinggi. Tinggi berarti ada risiko keselamatan atau lokasi tidak bisa dipakai</td></tr>
   <tr><td>Status</td><td>baru &rarr; diproses &rarr; selesai</td></tr>
@@ -947,7 +969,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 
 <div class="kaki">
   Sistem sudah berjalan dan dapat diakses di <strong>ai-complaint.yvrtz.workers.dev</strong>.
-  Antarmuka tersedia dalam Bahasa Indonesia dan Bahasa Inggris. Panduan ini diperbarui 29 Oktober 2026.
+  Antarmuka tersedia dalam Bahasa Indonesia dan Bahasa Inggris. Panduan ini diperbarui 4 November 2026.
   Rincian teknis ada pada <em>Dokumentasi Teknis</em> yang menyertai dokumen ini.
 </div>
 
