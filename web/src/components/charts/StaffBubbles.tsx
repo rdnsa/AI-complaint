@@ -14,9 +14,12 @@ const SPRING = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
 export default function StaffBubbles({
   staff,
   describe,
+  onOpen,
 }: {
   staff: Array<{ id: string; name: string; value: number; alerts: number }>;
   describe: (name: string, value: number) => string;
+  /** Opens this person's own reports. */
+  onOpen: (id: string) => void;
 }) {
   const mounted = useMounted();
   const max = Math.max(1, ...staff.map((s) => s.value));
@@ -28,30 +31,36 @@ export default function StaffBubbles({
         return (
           <li
             key={s.id}
-            title={describe(s.name, s.value)}
-            className="flex flex-col items-center gap-1.5"
             style={{
               opacity: mounted ? 1 : 0,
               transform: mounted ? 'none' : 'scale(0.2)',
               transition: `opacity .4s ease ${i * 80}ms, transform .8s ${SPRING} ${i * 80}ms`,
             }}
           >
-            <div className="chart-float relative" style={{ animationDelay: `${(i % 5) * -0.9}s` }}>
-              <div
-                className="grid place-content-center rounded-full text-lg font-bold tabular-nums text-white"
-                style={{ width: size, height: size, background: SINGLE, boxShadow: `0 6px 18px ${SINGLE}44` }}
-              >
-                {s.value}
-              </div>
-              {s.alerts > 0 && (
-                <span className="absolute -right-0.5 top-0 grid h-5 min-w-5 place-content-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-surface">
-                  {s.alerts}
+            <button
+              type="button"
+              onClick={() => onOpen(s.id)}
+              title={describe(s.name, s.value)}
+              aria-label={describe(s.name, s.value)}
+              className="group flex flex-col items-center gap-1.5 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+            >
+              <span className="chart-float relative block" style={{ animationDelay: `${(i % 5) * -0.9}s` }}>
+                <span
+                  className="grid place-content-center rounded-full text-lg font-bold tabular-nums text-white transition-transform duration-200 group-hover:scale-105 group-active:scale-95"
+                  style={{ width: size, height: size, background: SINGLE, boxShadow: `0 6px 18px ${SINGLE}44` }}
+                >
+                  {s.value}
                 </span>
-              )}
-            </div>
-            <span className="max-w-[118px] truncate text-nav font-semibold" style={{ color: INK.secondary }}>
-              {s.name}
-            </span>
+                {s.alerts > 0 && (
+                  <span className="absolute -right-0.5 top-0 grid h-5 min-w-5 place-content-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-surface">
+                    {s.alerts}
+                  </span>
+                )}
+              </span>
+              <span className="max-w-[118px] truncate text-nav font-semibold group-hover:underline" style={{ color: INK.secondary }}>
+                {s.name}
+              </span>
+            </button>
           </li>
         );
       })}

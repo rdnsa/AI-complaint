@@ -45,14 +45,23 @@ function formatDistance(m: number | null): string {
   return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`;
 }
 
-export default function CleaningPanel() {
+/** One person's reports over a range, as opened from the overview. */
+export interface CleaningFocus {
+  staffId: string;
+  from: string;
+  to: string;
+}
+
+export default function CleaningPanel({ focus = null }: { focus?: CleaningFocus | null }) {
   const { t, language } = useLanguage();
-  const [view, setView] = useState<'recap' | 'reports'>('recap');
+  const [view, setView] = useState<'recap' | 'reports'>(focus ? 'reports' : 'recap');
   const [date, setDate] = useState(todayWIB);
   const [recap, setRecap] = useState<CleaningRecap | null>(null);
   const [reports, setReports] = useState<CleaningReport[]>([]);
   const [staffList, setStaffList] = useState<StaffOption[]>([]);
-  const [staffId, setStaffId] = useState('');
+  const [staffId, setStaffId] = useState(focus?.staffId ?? '');
+  // Replaces the single day on the reports list until it is cleared. The recap is always one day.
+  const [range, setRange] = useState(focus ? { from: focus.from, to: focus.to } : null);
   const [alertsOnly, setAlertsOnly] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +69,7 @@ export default function CleaningPanel() {
     try {
       const [r, list] = await Promise.all([
         api.cleaningRecap(date),
-        api.cleaningReports({ from: date, to: date, staff_id: staffId, alerts: alertsOnly ? '1' : '', limit: '500' }),
+        api.cleaningReports({ from: range?.from ?? date, to: range?.to ?? date, staff_id: staffId, alerts: alertsOnly ? '1' : '', limit: '500' }),
       ]);
       setRecap(r);
       setReports(list.data);
@@ -70,7 +79,7 @@ export default function CleaningPanel() {
     } finally {
       setLoading(false);
     }
-  }, [date, staffId, alertsOnly]);
+  }, [date, range, staffId, alertsOnly]);
 
   useEffect(() => {
     load();
@@ -93,6 +102,10 @@ export default function CleaningPanel() {
     year: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(`${date}T00:00:00Z`));
+
+  const shortDate = (d: string) =>
+    new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${d}T00:00:00Z`));
+  const showRange = view === 'reports' && range;
 
   return (
     <div className="mt-6">
@@ -117,6 +130,22 @@ export default function CleaningPanel() {
           ))}
         </div>
 
+        {showRange ? (
+          <div className="flex min-w-0 items-center gap-2 rounded-full bg-mist-200 py-1 pl-4 pr-1 text-body-sm font-semibold text-ink-900">
+            <span className="truncate">
+              {shortDate(showRange.from)} – {shortDate(showRange.to)}
+            </span>
+            <button
+              type="button"
+              onClick={() => setRange(null)}
+              aria-label={t('time.reset')}
+              title={t('time.reset')}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-glass text-ink-900 shadow-subtle"
+            >
+              ×
+            </button>
+          </div>
+        ) : (
         <div className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
           <button type="button" className="btn-neutral !px-3 !py-2" onClick={() => setDate((d) => shiftDate(d, -1))}>
             ‹
@@ -137,6 +166,7 @@ export default function CleaningPanel() {
             ›
           </button>
         </div>
+        )}
 
         {view === 'recap' && (
           <button type="button" onClick={() => window.print()} aria-label={t('clean.print_report')} className="btn-primary !py-2 text-sm max-sm:!px-3 sm:ml-auto">
@@ -146,8 +176,8 @@ export default function CleaningPanel() {
         )}
       </div>
 
-      {/* The alert stays above every view: it is the one thing the supervisor must not miss. */}
-      {!!recap?.totals.alerts && (
+      {/* The alert stays above every view: it is the one thing the supervisor must not miss. It counts one day, so not over a range. */}
+      {!!recap?.totals.alerts && !showRange && (
         <button
           type="button"
           onClick={() => {

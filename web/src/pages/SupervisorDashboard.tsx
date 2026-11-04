@@ -10,6 +10,7 @@ import { useSession } from '../lib/session';
 import { CheckGlyph, InboxGlyph, SupervisorMark } from '../components/Marks';
 import ZoomableImage from '../components/ZoomableImage';
 import { Reveal } from '../lib/motion';
+import type { CleaningFocus } from '../components/CleaningPanel';
 import Select from '../components/Select';
 
 // Each tab is its own chunk, fetched when it is first opened: the QR library and the
@@ -89,6 +90,8 @@ function Board({ session }: { session: Session }) {
   const [tab, setTab] = useState<Tab>('overview');
   // The Reports tab holds two related lists, told apart by a small switch at its top.
   const [reportsView, setReportsView] = useState<'complaints' | 'cleaning'>('cleaning');
+  // Set when a staff bubble on the overview opened this person's reports for its dates.
+  const [cleaningFocus, setCleaningFocus] = useState<CleaningFocus | null>(null);
   // Today's cleaning reports filed off campus or without GPS: a red count on the tab.
   const [cleaningAlerts, setCleaningAlerts] = useState(0);
   // Kato Bot floats over every page; the QR stickers are a tab here.
@@ -145,7 +148,10 @@ function Board({ session }: { session: Session }) {
           {TABS.map((k) => (
             <button
               key={k}
-              onClick={() => setTab(k)}
+              onClick={() => {
+                setTab(k);
+                setCleaningFocus(null);
+              }}
               aria-pressed={tab === k}
               className={`relative rounded-full px-1 py-2 text-nav font-semibold leading-tight transition sm:text-body-sm md:px-3 ${
                 tab === k ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
@@ -165,7 +171,10 @@ function Board({ session }: { session: Session }) {
         {tab === 'reports' && (
           <SubTabs
             value={reportsView}
-            onChange={setReportsView}
+            onChange={(v) => {
+              setReportsView(v);
+              setCleaningFocus(null);
+            }}
             items={[
               { key: 'cleaning', label: t('tab.cleaning'), badge: cleaningAlerts },
               { key: 'complaints', label: t('sub.complaints') },
@@ -174,8 +183,17 @@ function Board({ session }: { session: Session }) {
         )}
 
         <Suspense fallback={<p className="mt-6 text-ink-600">{t('common.loading')}</p>}>
-          {tab === 'overview' && <OverviewPanel />}
-          {tab === 'reports' && reportsView === 'cleaning' && <CleaningPanel />}
+          {tab === 'overview' && (
+            <OverviewPanel
+              onOpenStaff={(staffId, range) => {
+                setCleaningFocus({ staffId, ...range });
+                setReportsView('cleaning');
+                setTab('reports');
+                window.scrollTo(0, 0);
+              }}
+            />
+          )}
+          {tab === 'reports' && reportsView === 'cleaning' && <CleaningPanel focus={cleaningFocus} />}
           {tab === 'logs' && <ActivityPanel />}
           {tab === 'accounts' && <AccountsPanel />}
           {tab === 'qr' && <QrCodesPanel />}

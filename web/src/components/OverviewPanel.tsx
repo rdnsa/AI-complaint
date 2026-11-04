@@ -23,7 +23,7 @@ import { buildPlaces, type Place } from '../lib/places';
 import { Reveal } from '../lib/motion';
 import { usePolling } from '../lib/polling';
 
-interface DateRange {
+export interface DateRange {
   from: string;
   to: string;
 }
@@ -162,7 +162,7 @@ const buildingTiles = (buildings: Array<{ building_code: string; building_name: 
  * already count. The picked dates drive both sections. The AI summary exists per
  * day, so it shows the last picked date.
  */
-export default function OverviewPanel() {
+export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: string, range: DateRange) => void }) {
   const { t, language } = useLanguage();
   // null until a date is picked: the rolling default.
   const [picked, setPicked] = useState<DateRange | null>(null);
@@ -308,7 +308,7 @@ export default function OverviewPanel() {
       </div>
 
       <SectionTitle>{t('ov.section_staff')}</SectionTitle>
-      {cleaning ? <CleaningDetails data={cleaning} places={places} /> : noData}
+      {cleaning ? <CleaningDetails data={cleaning} places={places} onOpenStaff={(id) => onOpenStaff(id, range)} /> : noData}
 
       <SectionTitle>{t('sub.complaints')}</SectionTitle>
       <SummaryCard
@@ -656,7 +656,15 @@ function ComplaintDetails({ data, places }: { data: ChartData; places: Place[] }
  * there is no score per person: a gap belongs to the area, and the staff chart
  * only says who did how much. Each question gets its own shape.
  */
-function CleaningDetails({ data, places }: { data: CleaningCharts; places: Place[] }) {
+function CleaningDetails({
+  data,
+  places,
+  onOpenStaff,
+}: {
+  data: CleaningCharts;
+  places: Place[];
+  onOpenStaff: (staffId: string) => void;
+}) {
   const { t, language } = useLanguage();
   const locale = language === 'id' ? 'id-ID' : 'en-GB';
   const { trend, areas } = data;
@@ -675,6 +683,7 @@ function CleaningDetails({ data, places }: { data: CleaningCharts; places: Place
           <StaffBubbles
             staff={data.staff.map((s) => ({ id: s.staff_id, name: s.staff_name, value: Number(s.tasks), alerts: Number(s.alerts) }))}
             describe={(name, n) => t('ov.clean_bubble', { name, n })}
+            onOpen={onOpenStaff}
           />
         </Tile>
         <Tile title={t('ov.clean_tasks')}>
