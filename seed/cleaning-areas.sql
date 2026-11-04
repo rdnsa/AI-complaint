@@ -1,4 +1,4 @@
--- Cleaning areas, cleaning staff, and who is assigned where — UPI Tasikmalaya.
+-- Cleaning areas and cleaning staff — UPI Tasikmalaya.
 --
 -- Source: "Penempatan Lokasi Kerja PHL dan OB 2026" (the Director's assignment
 -- letter, one page per staff member). These areas are the only locations the
@@ -8,9 +8,12 @@
 -- the daily tasks of the area directly. Staff pick their name when they act, and
 -- photograph and send each task done.
 --
--- Safe to re-run: areas are upserted, staff are only added when no active staff
--- member of that name exists yet, and the assignments are rebuilt from scratch.
--- An area removed from this list is deactivated, never deleted, so its history
+-- Staff do not own areas (migration 0012): whoever is free does the work, and
+-- the report records who did it. The letter is only the source of these names
+-- and places.
+--
+-- Safe to re-run: areas are upserted, and staff are only added when no active
+-- staff member of that name exists yet. An area removed from this list is deactivated, never deleted, so its history
 -- stays readable.
 --
 -- Every area has the same six tasks (migration 0010): menyapu & mengepel,
@@ -25,19 +28,12 @@
 --     E 2, F 2, G 1, H 2, I 1. Every floor is an area, and so is every
 --     building's yard (halaman, floor 0); the staff page lists the yard beside
 --     the floors. Where the letter names a whole building (RA Kartini, KH.
---     Ahmad Dahlan, Mohamad Yamin, Sutomo), its staff take every floor and the
---     yard, whose paths, gardens, gutters and paving their pages list.
---   * Gedung E and F, and Gedung A floor 1, are on the campus list but no page
---     of the letter assigns them: they have no staff yet.
+--     Ahmad Dahlan, Mohamad Yamin, Sutomo), every floor and the yard are listed.
+--   * Gedung E and F, and Gedung A floor 1, are on the campus list although no
+--     page of the letter names them.
 --   * Gedung G, D and H were one area each (ids 'G', 'D', 'H') before they had
 --     floors; those ids are deactivated, and the frontend sends an old link to
 --     one of them to the building.
---   * Locations come only from the "Area Penugasan" line of each page, never
---     from the task list: Feri Agus Sobari's tasks mention the tennis court,
---     the canteen and the drawing lab, but the page assigns them the same
---     places as Iqbal (Halaman Gedung Ki Hajar Dewantara, Mesjid).
---   * Romulus (technician, mower operator) works across the whole campus and
---     has no area of their own.
 
 UPDATE cleaning_areas SET active = 0;
 
@@ -112,26 +108,3 @@ SELECT lower(hex(randomblob(16))), n.name, 'staff'
  WHERE NOT EXISTS (
    SELECT 1 FROM users u WHERE u.role = 'staff' AND u.active = 1 AND lower(u.name) = lower(n.name)
  );
-
-DELETE FROM cleaning_assignments;
-
-WITH a(area_id, name) AS (VALUES
-  ('ADM-HALAMAN', 'Muhammad Iqbal Maulana'), ('MASJID', 'Muhammad Iqbal Maulana'), ('B-HALAMAN', 'Muhammad Iqbal Maulana'),
-  ('ADM-HALAMAN', 'Feri Agus Sobari'), ('MASJID', 'Feri Agus Sobari'), ('B-HALAMAN', 'Feri Agus Sobari'),
-  ('ADM-2', 'Joko Waluyo'), ('ADM-3', 'Joko Waluyo'), ('ADM-4', 'Joko Waluyo'),
-  ('C-1', 'Sri'), ('C-2', 'Sri'), ('C-3', 'Sri'),
-  ('C-1', 'Miranda'), ('C-2', 'Miranda'), ('C-3', 'Miranda'),
-  ('C-4', 'Jajang'), ('C-5', 'Jajang'),
-  ('C-HALAMAN', 'Sri'), ('C-HALAMAN', 'Miranda'), ('C-HALAMAN', 'Jajang'),
-  ('G-1', 'Rusman'), ('G-HALAMAN', 'Rusman'), ('D-1', 'Rusman'), ('D-HALAMAN', 'Rusman'), ('LAPANG-VOLI', 'Rusman'),
-  ('G-1', 'Riki Rukmantara'), ('G-HALAMAN', 'Riki Rukmantara'), ('D-1', 'Riki Rukmantara'), ('D-HALAMAN', 'Riki Rukmantara'),
-  ('LAPANG-VOLI', 'Riki Rukmantara'),
-  ('H-1', 'Gilang Abdul Aziz'), ('H-2', 'Gilang Abdul Aziz'), ('H-HALAMAN', 'Gilang Abdul Aziz'),
-  ('I-1', 'Zidan Muhammad S'), ('I-HALAMAN', 'Zidan Muhammad S')
-)
-INSERT INTO cleaning_assignments (area_id, staff_id)
-SELECT a.area_id, u.id
-  FROM a
-  JOIN users u ON u.role = 'staff' AND u.active = 1 AND lower(u.name) = lower(a.name)
- -- Two active staff with the same name would otherwise double the row.
- GROUP BY a.area_id, a.name;

@@ -13,10 +13,6 @@ classDiagram
     +sortOrder : Integer
     +active : Boolean
   }
-  class CleaningAssignment {
-    +areaId : String «FK»
-    +staffId : String «FK»
-  }
   class User {
     +id : String «PK»
     +username : String
@@ -124,8 +120,6 @@ classDiagram
   CleaningArea "1" <-- "0..*" CleaningReport : dikerjakan di
   User "1" <-- "0..*" CleaningReport : dilaporkan oleh (petugas)
   CleaningReport "1" *-- "1..6" CleaningReportTask : memuat
-  CleaningArea "1" <-- "0..*" CleaningAssignment : ditugaskan di
-  User "1" <-- "0..*" CleaningAssignment : petugas
   Toilet "1" <-- "0..*" WorkLog : dikerjakan di
   User "1" <-- "0..*" WorkLog : dicatat oleh
   Report "0..1" <.. "0..*" ActivityLog : mencatat

@@ -138,7 +138,7 @@ app.get('/reports', requireSupervisor, async (c) => {
   });
 });
 
-/** Supervisor: one WIB day per staff member — assigned tasks done, and the gaps. */
+/** Supervisor: one WIB day per area — tasks reported, by whom, and the gaps. */
 app.get('/recap', requireSupervisor, async (c) => {
   const date = c.req.query('date');
   return c.json(await cleaning.dailyRecap(c.env, isValidDate(date) ? date : undefined));

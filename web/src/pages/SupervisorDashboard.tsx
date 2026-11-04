@@ -89,7 +89,7 @@ function Board({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('overview');
   // Two tabs hold two related lists each, told apart by a small switch at their top.
-  const [reportsView, setReportsView] = useState<'complaints' | 'cleaning'>('complaints');
+  const [reportsView, setReportsView] = useState<'complaints' | 'cleaning'>('cleaning');
   const [logsView, setLogsView] = useState<'activity' | 'work_logs'>('activity');
   // Today's cleaning reports filed off campus or without GPS: a red count on the tab.
   const [cleaningAlerts, setCleaningAlerts] = useState(0);
@@ -169,8 +169,8 @@ function Board({ session }: { session: Session }) {
             value={reportsView}
             onChange={setReportsView}
             items={[
-              { key: 'complaints', label: t('sub.complaints') },
               { key: 'cleaning', label: t('tab.cleaning'), badge: cleaningAlerts },
+              { key: 'complaints', label: t('sub.complaints') },
             ]}
           />
         )}

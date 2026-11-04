@@ -34,27 +34,6 @@ export async function activeArea(env: Env, id: string): Promise<AreaRow | null> 
     .first<AreaRow>();
 }
 
-export interface AssignmentRow {
-  area_id: string;
-  staff_id: string;
-  staff_name: string;
-}
-
-/** Assignments to active areas of active staff; `areaId` narrows it to one area. */
-export async function assignments(env: Env, areaId?: string): Promise<AssignmentRow[]> {
-  const rows = await env.DB.prepare(
-    `SELECT s.area_id, s.staff_id, u.name AS staff_name
-       FROM cleaning_assignments s
-       JOIN users u ON u.id = s.staff_id AND u.active = 1
-       JOIN cleaning_areas a ON a.id = s.area_id AND a.active = 1
-      ${areaId ? 'WHERE s.area_id = ?' : ''}
-      ORDER BY a.sort_order, u.name`,
-  )
-    .bind(...(areaId ? [areaId] : []))
-    .all<AssignmentRow>();
-  return rows.results;
-}
-
 export interface UsedPhoto {
   photo_key: string;
   report_id: string;
@@ -171,4 +150,87 @@ export async function tasksOf(env: Env, reportIds: string[]): Promise<CleaningTa
     out.push(...rows.results);
   }
   return out;
+}
+
+/** The cleaning numbers for a WIB date window; `end` is exclusive. */
+export async function chartCounts(env: Env, w: { start: string; end: string; previousStart: string }) {
+  const inWindow = `r.created_at >= ? AND r.created_at < ?`;
+  const [totals, previous, daily, tasks, buildings, hours, staff, areas, matrix, locations] = await env.DB.batch<Record<string, unknown>>([
+    env.DB.prepare(
+      `SELECT COUNT(*) AS reports, COALESCE(SUM(r.location_status <> 'ok'), 0) AS alerts
+         FROM cleaning_reports r WHERE ${inWindow}`,
+    ).bind(w.start, w.end),
+    env.DB.prepare(`SELECT COUNT(*) AS reports FROM cleaning_reports r WHERE ${inWindow}`).bind(w.previousStart, w.start),
+    env.DB.prepare(
+      // '+7 hours' groups by WIB day rather than UTC.
+      `SELECT date(r.created_at, '+7 hours') AS date, COUNT(*) AS reports, SUM(r.location_status = 'ok') AS on_campus
+         FROM cleaning_reports r WHERE ${inWindow}
+        GROUP BY date ORDER BY date`,
+    ).bind(w.start, w.end),
+    env.DB.prepare(
+      `SELECT t.task, COUNT(*) AS count
+         FROM cleaning_report_tasks t JOIN cleaning_reports r ON r.id = t.report_id
+        WHERE ${inWindow}
+        GROUP BY t.task ORDER BY count DESC`,
+    ).bind(w.start, w.end),
+    env.DB.prepare(
+      // A place outside the buildings (Lapang Voli) stands for itself, as on the complaint charts.
+      `SELECT COALESCE(a.building_code, a.name) AS building_code, COALESCE(b.name, a.name) AS building_name,
+              COUNT(*) AS count
+         FROM cleaning_reports r
+         JOIN cleaning_areas a ON a.id = r.area_id
+         LEFT JOIN buildings b ON b.code = a.building_code
+        WHERE ${inWindow}
+        GROUP BY 1 ORDER BY count DESC`,
+    ).bind(w.start, w.end),
+    env.DB.prepare(
+      `SELECT CAST(strftime('%H', r.created_at, '+7 hours') AS INTEGER) AS hour, COUNT(*) AS count
+         FROM cleaning_reports r WHERE ${inWindow}
+        GROUP BY hour`,
+    ).bind(w.start, w.end),
+    env.DB.prepare(
+      `SELECT r.staff_id, MAX(r.staff_name) AS staff_name,
+              COUNT(DISTINCT r.id) AS reports,
+              COUNT(t.task) AS tasks,
+              COUNT(DISTINCT r.area_id) AS areas,
+              COUNT(DISTINCT CASE WHEN r.location_status <> 'ok' THEN r.id END) AS alerts
+         FROM cleaning_reports r LEFT JOIN cleaning_report_tasks t ON t.report_id = r.id
+        WHERE ${inWindow}
+        GROUP BY r.staff_id ORDER BY tasks DESC, staff_name`,
+    ).bind(w.start, w.end),
+    env.DB.prepare(`SELECT r.area_id, COUNT(*) AS count FROM cleaning_reports r WHERE ${inWindow} GROUP BY r.area_id`).bind(
+      w.start,
+      w.end,
+    ),
+    env.DB.prepare(
+      `SELECT COALESCE(a.building_code, a.name) AS building_code, t.task, COUNT(*) AS count
+         FROM cleaning_report_tasks t
+         JOIN cleaning_reports r ON r.id = t.report_id
+         JOIN cleaning_areas a ON a.id = r.area_id
+        WHERE ${inWindow}
+        GROUP BY 1, t.task`,
+    ).bind(w.start, w.end),
+    env.DB.prepare(
+      `SELECT r.location_status, COUNT(*) AS count FROM cleaning_reports r WHERE ${inWindow} GROUP BY r.location_status`,
+    ).bind(w.start, w.end),
+  ]);
+  return {
+    current: totals.results[0] as { reports: number; alerts: number },
+    previous: Number((previous.results[0] as { reports: number }).reports),
+    daily: daily.results as Array<{ date: string; reports: number; on_campus: number }>,
+    tasks: tasks.results as Array<{ task: CleaningTask; count: number }>,
+    buildings: buildings.results as Array<{ building_code: string; building_name: string; count: number }>,
+    hours: hours.results as Array<{ hour: number; count: number }>,
+    staff: staff.results as Array<{
+      staff_id: string;
+      staff_name: string;
+      reports: number;
+      tasks: number;
+      areas: number;
+      alerts: number;
+    }>,
+    reportsPerArea: areas.results as Array<{ area_id: string; count: number }>,
+    matrix: matrix.results as Array<{ building_code: string; task: CleaningTask; count: number }>,
+    locations: locations.results as Array<{ location_status: LocationStatus; count: number }>,
+  };
 }

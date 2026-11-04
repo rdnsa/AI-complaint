@@ -1,5 +1,5 @@
 import writeExcelFile, { type Row, type Sheet } from 'write-excel-file/browser';
-import type { ChartData, CleaningRecap, ExportReport } from './api';
+import type { ChartData, CleaningCharts, ExportReport } from './api';
 import type { Translate } from './i18n';
 
 const head = (labels: string[]): Row => labels.map((value) => ({ value, fontWeight: 'bold' }));
@@ -23,14 +23,14 @@ export async function exportDashboard({
   to,
   charts,
   reports,
-  recap,
+  cleaning,
   t,
 }: {
   from: string;
   to: string;
   charts: ChartData;
   reports: ExportReport[];
-  recap: CleaningRecap | null;
+  cleaning: CleaningCharts | null;
   t: Translate;
 }): Promise<void> {
   const priorityLabel = (p: string | null) => (p ? t(`priority_short.${p}` as 'priority_short.high') : '');
@@ -161,18 +161,44 @@ export async function exportDashboard({
     },
   ];
 
-  // Cleaning is counted one day at a time, so its sheet carries the date it is for.
-  if (recap) {
+  if (cleaning) {
+    const { trend, areas } = cleaning;
     sheets.push({
       data: [
-        head([t('export.staff'), t('export.tasks_done'), t('export.tasks_expected'), t('export.cleaning_reports'), t('export.alerts')]),
-        ...recap.staff
-          .filter((s) => s.expected > 0 || s.reports > 0)
-          .map((s) => plain([s.staff_name, s.done, s.expected, s.reports, s.alerts])),
+        head([t('tab.cleaning')]),
+        plain([t('export.period'), `${from} – ${to}`]),
+        [],
+        ...section(t('export.key_numbers'), [
+          [t('ov.clean_reports'), trend.reports],
+          [t('export.previous_period'), trend.previous_reports],
+          [t('export.change_pct'), trend.change],
+          [t('ov.clean_coverage'), `${areas.covered}/${areas.total}`],
+          [t('ov.clean_staff'), cleaning.staff.length],
+          [t('clean.stat_alerts'), trend.alerts],
+        ]),
+        ...section(
+          t('ov.clean_tasks'),
+          cleaning.tasks.map((x) => [t(`task.${x.task}`), Number(x.count)]),
+        ),
+        ...section(
+          t('ov.buildings'),
+          cleaning.buildings.map((b) => [
+            b.building_code === b.building_name ? b.building_name : `${b.building_code} - ${b.building_name}`,
+            Number(b.count),
+          ]),
+        ),
+        // Nobody owns an area, so the gap is listed by place, not by person.
+        head([t('ov.clean_missing')]),
+        ...cleaning.areas.missing.map((a) => plain([a.name])),
+        [],
+        head([t('export.staff'), t('export.tasks_done'), t('export.areas_worked'), t('export.cleaning_reports'), t('export.alerts')]),
+        ...cleaning.staff.map((s) => plain([s.staff_name, Number(s.tasks), Number(s.areas), Number(s.reports), Number(s.alerts)])),
+        [],
+        head([t('export.date'), t('clean.stat_reports'), t('clean.loc_ok')]),
+        ...cleaning.daily.map((d) => plain([d.date, d.reports, d.on_campus])),
       ],
-      sheet: `${t('export.sheet_cleaning')} ${to}`,
-      columns: [{ width: 24 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }],
-      stickyRowsCount: 1,
+      sheet: t('export.sheet_cleaning'),
+      columns: [{ width: 44 }, { width: 16 }, { width: 16 }, { width: 14 }, { width: 18 }],
     });
   }
 

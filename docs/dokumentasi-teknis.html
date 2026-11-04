@@ -141,10 +141,10 @@ kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
   <tr><th>Hal</th><th>Nilai</th><th>Sumber</th></tr>
   <tr><td>Penangan HTTP</td><td>37 (36 titik akhir API + <span class="mono">/api/health</span>) dalam 11 modul route</td><td class="mono">src/index.ts, src/routes/*.ts</td></tr>
   <tr><td>Migrasi D1</td><td>11 (0001&ndash;0011)</td><td class="mono">migrations/</td></tr>
-  <tr><td>Tabel dan view</td><td>11 tabel (<span class="mono">buildings, toilets, users, reports, work_logs, cleaning_areas, cleaning_assignments, cleaning_reports, cleaning_report_tasks, daily_summaries, activity_log</span>) dan 2 view (<span class="mono">toilet_info, location_info</span>)</td><td class="mono">migrations/0008, 0009, 0011</td></tr>
+  <tr><td>Tabel dan view</td><td>10 tabel (<span class="mono">buildings, toilets, users, reports, work_logs, cleaning_areas, cleaning_reports, cleaning_report_tasks, daily_summaries, activity_log</span>) dan 2 view (<span class="mono">toilet_info, location_info</span>)</td><td class="mono">migrations/0008, 0009, 0011</td></tr>
   <tr><td>Lokasi aktif (area kebersihan)</td><td>29: 9 halaman gedung (A&ndash;I), 19 lantai, 1 tempat di luar gedung (Lapang Voli)</td><td class="mono">seed/cleaning-areas.sql</td></tr>
   <tr><td>Toilet aktif (data lama)</td><td>26, di gedung A, B, C, G, H, I</td><td class="mono">seed/toilets.sql</td></tr>
-  <tr><td>Nama petugas di seed</td><td>11 (10 punya penugasan area; satu tidak)</td><td class="mono">seed/cleaning-areas.sql</td></tr>
+  <tr><td>Nama petugas di seed</td><td>11</td><td class="mono">seed/cleaning-areas.sql</td></tr>
   <tr><td>Tugas harian / kategori / prioritas / status / putusan bukti</td><td>6 / 6 / 3 / 3 / 3</td><td class="mono">src/domain/types.ts</td></tr>
   <tr><td>Jenis aksi jejak audit</td><td>14</td><td class="mono">src/repositories/activity.ts</td></tr>
   <tr><td>Rute halaman</td><td>12 rute berhalaman, 12 pengalihan (11 URL lama + <span class="mono">/clean</span>), 9 berkas halaman</td><td class="mono">web/src/main.tsx, web/src/pages/</td></tr>
@@ -240,7 +240,7 @@ lokasi) tetap berbahasa Indonesia.</p>
     memo.ts                cache memori per-isolate: memo(), forget(), reportsChanged(), cleaningChanged(), HTTP_CACHE
   repositories/
     reports.ts             keluhan: daftar dashboard, publik, terbuka, milik pelapor, kembar, analisis
-    cleaning.ts            area, penugasan, laporan kebersihan, foto terpakai
+    cleaning.ts            area, laporan kebersihan, angka grafik, foto terpakai
     work-logs.ts           laporan pekerjaan lama (read-mostly)
     time-filter.ts         filter waktu bersama (from, to, hour_from, hour_to; WIB, inklusif)
     users.ts               akun SPV/pelapor dan nama petugas
@@ -321,12 +321,6 @@ AI, kalimat jejak audit, nama lokasi) tetap bahasa Indonesia.</p>
   <tr><td>tasks</td><td>TEXT NOT NULL (JSON)</td><td>Tugas harian yang berlaku di sini. Migrasi 0010 menyamakannya di semua area: <span class="mono">["sweep_mop","glass","toilet","trash","gallon","tidy"]</span></td></tr>
   <tr><td>sort_order</td><td>INTEGER</td><td>Urutan (A: 10&ndash;14, B: 20&ndash;21, &hellip;, Lapang Voli 900)</td></tr>
   <tr><td>active</td><td>INTEGER</td><td>0/1. Area yang keluar dari daftar dinonaktifkan, tidak dihapus, agar riwayat tetap terbaca</td></tr>
-</table>
-
-<h3>cleaning_assignments</h3>
-<table class="kolom">
-  <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
-  <tr><td>area_id, staff_id</td><td>TEXT, PK gabungan</td><td>Siapa ditugaskan di mana (surat penempatan 2026). Beberapa petugas boleh berbagi satu area; satu petugas boleh memegang banyak area. FK ke <span class="mono">cleaning_areas</span> dan <span class="mono">users</span>. Indeks <span class="mono">idx_cleaning_assignments_staff</span></td></tr>
 </table>
 
 <h3>reports (keluhan)</h3>
@@ -440,6 +434,7 @@ bernilai NULL dan <span class="mono">building_order</span> bernilai 999 bila tid
   <tr><td class="mono">0009_cleaning_reports.sql</td><td><span class="mono">cleaning_areas</span>, <span class="mono">cleaning_assignments</span>, <span class="mono">cleaning_reports</span>, <span class="mono">cleaning_report_tasks</span>: laporan kebersihan per area dengan foto per tugas dan status GPS</td></tr>
   <tr><td class="mono">0010_daily_tasks.sql</td><td>Satu daftar enam tugas di semua area (<span class="mono">sweep</span> + <span class="mono">mop</span> menjadi <span class="mono">sweep_mop</span>; ditambah <span class="mono">trash, gallon, tidy</span>); <span class="mono">CHECK</span> tugas dibangun ulang tetapi tetap menerima nilai lama</td></tr>
   <tr><td class="mono">0011_report_locations.sql</td><td>Keluhan atas lokasi mana pun: <span class="mono">area_id</span> + <span class="mono">toilet_id</span> (tepat satu), <span class="mono">not_toilet</span> &rarr; <span class="mono">wrong_place</span>, view <span class="mono">location_info</span>; <span class="mono">reports</span> dibangun ulang karena SQLite tidak dapat melepas NOT NULL atau mengubah CHECK</td></tr>
+  <tr><td class="mono">0012_drop_cleaning_assignments.sql</td><td>Menghapus <span class="mono">cleaning_assignments</span>: petugas tidak punya area tetap; rekap dihitung per area</td></tr>
 </table>
 <p>Migrasi diterapkan dengan <span class="mono">npm run db:local</span> / <span class="mono">npm run db:remote</span> (<span class="mono">wrangler d1 migrations apply kato</span>). Pola yang berulang:
 SQLite tidak dapat mengubah <span class="mono">CHECK</span> atau <span class="mono">NOT NULL</span>, jadi tabel dibangun ulang, anak dahulu; D1 tidak dapat mematikan foreign key, hanya menundanya
@@ -449,7 +444,7 @@ SQLite tidak dapat mengubah <span class="mono">CHECK</span> atau <span class="mo
 <p>Dua berkas, keduanya aman dijalankan ulang kapan pun, termasuk setelah laporan ada.</p>
 <table>
   <tr><th>Berkas / perintah</th><th>Isi dan perilaku</th></tr>
-  <tr><td><span class="mono">seed/cleaning-areas.sql</span><br><span class="mono">npm run db:seed:cleaning</span> / <span class="mono">:remote</span></td><td>Sumber kebenaran lokasi hari ini, dari surat &ldquo;Penempatan Lokasi Kerja PHL dan OB 2026&rdquo;. Menonaktifkan semua area, lalu <em>upsert</em> 29 area (<span class="mono">ON CONFLICT(id) DO UPDATE &hellip; active = 1</span>); menambah 11 nama petugas hanya bila belum ada petugas aktif bernama sama (tanpa membedakan huruf besar); <strong>membangun ulang</strong> penugasan dari nol (<span class="mono">DELETE FROM cleaning_assignments</span> lalu isi). Gedung A lantai 1, E, dan F belum punya petugas; satu petugas (Romulus, teknisi) bekerja di seluruh kampus dan tidak punya area. Id lama <span class="mono">G</span>, <span class="mono">D</span>, <span class="mono">H</span> dinonaktifkan; frontend mengarahkan tautan lama ke gedungnya</td></tr>
+  <tr><td><span class="mono">seed/cleaning-areas.sql</span><br><span class="mono">npm run db:seed:cleaning</span> / <span class="mono">:remote</span></td><td>Sumber kebenaran lokasi hari ini, dari surat &ldquo;Penempatan Lokasi Kerja PHL dan OB 2026&rdquo;. Menonaktifkan semua area, lalu <em>upsert</em> 29 area (<span class="mono">ON CONFLICT(id) DO UPDATE &hellip; active = 1</span>); menambah 11 nama petugas hanya bila belum ada petugas aktif bernama sama (tanpa membedakan huruf besar); petugas tidak dipasangkan dengan area. Id lama <span class="mono">G</span>, <span class="mono">D</span>, <span class="mono">H</span> dinonaktifkan; frontend mengarahkan tautan lama ke gedungnya</td></tr>
   <tr><td><span class="mono">seed/toilets.sql</span><br><span class="mono">npm run db:seed</span> / <span class="mono">:remote</span></td><td>Daftar toilet lama: 26 toilet aktif (pria dan wanita) di gedung A, B, C, G, H, I; menonaktifkan semua dahulu. Tidak diperlukan untuk laporan baru; hanya menjaga nama lokasi pada data lama</td></tr>
 </table>
 
@@ -654,16 +649,16 @@ status = distance === null ? 'unknown'
   akan menambah biaya serta latensi pada pekerjaan yang dikirim berkali-kali sehari.
 </div>
 
-<h3>Rekap harian per petugas: <span class="mono">dailyRecap(env, date)</span></h3>
-<p><span class="mono">GET /api/cleaning/recap?date=YYYY-MM-DD</span> (SPV; tanpa tanggal = hari ini WIB) merangkum satu hari per petugas. Hasilnya di-<em>cache</em> 20 detik dengan kunci <span class="mono">recap:&lt;tanggal&gt;</span> dan dibuang oleh
-<span class="mono">cleaningChanged()</span> (laporan baru, atau akun/penugasan berubah). Cara kerja <span class="mono">loadRecap</span>:</p>
+<h3>Rekap harian per area: <span class="mono">dailyRecap(env, date)</span></h3>
+<p><span class="mono">GET /api/cleaning/recap?date=YYYY-MM-DD</span> (SPV; tanpa tanggal = hari ini WIB) merangkum satu hari per area. Hasilnya di-<em>cache</em> 20 detik dengan kunci <span class="mono">recap:&lt;tanggal&gt;</span> dan dibuang oleh
+<span class="mono">cleaningChanged()</span> (laporan baru). Cara kerja <span class="mono">loadRecap</span>:</p>
 <ol>
-  <li>Memuat paralel: area aktif, penugasan (petugas aktif di area aktif), dan semua laporan kebersihan hari itu (batas 1000).</li>
-  <li>Setiap penugasan membuat sel <em>kosong</em> untuk tiap tugas area itu: <span class="mono">{done_at:null, times:0, flagged:false}</span>.</li>
-  <li>Laporan diproses dari yang paling lama: <span class="mono">done_at</span> menjadi waktu foto <em>pertama</em> hari itu, <span class="mono">times</span> bertambah. <span class="mono">flagged</span> bernilai benar hanya bila <em>semua</em> laporan di balik sel itu dikirim dari luar kampus atau tanpa GPS
-      (satu laporan <span class="mono">ok</span> membersihkan tanda).</li>
-  <li><span class="mono">expected</span> = jumlah sel di area yang <em>ditugaskan</em>; <span class="mono">done</span> = sel yang punya <span class="mono">done_at</span>. Pekerjaan di area yang bukan penugasannya ditampilkan (<span class="mono">assigned:false</span>) tetapi tidak mengubah skor.</li>
-  <li>Petugas diurutkan menurut kemajuan menaik (yang paling tertinggal di atas), lalu nama. <span class="mono">totals</span>: <span class="mono">expected, done, reports, alerts</span>. Petugas tanpa penugasan dan tanpa laporan hari itu tidak masuk daftar.</li>
+  <li>Memuat paralel: area aktif dan semua laporan kebersihan hari itu (batas 1000).</li>
+  <li>Setiap area aktif membuat sel <em>kosong</em> untuk tiap tugasnya: <span class="mono">{done_at:null, times:0, flagged:false, staff:[]}</span>.</li>
+  <li>Laporan diproses dari yang paling lama: <span class="mono">done_at</span> menjadi waktu foto <em>pertama</em> hari itu, <span class="mono">times</span> bertambah, nama pelapor masuk ke <span class="mono">staff</span>. <span class="mono">flagged</span> bernilai benar hanya bila <em>semua</em> laporan di balik sel itu dikirim dari luar kampus atau tanpa GPS
+      (satu laporan <span class="mono">ok</span> membersihkan tanda). Area yang sudah dinonaktifkan tetap muncul bila ada laporannya.</li>
+  <li><span class="mono">totals</span>: <span class="mono">expected</span> = jumlah sel semua area, <span class="mono">done</span> = sel yang punya <span class="mono">done_at</span>, <span class="mono">reports, alerts</span>.</li>
+  <li><span class="mono">staff</span> berisi yang melapor hari itu (<span class="mono">tasks, areas, reports, alerts</span>), diurutkan dari tugas terbanyak. Petugas tidak punya area tetap, jadi tidak ada target atau skor per orang.</li>
 </ol>
 <p>Sisi lain data yang sama: <span class="mono">GET /api/cleaning/reports</span> (SPV; filter <span class="mono">staff_id, area_id, alerts=1</span>, filter waktu; maks. 500) memberi daftar laporan dengan foto dan penanda GPS;
 <span class="mono">GET /api/cleaning/reports/public</span> menampilkannya di papan publik <em>tanpa nama petugas dan tanpa GPS</em> (bab 13). Dashboard tab Laporan &rarr; <em>Kebersihan</em> menampilkan rekap dan daftar itu; hitungan merah pada tab menunjukkan peringatan hari ini.</p>
@@ -853,9 +848,9 @@ bucket tidak menumpuk foto bukti palsu; riwayat penolakan hidup di jejak audit, 
   <tr><td>Tambah petugas</td><td><span class="mono">POST /api/users {role:"staff", name}</span></td><td>Nama 2&ndash;60 karakter, tanpa username dan sandi (&ldquo;Petugas cukup nama, tanpa login&rdquo;). Jejak <span class="mono">user_changed</span>: &ldquo;Menambah petugas &hellip;&rdquo;</td></tr>
   <tr><td>Tambah supervisor</td><td><span class="mono">POST /api/users {role:"supervisor", username, name, password}</span></td><td>Username 3&ndash;30 <span class="mono">[a-zA-Z0-9._-]</span>, sandi 8&ndash;200; username dipakai &rarr; 409; sandi di-<em>hash</em> dengan garam baru</td></tr>
   <tr><td>Ubah</td><td><span class="mono">PATCH /api/users/:id {name?, password?, active?}</span></td><td>Minimal satu bidang. <span class="mono">password</span> mengganti hash <em>dan</em> garam; petugas tidak punya sandi (400). Akun yang sedang dipakai tidak bisa dinonaktifkan (400, <em>self-lockout</em>). Nonaktif = tidak bisa masuk (SPV) atau hilang dari dropdown (petugas)</td></tr>
-  <tr><td>Hapus</td><td><span class="mono">DELETE /api/users/:id</span></td><td>Hanya SPV atau petugas (pelapor &rarr; 404). Ditolak: akun sendiri (400), <strong>SPV aktif terakhir</strong> (400), dan akun yang <strong>punya catatan</strong> (409, memuat jumlahnya: pesan &ldquo;Akun ini punya N catatan (laporan atau pekerjaan). Nonaktifkan saja agar riwayatnya tetap utuh.&rdquo;). Catatan dihitung dari <span class="mono">work_logs.staff_id</span> + <span class="mono">cleaning_reports.staff_id</span> + <span class="mono">reports.reporter_id</span>. Bila lolos, akun dan penugasan areanya (<span class="mono">cleaning_assignments</span>) dihapus dalam satu <span class="mono">batch</span>. Antarmuka meminta konfirmasi &ldquo;Hapus &hellip; secara permanen?&rdquo;</td></tr>
+  <tr><td>Hapus</td><td><span class="mono">DELETE /api/users/:id</span></td><td>Hanya SPV atau petugas (pelapor &rarr; 404). Ditolak: akun sendiri (400), <strong>SPV aktif terakhir</strong> (400), dan akun yang <strong>punya catatan</strong> (409, memuat jumlahnya: pesan &ldquo;Akun ini punya N catatan (laporan atau pekerjaan). Nonaktifkan saja agar riwayatnya tetap utuh.&rdquo;). Catatan dihitung dari <span class="mono">work_logs.staff_id</span> + <span class="mono">cleaning_reports.staff_id</span> + <span class="mono">reports.reporter_id</span>. Bila lolos, akun dihapus. Antarmuka meminta konfirmasi &ldquo;Hapus &hellip; secara permanen?&rdquo;</td></tr>
 </table>
-<p>Setiap perubahan akun menulis <span class="mono">user_changed</span> dengan kalimat terbaca (&ldquo;Mengubah petugas X: nama, dinonaktifkan&rdquo;, &ldquo;Menghapus akun budi&rdquo;) dan memanggil <span class="mono">forgetStaff()</span>, yang membuang cache daftar petugas, daftar lokasi (penugasan ikut di dalamnya), dan rekap kebersihan. Keluhan menyimpan nama petugas sebagai <em>teks</em> (<span class="mono">reports.staff_name</span>), bukan FK, sehingga keluhan yang pernah ditangani petugas tidak menghalangi penghapusan namanya; jejak audit juga menyebut nama secara polos. Alasan membedakan hapus dan nonaktif: hapus hanya untuk salah ketik atau akun uji tanpa riwayat; yang punya riwayat dinonaktifkan agar riwayat tidak yatim.</p>
+<p>Setiap perubahan akun menulis <span class="mono">user_changed</span> dengan kalimat terbaca (&ldquo;Mengubah petugas X: nama, dinonaktifkan&rdquo;, &ldquo;Menghapus akun budi&rdquo;) dan memanggil <span class="mono">forgetStaff()</span>, yang membuang cache daftar petugas. Keluhan menyimpan nama petugas sebagai <em>teks</em> (<span class="mono">reports.staff_name</span>), bukan FK, sehingga keluhan yang pernah ditangani petugas tidak menghalangi penghapusan namanya; jejak audit juga menyebut nama secara polos. Alasan membedakan hapus dan nonaktif: hapus hanya untuk salah ketik atau akun uji tanpa riwayat; yang punya riwayat dinonaktifkan agar riwayat tidak yatim.</p>
 <div class="peringatan">
   <strong>Catatan konsistensi.</strong> <span class="mono">updateAccount</span> (<span class="mono">src/services/user-service.ts</span>) tidak menolak akun berperan <span class="mono">reporter</span>, berbeda dengan <span class="mono">deleteAccount</span>: supervisor yang mengetahui id seorang pelapor dapat mengganti nama, menonaktifkan, atau mengatur ulang sandinya lewat <span class="mono">PATCH</span>. Antarmuka tidak menyediakannya (daftar tidak memuat pelapor).
 </div>
@@ -1170,6 +1165,7 @@ Path API lama berbahasa Indonesia (<span class="mono">/api/lokasi</span>, <span 
   <tr><td class="mono">GET /api/summary<br><span class="kecil">SPV</span></td><td><span class="mono">?date</span> (bawaan hari ini WIB)</td><td><span class="mono">{date, exists:false}</span> atau <span class="mono">{date, report_count, summary, highlights[], created_at, exists:true}</span></td><td>400 format tanggal</td></tr>
   <tr><td class="mono">GET /api/summary/stats<br><span class="kecil">SPV</span></td><td><span class="mono">?date</span></td><td><span class="mono">{date, today:{total, high, medium, low, ai_failed}, unresolved, top_locations:[{location, count}]}</span></td><td>400</td></tr>
   <tr><td class="mono">GET /api/summary/charts<br><span class="kecil">SPV</span></td><td><span class="mono">?days</span> (bawaan 14, maks. 90)</td><td>ChartData (bab 12)</td><td></td></tr>
+  <tr><td class="mono">GET /api/summary/cleaning-charts<br><span class="kecil">SPV</span></td><td><span class="mono">?from&amp;to</span> (WIB, maks. 366 hari)</td><td>Tren, area terlapor dan yang belum, jenis tugas, gedung, jam, pekerjaan per petugas</td><td></td></tr>
   <tr><td class="mono">POST /api/summary/generate<br><span class="kecil">SPV</span></td><td><span class="mono">?date</span></td><td><span class="mono">{date, report_count, summary, highlights[], exists:true}</span></td><td>400; 502 LLM gagal</td></tr>
   <tr><td class="mono">GET /api/activity<br><span class="kecil">SPV</span></td><td><span class="mono">?action, report_id, from, to, hour_from, hour_to, date, limit</span> (bawaan 100, maks. 300)</td><td><span class="mono">{data:[{id, created_at, action, report_id, actor, summary, details}]}</span></td><td>401/403</td></tr>
   <tr><td class="mono">GET /api/users<br><span class="kecil">SPV</span></td><td>&mdash;</td><td><span class="mono">{data:[{id, username, name, role, active, created_at}]}</span>, hanya SPV dan petugas; SPV dulu, lalu nama</td><td>401/403</td></tr>
@@ -1183,7 +1179,7 @@ Path API lama berbahasa Indonesia (<span class="mono">/api/lokasi</span>, <span 
 <h4>Aturan <span class="mono">DELETE /api/users/:id</span></h4>
 <p>Urutan pemeriksaan di <span class="mono">deleteAccount()</span> (<span class="mono">services/user-service.ts</span>): akun tak ada atau berperan pelapor &rarr; 404; akun sendiri &rarr; 400; SPV aktif terakhir &rarr; 400;
 akun yang masih dirujuk <span class="mono">work_logs.staff_id</span>, <span class="mono">cleaning_reports.staff_id</span>, atau <span class="mono">reports.reporter_id</span> &rarr; <strong>409</strong> dengan jumlahnya di bidang <span class="mono">records</span>
-dan saran menonaktifkan. Bila lolos, akun dan penugasan areanya (<span class="mono">cleaning_assignments</span>) dihapus dalam satu <em>batch</em>, cache nama petugas dan lokasi dibuang, dan <span class="mono">user_changed</span> dicatat.
+dan saran menonaktifkan. Bila lolos, akun dihapus, cache nama petugas dibuang, dan <span class="mono">user_changed</span> dicatat.
 Menonaktifkan (<span class="mono">PATCH active:false</span>) menyembunyikan nama sama efektifnya dan menjaga riwayat. Perhatikan: keluhan yang diklaim atau diselesaikan petugas hanya menyimpan <em>nama</em> (<span class="mono">reports.staff_name</span>), jadi tidak ikut dihitung sebagai &ldquo;catatan&rdquo;.</p>
 <h4>Header pada GET tertentu</h4>
 <p>ETag lemah dipasang pada <span class="mono">GET</span> di bawah <span class="mono">/api/summary, /api/activity, /api/cleaning, /api/reports, /api/work-logs, /api/users, /api/staff, /api/leaderboard</span>; permintaan dengan
@@ -1230,7 +1226,7 @@ Lencana merah di tab Laporan menghitung laporan kebersihan hari ini yang berloka
   <tr><th>Tab / sub-tab</th><th>Isi</th></tr>
   <tr><td>Ringkasan</td><td><span class="mono">OverviewPanel</span>: kartu ringkasan AI hari ini di paling atas (tombol &ldquo;Buat ulang&rdquo;, tanda &ldquo;!&rdquo; berisi jadwal 17.00 WIB, dan batang lokasi terbanyak hari ini); pemilih rentang 7/14/30/90 hari (bawaan 90); pengukur tingkat penyelesaian dan empat kartu angka; grafik area, donat status; cincin kemajuan kebersihan per petugas; jam radial; cincin kategori; donat prioritas; treemap gedung (tanda &ldquo;!&rdquo; menerangkan kode gedung); kolom umur; peta panas gedung &times; kategori; batang waktu selesai per prioritas; peta panas hari &times; jam; komposisi prioritas per hari. Pemetaan visual ke data ada di bab 12. Memuat ulang tiap 60 detik</td></tr>
   <tr><td>Laporan &rsaquo; Keluhan</td><td>Filter status dan prioritas (<span class="mono">Select</span>), <strong>filter waktu</strong>, hitungan &ldquo;<em>n</em> data ditampilkan&rdquo;, dan kartu keluhan (di bawah). Memuat paling banyak 200 baris; memuat ulang tiap 30 detik <em>hanya</em> saat sub-tab ini sedang tampil</td></tr>
-  <tr><td>Laporan &rsaquo; Kebersihan</td><td><span class="mono">CleaningPanel</span>. <em>Rekap harian</em>: pilih tanggal (maju/mundur sehari), kartu per petugas dengan tabel area &times; enam tugas (jam pertama tugas dilaporkan, tanda untuk laporan yang berlokasi di luar kampus atau tanpa GPS, area di luar penugasan diberi catatan &ldquo;tambahan&rdquo;), tiga angka ringkas, spanduk peringatan, dan tombol cetak. <em>Laporan &amp; foto</em>: filter petugas dan &ldquo;hanya yang ditandai&rdquo;, setiap laporan dengan foto per tugas, jam server, jarak dari kampus, dan tautan peta. Memuat ulang tiap 30 detik</td></tr>
+  <tr><td>Laporan &rsaquo; Kebersihan</td><td><span class="mono">CleaningPanel</span>. <em>Rekap harian</em>: pilih tanggal (maju/mundur sehari), satu tabel area &times; enam tugas (jam pertama tugas dilaporkan, nama yang mengerjakan, tanda untuk laporan yang berlokasi di luar kampus atau tanpa GPS), daftar pekerjaan per petugas tanpa target, tiga angka ringkas, spanduk peringatan, dan tombol cetak. <em>Laporan &amp; foto</em>: filter petugas dan &ldquo;hanya yang ditandai&rdquo;, setiap laporan dengan foto per tugas, jam server, jarak dari kampus, dan tautan peta. Memuat ulang tiap 30 detik</td></tr>
   <tr><td>Log &rsaquo; Log aktivitas</td><td><span class="mono">ActivityPanel</span>: pilih jenis aksi (13 pilihan), filter waktu, hingga 300 baris dengan waktu persis WIB. Salinan keluhan yang dihapus dibentangkan langsung (bab 11)</td></tr>
   <tr><td>Log &rsaquo; Log pekerjaan</td><td><span class="mono">WorkLogPanel</span>: data lama (laporan pekerjaan sebelum laporan kebersihan), hanya dibaca. Filter petugas aktif dan filter waktu, hingga 200 baris</td></tr>
   <tr><td>Petugas &amp; Supervisor</td><td><span class="mono">AccountsPanel</span>: tambah nama petugas (nama saja), tambah akun SPV (username, nama, sandi), ubah nama, ganti sandi SPV, aktifkan/nonaktifkan, dan <strong>hapus</strong> dengan konfirmasi. Hapus hanya berhasil untuk akun tanpa riwayat (409 bila punya catatan); akun sendiri tidak bisa dinonaktifkan atau dihapus, dan SPV aktif terakhir tidak bisa dihapus</td></tr>
@@ -1331,13 +1327,14 @@ tempat aplikasi ini berjalan. Karena itu cache sisi server berupa memori isolate
 </ul>
 <table>
   <tr><th>Kunci cache</th><th>TTL</th><th>Fungsi / data</th><th>Dibuang oleh</th></tr>
-  <tr><td class="mono">areas</td><td>5 menit</td><td><span class="mono">listAreas</span>: lokasi dan penugasan petugas</td><td><span class="mono">forget('areas')</span> saat akun petugas berubah (<span class="mono">forgetStaff</span>)</td></tr>
+  <tr><td class="mono">areas</td><td>5 menit</td><td><span class="mono">listAreas</span>: daftar lokasi</td><td>Kedaluwarsa sendiri</td></tr>
   <tr><td class="mono">staff</td><td>60 detik</td><td><span class="mono">activeStaff</span>: nama petugas aktif</td><td><span class="mono">forget('staff')</span> saat akun berubah</td></tr>
   <tr><td class="mono">charts:&lt;days&gt;</td><td>60 detik</td><td><span class="mono">chartData</span> (query terberat)</td><td><span class="mono">reportsChanged()</span></td></tr>
   <tr><td class="mono">stats:&lt;tanggal&gt;</td><td>15 detik</td><td><span class="mono">dailyStats</span></td><td><span class="mono">reportsChanged()</span></td></tr>
   <tr><td class="mono">summary:&lt;tanggal&gt;</td><td>60 detik</td><td><span class="mono">storedSummary</span></td><td><span class="mono">forget('summary')</span> saat ringkasan dibuat ulang</td></tr>
   <tr><td class="mono">leaderboard</td><td>30 detik</td><td>20 pelapor teratas</td><td><span class="mono">reportsChanged()</span></td></tr>
-  <tr><td class="mono">recap:&lt;tanggal&gt;</td><td>20 detik</td><td><span class="mono">dailyRecap</span>: rekap kebersihan harian</td><td><span class="mono">cleaningChanged()</span> saat laporan kebersihan masuk atau penugasan berubah</td></tr>
+  <tr><td class="mono">recap:&lt;tanggal&gt;</td><td>20 detik</td><td><span class="mono">dailyRecap</span>: rekap kebersihan harian</td><td><span class="mono">cleaningChanged()</span> saat laporan kebersihan masuk</td></tr>
+  <tr><td class="mono">cleaning-charts:&lt;dari&gt;:&lt;sampai&gt;</td><td>60 detik</td><td><span class="mono">chartData</span>: tampilan Kebersihan di tab Ringkasan</td><td><span class="mono">cleaningChanged()</span> saat laporan kebersihan masuk</td></tr>
 </table>
 <p><span class="mono">forget(awalan)</span> membuang semua kunci berawalan itu. <span class="mono">reportsChanged()</span> membuang <span class="mono">stats</span>, <span class="mono">charts</span>, dan <span class="mono">leaderboard</span> dan dipanggil dari setiap penulisan tabel <span class="mono">reports</span>:
 keluhan baru, perubahan status, analisis AI selesai atau gagal, analisis ulang, penghapusan. <span class="mono">cleaningChanged()</span> membuang <span class="mono">recap</span>. Ada pula cache ringan di peramban untuk daftar yang jarang berubah (<span class="mono">cachedReq</span> di <span class="mono">lib/api.ts</span>: daftar petugas 60 detik, daftar area 5 menit, dibuang oleh klien saat akun diubah).</p>
@@ -1462,7 +1459,7 @@ Berkas ini membaca nilai persis seperti <em>secrets</em> produksi. Mengganti pen
 <pre>npm install
 cp .dev.vars.example .dev.vars    # isi LLM_API_KEY, VISION_API_KEY, AUTH_SECRET
 npm run db:local                  # menerapkan migrasi 0001-0011 ke D1 lokal
-npm run db:seed:cleaning          # lokasi, nama petugas, penugasan (wajib agar ada lokasi)
+npm run db:seed:cleaning          # lokasi, nama petugas (wajib agar ada lokasi)
 npm run db:seed                   # opsional: daftar toilet lama (hanya untuk data lama)
 npm run dev                       # Vite (5173) + Worker (8787) berdampingan</pre>
 <p>Buka <span class="mono">http://localhost:5173</span>. Perintah <span class="mono">npm run dev</span> menjalankan tiga proses sekaligus (<span class="mono">concurrently</span>): <span class="mono">db</span> (<span class="mono">scripts/watch-db.mjs</span>),
@@ -1470,7 +1467,7 @@ npm run dev                       # Vite (5173) + Worker (8787) berdampingan</pr
 (<span class="mono">scripts/free-dev-port.mjs</span>) menghentikan Worker lama <em>dari proyek ini</em> yang masih memegang port 8787.</p>
 <ul>
   <li><span class="mono">watch-db.mjs</span> menerapkan migrasi yang belum dijalankan saat mulai dan setiap kali berkas di <span class="mono">migrations/</span> berubah, serta menjalankan ulang berkas di <span class="mono">seed/</span> setiap kali disimpan. Seed tidak dijalankan otomatis saat mulai; basis data kosong butuh <span class="mono">db:seed:cleaning</span> sekali.</li>
-  <li>Kedua seed aman dijalankan ulang. <span class="mono">seed/cleaning-areas.sql</span> menonaktifkan semua area lalu mengaktifkan yang tercantum, menambah nama petugas hanya bila belum ada nama aktif yang sama, dan <strong>menghapus lalu membangun ulang seluruh penugasan area</strong>.</li>
+  <li>Kedua seed aman dijalankan ulang. <span class="mono">seed/cleaning-areas.sql</span> menonaktifkan semua area lalu mengaktifkan yang tercantum, menambah nama petugas hanya bila belum ada nama aktif yang sama.</li>
   <li>Migrasi yang sudah diterapkan tidak dijalankan ulang bila isi berkasnya diubah (D1 mencatat namanya). Perubahan skema = berkas migrasi baru.</li>
   <li>Akun SPV bawaan berasal dari migrasi 0004 (username <span class="mono">admin</span>; kata sandinya tercatat di berkas itu dan karena itu publik). Untuk lokal tidak masalah; untuk produksi wajib diganti (bab 20).</li>
   <li><span class="mono">build.command</span> di <span class="mono">wrangler.jsonc</span> juga membangun <span class="mono">./dist</span> saat <span class="mono">wrangler dev</span> dimulai; direktori aset itu harus ada. Perubahan frontend terlihat lewat Vite (5173), bukan lewat 8787.</li>
@@ -1493,7 +1490,7 @@ npm run dev                       # Vite (5173) + Worker (8787) berdampingan</pr
   <tr><td class="mono">typecheck</td><td><span class="mono">tsc --noEmit</span> untuk <span class="mono">src/</span>, <span class="mono">web/src/</span>, dan <span class="mono">scripts/</span>. Satu-satunya pemeriksaan otomatis; tidak ada uji unit</td></tr>
   <tr><td class="mono">db:local / db:remote</td><td>Menerapkan migrasi yang belum dijalankan (<span class="mono">wrangler d1 migrations apply kato --local|--remote</span>)</td></tr>
   <tr><td class="mono">db:seed / db:seed:remote</td><td>Menjalankan <span class="mono">seed/toilets.sql</span> (toilet lama)</td></tr>
-  <tr><td class="mono">db:seed:cleaning / db:seed:cleaning:remote</td><td>Menjalankan <span class="mono">seed/cleaning-areas.sql</span> (lokasi, petugas, penugasan)</td></tr>
+  <tr><td class="mono">db:seed:cleaning / db:seed:cleaning:remote</td><td>Menjalankan <span class="mono">seed/cleaning-areas.sql</span> (lokasi, petugas)</td></tr>
   <tr><td class="mono">qr</td><td><span class="mono">scripts/generate-qr.mjs</span>: membaca <span class="mono">/api/cleaning/areas</span> dari <span class="mono">BASE_URL</span> dan menulis satu PNG per lokasi serta lembar cetak ke <span class="mono">qr-codes/</span> (diabaikan git; folder dikosongkan lebih dulu). Alternatif tanpa skrip: tab QR lokasi di dashboard</td></tr>
   <tr><td class="mono">docs</td><td>Merender dokumen di <span class="mono">docs/</span> ke PDF lewat Chrome headless</td></tr>
   <tr><td class="mono">cf-typegen</td><td>Menghasilkan tipe <em>binding</em> dari wrangler</td></tr>
@@ -1528,7 +1525,7 @@ npx wrangler secret put AUTH_SECRET
 npm run typecheck
 npx wrangler d1 export kato --remote --output ~/kato-cadangan.sql   # cadangan dulu, di luar repositori
 npm run db:remote                   # migrasi D1 produksi: SEBELUM deploy
-npm run db:seed:cleaning:remote     # hanya bila daftar lokasi/petugas/penugasan berubah
+npm run db:seed:cleaning:remote     # hanya bila daftar lokasi/petugas berubah
 npm run deploy                      # wrangler deploy: membangun frontend lalu mengunggah Worker + aset</pre>
 <ul>
   <li><strong>Frontend dibangun otomatis.</strong> <span class="mono">wrangler deploy</span> menjalankan <span class="mono">build.command</span> (<span class="mono">scripts/build-frontend.mjs</span>) lebih dulu; pada checkout bersih tanpa <span class="mono">node_modules/vite</span> ia memasang dependensi dengan <span class="mono">npm ci</span>. Tidak perlu <span class="mono">npm run build</span> manual.</li>
@@ -1745,7 +1742,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Ketergantungan pada penyedia model</td><td>Kuota harian (tingkat gratis), nama model yang berumur pendek (404 mendadak saat ditutup), data pada tingkat gratis dapat dipakai penyedia</td><td>Beberapa kunci terpisah koma (sudah didukung), model ringan, penagihan; pantau <span class="mono">verification_failed</span></td></tr>
   <tr><td>Tidak ada alur lupa sandi</td><td>SPV yang lupa harus minta SPV lain mengatur sandi baru; SPV terakhir yang lupa harus diperbaiki lewat SQL</td><td>Reset lewat e-mail atau OTP</td></tr>
   <tr><td><strong>Tidak ada uji otomatis</strong></td><td>Repositori tidak punya berkas uji maupun skrip uji; hanya <span class="mono">npm run typecheck</span>. Verifikasi dilakukan manual (curl dan server model tiruan, bab 19)</td><td>Vitest dengan <span class="mono">unstable_dev</span> wrangler untuk rute dan <span class="mono">buildTimeFilter</span>, <span class="mono">changeStatus</span>, <span class="mono">locationStatus</span></td></tr>
-  <tr><td>Data lokasi dan penugasan bergantung pada seed</td><td>Kampus berubah (lantai, gedung, penugasan) lewat penyuntingan <span class="mono">seed/cleaning-areas.sql</span> dan penjalanan ulang; seed membangun ulang seluruh penugasan. Pusat kampus pada <span class="mono">wrangler.jsonc</span> bertanda penanda sementara</td><td>Layar pengelolaan lokasi dan penugasan untuk SPV; koordinat yang dipastikan</td></tr>
+  <tr><td>Data lokasi bergantung pada seed</td><td>Kampus berubah (lantai, gedung) lewat penyuntingan <span class="mono">seed/cleaning-areas.sql</span> dan penjalanan ulang. Pusat kampus pada <span class="mono">wrangler.jsonc</span> bertanda penanda sementara</td><td>Layar pengelolaan lokasi untuk SPV; koordinat yang dipastikan</td></tr>
   <tr><td>Path API lama dan materi lama</td><td>URL halaman lama dialihkan hanya oleh router peramban; path API lama menjawab 404; PDF atau catatan lama yang menyebut tabel atau nama toilet tidak berlaku</td><td>Perbarui materi lama; pertahankan pengalihan selama stiker lama masih tertempel</td></tr>
   <tr><td>Keluhan berbahasa selain Indonesia/Inggris</td><td>Belum diuji</td><td>&mdash;</td></tr>
   <tr><td>Penyelesaian ulang dan pemundurkan status belum dijaga</td><td><span class="mono">changeStatus</span> (<span class="mono">src/services/report-service.ts</span>) menolak membuka kembali laporan yang sudah selesai, tetapi tidak menolak <span class="mono">resolved</span> &rarr; <span class="mono">resolved</span>: nama petugas dan <span class="mono">resolved_at</span> tertimpa, dan bila foto bukti baru lolos, foto yang lama tertinggal di R2. Status <span class="mono">new</span> juga diterima untuk laporan yang sedang dikerjakan oleh siapa pun yang mengirim <span class="mono">staff_id</span> sah</td><td>Tolak transisi <span class="mono">resolved</span> &rarr; <span class="mono">resolved</span> dan setiap transisi ke <span class="mono">new</span>; hapus foto lama saat bukti diganti</td></tr>
@@ -1865,6 +1862,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td class="mono">0009_cleaning_reports.sql</td><td>Area kebersihan, penugasan, laporan kebersihan, dan tugas per laporan (foto <span class="mono">UNIQUE</span>)</td></tr>
   <tr><td class="mono">0010_daily_tasks.sql</td><td>Enam tugas harian yang sama di setiap area; <span class="mono">sweep</span>/<span class="mono">mop</span> tetap sah untuk data lama</td></tr>
   <tr><td class="mono">0011_report_locations.sql</td><td><span class="mono">reports.area_id</span> berdampingan dengan <span class="mono">toilet_id</span>; view <span class="mono">location_info</span>; <span class="mono">not_toilet</span> menjadi <span class="mono">wrong_place</span></td></tr>
+  <tr><td class="mono">0012_drop_cleaning_assignments.sql</td><td>Menghapus <span class="mono">cleaning_assignments</span>: petugas tidak punya area tetap; rekap dihitung per area</td></tr>
 </table>
 
 <h3>C. Perintah yang berguna</h3>
@@ -1915,7 +1913,6 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Pengguna, akun</td><td><span class="mono">users</span>; <span class="mono">/api/users</span></td></tr>
   <tr><td>Lokasi, area kebersihan</td><td><span class="mono">cleaning_areas</span> (<span class="mono">id</span>, <span class="mono">name</span>, <span class="mono">building_code</span>, <span class="mono">floor</span>, <span class="mono">tasks</span>); view <span class="mono">location_info</span>; <span class="mono">/api/cleaning/areas</span></td></tr>
   <tr><td>Gedung; lantai; halaman; gedung utuh</td><td><span class="mono">buildings</span> (<span class="mono">code</span>, <span class="mono">name</span>); <span class="mono">floor</span> bilangan; <span class="mono">floor = 0</span>; <span class="mono">floor</span> NULL</td></tr>
-  <tr><td>Penugasan</td><td><span class="mono">cleaning_assignments</span> (<span class="mono">area_id</span>, <span class="mono">staff_id</span>)</td></tr>
   <tr><td>Keluhan (laporan dari pelapor)</td><td><span class="mono">reports</span>; teks = <span class="mono">description</span>; <span class="mono">/api/reports</span>; <span class="mono">/report/:locationId</span>, <span class="mono">/reports</span></td></tr>
   <tr><td>Status baru / diproses / selesai</td><td><span class="mono">new</span> / <span class="mono">in_progress</span> / <span class="mono">resolved</span>; waktu selesai = <span class="mono">resolved_at</span></td></tr>
   <tr><td>Klaim, ambil alih</td><td><span class="mono">PATCH</span> dengan <span class="mono">status: in_progress</span>; <span class="mono">details.handed_over_from</span></td></tr>
@@ -1953,7 +1950,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>D1 / R2</td><td>Basis data SQLite terkelola / penyimpanan objek Cloudflare</td></tr>
   <tr><td><em>Binding</em></td><td>Cara Worker mengakses D1/R2 tanpa kredensial jaringan</td></tr>
   <tr><td>Migrasi</td><td>Berkas SQL bernomor yang mengubah skema secara berurutan; tiap berkas diterapkan atomik</td></tr>
-  <tr><td>Seed</td><td>Data awal (lokasi, nama petugas, penugasan) yang aman dijalankan ulang</td></tr>
+  <tr><td>Seed</td><td>Data awal (lokasi, nama petugas) yang aman dijalankan ulang</td></tr>
   <tr><td>JWT</td><td>Token sesi bertanda tangan; disimpan di cookie HttpOnly <span class="mono">session</span></td></tr>
   <tr><td>PBKDF2</td><td>Fungsi turunan kunci untuk menyimpan sandi secara aman</td></tr>
   <tr><td>ETag</td><td>Sidik isi respons; peramban mengirimnya kembali (<span class="mono">If-None-Match</span>) dan server menjawab 304 tanpa isi bila tidak berubah</td></tr>

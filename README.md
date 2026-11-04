@@ -74,7 +74,7 @@ at; queries read both through the `location_info` view.
   gauge, KPI cards with sparklines, area, donut, radial, treemap, aging-bar,
   heatmap and stacked-bar charts
 - Status tracking for reporters without an account
-- One location list for every page: the locations of the 2026 staff assignment
+- One location list for every page: the locations named in the 2026 staff
   letter (`seed/cleaning-areas.sql`), picked as **Gedung** then **Lantai /
   Halaman** — a floor, the building's yard, or the whole building/area
 - Two kinds of staff work, as two tabs on the staff page:
@@ -94,7 +94,8 @@ at; queries read both through the `location_info` view.
     without GPS) is accepted but flagged to the supervisor. These photos are
     not judged by the vision model. Staff may send from any area; the
     supervisor's **Laporan → Kebersihan** view shows a printable daily recap
-    per staff member (done ✓ / not done ✗). Areas and assignments live in
+    per area (done ✓ with who and when / not reported ✗), plus what each person
+    did. Staff do not own areas: whoever is free does the work. Areas live in
     `seed/cleaning-areas.sql` (`npm run db:seed:cleaning`)
 - Staff work log (older, toilet-based): kept read-only under **Log → Log
   pekerjaan**; nothing writes to it any more (`POST /api/work-logs` is gone)
@@ -375,11 +376,12 @@ Reports filed before migration 0011 point at a legacy toilet
 | `POST` | `/api/reports/:id/reanalyze` | re-run a failed analysis |
 | `DELETE` | `/api/reports/:id` | delete permanently, logged with a full copy |
 | `GET` | `/api/cleaning/reports` | daily-task reports; filters `staff_id, area_id, alerts=1, from, to, hour_from, hour_to` |
-| `GET` | `/api/cleaning/recap?date=` | one WIB day per staff member: tasks done and gaps |
+| `GET` | `/api/cleaning/recap?date=` | one WIB day per area: tasks reported, by whom, and gaps; plus work per staff member |
 | `GET` | `/api/work-logs` | legacy staff work log (read-only); filters `staff_id, toilet_id, building, from, to, hour_from, hour_to` |
 | `GET` | `/api/summary?date=` | the stored daily summary |
 | `GET` | `/api/summary/stats?date=` | counters for the day |
 | `GET` | `/api/summary/charts?from=&to=` | chart data for a WIB date range (max 366 days), including `statuses` and `aging` |
+| `GET` | `/api/summary/cleaning-charts?from=&to=` | the same range for cleaning reports: trend, areas per building and those missing, location status, tasks, building × task, hours, work per staff member |
 | `GET` | `/api/summary/export?from=&to=` | every report of the range, one row each, for the dashboard's Excel export |
 | `POST` | `/api/summary/generate` | write the daily summary now |
 | `GET` | `/api/activity` | activity log (action, time filter) |
@@ -468,8 +470,8 @@ web/src/
                          Register, Leaderboard, SupervisorDashboard
   ../public/peta-lokasi-gedung.jpg    campus building map
 
-migrations/              D1 schema, applied in order (0001–0011)
-seed/cleaning-areas.sql  the current location list and staff assignments
+migrations/              D1 schema, applied in order (0001–0012)
+seed/cleaning-areas.sql  the current location list and staff names
 seed/toilets.sql         legacy toilet list that older reports point at
 scripts/generate-qr.mjs  QR codes and the A4 print sheet
 scripts/build-frontend.mjs   builds the frontend before wrangler deploy

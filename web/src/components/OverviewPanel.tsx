@@ -2,19 +2,24 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import AgingBars from './charts/AgingBars';
 import AreaChart from './charts/AreaChart';
 import BarChart from './charts/BarChart';
+import CalendarHeat from './charts/CalendarHeat';
+import CoverageGrid from './charts/CoverageGrid';
 import Donut from './charts/Donut';
 import Heatmap, { type HeatmapCell } from './charts/Heatmap';
+import HourBars from './charts/HourBars';
 import HourClock from './charts/HourClock';
+import InView from './charts/InView';
 import KpiCard from './charts/KpiCard';
 import RadialBars from './charts/RadialBars';
 import RadialGauge from './charts/RadialGauge';
 import StackedBarChart from './charts/StackedBarChart';
-import StaffRings from './charts/StaffRings';
+import StaffBubbles from './charts/StaffBubbles';
+import TaskDials from './charts/TaskDials';
 import Treemap from './charts/Treemap';
 import { AGING_COLORS, CATEGORY_COLORS, PRIORITY_COLORS, SERIES, SINGLE, STATUS_COLORS } from './charts/colors';
-import { api, type ChartData, type CleaningRecap, type DailySummary } from '../lib/api';
+import { api, CLEANING_TASKS, type ChartData, type CleaningCharts, type DailySummary } from '../lib/api';
 import { useLanguage, type Translate } from '../lib/i18n';
-import { buildPlaces } from '../lib/places';
+import { buildPlaces, type Place } from '../lib/places';
 import { Reveal } from '../lib/motion';
 import { usePolling } from '../lib/polling';
 
@@ -120,18 +125,42 @@ function Tile({
           {title}
           {hint}
         </h3>
-        {children}
+        <InView>{children}</InView>
       </section>
     </Reveal>
   );
 }
 
+/** The key for the building letters: every building of the campus or, until that list arrives, the ones charted. */
+function buildingHint(
+  places: Place[],
+  charted: Array<{ building_code: string; building_name: string }>,
+  t: Translate,
+): ReactNode {
+  const items = places.length
+    ? places.map((p) => ({ code: p.code, name: p.name }))
+    : charted.filter((b) => b.building_code !== b.building_name).map((b) => ({ code: b.building_code, name: b.building_name }));
+  if (!items.length) return null;
+  return (
+    <InfoTip label={t('ov.building_key')}>
+      <BuildingKey items={items} title={t('ov.building_key')} />
+    </InfoTip>
+  );
+}
+
+const buildingTiles = (buildings: Array<{ building_code: string; building_name: string; count: number }>) =>
+  buildings.map((b) => ({
+    key: b.building_code,
+    label: b.building_code === b.building_name ? b.building_name : b.building_code,
+    value: Number(b.count),
+  }));
+
 /**
  * The supervisor's landing view: the whole picture in shapes, with as few words
- * as will do. Everything here comes from the chart and cleaning recap endpoints;
- * nothing is computed that the server did not already count. The picked dates
- * drive every chart. The AI summary and the cleaning recap exist per day, so those
- * two show the last picked date.
+ * as will do, for the staff's work reports and then complaints, on one page. Everything here
+ * comes from the chart endpoints; nothing is computed that the server did not
+ * already count. The picked dates drive both sections. The AI summary exists per
+ * day, so it shows the last picked date.
  */
 export default function OverviewPanel() {
   const { t, language } = useLanguage();
@@ -140,10 +169,9 @@ export default function OverviewPanel() {
   // What the two date inputs hold, which may be half-typed; only a usable range becomes `picked`.
   const [draft, setDraft] = useState<DateRange | null>(null);
   const [data, setData] = useState<ChartData | null>(null);
-  const [recap, setRecap] = useState<CleaningRecap | null>(null);
+  const [cleaning, setCleaning] = useState<CleaningCharts | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
-  const [places, setPlaces] = useState<ReturnType<typeof buildPlaces>>([]);
-  const [generating, setGenerating] = useState(false);
+  const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportFailed, setExportFailed] = useState(false);
@@ -152,15 +180,15 @@ export default function OverviewPanel() {
   const load = useCallback(async () => {
     const { from, to } = picked ?? rollingRange();
     const run = ++latestLoad.current;
-    const [d, r, sum] = await Promise.all([
+    const [d, c, sum] = await Promise.all([
       api.charts(from, to).catch(() => null),
-      api.cleaningRecap(to).catch(() => null),
+      api.cleaningCharts(from, to).catch(() => null),
       api.summary(to).catch(() => null),
     ]);
     // Dates picked in quick succession: only the newest answer may reach the screen.
     if (run !== latestLoad.current) return;
     setData(d);
-    setRecap(r);
+    setCleaning(c);
     setSummary(sum);
     setLoading(false);
   }, [picked]);
@@ -175,26 +203,7 @@ export default function OverviewPanel() {
       .catch(() => setPlaces([]));
   }, []);
 
-  const hours = useMemo(() => {
-    const h = new Array<number>(24).fill(0);
-    for (const row of data?.hourByDay ?? []) h[row.hour] += Number(row.count);
-    return h;
-  }, [data]);
-
-  const weekHeat = useMemo<HeatmapCell[]>(() => {
-    const cells = new Map<string, number>();
-    for (const { day, hour, count } of data?.hourByDay ?? []) {
-      const key = `${day}|${HOUR_BUCKETS[Math.floor(hour / 3)]}`;
-      cells.set(key, (cells.get(key) ?? 0) + Number(count));
-    }
-    return [...cells].map(([key, value]) => {
-      const [day, hour] = key.split('|');
-      return { row: t(`weekday.${day}` as 'weekday.0'), column: `${hour.padStart(2, '0')}.00`, value };
-    });
-  }, [data, t]);
-
   if (loading) return <p className="mt-6 text-ink-600">{t('common.loading')}</p>;
-  if (!data) return <p className="card mt-6 p-10 text-center text-ink-600">{t('charts.no_data')}</p>;
 
   const range = picked ?? rollingRange();
   const shown = draft ?? range;
@@ -217,13 +226,13 @@ export default function OverviewPanel() {
     setExportFailed(false);
     try {
       // Fetched for exactly these dates, so the file cannot disagree with its own period.
-      const [{ exportDashboard }, charts, reports, cleaningRecap] = await Promise.all([
+      const [{ exportDashboard }, charts, reports, cleaningCharts] = await Promise.all([
         import('../lib/export-dashboard'),
         api.charts(range.from, range.to),
         api.exportReports(range.from, range.to),
-        api.cleaningRecap(range.to).catch(() => null),
+        api.cleaningCharts(range.from, range.to).catch(() => null),
       ]);
-      await exportDashboard({ ...range, charts, reports: reports.data, recap: cleaningRecap, t });
+      await exportDashboard({ ...range, charts, reports: reports.data, cleaning: cleaningCharts, t });
     } catch {
       setExportFailed(true);
     } finally {
@@ -231,60 +240,7 @@ export default function OverviewPanel() {
     }
   };
 
-  const { trend } = data;
-  const rate = trend.reports ? Math.round((trend.resolved / trend.reports) * 100) : 0;
-  const priorityLabels = {
-    high: t('priority_short.high'),
-    medium: t('priority_short.medium'),
-    low: t('priority_short.low'),
-  };
-  const count = (rows: Array<{ count: number }>, pick: (r: never) => boolean) =>
-    Number(rows.find((r) => pick(r as never))?.count ?? 0);
-
-  const statusSegments = (['new', 'in_progress', 'resolved'] as const).map((k) => ({
-    key: k,
-    label: t(`status.${k}`),
-    value: count(data.statuses, (r: { status: string }) => r.status === k),
-    color: STATUS_COLORS[k],
-  }));
-  const prioritySegments = (['high', 'medium', 'low'] as const).map((k) => ({
-    key: k,
-    label: priorityLabels[k],
-    value: count(data.priorities, (r: { priority: string }) => r.priority === k),
-    color: PRIORITY_COLORS[k],
-  }));
-  const categorySegments = CATEGORY_ORDER.map((k) => ({
-    key: k,
-    label: t(`category.${k}` as 'category.other'),
-    value: count(data.categories, (r: { category: string }) => r.category === k),
-    color: CATEGORY_COLORS[k],
-  }))
-    .filter((c) => c.value > 0)
-    .sort((a, b) => b.value - a.value);
-
-  const buildingItems = data.buildings.map((b) => ({
-    key: b.building_code,
-    label: b.building_code === b.building_name ? b.building_name : b.building_code,
-    value: Number(b.count),
-  }));
-  const buildingsPresent = [...new Set(data.matrix.map((m) => m.building_code))].sort();
-  const categoriesPresent = CATEGORY_ORDER.filter((c) => data.matrix.some((m) => m.category === c));
-
-  // The key for the building letters: every building of the campus, or, until that list arrives,
-  // the ones that have reports.
-  const keyItems = places.length
-    ? places.map((p) => ({ code: p.code, name: p.name }))
-    : data.buildings.filter((b) => b.building_code !== b.building_name).map((b) => ({ code: b.building_code, name: b.building_name }));
-  const buildingHint = keyItems.length ? (
-    <InfoTip label={t('ov.building_key')}>
-      <BuildingKey items={keyItems} title={t('ov.building_key')} />
-    </InfoTip>
-  ) : null;
-
-  const staff = (recap?.staff ?? [])
-    .filter((s) => s.expected > 0 || s.reports > 0)
-    .map((s) => ({ id: s.staff_id, name: s.staff_name, done: s.done, expected: s.expected, alerts: s.alerts }));
-  const cleaningPct = recap && recap.totals.expected ? Math.round((recap.totals.done / recap.totals.expected) * 100) : 0;
+  const noData = <p className="card p-10 text-center text-ink-600">{t('charts.no_data')}</p>;
 
   return (
     <div className="mt-6 space-y-4">
@@ -343,12 +299,63 @@ export default function OverviewPanel() {
         )}
       </div>
 
-      {/* The day in words, next to the day in shapes: the AI's summary and where reports came from. */}
+      {/* The staff's work comes first: it is what this system is for. Complaints support it. */}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        {cleaning ? <CleaningHeadline data={cleaning} /> : noData}
+        {/* The line between them: across when they stack, upright when they stand side by side. */}
+        <div aria-hidden className="h-px bg-mist-200 xl:h-auto xl:w-px" />
+        {data ? <ComplaintHeadline data={data} /> : noData}
+      </div>
+
+      <SectionTitle>{t('ov.section_staff')}</SectionTitle>
+      {cleaning ? <CleaningDetails data={cleaning} places={places} /> : noData}
+
+      <SectionTitle>{t('sub.complaints')}</SectionTitle>
+      <SummaryCard
+        summary={summary}
+        onSummary={setSummary}
+        date={range.to}
+        title={range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
+        topLocations={data?.top_locations ?? []}
+      />
+      {data ? <ComplaintDetails data={data} places={places} /> : noData}
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="!mt-10 !mb-6 flex items-center gap-4 font-display text-2xl font-semibold text-ink-900">
+      <span aria-hidden className="h-px flex-1 bg-mist-200" />
+      {children}
+      <span aria-hidden className="h-px flex-1 bg-mist-200" />
+    </h2>
+  );
+}
+
+/** The day in words, next to the day in shapes: the AI's summary and where reports came from. */
+function SummaryCard({
+  summary,
+  onSummary,
+  date,
+  title,
+  topLocations,
+}: {
+  summary: DailySummary | null;
+  onSummary: (s: DailySummary) => void;
+  date: string;
+  title: string;
+  topLocations: ChartData['top_locations'];
+}) {
+  const { t } = useLanguage();
+  const [generating, setGenerating] = useState(false);
+
+  return (
       <Reveal>
         <section className="card overflow-hidden">
           <div className="flex items-center justify-between gap-3 px-5 pt-5">
             <h3 className="section-title flex items-center gap-2">
-              {range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
+              {title}
               <InfoTip label={t('dashboard.summary_schedule')}>{t('dashboard.summary_schedule')}</InfoTip>
             </h3>
             <button
@@ -357,7 +364,7 @@ export default function OverviewPanel() {
               onClick={async () => {
                 setGenerating(true);
                 try {
-                  setSummary(await api.generateSummary(range.to));
+                  onSummary(await api.generateSummary(date));
                 } catch {
                   /* leave the previous summary on screen */
                 } finally {
@@ -390,54 +397,167 @@ export default function OverviewPanel() {
               )}
             </div>
 
-            {!!data.top_locations.length && (
+            {!!topLocations.length && (
               <div>
                 <p className="mb-2 text-nav font-semibold text-ink-600">{t('ov.top_locations')}</p>
-                <BarChart data={data.top_locations.map((l) => ({ label: l.location, value: Number(l.count) }))} />
+                <BarChart data={topLocations.map((l) => ({ label: l.location, value: Number(l.count) }))} />
               </div>
             )}
           </div>
         </section>
       </Reveal>
+  );
+}
 
-      {/* The headline: one dial for the answer, four tiles for the numbers behind it. */}
-      <Reveal>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,300px)_1fr]">
-          <section className="card grid place-content-center p-6">
-            <RadialGauge value={rate} label={t('ov.rate')} />
-          </section>
-          <div className="grid grid-cols-2 gap-3">
-            <KpiCard
-              label={t('ov.total_reports')}
-              value={trend.reports}
-              series={data.daily.map((d) => d.total)}
-              color={SERIES.received}
-              change={trend.change}
-              note={t('ov.days', { n: trend.days })}
-            />
-            <KpiCard
-              label={t('charts.kpi_high')}
-              value={trend.high}
-              series={data.dailyByPriority.map((d) => d.high)}
-              color={PRIORITY_COLORS.high}
-              note={t('ov.days', { n: trend.days })}
-            />
-            <KpiCard
-              label={t('ov.open')}
-              value={statusSegments[0].value + statusSegments[1].value}
-              series={data.daily.map((d) => d.total - d.resolved)}
-              color={PRIORITY_COLORS.medium}
-            />
-            <KpiCard
-              label={t('ov.speed')}
-              value={duration(data.resolution.minutes, t)}
-              color={SINGLE}
-              note={`${data.resolution.count} ${t('ov.reports')}`}
-            />
-          </div>
+/** A section's answer at a glance: one dial, four tiles for the numbers behind it. */
+function Headline({ title, dial, children }: { title: string; dial: ReactNode; children: ReactNode }) {
+  return (
+    <Reveal className="h-full">
+      <InView className="flex h-full flex-col">
+        <h3 className="section-title mb-3">{title}</h3>
+        <div className="grid flex-1 gap-3 sm:grid-cols-[minmax(0,200px)_1fr]">
+          <section className="card grid place-content-center p-4">{dial}</section>
+          <div className="grid grid-cols-2 gap-3">{children}</div>
         </div>
-      </Reveal>
+      </InView>
+    </Reveal>
+  );
+}
 
+function ComplaintHeadline({ data }: { data: ChartData }) {
+  const { t } = useLanguage();
+  const { trend } = data;
+  const rate = trend.reports ? Math.round((trend.resolved / trend.reports) * 100) : 0;
+  const open = data.statuses.filter((s) => s.status !== 'resolved').reduce((n, s) => n + Number(s.count), 0);
+
+  return (
+    <Headline title={t('sub.complaints')} dial={<RadialGauge value={rate} label={t('ov.rate')} />}>
+      <KpiCard
+        label={t('ov.total_reports')}
+        value={trend.reports}
+        series={data.daily.map((d) => d.total)}
+        color={SERIES.received}
+        change={trend.change}
+        note={t('ov.days', { n: trend.days })}
+      />
+      <KpiCard
+        label={t('charts.kpi_high')}
+        value={trend.high}
+        series={data.dailyByPriority.map((d) => d.high)}
+        color={PRIORITY_COLORS.high}
+        note={t('ov.days', { n: trend.days })}
+      />
+      <KpiCard
+        label={t('ov.open')}
+        value={open}
+        series={data.daily.map((d) => d.total - d.resolved)}
+        color={PRIORITY_COLORS.medium}
+      />
+      <KpiCard
+        label={t('ov.speed')}
+        value={duration(data.resolution.minutes, t)}
+        color={SINGLE}
+        note={`${data.resolution.count} ${t('ov.reports')}`}
+      />
+    </Headline>
+  );
+}
+
+function CleaningHeadline({ data }: { data: CleaningCharts }) {
+  const { t } = useLanguage();
+  const { trend, areas } = data;
+  const coverage = areas.total ? Math.round((areas.covered / areas.total) * 100) : 0;
+
+  return (
+    <Headline
+      title={t('ov.section_staff')}
+      dial={<RadialGauge value={coverage} label={t('ov.clean_reported')} from="#5E5CE6" to="#30B0C7" />}
+    >
+      <KpiCard
+        label={t('ov.clean_reports')}
+        value={trend.reports}
+        series={data.daily.map((d) => d.reports)}
+        color={SERIES.resolved}
+        change={trend.change}
+        goodDirection="up"
+        note={t('ov.days', { n: trend.days })}
+      />
+      <KpiCard
+        label={t('ov.clean_coverage')}
+        value={`${areas.covered}/${areas.total}`}
+        color={SINGLE}
+        note={t('ov.days', { n: trend.days })}
+      />
+      <KpiCard label={t('ov.clean_staff')} value={data.staff.length} color={SINGLE} note={t('ov.days', { n: trend.days })} />
+      <KpiCard
+        label={t('clean.stat_alerts')}
+        value={trend.alerts}
+        series={data.daily.map((d) => d.reports - d.on_campus)}
+        color={PRIORITY_COLORS.high}
+        note={t('ov.days', { n: trend.days })}
+      />
+    </Headline>
+  );
+}
+
+function ComplaintDetails({ data, places }: { data: ChartData; places: Place[] }) {
+  const { t } = useLanguage();
+
+  const hours = useMemo(() => {
+    const h = new Array<number>(24).fill(0);
+    for (const row of data.hourByDay) h[row.hour] += Number(row.count);
+    return h;
+  }, [data]);
+
+  const weekHeat = useMemo<HeatmapCell[]>(() => {
+    const cells = new Map<string, number>();
+    for (const { day, hour, count } of data.hourByDay) {
+      const key = `${day}|${HOUR_BUCKETS[Math.floor(hour / 3)]}`;
+      cells.set(key, (cells.get(key) ?? 0) + Number(count));
+    }
+    return [...cells].map(([key, value]) => {
+      const [day, hour] = key.split('|');
+      return { row: t(`weekday.${day}` as 'weekday.0'), column: `${hour.padStart(2, '0')}.00`, value };
+    });
+  }, [data, t]);
+
+  const { trend } = data;
+  const priorityLabels = {
+    high: t('priority_short.high'),
+    medium: t('priority_short.medium'),
+    low: t('priority_short.low'),
+  };
+  const count = (rows: Array<{ count: number }>, pick: (r: never) => boolean) =>
+    Number(rows.find((r) => pick(r as never))?.count ?? 0);
+
+  const statusSegments = (['new', 'in_progress', 'resolved'] as const).map((k) => ({
+    key: k,
+    label: t(`status.${k}`),
+    value: count(data.statuses, (r: { status: string }) => r.status === k),
+    color: STATUS_COLORS[k],
+  }));
+  const prioritySegments = (['high', 'medium', 'low'] as const).map((k) => ({
+    key: k,
+    label: priorityLabels[k],
+    value: count(data.priorities, (r: { priority: string }) => r.priority === k),
+    color: PRIORITY_COLORS[k],
+  }));
+  const categorySegments = CATEGORY_ORDER.map((k) => ({
+    key: k,
+    label: t(`category.${k}` as 'category.other'),
+    value: count(data.categories, (r: { category: string }) => r.category === k),
+    color: CATEGORY_COLORS[k],
+  }))
+    .filter((c) => c.value > 0)
+    .sort((a, b) => b.value - a.value);
+
+  const buildingsPresent = [...new Set(data.matrix.map((m) => m.building_code))].sort();
+  const categoriesPresent = CATEGORY_ORDER.filter((c) => data.matrix.some((m) => m.category === c));
+
+  const hint = buildingHint(places, data.buildings, t);
+
+  return (
+    <>
       <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,280px)]">
         <Tile title={t('ov.days', { n: trend.days })}>
           {/* One day has no line to draw, so its two numbers stand as bars. */}
@@ -457,17 +577,6 @@ export default function OverviewPanel() {
         </Tile>
       </div>
 
-      {staff.length > 0 && (
-        <Tile title={range.to === today ? t('ov.cleaning') : t('ov.cleaning_on', { date: lastDay })}>
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            <div className="w-40 shrink-0 self-center">
-              <RadialGauge value={cleaningPct} from="#5E5CE6" to="#30B0C7" />
-            </div>
-            <StaffRings staff={staff} />
-          </div>
-        </Tile>
-      )}
-
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Tile title={t('ov.hours')}>
           <HourClock hours={hours} unit={t('ov.reports')} />
@@ -481,8 +590,8 @@ export default function OverviewPanel() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <Tile title={t('ov.buildings')} hint={buildingHint}>
-          <Treemap items={buildingItems} />
+        <Tile title={t('ov.buildings')} hint={hint}>
+          <Treemap items={buildingTiles(data.buildings)} />
         </Tile>
         <Tile title={t('ov.aging')}>
           <AgingBars values={data.aging} labels={AGING_COLORS.map((_, i) => t(`ov.age_${i}` as 'ov.age_0'))} />
@@ -490,7 +599,7 @@ export default function OverviewPanel() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <Tile title={`${t('ov.buildings')} × ${t('ov.problems')}`} hint={buildingHint}>
+        <Tile title={`${t('ov.buildings')} × ${t('ov.problems')}`} hint={hint}>
           {buildingsPresent.length ? (
             <Heatmap
               data={data.matrix.map((m) => ({ row: m.building_code, column: m.category, value: Number(m.count) }))}
@@ -535,6 +644,97 @@ export default function OverviewPanel() {
           <StackedBarChart data={data.dailyByPriority} labels={priorityLabels} />
         </Tile>
       </div>
-    </div>
+    </>
+  );
+}
+
+/**
+ * The same dates, for the work the staff reported. Staff do not own areas, so
+ * there is no score per person: a gap belongs to the area, and the staff chart
+ * only says who did how much. Each question gets its own shape.
+ */
+function CleaningDetails({ data, places }: { data: CleaningCharts; places: Place[] }) {
+  const { t, language } = useLanguage();
+  const locale = language === 'id' ? 'id-ID' : 'en-GB';
+  const { trend, areas } = data;
+  const hint = buildingHint(places, data.buildings, t);
+
+  if (trend.reports === 0) return <p className="card p-10 text-center text-ink-600">{t('clean.empty')}</p>;
+
+  const format = (options: Intl.DateTimeFormatOptions, date: string) =>
+    new Intl.DateTimeFormat(locale, { timeZone: 'UTC', ...options }).format(new Date(date));
+  const buildings = [...new Set(data.matrix.map((m) => m.building_code))].sort();
+
+  return (
+    <>
+      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+        <Tile title={t('ov.clean_by_staff')}>
+          <StaffBubbles
+            staff={data.staff.map((s) => ({ id: s.staff_id, name: s.staff_name, value: Number(s.tasks), alerts: Number(s.alerts) }))}
+            describe={(name, n) => t('ov.clean_bubble', { name, n })}
+          />
+        </Tile>
+        <Tile title={t('ov.clean_tasks')}>
+          <TaskDials
+            items={CLEANING_TASKS.map((task) => ({
+              key: task,
+              label: t(`task.${task}`),
+              value: Number(data.tasks.find((x) => x.task === task)?.count ?? 0),
+            }))}
+          />
+        </Tile>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,280px)]">
+        <Tile title={t('ov.clean_map', { covered: areas.covered, total: areas.total })}>
+          <CoverageGrid
+            areas={areas.list}
+            yardKey={t('ov.clean_yard')}
+            missingLabel={t('ov.clean_missing')}
+            areaLabel={(a) =>
+              a.reports ? t('ov.clean_area', { name: a.name, n: a.reports }) : t('ov.clean_area_none', { name: a.name })
+            }
+          />
+        </Tile>
+        <Tile title={t('ov.clean_location')}>
+          <Donut
+            totalLabel={t('ov.total')}
+            segments={[
+              { key: 'ok', label: t('clean.loc_ok'), value: data.location.ok, color: STATUS_COLORS.resolved },
+              { key: 'far', label: t('ov.clean_far'), value: data.location.far, color: PRIORITY_COLORS.high },
+              { key: 'unknown', label: t('clean.loc_unknown'), value: data.location.unknown, color: STATUS_COLORS.new },
+            ]}
+          />
+        </Tile>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+        <Tile title={t('ov.clean_calendar')}>
+          <CalendarHeat
+            data={data.daily.map((d) => ({ date: d.date, value: d.reports }))}
+            weekdayLabel={(d) => t(`weekday.${d}` as 'weekday.0')}
+            monthLabel={(date) => format({ month: 'short' }, date)}
+            dayLabel={(date, n) => t('ov.clean_day', { date: format({ day: 'numeric', month: 'short' }, date), n })}
+            fewerLabel={t('charts.fewer')}
+            moreLabel={t('charts.more')}
+          />
+        </Tile>
+        <Tile title={t('ov.hours')}>
+          <HourBars hours={data.hours} unit={t('ov.reports')} />
+        </Tile>
+      </div>
+
+      <Tile title={t('ov.clean_building_task')} hint={hint}>
+        <Heatmap
+          data={data.matrix.map((m) => ({ row: m.building_code, column: m.task, value: Number(m.count) }))}
+          rows={buildings}
+          columns={[...CLEANING_TASKS]}
+          columnLabel={(c) => t(`task.${c}` as 'task.tidy')}
+          verticalLabels
+          fewerLabel={t('charts.fewer')}
+          moreLabel={t('charts.more')}
+        />
+      </Tile>
+    </>
   );
 }

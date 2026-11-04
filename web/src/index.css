@@ -262,6 +262,13 @@
 .anim-rise-in { animation: rise-in 1.4s var(--ease-out-quint) both; }
 .anim-line { transform-origin: left; animation: line 1.1s var(--ease-in-out-quart) both; }
 
+/* A bubble on a chart breathes a little while it is on screen. */
+@keyframes chart-float {
+  from { transform: translateY(2px); }
+  to { transform: translateY(-3px); }
+}
+.chart-float { animation: chart-float 3.2s ease-in-out infinite alternate; }
+
 /* Scroll reveal: elements rise 32px into place; they come down instead when
    the page is scrolled back up past them. */
 .reveal,
@@ -292,7 +299,8 @@ html { scroll-behavior: smooth; }
   .anim-fade-in,
   .anim-fade-up,
   .anim-rise-in,
-  .anim-line { animation: none; }
+  .anim-line,
+  .chart-float { animation: none; }
   .reveal,
   .reveal-stagger > * { opacity: 1; transform: none; transition: none; }
 }

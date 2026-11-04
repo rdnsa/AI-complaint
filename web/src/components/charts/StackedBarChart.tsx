@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { EASE, useMounted } from './motion';
 import { PRIORITY_COLORS, INK } from './colors';
 
 export interface DailyPriority {
@@ -24,6 +25,7 @@ export default function StackedBarChart({
   data: DailyPriority[];
   labels: Record<(typeof ORDER)[number], string>;
 }) {
+  const mounted = useMounted();
   const [hovered, setHovered] = useState<number | null>(null);
   if (!data.length) return null;
 
@@ -47,7 +49,13 @@ export default function StackedBarChart({
             key={d.date}
             className="flex h-full flex-1 cursor-default flex-col justify-end gap-0.5"
             onMouseEnter={() => setHovered(i)}
-            style={{ opacity: hovered === null || hovered === i ? 1 : 0.45 }}
+            style={{
+              opacity: hovered === null || hovered === i ? 1 : 0.45,
+              transformOrigin: 'bottom',
+              transform: mounted ? 'none' : 'scaleY(0)',
+              // The whole row takes the same 0.7 s to sweep in, however many days it holds.
+              transition: `transform .8s ${EASE} ${(i / data.length) * 700}ms`,
+            }}
           >
             {ORDER.map((p) => {
               const value = d[p];

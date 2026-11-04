@@ -3,6 +3,7 @@ import { HTTP_CACHE } from '../adapters/memo';
 import { daysInRange, isValidDate, wibDate } from '../adapters/clock';
 import { requireSupervisor } from '../adapters/session';
 import type { AppEnv } from '../env';
+import * as cleaning from '../services/cleaning-service';
 import * as summaries from '../services/summary-service';
 
 const app = new Hono<AppEnv>();
@@ -40,6 +41,14 @@ app.get('/charts', requireSupervisor, async (c) => {
   if (!range) return c.json({ error: BAD_RANGE }, 400);
   c.header('Cache-Control', HTTP_CACHE.charts);
   return c.json(await summaries.chartData(c.env, range.from, range.to));
+});
+
+/** The numbers behind the overview's cleaning view, for the same dates as the complaint charts. */
+app.get('/cleaning-charts', requireSupervisor, async (c) => {
+  const range = rangeFrom(c);
+  if (!range) return c.json({ error: BAD_RANGE }, 400);
+  c.header('Cache-Control', HTTP_CACHE.charts);
+  return c.json(await cleaning.chartData(c.env, range.from, range.to));
 });
 
 /** Every report of a range, one row each, for the dashboard's Excel export. */

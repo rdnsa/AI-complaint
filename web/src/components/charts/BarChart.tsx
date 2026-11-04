@@ -1,3 +1,4 @@
+import { EASE, useMounted } from './motion';
 import { INK, SINGLE } from './colors';
 
 export interface BarItem {
@@ -16,12 +17,13 @@ export interface BarItem {
  * without relying on colour or on a pointer.
  */
 export default function BarChart({ data }: { data: BarItem[] }) {
+  const mounted = useMounted();
   if (!data.length) return null;
   const max = Math.max(...data.map((d) => d.value), 1);
 
   return (
     <ul className="space-y-2">
-      {data.map((d) => (
+      {data.map((d, i) => (
         <li key={d.label} className="group">
           <div className="flex items-baseline justify-between gap-3 text-sm">
             <span className="truncate font-medium capitalize" style={{ color: INK.secondary }}>
@@ -33,9 +35,10 @@ export default function BarChart({ data }: { data: BarItem[] }) {
           </div>
           <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-mist-100">
             <div
-              className="h-full rounded-full transition-all duration-500"
+              className="h-full rounded-full"
               style={{
-                width: `${Math.max((d.value / max) * 100, 3)}%`,
+                width: mounted ? `${Math.max((d.value / max) * 100, 3)}%` : 0,
+                transition: `width 1s ${EASE} ${i * 70}ms`,
                 background: d.color ?? SINGLE,
               }}
             />

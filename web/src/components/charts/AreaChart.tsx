@@ -191,7 +191,9 @@ export default function AreaChart({
         )}
       </div>
 
-      <table className="sr-only">
+      {/* On a div: browsers ignore height on a table, and 90 rows would stretch the page. */}
+      <div className="sr-only">
+      <table>
         <caption>{`${receivedLabel} / ${resolvedLabel}`}</caption>
         <tbody>
           {data.map((d) => (
@@ -203,6 +205,7 @@ export default function AreaChart({
           ))}
         </tbody>
       </table>
+      </div>
     </figure>
   );
 }

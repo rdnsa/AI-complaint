@@ -209,7 +209,7 @@ Petugas tidak pernah login, cukup memilih namanya dari daftar.</p>
   <tr>
     <td><strong>Pimpinan</strong></td>
     <td>Memakai akun SPV</td>
-    <td>Membaca ringkasan harian, grafik tab Ringkasan, rekap kebersihan per petugas, dan log aktivitas</td>
+    <td>Membaca ringkasan harian, grafik tab Ringkasan, rekap kebersihan per area, dan log aktivitas</td>
   </tr>
   <tr>
     <td><strong>Umum</strong></td>
@@ -406,7 +406,7 @@ adalah membuka halaman petugas.</p>
     <h3>Pilih tab <span class="tombol netral">Tugas harian</span>, namamu, dan lokasinya</h3>
     <p>Di kotak <em>&ldquo;Siapa kamu?&rdquo;</em> pilih <em>&ldquo;&mdash; Pilih namamu &mdash;&rdquo;</em> lalu namamu (HP mengingatnya; pastikan namamu sendiri yang terpilih, terutama
     bila HP dipakai bergantian). Lalu pilih <em>Gedung</em> dan <em>Lantai / Halaman</em>. Bila belum dipilih, tertulis &ldquo;Pilih lokasi dulu.&rdquo;
-    Kamu boleh mengirim di lokasi mana pun, tidak harus lokasi penugasanmu.</p>
+    Kamu boleh mengirim di lokasi mana pun; petugas tidak punya lokasi tetap.</p>
   </div>
 </div>
 
@@ -448,7 +448,7 @@ adalah membuka halaman petugas.</p>
   <strong>Aturan foto tugas harian.</strong> Foto hanya dari kamera langsung. Jam yang dihitung adalah jam server saat foto diterima, bukan jam di HP.
   Foto yang sudah lebih dari 3 jam tidak diterima (&ldquo;Ambil foto baru.&rdquo;), dan satu foto hanya bisa membuktikan satu tugas satu kali.
   Foto tugas harian <em>tidak</em> dinilai AI; yang diperiksa SPV adalah fotonya, jamnya, dan posisinya. Pengiriman ganda yang tak sengaja (tombol tertekan dua kali dengan foto yang sama) tidak dihitung dua kali.<br><br>
-  <strong>Ronde harian.</strong> SPV melihat, untuk setiap petugas, tugas mana saja di lokasi penugasannya yang sudah dikirim hari itu dan mana yang belum
+  <strong>Ronde harian.</strong> SPV melihat, untuk setiap lokasi, tugas mana saja yang sudah dikirim hari itu, oleh siapa, dan mana yang belum
   (bagian 7, tab Laporan &rarr; Kebersihan). Tugas yang tak dikirim terlihat sebagai celah. Jadi kirim tiap tugas begitu selesai.
   Tugas harian tidak menutup keluhan pelapor; keluhan hanya selesai lewat tombol foto bukti pada kartu keluhan.
 </div>
@@ -480,8 +480,8 @@ di dashboard tidak ada tombol untuk menandai laporan selesai.</p>
 <h3>Lima tab di Dashboard Supervisor</h3>
 <table>
   <tr><th>Tab</th><th>Isinya</th></tr>
-  <tr><td><strong>Ringkasan</strong></td><td>Halaman awal. Ringkasan AI hari ini, lalu grafik-grafik (dibahas di bagian 8).</td></tr>
-  <tr><td><strong>Laporan</strong></td><td>Dua sub-tab: <em>Keluhan</em> (daftar laporan dari pelapor) dan <em>Kebersihan</em> (rekap harian dan foto tugas harian petugas). Angka merah pada tab menandai laporan kebersihan hari ini yang dikirim dari luar kampus atau tanpa GPS.</td></tr>
+  <tr><td><strong>Ringkasan</strong></td><td>Halaman awal. Laporan kerja petugas lebih dulu, lalu keluhan beserta ringkasan AI hari ini (dibahas di bagian 8).</td></tr>
+  <tr><td><strong>Laporan</strong></td><td>Dua sub-tab: <em>Kebersihan</em> (terbuka lebih dulu; rekap harian dan foto tugas harian petugas) dan <em>Keluhan</em> (daftar laporan dari pelapor). Angka merah pada tab menandai laporan kebersihan hari ini yang dikirim dari luar kampus atau tanpa GPS.</td></tr>
   <tr><td><strong>Log</strong></td><td>Dua sub-tab: <em>Log aktivitas</em> (jejak semua kejadian yang tidak bisa dihapus) dan <em>Log pekerjaan</em> (catatan lama, sebelum ada tugas harian; hanya dibaca).</td></tr>
   <tr><td><strong>Petugas &amp; Supervisor</strong></td><td>Menambah, mengubah, menonaktifkan, dan menghapus nama petugas serta akun SPV.</td></tr>
   <tr><td><strong>QR lokasi</strong></td><td>Mencetak atau mengunduh stiker QR setiap lokasi.</td></tr>
@@ -520,17 +520,17 @@ ia ikon melayang yang ada di setiap halaman (bagian 9). Bila SPV sedang masuk, K
 <p>Dua tampilan, dipilih dengan sakelar kecil: <span class="tombol netral">Rekap harian</span> dan <span class="tombol netral">Laporan &amp; foto</span>.
 Pilih harinya dengan tanggal atau tombol panah (hari ini adalah yang terbaru).</p>
 <ul>
-  <li><strong>Rekap harian</strong>: per petugas, berapa tugas di lokasi penugasannya yang sudah dikirim (&ldquo;n dari m tugas&rdquo;), tanda &#10003; dengan jam pertama dikirim,
-  &#10007; untuk yang belum dikirim, dan &ldquo;&ndash;&rdquo; untuk yang bukan tugasnya. Sel kuning = hanya dikirim dari luar kampus atau tanpa GPS. Lokasi di luar penugasan petugas diberi
-  keterangan &ldquo;di luar penugasan&rdquo; dan tidak mengubah angka. Tombol <span class="tombol netral">Cetak rekap</span> mencetak halaman rekap.</li>
+  <li><strong>Rekap harian</strong>: tabel semua lokasi dan tugas. Tanda &#10003; dengan jam pertama dikirim dan nama yang mengerjakan,
+  &#10007; untuk yang belum dikirim, dan &ldquo;&ndash;&rdquo; untuk yang bukan tugas di lokasi itu. Sel kuning = hanya dikirim dari luar kampus atau tanpa GPS. Di bawah tabel ada daftar
+  yang dikerjakan tiap petugas (jumlah tugas dan lokasi), tanpa target. Tombol <span class="tombol netral">Cetak rekap</span> mencetak halaman rekap.</li>
   <li><strong>Laporan &amp; foto</strong>: setiap kiriman beserta foto tiap tugasnya, jam foto, nama petugas, dan status lokasi: &ldquo;Di kampus&rdquo;, &ldquo;n m dari kampus&rdquo;, atau &ldquo;Tanpa GPS&rdquo;
   (dengan tautan &ldquo;Lihat di peta&rdquo;). Bisa disaring per petugas (&ldquo;Semua petugas&rdquo;) dan dengan kotak <em>Hanya yang ditandai</em>.</li>
   <li><strong>Pita merah di atas</strong> (&ldquo;n laporan dikirim di luar kampus atau tanpa GPS&rdquo;) membuka daftar yang ditandai dengan satu ketukan.
   <em>Cara menangani</em>: lihat fotonya dan petanya, tanyakan ke petugasnya, dan catat. Sistem tidak menolak kiriman itu, hanya menandainya.</li>
 </ul>
 <div class="catatan">
-  <strong>Penugasan lokasi per petugas</strong> berasal dari data awal sistem (surat penempatan kerja 2026), bukan dari dashboard. Petugas yang baru ditambahkan lewat dashboard bisa mengirim tugas harian,
-  tetapi belum punya lokasi penugasan, sehingga di rekap ia tidak punya target. Untuk memasukkan penugasan, hubungi pengelola sistem.
+  <strong>Petugas tidak punya lokasi tetap.</strong> Di lapangan siapa pun yang sempat boleh mengerjakan tugas di lokasi mana pun, dan laporannya mencatat siapa yang mengerjakan.
+  Karena itu &#10007; berarti lokasi itu belum dilaporkan, bukan kelalaian orang tertentu.
 </div>
 
 <h3>Tab Log</h3>
@@ -627,7 +627,7 @@ Stiker yang dicetak untuk lokasi yang kemudian dihapus dari daftar akan memuncul
 <p>Pimpinan memakai akun SPV. Halaman pertama dashboard, tab <strong>Ringkasan</strong>, menjawab pertanyaan pengelolaan, bukan sekadar menampilkan angka.
 Halaman ini menyegarkan diri tiap menit selama dibuka.</p>
 
-<h3>Ringkasan hari ini (kartu paling atas)</h3>
+<h3>Ringkasan hari ini (kartu pertama bagian Keluhan)</h3>
 <p>Setiap pukul 17.00 WIB sistem menyusun satu paragraf: berapa laporan masuk, lokasi mana yang paling
 bermasalah, pola apa yang berulang, dan sampai empat tindakan paling mendesak. Tanda <strong>&ldquo;!&rdquo;</strong> kecil di samping judulnya
 menjelaskan jadwal itu (&ldquo;Diperbarui otomatis setiap hari pukul 17.00 WIB.&rdquo;). Bisa disusun ulang
@@ -649,8 +649,7 @@ lihat tabel berikut agar tidak salah baca. Tanda <strong>&ldquo;!&rdquo;</strong
   <tr><td>Kartu &ldquo;Waktu selesai&rdquo;</td><td>Rata-rata lama dari laporan masuk sampai selesai, dari semua laporan yang pernah selesai.</td><td>Tidak</td></tr>
   <tr><td>Grafik area &ldquo;(n) hari&rdquo;</td><td>Garis masuk dan selesai per hari. Bila garis selesai tertinggal jauh, tumpukan pekerjaan bertambah.</td><td>Ya</td></tr>
   <tr><td>Lingkaran &ldquo;Status&rdquo;</td><td>Berapa yang baru, diproses, dan selesai.</td><td>Ya</td></tr>
-  <tr><td>&ldquo;Kebersihan hari ini&rdquo;</td><td>Seberapa banyak tugas harian yang seharusnya dikirim hari ini sudah terkirim, secara keseluruhan dan per petugas (cincin per orang). Hanya muncul bila ada petugas yang punya penugasan atau sudah mengirim hari ini.</td><td>Tidak (hari ini)</td></tr>
-  <tr><td>&ldquo;Jam masuk&rdquo;</td><td>Jam berapa dalam sehari (24 jam, WIB) keluhan paling sering masuk.</td><td>Tidak (semua data)</td></tr>
+    <tr><td>&ldquo;Jam masuk&rdquo;</td><td>Jam berapa dalam sehari (24 jam, WIB) keluhan paling sering masuk.</td><td>Tidak (semua data)</td></tr>
   <tr><td>&ldquo;Masalah&rdquo;</td><td>Jenis masalah yang paling sering: kebersihan, perlengkapan, kerusakan, bau, genangan, lainnya.</td><td>Tidak (semua data)</td></tr>
   <tr><td>&ldquo;Prioritas&rdquo;</td><td>Perbandingan prioritas tinggi, sedang, rendah.</td><td>Tidak (semua data)</td></tr>
   <tr><td>&ldquo;Gedung&rdquo;</td><td>Gedung atau tempat mana yang paling sering dilaporkan (sampai 10 teratas).</td><td>Tidak (semua data)</td></tr>
@@ -661,10 +660,22 @@ lihat tabel berikut agar tidak salah baca. Tanda <strong>&ldquo;!&rdquo;</strong
   <tr><td>&ldquo;Komposisi prioritas per hari&rdquo;</td><td>Apakah beban yang <em>berat</em> bertambah, atau hanya jumlahnya yang naik?</td><td>Ya</td></tr>
 </table>
 
+<h3>Bagian Laporan Petugas</h3>
+<p>Laporan kerja petugas adalah fokus utama, jadi tampil paling atas; keluhan menyusul di halaman yang sama. Angka utama keduanya berdampingan, lalu bagian <strong>Laporan Petugas</strong> mengikuti tanggal yang dipilih:</p>
+<ul>
+  <li><strong>Kalender laporan</strong>: satu kotak per hari; makin gelap makin banyak laporan.</li>
+  <li><strong>Lokasi saat melapor</strong>: laporan dari kampus, dari luar kampus, dan tanpa GPS.</li>
+  <li><strong>Peta area</strong>: satu baris per gedung, satu kotak per lantai dan halaman (H). Kotak putus-putus berarti <em>belum ada laporan</em>; arahkan kursor atau ketuk untuk melihat nama lokasinya.</li>
+  <li><strong>Jenis pekerjaan</strong>: jumlah dan porsi tiap tugas.</li>
+  <li><strong>Dikerjakan per petugas</strong>: makin besar gelembung makin banyak tugas, tanpa target; lencana merah menghitung laporan yang ditandai.</li>
+  <li><strong>Jam masuk</strong> dan <strong>Gedung &times; Pekerjaan</strong>: kapan dan di mana pekerjaan dilaporkan.</li>
+</ul>
+<p>Ekspor Excel memuat sheet Kebersihan untuk rentang yang sama.</p>
+
 <h3>Tab Laporan dan tab Log</h3>
 <p>Untuk melihat kerja rutin petugas, bukan hanya reaksi terhadap keluhan, buka <strong>Laporan &rarr; Kebersihan</strong>. Contoh pemakaian:</p>
 <ul>
-  <li>Pilih hari ini pada <em>Rekap harian</em>: petugas dengan tugas yang belum terkirim (&#10007;) terlihat jelas, dan petugas diurutkan dari yang paling sedikit menyelesaikan target.</li>
+  <li>Pilih hari ini pada <em>Rekap harian</em>: lokasi dan tugas yang belum terkirim (&#10007;) terlihat jelas, begitu juga siapa yang sudah mengerjakan apa.</li>
   <li>Buka <em>Laporan &amp; foto</em> dan pilih satu nama: terlihat lokasi, tugas, jam foto, dan fotonya.</li>
   <li>Bandingkan dengan <em>Laporan &rarr; Keluhan</em>: lokasi yang sering dikeluhkan tetapi jarang tercatat dibersihkan menunjuk ke jadwal ronde yang perlu diubah.</li>
   <li>Pakai <em>Log &rarr; Log aktivitas</em> dengan saringan jenis dan jam untuk menelusuri satu kejadian: siapa mengambil alih, foto mana yang ditolak dan mengapa, laporan mana yang dihapus.</li>
@@ -856,7 +867,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 <p><strong>Kenapa penghapusan akun petugas ditolak?</strong> Karena akun itu sudah punya riwayat (laporan atau pekerjaan). Pakai <em>Nonaktifkan</em>; namanya hilang dari pilihan tetapi riwayatnya utuh.</p>
 <p><strong>Apakah stiker QR harus dicetak ulang setelah pembaruan?</strong> Tidak. Stiker lama tetap berfungsi. Cetak ulang hanya untuk stiker yang hilang atau rusak, atau untuk lokasi baru, dari tab <em>QR lokasi</em>.</p>
 <p><strong>Kenapa sebagian grafik tidak berubah saat saya mengganti rentang hari?</strong> Karena hanya sebagian grafik yang mengikuti rentang (lihat tabel di bagian 8).</p>
-<p><strong>Kenapa petugas baru tidak punya target di rekap?</strong> Penugasan lokasi per petugas berasal dari data awal, bukan dari dashboard (bagian 7).</p>
+<p><strong>Kenapa petugas tidak punya target di rekap?</strong> Petugas tidak punya lokasi tetap; siapa pun boleh mengerjakan apa pun. Rekap menunjukkan lokasi yang belum dilaporkan dan yang sudah dikerjakan tiap petugas (bagian 7).</p>
 <p><strong>Seberapa akurat kecerdasan buatannya?</strong> Untuk teks, lama proses dan hasil tiap laporan tersimpan dan dapat dibandingkan dengan penilaian manusia. Untuk foto, putusan bersifat perkiraan: bisa salah tolak atau salah terima, dan alasannya selalu tercatat sehingga dapat diperiksa. Angka akurasi yang sesungguhnya belum diukur dalam dokumen ini.</p>
 
 <h2>14. Bila ada masalah</h2>
@@ -900,7 +911,6 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <tr><th>Hal</th><th>Keadaan saat ini</th></tr>
   <tr><td>Password SPV bawaan</td><td>Akun <em>admin</em> memakai password bawaan yang tertulis di kode program; wajib diganti</td></tr>
   <tr><td>Titik pusat kampus untuk pemeriksaan GPS</td><td>Pengaturan sistem memuat titik pusat dan radius 500 m, dan titik itu diberi catatan sebagai titik sementara di sekitar Jln. Dadaha. Bila belum diganti dengan titik kampus yang sebenarnya, tugas harian yang sah bisa ditandai &ldquo;luar kampus&rdquo;. Perlu dipastikan</td></tr>
-  <tr><td>Penugasan lokasi per petugas</td><td>Berasal dari data awal (surat penempatan kerja 2026), bukan dari dashboard. Menurut data awal, Gedung A lantai 1, Gedung E, dan Gedung F belum punya petugas. Petugas baru perlu dimasukkan penugasannya oleh pengelola sistem agar muncul target di rekap</td></tr>
   <tr><td>Petugas tanpa login</td><td>Dipilih demi kemudahan petugas; konsekuensinya, nama bisa dipilih orang lain. Perlu disepakati bahwa SPV rutin memeriksa rekap kebersihan dan log aktivitas</td></tr>
   <tr><td>Foto tugas harian di papan umum</td><td>Tab &ldquo;Dari petugas&rdquo; menampilkan foto tugas harian secara terbuka, dan foto itu memuat cap nama petugas dan koordinat GPS di dalam gambarnya. Kampus perlu memutuskan apakah ini dapat diterima</td></tr>
   <tr><td>Tugas harian belum diperiksa AI</td><td>Keabsahannya dijaga oleh kamera langsung, jam server, batas umur foto, dan GPS. Perlu diputuskan apakah pemeriksaan isi foto juga diperlukan</td></tr>

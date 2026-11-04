@@ -1,26 +1,37 @@
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** True one frame after mount, so CSS transitions have a starting state to move from. */
+/** False while the chart is held back (off screen, see InView); outside a gate, charts just play. */
+export const ChartGate = createContext(true);
+
+/** True one frame after mount and in view, so CSS transitions have a starting state to move from. */
 export function useMounted(): boolean {
+  const open = useContext(ChartGate);
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     if (reduced()) return setMounted(true);
+    if (!open) return setMounted(false);
     const id = requestAnimationFrame(() => requestAnimationFrame(() => setMounted(true)));
     return () => cancelAnimationFrame(id);
-  }, []);
+  }, [open]);
   return mounted;
 }
 
 /** Eases a number up to its target; a refreshed value counts on from the old one. */
 export function useCountUp(target: number, ms = 900): number {
+  const open = useContext(ChartGate);
   const [value, setValue] = useState(0);
   const from = useRef(0);
 
   useEffect(() => {
     if (reduced()) {
       setValue(target);
+      return;
+    }
+    if (!open) {
+      from.current = 0;
+      setValue(0);
       return;
     }
     const start = performance.now();
@@ -36,7 +47,7 @@ export function useCountUp(target: number, ms = 900): number {
     };
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);
-  }, [target, ms]);
+  }, [target, ms, open]);
 
   return value;
 }

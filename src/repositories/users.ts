@@ -124,10 +124,6 @@ export async function otherActiveSupervisors(env: Env, exceptId: string): Promis
   return row?.n ?? 0;
 }
 
-/** Removes the account and the area assignments that only exist for it. */
 export async function remove(env: Env, id: string): Promise<void> {
-  await env.DB.batch([
-    env.DB.prepare(`DELETE FROM cleaning_assignments WHERE staff_id = ?`).bind(id),
-    env.DB.prepare(`DELETE FROM users WHERE id = ?`).bind(id),
-  ]);
+  await env.DB.prepare(`DELETE FROM users WHERE id = ?`).bind(id).run();
 }

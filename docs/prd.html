@@ -90,7 +90,7 @@ data untuk mengambil keputusan.</p>
   <tr><td>Tiket kerja otomatis</td><td>Porsi keluhan dengan analisis AI berhasil; lama analisis</td><td><code>ai_status = ok</code> dan kolom <code>ai_ms</code> di <code>reports</code>; angka produksi belum diukur ulang</td></tr>
   <tr><td>Selesai harus terbukti</td><td>Tingkat penyelesaian; porsi foto bukti ditolak</td><td>Pengukur tingkat penyelesaian di tab Ringkasan; baris <code>proof_rejected</code> di log aktivitas</td></tr>
   <tr><td>Keluhan cepat ditangani</td><td>Rata-rata waktu dari masuk sampai selesai, per prioritas; umur keluhan yang masih terbuka</td><td><code>resolved_at &minus; created_at</code> dan kolom umur keluhan terbuka (lima pita: &lt; 2 jam sampai &gt; 3 hari), keduanya tampil di tab Ringkasan</td></tr>
-  <tr><td>Tugas harian terbukti dikerjakan</td><td>Kepatuhan tugas harian: tugas yang dilaporkan dibanding yang seharusnya, per petugas per hari; jumlah laporan di luar kampus atau tanpa GPS</td><td>Rekap harian di tab Laporan &gt; Kebersihan dan cincin kepatuhan di tab Ringkasan</td></tr>
+  <tr><td>Tugas harian terbukti dikerjakan</td><td>Cakupan tugas harian: area dan tugas yang sudah dilaporkan dibanding seluruhnya, per hari (petugas tidak punya area tetap); jumlah laporan di luar kampus atau tanpa GPS</td><td>Rekap harian di tab Laporan &gt; Kebersihan dan cincin kepatuhan di tab Ringkasan</td></tr>
   <tr><td>Pengawas terinformasi</td><td>Ringkasan harian tersusun setiap hari</td><td>Satu baris <code>daily_summaries</code> per tanggal</td></tr>
 </table>
 <p>Target angka untuk setiap metrik <strong>belum ditetapkan</strong>. Sistem sudah mengukur semuanya, tetapi
@@ -133,7 +133,6 @@ petugas dan pemantauan oleh supervisor.</p>
   <li>Notifikasi ke petugas (push, WhatsApp, Telegram)</li>
   <li>Login atau PIN untuk petugas</li>
   <li>Pemeriksaan isi foto tugas harian oleh AI (foto dicek keberadaan, usia, dan keunikannya, bukan isinya)</li>
-  <li>Pengelolaan penugasan petugas ke lokasi dari dashboard; penugasan dimuat dari berkas seed</li>
   <li>Pelatihan model AI atau dataset berlabel; model dipakai apa adanya lewat prompt</li>
   <li>Kampus selain UPI Tasikmalaya</li>
   <li>Aplikasi seluler dari toko aplikasi; sistem berjalan di peramban ponsel</li>
@@ -205,7 +204,7 @@ memotret lagi.</p>
 
 <h3>5.3 Pemantauan supervisor</h3>
 <p>Supervisor masuk, membuka tab Ringkasan untuk gambaran umum (ringkasan AI hari ini, tingkat penyelesaian, umur
-keluhan terbuka, kepatuhan tugas harian), lalu menelusuri di tab Laporan (keluhan dan laporan kebersihan),
+keluhan terbuka, cakupan laporan kebersihan), lalu menelusuri di tab Laporan (keluhan dan laporan kebersihan),
 Log (jejak audit), dan Petugas &amp; Supervisor. Setiap hari pukul 17.00 WIB sistem menyusun ringkasan harian
 secara otomatis.</p>
 
@@ -251,7 +250,7 @@ Status mengikuti kode yang berjalan: <span class="inti">Selesai</span> berarti b
   <tr><td class="id">FR-16</td><td>Foto hanya dari kamera langsung, dicap nama petugas, lokasi, waktu server, dan koordinat GPS; waktu yang dihitung adalah saat server menerima foto</td><td>Petugas</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-17</td><td>Tolak foto yang tidak ditemukan, lebih tua dari 3 jam sejak diterima server, atau sudah dipakai untuk tugas lain; tolak tugas yang bukan bagian dari lokasi</td><td>Sistem</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-18</td><td>Bandingkan posisi GPS dengan titik kampus dan radius 500 m; di luar kampus atau tanpa GPS tetap diterima tetapi ditandai ke supervisor dan dicatat di log</td><td>Sistem</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
-  <tr><td class="id">FR-19</td><td>Penugasan petugas ke lokasi dan perhitungan kepatuhan (tugas dilaporkan dibanding seharusnya); penugasan hanya bisa diubah lewat berkas seed, belum lewat dashboard</td><td>Supervisor</td><td>Sedang</td><td><span class="pendukung">Sebagian</span></td></tr>
+  <tr><td class="id">FR-19</td><td>Cakupan kebersihan per lokasi (tugas dilaporkan dibanding seluruh tugas, dan lokasi yang belum ada laporannya); petugas tidak punya lokasi tetap, jadi tidak ada target per orang</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-20</td><td>Pemeriksaan isi foto tugas harian oleh AI vision</td><td>Sistem</td><td>Sedang</td><td><span class="pendukung">Rencana</span></td></tr>
 </table>
 
@@ -260,9 +259,9 @@ Status mengikuti kode yang berjalan: <span class="inti">Selesai</span> berarti b
   <tr><th style="width:8%">ID</th><th>Kebutuhan</th><th style="width:12%">Aktor</th><th style="width:10%">Prioritas</th><th style="width:12%">Status</th></tr>
   <tr><td class="id">FR-21</td><td>Login supervisor (sesi 12 jam) dan dashboard lima tab: Ringkasan, Laporan, Log, Petugas &amp; Supervisor, QR lokasi</td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-22</td><td>Ringkasan AI hari ini di puncak tab Ringkasan: dibuat otomatis tiap hari 17.00 WIB, tombol &ldquo;Buat ulang&rdquo;, serta lima lokasi dengan keluhan terbanyak hari ini</td><td>Sistem, Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
-  <tr><td class="id">FR-23</td><td>Visualisasi tab Ringkasan dengan rentang 7/14/30/90 hari (bawaan 90): pengukur tingkat penyelesaian, kartu angka dengan grafik mini, grafik masuk vs selesai, status, kepatuhan tugas harian per petugas, jam sibuk, kategori masalah, prioritas, peta pohon gedung, umur keluhan terbuka, gedung &times; kategori, waktu penyelesaian per prioritas, pola hari &times; jam, komposisi prioritas per hari. Sebagian grafik (kategori, prioritas, gedung, jam, waktu penyelesaian) menghitung seluruh data dan belum mengikuti rentang yang dipilih</td><td>Supervisor</td><td>Tinggi</td><td><span class="pendukung">Sebagian</span></td></tr>
+  <tr><td class="id">FR-23</td><td>Visualisasi tab Ringkasan dengan rentang 7/14/30/90 hari (bawaan 90): pengukur tingkat penyelesaian, kartu angka dengan grafik mini, grafik masuk vs selesai, status, jam sibuk, kategori masalah, prioritas, peta pohon gedung, umur keluhan terbuka, gedung &times; kategori, waktu penyelesaian per prioritas, pola hari &times; jam, komposisi prioritas per hari. Satu halaman yang sama memuat bagian Kebersihan pada tanggal yang sama: jumlah laporan, area terlapor, petugas melapor, laporan ditandai, kalender harian, status lokasi, peta area, jenis pekerjaan, pekerjaan per petugas, jam, dan gedung &times; pekerjaan. Sebagian grafik (kategori, prioritas, gedung, jam, waktu penyelesaian) menghitung seluruh data dan belum mengikuti rentang yang dipilih</td><td>Supervisor</td><td>Tinggi</td><td><span class="pendukung">Sebagian</span></td></tr>
   <tr><td class="id">FR-24</td><td>Tab Laporan &gt; Keluhan: daftar maks. 200 keluhan dengan filter status, prioritas, dan waktu; foto kondisi dan foto bukti dapat diperbesar; hapus dan analisis ulang; menyegarkan diri tiap 30 detik saat tampil</td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
-  <tr><td class="id">FR-25</td><td>Tab Laporan &gt; Kebersihan: rekap harian per petugas (pilih tanggal, cetak), daftar laporan dengan foto per tugas, saring per petugas dan hanya peringatan, tautan peta; angka merah di tab untuk peringatan hari ini</td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
+  <tr><td class="id">FR-25</td><td>Tab Laporan &gt; Kebersihan: rekap harian per area beserta siapa yang mengerjakan (pilih tanggal, cetak), daftar laporan dengan foto per tugas, saring per petugas dan hanya peringatan, tautan peta; angka merah di tab untuk peringatan hari ini</td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-26</td><td>Filter waktu bersama (keluhan, laporan kebersihan, log): semua, hari ini, kemarin, 7 hari, 30 hari, rentang tanggal, ditambah jam dari/sampai dengan pemilih jam berbentuk dial (jam lalu menit, ketelitian 1 menit, WIB); jendela melewati tengah malam didukung</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-27</td><td>Tab Log: log aktivitas (14 jenis aksi, filter aksi dan waktu, waktu persis) dan log pekerjaan lama (data toilet, hanya dibaca)</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-28</td><td>Pembaca khusus pimpinan (login baca-saja ke dashboard)</td><td>Pimpinan</td><td>Rendah</td><td><span class="pendukung">Rencana</span></td></tr>
@@ -309,7 +308,7 @@ mana pun perubahan status datang. Nilai ambang di bawah diambil dari kode.</p>
   <li><strong>Duplikat dideteksi.</strong> Keluhan dengan lokasi dan teks yang sama dalam 2 menit memakai nomor lama. Laporan tugas harian dianggap kembar bila seluruh fotonya sudah dipakai oleh laporan petugas dan lokasi yang sama; kiriman kedua yang sungguhan, sebentar kemudian, tidak ikut tertelan.</li>
   <li><strong>Aturan tugas harian.</strong> Satu kiriman berisi 1 sampai 6 tugas tanpa tugas ganda dan tanpa foto yang sama; tiap tugas harus bagian dari lokasi; foto dihitung dari saat server menerimanya dan ditolak bila lebih tua dari 3 jam; satu foto tidak dapat membuktikan dua tugas.</li>
   <li><strong>GPS luar kampus ditandai, bukan ditolak.</strong> Jarak ke titik kampus dihitung server. Posisi dianggap jauh hanya bila jaraknya melebihi 500 m bahkan setelah dikurangi akurasi GPS (dibatasi maksimal 200 m). Laporan jauh atau tanpa GPS diterima, tercatat sebagai <code>cleaning_out_of_range</code>, dan menambah angka merah di dashboard.</li>
-  <li><strong>Lokasi tugas bukan batasan.</strong> Petugas boleh mengirim di lokasi mana pun; kepatuhan hanya dihitung di lokasi penugasannya, dan pekerjaan di lokasi lain tampil sebagai tambahan.</li>
+  <li><strong>Lokasi tugas bukan batasan.</strong> Petugas boleh mengirim di lokasi mana pun dan tidak punya lokasi tetap; rekap dihitung per lokasi dan mencatat siapa yang mengerjakan.</li>
   <li><strong>Keluhan tidak hilang karena AI teks gagal.</strong> Keluhan disimpan lebih dulu; kegagalan analisis dicatat sebagai <code>ai_status = failed</code> dan bisa dianalisis ulang.</li>
   <li><strong>Hapus keluhan meninggalkan jejak.</strong> Salinan lengkap keluhan masuk ke log sebelum keluhan dan fotonya dihapus.</li>
   <li><strong>Jejak audit tidak dihapus.</strong> Log aktivitas hanya ditambah; tidak ada baris yang diubah atau dihapus lewat aplikasi, dan kegagalan mencatat tidak menggagalkan tindakannya.</li>
@@ -375,7 +374,6 @@ pada dua layanan AI dari luar.</p>
   <tr><th style="width:30%">Penyimpanan</th><th>Isi</th></tr>
   <tr><td><code>users</code></td><td>Akun supervisor dan pelapor, serta nama petugas; sandi dalam bentuk hash</td></tr>
   <tr><td><code>cleaning_areas</code></td><td>Lokasi (area kebersihan): lantai, halaman, gedung utuh, atau tempat di luar gedung; enam tugas per lokasi; status aktif. Satu lokasi satu kode QR</td></tr>
-  <tr><td><code>cleaning_assignments</code></td><td>Petugas yang ditugaskan di setiap lokasi (dimuat dari <code>seed/cleaning-areas.sql</code>)</td></tr>
   <tr><td><code>reports</code></td><td>Keluhan: lokasi (<code>area_id</code>, atau <code>toilet_id</code> untuk data lama), foto kondisi, status, hasil AI teks, foto bukti dan penilaian AI vision</td></tr>
   <tr><td><code>cleaning_reports</code>, <code>cleaning_report_tasks</code></td><td>Laporan tugas harian: petugas, catatan, posisi GPS, jarak, status lokasi (ok/far/unknown); satu baris per tugas dengan foto yang unik dan waktu terima server</td></tr>
   <tr><td><code>daily_summaries</code></td><td>Satu ringkasan dan poin sorotan per tanggal</td></tr>
@@ -412,7 +410,6 @@ harian), dan jejak audit.</p>
   <tr><td>Kuota, biaya, dan privasi layanan AI</td><td>Kuota harian layanan vision bisa habis dan menghentikan penutupan keluhan; kebijakan penggunaan foto oleh penyedia bergantung pada tingkat layanan akun</td><td>Pastikan tingkat layanan, siapkan kunci cadangan, atau aktifkan penagihan</td></tr>
   <tr><td>Grafik tertentu tidak mengikuti rentang</td><td>Kategori, prioritas, gedung, jam, dan waktu penyelesaian di tab Ringkasan menghitung seluruh data, sehingga bisa berbeda dari kartu yang mengikuti rentang</td><td>Terapkan rentang pada semua kueri grafik</td></tr>
   <tr><td>Ringkasan harian dan Kato Bot hanya mencakup keluhan</td><td>Laporan tugas harian tidak ikut diringkas atau ditanyakan</td><td>Tambahkan alat dan bahan ringkasan dari laporan kebersihan</td></tr>
-  <tr><td>Penugasan hanya lewat berkas seed</td><td>Mutasi petugas pindah lokasi perlu bantuan teknis</td><td>Layar penugasan di dashboard</td></tr>
   <tr><td>Tampilan berfilter maks. 200 baris</td><td>Rentang panjang tidak tampil utuh</td><td>Paginasi atau hitungan dari server</td></tr>
   <tr><td>Tidak ada lupa sandi</td><td>Supervisor terakhir yang lupa sandi harus diperbaiki lewat SQL</td><td>Reset lewat e-mail atau OTP</td></tr>
   <tr><td>Belum ada uji otomatis</td><td>Verifikasi masih manual</td><td>Vitest dengan Wrangler</td></tr>
@@ -421,7 +418,6 @@ harian), dan jejak audit.</p>
 <ul class="cek">
   <li>Ganti sandi supervisor bawaan dan tetapkan pemegang akun supervisor (sebaiknya dua orang) serta pengelola teknis untuk keadaan darurat</li>
   <li>Tetapkan koordinat pusat kampus dan radius yang tepat</li>
-  <li>Gedung E dan F, serta Gedung A lantai 1, belum punya petugas yang ditugaskan; tetapkan penugasannya</li>
   <li>Sepakati bahwa supervisor rutin memeriksa tab Laporan &gt; Kebersihan dan Log, terutama peringatan luar kampus</li>
   <li>Putuskan apakah foto tugas harian perlu diperiksa AI dan apakah penagihan layanan AI diaktifkan</li>
   <li>Putuskan apakah pimpinan perlu peran baca-saja</li>
@@ -440,7 +436,6 @@ harian), dan jejak audit.</p>
   <tr><td>Penanganan keluhan (FR-08 s.d. FR-13)</td><td><span class="inti">Selesai</span></td><td>Klaim, ambil alih, foto bukti diperiksa AI, tidak dibuka lagi</td></tr>
   <tr><td>Notifikasi petugas (FR-14)</td><td><span class="pendukung">Rencana</span></td><td>Belum ada</td></tr>
   <tr><td>Tugas harian (FR-15 s.d. FR-18)</td><td><span class="inti">Selesai</span></td><td>Enam tugas, foto bercap, GPS, usia dan keunikan foto</td></tr>
-  <tr><td>Penugasan lewat dashboard (FR-19)</td><td><span class="pendukung">Sebagian</span></td><td>Penugasan dan kepatuhan dihitung; pengubahan hanya lewat seed</td></tr>
   <tr><td>Pemeriksaan foto tugas oleh AI (FR-20)</td><td><span class="pendukung">Rencana</span></td><td>Belum ada</td></tr>
   <tr><td>Dashboard 5 tab (FR-21, FR-22, FR-24 s.d. FR-27)</td><td><span class="inti">Selesai</span></td><td>Termasuk filter waktu menit dan log aktivitas</td></tr>
   <tr><td>Visualisasi Ringkasan (FR-23)</td><td><span class="pendukung">Sebagian</span></td><td>Sebagian grafik belum mengikuti rentang yang dipilih</td></tr>
@@ -464,7 +459,7 @@ harian), dan jejak audit.</p>
   <li>Pembatasan laju atau CAPTCHA pada pelaporan, unggah foto, dan login</li>
   <li>PIN atau pembatasan perangkat untuk petugas</li>
   <li>Notifikasi ke petugas untuk keluhan prioritas tinggi</li>
-  <li>Layar penugasan petugas di dashboard dan peran baca-saja untuk pimpinan</li>
+  <li>Peran baca-saja untuk pimpinan</li>
   <li>Rentang waktu yang konsisten di semua grafik; ringkasan harian dan Kato Bot yang mencakup tugas harian</li>
   <li>Uji otomatis, reset sandi supervisor, dan pembersihan foto yatim</li>
 </ol>

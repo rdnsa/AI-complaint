@@ -43,9 +43,12 @@ export function sequentialStep(value: number, max: number): string {
   return SEQUENTIAL[index];
 }
 
-/** Cells past the middle of the ramp are dark enough to need light text. */
+/**
+ * Cells past the middle of the ramp are dark enough to need light text. The ramp
+ * is the same in both themes, so a pale cell needs dark ink in dark mode too.
+ */
 export function inkOn(value: number, max: number): string {
-  return value / Math.max(max, 1) > 0.62 ? '#FFFFFF' : INK.primary;
+  return value / Math.max(max, 1) > 0.62 ? '#FFFFFF' : '#1D1D1F';
 }
 
 /** A single magnitude series needs one colour — and no legend. */

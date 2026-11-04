@@ -14,9 +14,10 @@ import Select from './Select';
 
 /**
  * The supervisor's view of the cleaning reports, built for the decision
- * management has to make: per staff member and per day, which assigned tasks
- * were reported (with the photos behind them) and which were not, plus every
- * report filed away from campus or without GPS.
+ * management has to make: per area and per day, which tasks were reported, by
+ * whom (with the photos behind them) and which were not, plus every report filed
+ * away from campus or without GPS. Staff do not own areas: whoever is free does
+ * the work, so a gap belongs to the area and not to a person.
  */
 
 function todayWIB(): string {
@@ -217,7 +218,7 @@ function LocationBadge({ status, distance }: { status: LocationStatus; distance:
   );
 }
 
-/** The day's report for management: one block per staff member, gaps first. Printable. */
+/** The day's report for management: every area against every task, then what each person did. Printable. */
 function Recap({ recap, dateLabel, locale }: { recap: CleaningRecap; dateLabel: string; locale: string }) {
   const { t } = useLanguage();
   const percent = recap.totals.expected ? Math.round((recap.totals.done / recap.totals.expected) * 100) : 0;
@@ -237,90 +238,83 @@ function Recap({ recap, dateLabel, locale }: { recap: CleaningRecap; dateLabel: 
         <Stat label={t('clean.stat_alerts')} value={String(recap.totals.alerts)} tone={recap.totals.alerts ? 'red' : undefined} />
       </div>
 
-      <div className="mt-4 space-y-3">
-        {!recap.staff.length && <p className="card p-10 text-center text-ink-600">{t('clean.recap_empty')}</p>}
-        {recap.staff.map((s) => {
-          const pct = s.expected ? Math.round((s.done / s.expected) * 100) : null;
-          const tone =
-            pct === null ? 'text-ink-700' : pct >= 100 ? 'text-emerald-700' : pct === 0 ? 'text-red-700' : 'text-amber-700';
-          return (
-            <article key={s.staff_id} className="card overflow-hidden print:break-inside-avoid print:border print:border-black">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-mist-200 bg-mist-50 px-4 py-3">
-                <p className="font-bold text-ink-900">{s.staff_name}</p>
-                {pct !== null && (
-                  <p className={`text-sm font-bold ${tone}`}>
-                    {t('clean.done_of', { done: s.done, expected: s.expected })} · {pct}%
-                  </p>
-                )}
-                {s.reports === 0 && s.expected > 0 && (
-                  <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white">
-                    {t('clean.no_report_today')}
-                  </span>
-                )}
-                {!!s.alerts && (
-                  <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-800 ring-1 ring-red-200">
-                    {t('clean.alerts_count', { n: s.alerts })}
-                  </span>
-                )}
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] table-fixed text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-ink-600">
-                      <th className="w-2/5 px-4 py-2 font-semibold">{t('clean.col_area')}</th>
-                      {CLEANING_TASKS.map((task) => (
-                        <th key={task} className="px-2 py-2 text-center font-semibold">
-                          {t(`task.${task}`)}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {s.areas.map((a) => (
-                      <tr key={a.area_id} className="border-t border-mist-200">
-                        <td className="px-4 py-2 text-ink-900">
-                          {a.area_name}
-                          {!a.assigned && <span className="ml-1 text-xs text-ink-600">({t('clean.extra_area')})</span>}
+      {!recap.areas.length && <p className="card mt-4 p-10 text-center text-ink-600">{t('clean.recap_empty')}</p>}
+      {!!recap.areas.length && (
+        <div className="card mt-4 overflow-x-auto print:border print:border-black">
+          <table className="w-full min-w-[820px] table-fixed text-sm">
+            <thead>
+              <tr className="bg-mist-50 text-left text-xs text-ink-600">
+                <th className="w-[30%] px-4 py-2 font-semibold">{t('clean.col_area')}</th>
+                {CLEANING_TASKS.map((task) => (
+                  <th key={task} className="px-2 py-2 text-center font-semibold">
+                    {t(`task.${task}`)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {recap.areas.map((a) => (
+                <tr key={a.area_id} className="border-t border-mist-200 print:break-inside-avoid">
+                  <td className="px-4 py-2 text-ink-900">{a.area_name}</td>
+                  {CLEANING_TASKS.map((task) => {
+                    const cell = a.tasks[task];
+                    if (!cell) {
+                      return (
+                        <td key={task} className="px-2 py-2 text-center text-ink-600">
+                          –
                         </td>
-                        {CLEANING_TASKS.map((task) => {
-                          const cell = a.tasks[task];
-                          if (!cell) {
-                            return (
-                              <td key={task} className="px-2 py-2 text-center text-ink-600">
-                                –
-                              </td>
-                            );
-                          }
-                          return cell.done_at ? (
-                            <td
-                              key={task}
-                              className={`px-2 py-2 text-center font-semibold ${
-                                cell.flagged ? 'bg-amber-50 text-amber-800' : 'text-emerald-700'
-                              }`}
-                              title={cell.flagged ? t('clean.cell_flagged') : undefined}
-                            >
-                              <span className="inline-flex items-center gap-0.5">
-                                {cell.flagged ? <PinGlyph className="h-3.5 w-3.5" /> : <CheckGlyph className="h-3.5 w-3.5" />}
-                                {clockWIB(cell.done_at, locale)}
-                              </span>
-                              {cell.times > 1 && <span className="ml-0.5 text-xs text-ink-600">×{cell.times}</span>}
-                            </td>
-                          ) : (
-                            <td key={task} className="bg-red-50 px-2 py-2 text-center font-bold text-red-700">
-                              ✗
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+                      );
+                    }
+                    const who = cell.staff.join(', ');
+                    return cell.done_at ? (
+                      <td
+                        key={task}
+                        className={`px-2 py-2 text-center font-semibold ${
+                          cell.flagged ? 'bg-amber-50 text-amber-800' : 'text-emerald-700'
+                        }`}
+                        title={cell.flagged ? `${who} · ${t('clean.cell_flagged')}` : who}
+                      >
+                        <span className="inline-flex items-center gap-0.5">
+                          {cell.flagged ? <PinGlyph className="h-3.5 w-3.5" /> : <CheckGlyph className="h-3.5 w-3.5" />}
+                          {clockWIB(cell.done_at, locale)}
+                        </span>
+                        {cell.times > 1 && <span className="ml-0.5 text-xs text-ink-600">×{cell.times}</span>}
+                        <span className="block truncate text-[11px] font-normal opacity-80">{who}</span>
+                      </td>
+                    ) : (
+                      <td key={task} className="px-2 py-2 text-center font-bold text-red-700">
+                        ✗
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       <p className="mt-3 text-xs text-ink-600">{t('clean.recap_legend')}</p>
+
+      {!!recap.staff.length && (
+        <div className="card mt-4 p-5 print:break-inside-avoid print:border print:border-black">
+          <h3 className="section-title mb-3">{t('clean.staff_title')}</h3>
+          <ul className="m-0 grid list-none gap-x-6 gap-y-2 p-0 sm:grid-cols-2">
+            {recap.staff.map((s) => (
+              <li key={s.staff_id} className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+                <span className="font-semibold text-ink-900">{s.staff_name}</span>
+                <span className="text-ink-700">
+                  {t('clean.staff_work', { tasks: s.tasks, areas: s.areas })}
+                  {!!s.alerts && (
+                    <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold text-red-800 ring-1 ring-red-200">
+                      {t('clean.alerts_count', { n: s.alerts })}
+                    </span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }

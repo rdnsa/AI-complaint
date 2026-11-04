@@ -39,9 +39,10 @@ export function reportsChanged(): void {
   forget('leaderboard');
 }
 
-/** The cleaning recap, after a staff member files a report or the assignments change. */
+/** The cleaning recap and charts, after a staff member files a report. */
 export function cleaningChanged(): void {
   forget('recap');
+  forget('cleaning-charts');
 }
 
 /** Cache-Control values, so every route states its freshness the same way. */

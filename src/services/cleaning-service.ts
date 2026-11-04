@@ -1,4 +1,4 @@
-import { wibDate } from '../adapters/clock';
+import { addDays, daysInRange, wibDate, wibDayRange } from '../adapters/clock';
 import { deletePhoto, FOLDER, photoUploadedAt } from '../adapters/storage';
 import {
   CLEANING_TASKS,
@@ -62,7 +62,6 @@ export interface AreaDTO {
   building_name: string | null;
   floor: number | null;
   tasks: CleaningTask[];
-  staff: Array<{ id: string; name: string }>;
 }
 
 /** The locations every page picks from; they change only when the seed is re-run. */
@@ -70,32 +69,24 @@ export function listAreas(env: Env): Promise<AreaDTO[]> {
   return memo('areas', 5 * 60_000, () => loadAreas(env));
 }
 
-async function loadAreas(env: Env): Promise<AreaDTO[]> {
-  const [areas, assigned] = await Promise.all([cleaning.activeAreas(env), cleaning.assignments(env)]);
-  return areas.map((a) => ({
+function toAreaDTO(a: cleaning.AreaRow): AreaDTO {
+  return {
     id: a.id,
     name: a.name,
     building_code: a.building_code,
     building_name: a.building_name,
     floor: a.floor,
     tasks: parseTasks(a.tasks),
-    staff: assigned.filter((s) => s.area_id === a.id).map((s) => ({ id: s.staff_id, name: s.staff_name })),
-  }));
+  };
+}
+
+async function loadAreas(env: Env): Promise<AreaDTO[]> {
+  return (await cleaning.activeAreas(env)).map(toAreaDTO);
 }
 
 export async function getArea(env: Env, id: string): Promise<AreaDTO | null> {
   const area = await cleaning.activeArea(env, id);
-  if (!area) return null;
-  const assigned = await cleaning.assignments(env, id);
-  return {
-    id: area.id,
-    name: area.name,
-    building_code: area.building_code,
-    building_name: area.building_name,
-    floor: area.floor,
-    tasks: parseTasks(area.tasks),
-    staff: assigned.map((s) => ({ id: s.staff_id, name: s.staff_name })),
-  };
+  return area ? toAreaDTO(area) : null;
 }
 
 export type SubmitResult =
@@ -277,9 +268,9 @@ export async function publicReports(env: Env, limit: number) {
 }
 
 /**
- * One WIB day, per staff member: for every area they are assigned to (plus any
- * other area they reported in), which tasks were done and when. A task not
- * reported is a gap; that is what management decides on.
+ * One WIB day, per area: which tasks were reported, when, and by whom. Staff do
+ * not own areas, whoever is free does the work, so a gap belongs to the area and
+ * not to a person. The staff list says what each person did, with no target.
  */
 export interface RecapCell {
   /** First time the task was reported that day (UTC), or null when it was not. */
@@ -287,21 +278,21 @@ export interface RecapCell {
   times: number;
   /** Every report behind it was filed off campus or without GPS: counted, but questionable. */
   flagged: boolean;
+  /** Everyone who reported it that day, first reporter first. */
+  staff: string[];
 }
 
 export interface RecapArea {
   area_id: string;
   area_name: string;
-  assigned: boolean;
   tasks: Partial<Record<CleaningTask, RecapCell>>;
 }
 
 export interface RecapStaff {
   staff_id: string;
   staff_name: string;
-  areas: RecapArea[];
-  expected: number;
-  done: number;
+  tasks: number;
+  areas: number;
   reports: number;
   alerts: number;
 }
@@ -312,75 +303,139 @@ export function dailyRecap(env: Env, date: string = wibDate()) {
 }
 
 async function loadRecap(env: Env, date: string) {
-  const [areas, assigned, reports] = await Promise.all([
+  const [activeAreas, reports] = await Promise.all([
     cleaning.activeAreas(env),
-    cleaning.assignments(env),
     listReports(env, { from: date, to: date, limit: 1000 }),
   ]);
-  const areaById = new Map(areas.map((a) => [a.id, a]));
 
-  const staff = new Map<string, RecapStaff>();
-  const ensureStaff = (id: string, name: string) => {
-    let s = staff.get(id);
-    if (!s) {
-      s = { staff_id: id, staff_name: name, areas: [], expected: 0, done: 0, reports: 0, alerts: 0 };
-      staff.set(id, s);
-    }
-    return s;
-  };
-  const ensureArea = (s: RecapStaff, areaId: string, areaName: string, isAssigned: boolean) => {
-    let a = s.areas.find((x) => x.area_id === areaId);
-    if (!a) {
-      const row = areaById.get(areaId);
-      const tasks: RecapArea['tasks'] = {};
-      for (const t of row ? parseTasks(row.tasks) : []) tasks[t] = { done_at: null, times: 0, flagged: false };
-      a = { area_id: areaId, area_name: areaName, assigned: isAssigned, tasks };
-      s.areas.push(a);
-    }
-    return a;
-  };
-
-  for (const as of assigned) {
-    ensureArea(ensureStaff(as.staff_id, as.staff_name), as.area_id, areaById.get(as.area_id)?.name ?? as.area_id, true);
+  const areas = new Map<string, RecapArea>();
+  for (const a of activeAreas) {
+    const tasks: RecapArea['tasks'] = {};
+    for (const t of parseTasks(a.tasks)) tasks[t] = { done_at: null, times: 0, flagged: false, staff: [] };
+    areas.set(a.id, { area_id: a.id, area_name: a.name, tasks });
   }
+
+  const staff = new Map<string, RecapStaff & { areaIds: Set<string> }>();
 
   // Oldest first, so done_at ends up as the first time of the day.
   for (const r of [...reports].reverse()) {
-    const s = ensureStaff(r.staff_id, r.staff_name);
+    let s = staff.get(r.staff_id);
+    if (!s) {
+      s = { staff_id: r.staff_id, staff_name: r.staff_name, tasks: 0, areas: 0, reports: 0, alerts: 0, areaIds: new Set() };
+      staff.set(r.staff_id, s);
+    }
+    const flagged = r.location_status !== 'ok';
     s.reports++;
-    if (r.location_status !== 'ok') s.alerts++;
-    const a = ensureArea(s, r.area_id, r.area_name, false);
+    if (flagged) s.alerts++;
+    s.tasks += r.tasks.length;
+    s.areaIds.add(r.area_id);
+
+    // An area deactivated since still shows the work done in it.
+    let area = areas.get(r.area_id);
+    if (!area) {
+      area = { area_id: r.area_id, area_name: r.area_name, tasks: {} };
+      areas.set(r.area_id, area);
+    }
     for (const t of r.tasks) {
-      const cell = (a.tasks[t.task] ??= { done_at: null, times: 0, flagged: false });
-      const flagged = r.location_status !== 'ok';
+      const cell = (area.tasks[t.task] ??= { done_at: null, times: 0, flagged: false, staff: [] });
       cell.flagged = cell.times === 0 ? flagged : cell.flagged && flagged;
       cell.done_at ??= t.photo_at;
       cell.times++;
+      if (!cell.staff.includes(r.staff_name)) cell.staff.push(r.staff_name);
     }
   }
 
-  for (const s of staff.values()) {
-    for (const a of s.areas) {
-      const cells = Object.values(a.tasks);
-      // Extra work in someone else's area is shown, but does not change the score.
-      if (a.assigned) {
-        s.expected += cells.length;
-        s.done += cells.filter((c) => c.done_at).length;
-      }
-    }
-  }
-
-  const list = [...staff.values()].sort(
-    (a, b) => a.done / (a.expected || 1) - b.done / (b.expected || 1) || a.staff_name.localeCompare(b.staff_name),
-  );
+  const cells = [...areas.values()].flatMap((a) => Object.values(a.tasks));
   return {
     date,
-    staff: list,
+    areas: [...areas.values()],
+    staff: [...staff.values()]
+      .map(({ areaIds, ...s }) => ({ ...s, areas: areaIds.size }))
+      .sort((a, b) => b.tasks - a.tasks || a.staff_name.localeCompare(b.staff_name)),
     totals: {
-      expected: list.reduce((n, s) => n + s.expected, 0),
-      done: list.reduce((n, s) => n + s.done, 0),
+      expected: cells.length,
+      done: cells.filter((c) => c.done_at).length,
       reports: reports.length,
       alerts: reports.filter((r) => r.location_status !== 'ok').length,
     },
+  };
+}
+
+/** Reports from before migration 0010 count 'sweep' and 'mop' apart; today they are one task. */
+function mergedLegacyTasks<T extends { task: CleaningTask; count: number }>(rows: T[], group: (r: T) => string = () => ''): T[] {
+  const merged = new Map<string, T>();
+  for (const r of rows) {
+    const task: CleaningTask = r.task === 'sweep' || r.task === 'mop' ? 'sweep_mop' : r.task;
+    const key = `${group(r)}|${task}`;
+    const seen = merged.get(key);
+    merged.set(key, { ...r, task, count: Number(r.count) + Number(seen?.count ?? 0) });
+  }
+  return [...merged.values()];
+}
+
+/** The overview's cleaning charts for a date range; a minute old is fine, like the complaint charts. */
+export function chartData(env: Env, from: string, to: string) {
+  return memo(`cleaning-charts:${from}:${to}`, 60_000, () => loadChartData(env, from, to));
+}
+
+async function loadChartData(env: Env, from: string, to: string) {
+  const days = daysInRange(from, to);
+  const [counts, activeAreas] = await Promise.all([
+    cleaning.chartCounts(env, {
+      start: wibDayRange(from).start,
+      end: wibDayRange(to).end,
+      previousStart: wibDayRange(addDays(from, -days)).start,
+    }),
+    cleaning.activeAreas(env),
+  ]);
+
+  // Empty days are zeros, not gaps: a zero reads as "nothing was reported", which is the truth.
+  const dailyMap = new Map(counts.daily.map((d) => [d.date, d]));
+  const daily = Array.from({ length: days }, (_, i) => {
+    const date = addDays(from, i);
+    const found = dailyMap.get(date);
+    return { date, reports: Number(found?.reports ?? 0), on_campus: Number(found?.on_campus ?? 0) };
+  });
+
+  const hours = new Array<number>(24).fill(0);
+  for (const h of counts.hours) hours[h.hour] = Number(h.count);
+
+  const reports = new Map(counts.reportsPerArea.map((a) => [a.area_id, Number(a.count)]));
+  const reportsIn = (id: string) => reports.get(id) ?? 0;
+  const locationCount = (status: LocationStatus) =>
+    Number(counts.locations.find((l) => l.location_status === status)?.count ?? 0);
+  const current = Number(counts.current.reports);
+  const previous = counts.previous;
+
+  return {
+    trend: {
+      days,
+      reports: current,
+      previous_reports: previous,
+      // A previous window of zero has no meaningful percentage change.
+      change: previous > 0 ? Math.round(((current - previous) / previous) * 100) : null,
+      alerts: Number(counts.current.alerts),
+    },
+    areas: {
+      total: activeAreas.length,
+      covered: activeAreas.filter((a) => reportsIn(a.id) > 0).length,
+      // In campus order: where nobody has reported yet is the question the supervisor acts on.
+      missing: activeAreas.filter((a) => !reportsIn(a.id)).map((a) => ({ id: a.id, name: a.name })),
+      list: activeAreas.map((a) => ({
+        id: a.id,
+        name: a.name,
+        building_code: a.building_code,
+        building_name: a.building_name,
+        floor: a.floor,
+        reports: reportsIn(a.id),
+      })),
+    },
+    daily,
+    hours,
+    location: { ok: locationCount('ok'), far: locationCount('far'), unknown: locationCount('unknown') },
+    tasks: mergedLegacyTasks(counts.tasks),
+    matrix: mergedLegacyTasks(counts.matrix, (m) => m.building_code),
+    buildings: counts.buildings,
+    staff: counts.staff,
   };
 }

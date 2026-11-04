@@ -14,7 +14,7 @@ type Callback = (entry: IntersectionObserverEntry) => void;
 const observers = new Map<string, { observer: IntersectionObserver; callbacks: Map<Element, Callback> }>();
 
 /** One IntersectionObserver per root margin, shared by every element that uses it. */
-function observe(el: Element, cb: Callback, rootMargin = '0px') {
+export function observe(el: Element, cb: Callback, rootMargin = '0px') {
   let entry = observers.get(rootMargin);
   if (!entry) {
     const callbacks = new Map<Element, Callback>();

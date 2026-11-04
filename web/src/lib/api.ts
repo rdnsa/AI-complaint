@@ -208,8 +208,6 @@ export interface CleaningArea {
   building_name: string | null;
   floor: number | null;
   tasks: CleaningTask[];
-  /** The staff assigned here by the assignment letter. */
-  staff: StaffOption[];
 }
 
 export interface Campus {
@@ -244,23 +242,52 @@ export interface PublicCleaningReport {
   tasks: Array<{ task: CleaningTask; photo_url: string | null; photo_at: string }>;
 }
 
+/** One WIB day per area: a gap belongs to the area, because staff do not own areas. */
 export interface CleaningRecap {
   date: string;
-  staff: Array<{
-    staff_id: string;
-    staff_name: string;
-    expected: number;
-    done: number;
-    reports: number;
-    alerts: number;
-    areas: Array<{
-      area_id: string;
-      area_name: string;
-      assigned: boolean;
-      tasks: Partial<Record<CleaningTask, { done_at: string | null; times: number; flagged: boolean }>>;
-    }>;
+  areas: Array<{
+    area_id: string;
+    area_name: string;
+    tasks: Partial<Record<CleaningTask, { done_at: string | null; times: number; flagged: boolean; staff: string[] }>>;
   }>;
+  /** What each person reported that day, with no target to reach. */
+  staff: CleaningStaffWork[];
   totals: { expected: number; done: number; reports: number; alerts: number };
+}
+
+export interface CleaningStaffWork {
+  staff_id: string;
+  staff_name: string;
+  tasks: number;
+  areas: number;
+  reports: number;
+  alerts: number;
+}
+
+/** The overview's cleaning view, for a date range. */
+export interface CleaningCharts {
+  trend: { days: number; reports: number; previous_reports: number; change: number | null; alerts: number };
+  areas: {
+    total: number;
+    covered: number;
+    missing: Array<{ id: string; name: string }>;
+    list: Array<{
+      id: string;
+      name: string;
+      building_code: string | null;
+      building_name: string | null;
+      floor: number | null;
+      reports: number;
+    }>;
+  };
+  location: Record<LocationStatus, number>;
+  matrix: Array<{ building_code: string; task: CleaningTask; count: number }>;
+  daily: Array<{ date: string; reports: number; on_campus: number }>;
+  /** Reports per hour of the WIB day, 24 entries. */
+  hours: number[];
+  tasks: Array<{ task: CleaningTask; count: number }>;
+  buildings: Array<{ building_code: string; building_name: string; count: number }>;
+  staff: CleaningStaffWork[];
 }
 
 /** The vision check's verdict on a proof or work photo. */
@@ -295,7 +322,6 @@ function cachedReq<T>(path: string, ttl: number): Promise<T> {
   return value;
 }
 
-/** Staff names also appear on the location list, by assignment. */
 function forgetStaff() {
   shared.delete('/api/staff');
   shared.delete('/api/cleaning/areas');
@@ -433,6 +459,8 @@ export const api = {
   deleteReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 
   charts: (from: string, to: string) => req<ChartData>(`/api/summary/charts?from=${from}&to=${to}`),
+  cleaningCharts: (from: string, to: string) =>
+    req<CleaningCharts>(`/api/summary/cleaning-charts?from=${from}&to=${to}`),
   exportReports: (from: string, to: string) =>
     req<{ data: ExportReport[] }>(`/api/summary/export?from=${from}&to=${to}`),
   activity: (filter: Record<string, string> = {}) => {

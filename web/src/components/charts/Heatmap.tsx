@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { EASE, useMounted } from './motion';
 import { INK, inkOn, SEQUENTIAL, sequentialStep } from './colors';
 
 export interface HeatmapCell {
@@ -36,6 +37,7 @@ export default function Heatmap({
   fewerLabel: string;
   moreLabel: string;
 }) {
+  const mounted = useMounted();
   const [hovered, setHovered] = useState<HeatmapCell | null>(null);
 
   const cells = new Map(data.map((d) => [`${d.row}|${d.column}`, d.value]));
@@ -78,7 +80,7 @@ export default function Heatmap({
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {rows.map((r, ri) => (
               <tr key={r}>
                 <th
                   className="truncate pr-1.5 text-right font-semibold"
@@ -86,7 +88,7 @@ export default function Heatmap({
                 >
                   {r}
                 </th>
-                {columns.map((c) => {
+                {columns.map((c, ci) => {
                   const n = valueAt(r, c);
                   return (
                     <td
@@ -97,6 +99,10 @@ export default function Heatmap({
                       style={{
                         background: sequentialStep(n, max),
                         color: n ? inkOn(n, max) : INK.muted,
+                        // A wave from the top-left corner, one diagonal at a time.
+                        opacity: mounted ? 1 : 0,
+                        transform: mounted ? 'none' : 'scale(0.6)',
+                        transition: `opacity .4s ease ${(ri + ci) * 45}ms, transform .6s ${EASE} ${(ri + ci) * 45}ms`,
                       }}
                     >
                       {n || ''}
