@@ -21,7 +21,7 @@ QR or picked location  →  describe the problem  →  LLM analysis
 
 Live: <https://ai-complaint.yvrtz.workers.dev>
 
-Two longer documents live in [`docs/`](docs/), each as HTML and PDF
+Three longer documents live in [`docs/`](docs/), each as HTML and PDF
 (`npm run docs` re-renders the PDFs with headless Chrome):
 
 - [`dokumentasi-teknis`](docs/dokumentasi-teknis.pdf) — the full technical
@@ -31,6 +31,9 @@ Two longer documents live in [`docs/`](docs/), each as HTML and PDF
 - [`panduan-umum`](docs/panduan-umum.pdf) — the plain-language guide for
   reporters, cleaning staff, supervisors, and management: step-by-step use, FAQ,
   privacy, what to do when something goes wrong.
+- [`dokumentasi-testing`](docs/dokumentasi-testing.pdf) — the automated tests
+  (Indonesian): how to run and read them, how the isolated environment works,
+  coverage against the manual test cases, open bugs, and how to add a test.
 
 One QR code represents one **location** (a cleaning area, `cleaning_areas`): a
 floor of a building, a building's yard, a whole building, or a place like
@@ -218,6 +221,29 @@ only after changing `package.json` dependencies.
 
 The old Indonesian URLs (`/lapor/A-1`, `/petugas`, `/spv`, `/laporan`, …)
 redirect to the new ones, so QR stickers printed before the rename keep working.
+
+---
+
+## Testing
+
+End-to-end tests with Playwright. They start their own Worker, a fresh database
+and a mock LLM, so they need neither `npm run dev` nor any API key, and they
+never touch the development database or a real LLM provider.
+
+```bash
+npx playwright install chromium  # once
+
+npm run test:e2e                 # everything, about a minute
+npm run test:e2e:api             # API only, no browser
+npm run test:e2e:smoke           # one full journey: reporter, staff, supervisor
+npm run test:e2e:ui              # Playwright's interactive mode
+npm run test:e2e:report          # the HTML report of the last run
+```
+
+A test marked `knownIssue()` describes the correct behaviour of a bug that is
+still open, so it is expected to fail; once the bug is fixed the run fails until
+that line is removed. The list of open bugs and everything else is in
+[`docs/dokumentasi-testing`](docs/dokumentasi-testing.pdf).
 
 ---
 

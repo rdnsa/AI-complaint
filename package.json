@@ -18,6 +18,12 @@
     "db:seed:cleaning:remote": "wrangler d1 execute kato --remote --file=./seed/cleaning-areas.sql",
     "qr": "node scripts/generate-qr.mjs",
     "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:api": "playwright test --project=api",
+    "test:e2e:smoke": "playwright test --project=desktop --grep @smoke",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --project=desktop --headed --workers=1",
+    "test:e2e:report": "playwright show-report",
     "cf-typegen": "wrangler types",
     "docs": "node scripts/build-docs.mjs"
   },
@@ -27,6 +33,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260831.1",
+    "@playwright/test": "^1.64.1",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",

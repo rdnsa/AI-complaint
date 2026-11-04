@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<title>Dokumentasi Testing Kato Report</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Plus Jakarta Sans", "Helvetica Neue", Arial, sans-serif;
+         color: #3E1712; font-size: 10.5pt; line-height: 1.55; margin: 0 auto; max-width: 190mm; }
+  h1 { font-size: 24pt; margin: 0 0 2mm; letter-spacing: -0.4pt; }
+  h2 { font-size: 14pt; margin: 9mm 0 3mm; padding-bottom: 1.5mm;
+       border-bottom: 2px solid #E2571F; page-break-after: avoid; }
+  h3 { font-size: 11pt; margin: 5mm 0 1.5mm; page-break-after: avoid; }
+  p { margin: 0 0 3mm; }
+  .sampul { background: linear-gradient(135deg,#4A1D16,#8A3A22); color: #fff;
+            padding: 14mm 12mm; border-radius: 4mm; margin-bottom: 8mm; }
+  .sampul h1 { color: #fff; }
+  .sampul .sub { font-size: 11pt; color: #F0E4D3; margin: 0; }
+  .lencana { display: inline-block; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3);
+             padding: 1mm 3mm; border-radius: 10mm; font-size: 8.5pt; font-weight: 700;
+             letter-spacing: .5pt; text-transform: uppercase; margin-bottom: 4mm; }
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; font-size: 9.5pt; }
+  th, td { text-align: left; padding: 2.2mm 3mm; border-bottom: 1px solid #EFE4D6; vertical-align: top; }
+  th { background: #FDF6F1; font-weight: 700; color: #5D2A20; }
+  tr { page-break-inside: avoid; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 3mm 0 4mm; }
+  .kartu { border: 1px solid #EFE4D6; border-radius: 3mm; padding: 4mm; background: #FDFAF6; page-break-inside: avoid; }
+  .angka { font-size: 20pt; font-weight: 800; color: #E2571F; line-height: 1; }
+  .angka-ket { font-size: 8.5pt; color: #7A3628; margin-top: 1mm; }
+  .alur { border: 2px solid #E2571F; background: #FEF6F1; border-radius: 3mm; padding: 4mm 5mm;
+          margin: 3mm 0 4mm; font-size: 10pt; font-weight: 600; line-height: 1.7; page-break-inside: avoid; }
+  .catatan { background: #FDF6F1; border-radius: 2mm; padding: 4mm; font-size: 9.5pt; margin: 3mm 0; page-break-inside: avoid; }
+  .tolak { border-left: 3px solid #B91C1C; background: #FEF2F2; padding: 3mm 4mm; margin: 3mm 0; font-size: 9.5pt; page-break-inside: avoid; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 8.8pt; background: #FDF0E8;
+         padding: 0.2mm 1mm; border-radius: 1mm; overflow-wrap: anywhere; }
+  pre { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 8.8pt; line-height: 1.5; background: #2A120D;
+        color: #F7EDE3; padding: 4mm; border-radius: 2mm; margin: 2mm 0 4mm; overflow-x: auto; page-break-inside: avoid; }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.5mm; }
+  .toc { columns: 2; column-gap: 8mm; font-size: 9.5pt; margin: 3mm 0 2mm; }
+  .toc ol { margin: 0; padding-left: 5mm; }
+  .toc li { margin-bottom: 0.8mm; break-inside: avoid; }
+  .kaki { margin-top: 10mm; padding-top: 3mm; border-top: 1px solid #EFE4D6; font-size: 8.5pt; color: #7A3628; }
+  @media screen { body { padding: 8mm 5mm; } }
+</style></head><body>
+
+<div class="sampul">
+  <span class="lencana">Dokumentasi testing &middot; Edisi 4 November 2026</span>
+  <h1>Testing Otomatis Kato Report</h1>
+  <p class="sub">Panduan menjalankan, membaca, dan menambah test end-to-end Playwright. Untuk developer dan QA.</p>
+</div>
+
+<div class="toc"><ol>
+  <li><a href="#ringkas">Ringkasan</a></li>
+  <li><a href="#jalan">Cara menjalankan</a></li>
+  <li><a href="#baca">Membaca hasil</a></li>
+  <li><a href="#lingkungan">Lingkungan pengujian</a></li>
+  <li><a href="#struktur">Struktur berkas</a></li>
+  <li><a href="#cakupan">Cakupan</a></li>
+  <li><a href="#temuan">Bug yang masih terbuka</a></li>
+  <li><a href="#batas">Yang tidak diotomasi</a></li>
+  <li><a href="#tulis">Menulis test baru</a></li>
+  <li><a href="#masalah">Mengatasi masalah</a></li>
+</ol></div>
+
+<h2 id="ringkas">1. Ringkasan</h2>
+<div class="grid">
+  <div class="kartu"><div class="angka">264</div><div class="angka-ket">eksekusi test lulus</div></div>
+  <div class="kartu"><div class="angka">16</div><div class="angka-ket">gagal sesuai harapan: mencatat 13 bug terbuka</div></div>
+  <div class="kartu"><div class="angka">0</div><div class="angka-ket">gagal tak terduga atau flaky</div></div>
+  <div class="kartu"><div class="angka">&plusmn;1 mnt</div><div class="angka-ket">satu putaran penuh, 4 worker</div></div>
+</div>
+<p>Hasil di atas berasal dari basis commit <code>fccd959</code>, 4 November 2026. Suite dijalankan penuh empat kali berturut-turut tanpa satu pun kegagalan tak terduga. Suite terdiri dari 279 test ditambah 1 langkah login: 167 test API, 91 test UI desktop, dan 21 test UI HP.</p>
+<p>Kepekaan suite juga sudah diuji dengan sengaja merusak empat aturan di kode aplikasi, lalu memulihkannya: laporan selesai bisa dibuka kembali, API akun tanpa pemeriksaan hak akses, klaim tanpa nama, dan kirim laporan tanpa foto. Keempatnya ditangkap suite.</p>
+<div class="tolak"><b>Hijau bukan berarti bebas bug.</b> Ada 13 bug nyata yang masih terbuka, tiga di antaranya berat: lihat <a href="#temuan">bagian 7</a>. Suite tetap hijau karena bug itu ditandai sebagai <em>known issue</em>.</div>
+
+<h2 id="jalan">2. Cara menjalankan</h2>
+<p>Hanya perlu dipasang sekali:</p>
+<pre><code>npm install
+npx playwright install chromium</code></pre>
+<p>Tidak perlu <code>npm run dev</code>, tidak perlu <code>.dev.vars</code>, tidak perlu API key, dan tidak perlu login Cloudflare. Test menyalakan semuanya sendiri.</p>
+<table>
+  <tr><th>Perintah</th><th>Kegunaan</th></tr>
+  <tr><td><code>npm run test:e2e</code></td><td>Semua test. Jalankan ini sebelum merge atau deploy.</td></tr>
+  <tr><td><code>npm run test:e2e:api</code></td><td>Test API saja, tanpa browser. Sekitar 20 detik, cocok saat mengubah <code>src/</code>.</td></tr>
+  <tr><td><code>npm run test:e2e:smoke</code></td><td>Satu perjalanan penuh: pelapor, petugas, supervisor.</td></tr>
+  <tr><td><code>npm run test:e2e:ui</code></td><td>Mode interaktif Playwright, paling enak untuk menulis dan menelusuri test.</td></tr>
+  <tr><td><code>npm run test:e2e:headed</code></td><td>Browser terlihat, satu per satu.</td></tr>
+  <tr><td><code>npm run test:e2e:report</code></td><td>Membuka laporan HTML dari putaran terakhir.</td></tr>
+  <tr><td><code>npx playwright test -g "TC-KLH-011"</code></td><td>Satu test case berdasarkan ID-nya.</td></tr>
+  <tr><td><code>npx playwright test e2e/ui/staff.spec.ts</code></td><td>Satu berkas.</td></tr>
+</table>
+<p>Kalau menyalakan stack sendiri agar putaran berulang lebih cepat, jalankan <code>node e2e/support/start-stack.mjs</code> di terminal lain, lalu <code>E2E_REUSE=1 npx playwright test</code>. Datanya menumpuk sampai stack dinyalakan ulang, dan kuota Kato Bot (20 pertanyaan per hari per alamat) bisa habis.</p>
+
+<h2 id="baca">3. Membaca hasil</h2>
+<table>
+  <tr><th>Yang terlihat</th><th>Artinya</th><th>Yang perlu dilakukan</th></tr>
+  <tr><td><code>✓</code></td><td>Lulus.</td><td>Tidak ada.</td></tr>
+  <tr><td><code>✘</code> tetapi ringkasan akhir tidak menyebutnya <em>failed</em></td><td><em>Known issue</em>: test gagal seperti yang sudah diperkirakan. Reporter <code>list</code> tetap menampilkan tanda silang.</td><td>Tidak ada. Bug-nya tercatat di bagian 7.</td></tr>
+  <tr><td><code>failed</code> dengan pesan <em>Expected to fail, but passed</em></td><td>Bug yang ditandai sudah diperbaiki.</td><td>Hapus baris <code>knownIssue(...)</code> dari test itu, dan perbarui bagian 7.</td></tr>
+  <tr><td><code>failed</code> dengan pesan lain</td><td>Regresi, atau test perlu disesuaikan dengan perubahan yang disengaja.</td><td>Buka trace-nya.</td></tr>
+</table>
+<p>Saat test gagal, Playwright menyimpan screenshot, video, dan trace di <code>test-results/</code>. Trace paling berguna karena merekam setiap langkah, isi halaman, dan request jaringan:</p>
+<pre><code>npx playwright show-trace test-results/&lt;nama-test&gt;/trace.zip</code></pre>
+
+<h2 id="lingkungan">4. Lingkungan pengujian</h2>
+<div class="alur">Playwright &rarr; <code>start-stack.mjs</code> &rarr; hapus dan isi ulang D1 + R2 uji &rarr; mock LLM (:8799) &rarr; Worker + frontend hasil build (:8788)</div>
+<p>Semua berjalan lokal dan dibuat ulang setiap putaran. Pengujian tidak menyentuh produksi maupun database pengembangan.</p>
+<table>
+  <tr><th>Bagian</th><th>Di test</th><th>Mengapa</th></tr>
+  <tr><td>Worker + frontend</td><td><code>wrangler dev</code> sungguhan di port 8788. Frontend di-build setiap start.</td><td>Sama dengan cara aplikasi berjalan di produksi: satu Worker, satu origin.</td></tr>
+  <tr><td>D1 dan R2</td><td>Lokal di <code>.wrangler/e2e-state</code>, memakai migrasi dan seed asli.</td><td>Terpisah dari <code>.wrangler/state</code> milik <code>npm run dev</code>.</td></tr>
+  <tr><td>LLM teks dan visi</td><td>Mock di <code>e2e/support/mock-llm.mjs</code>. <code>--var</code> menimpa URL dan kunci dari <code>.dev.vars</code>.</td><td>Gratis, pasti sama hasilnya, dan kegagalan model bisa dipicu. Satu test memastikan Worker hanya memakai kunci palsu.</td></tr>
+  <tr><td>Kamera</td><td>Kamera sintetis Chromium (<code>--use-fake-device-for-media-stream</code>).</td><td>Foto hanya bisa diambil dari kamera live di halaman, jadi kameranya yang dipalsukan, bukan unggahannya.</td></tr>
+  <tr><td>GPS</td><td>Geolocation Playwright: pusat kampus, Jakarta, atau izin ditolak.</td><td>Mencakup ketiga status lokasi tanpa pergi ke lapangan.</td></tr>
+  <tr><td>Supervisor</td><td><code>admin</code> / <code>Admin123!</code> dari migrasi (temuan T-04).</td><td>Hanya berlaku di database uji yang baru dibuat.</td></tr>
+</table>
+<h3>Penanda perilaku mock LLM</h3>
+<p>Perilaku mock diatur lewat teks keluhan atau pertanyaan, jadi test tidak perlu saluran kontrol terpisah.</p>
+<table>
+  <tr><th>Tulis di teks</th><th>Akibatnya</th></tr>
+  <tr><td><code>banjir</code>, <code>becek</code>, <code>meluap</code>, <code>mampet</code></td><td>Prioritas tinggi, kategori genangan</td></tr>
+  <tr><td><code>sedikit</code>, <code>debu</code></td><td>Prioritas rendah</td></tr>
+  <tr><td>teks lain</td><td>Prioritas sedang, kategori kebersihan</td></tr>
+  <tr><td><code>[llm:error]</code></td><td>Model teks membalas HTTP 500</td></tr>
+  <tr><td><code>[llm:fail-once]</code></td><td>Gagal sekali, berhasil pada analisis ulang</td></tr>
+  <tr><td><code>[llm:not-json]</code></td><td>Balasan bukan JSON</td></tr>
+  <tr><td><code>[llm:odd]</code></td><td>Kategori dan prioritas karangan, yang harus dinormalkan Worker</td></tr>
+  <tr><td><code>[llm:slow]</code></td><td>Analisis butuh 3 detik</td></tr>
+  <tr><td><code>[vision:dirty]</code>, <code>[vision:wrong_place]</code>, <code>[vision:error]</code></td><td>Foto bukti ditolak (masih kotor, bukan lokasinya) atau pemeriksa gagal</td></tr>
+  <tr><td><code>[ask:error]</code></td><td>Kato Bot gagal menjawab</td></tr>
+  <tr><td><code>per petugas</code> (pada pertanyaan)</td><td>Model meminta data per petugas, untuk menguji batas akses publik</td></tr>
+</table>
+
+<h2 id="struktur">5. Struktur berkas</h2>
+<pre><code>playwright.config.ts        proyek api, setup, desktop, mobile
+e2e/
+  fixtures.ts               helper bersama: Api, newStaff, reporter, pick, takePhoto, knownIssue
+  support/
+    start-stack.mjs         menyiapkan database, mock, dan Worker
+    mock-llm.mjs            tiruan penyedia LLM
+  api/                      167 test tanpa browser
+    auth.spec.ts            registrasi, login, sesi, cookie
+    access.spec.ts          matriks hak akses tiap endpoint
+    reports.spec.ts         laporan, analisis AI, status, foto bukti, papan publik, peringkat
+    cleaning.spec.ts        tugas harian, GPS, pemakaian ulang foto, rekap
+    uploads.spec.ts         format, ukuran, folder, path traversal
+    users.spec.ts           kelola akun petugas dan supervisor
+    insight.spec.ts         isolasi, ringkasan, grafik, Kato Bot
+  ui/                       112 eksekusi di browser
+    auth.setup.ts           menyimpan sesi supervisor
+    home.spec.ts            beranda, tautan lama, bahasa, tema, lebar layar, login
+    report.spec.ts          form laporan, kamera, halaman status
+    staff.spec.ts           klaim, ambil alih, foto bukti, enam tugas harian, GPS
+    public.spec.ts          papan publik, peringkat, Kato Bot
+    supervisor.spec.ts      lima tab dashboard
+    journey.spec.ts         perjalanan penuh (@smoke)</code></pre>
+<p>Test bertanda <code>@mobile</code> juga dijalankan pada emulasi Pixel 7, karena pelapor dan petugas terutama memakai HP.</p>
+
+<h2 id="cakupan">6. Cakupan</h2>
+<p>Judul setiap test memuat ID dari <code>docs/qa/test-case-manual-kato-report.xlsx</code>, sehingga bisa ditelusuri dua arah. Suite ini menyentuh <b>220 dari 542 test case manual</b>, termasuk <b>155 dari 232 yang berprioritas P1</b>.</p>
+<div class="catatan">"Tersentuh" berarti ada test otomatis untuk skenario itu, tidak selalu seluruh langkah manualnya. Suite ini <b>tidak menggantikan</b> sheet manual: kolom statusnya tetap perlu diisi penguji untuk bagian yang tercantum di <a href="#batas">bagian 8</a>.</div>
+<table>
+  <tr><th>Modul</th><th class="n">Tersentuh</th><th class="n">Total</th><th>Catatan</th></tr>
+  <tr><td>A. Beranda &amp; Navigasi</td><td class="n">4</td><td class="n">14</td><td></td></tr>
+  <tr><td>B. Registrasi, Login &amp; Sesi</td><td class="n">29</td><td class="n">49</td><td></td></tr>
+  <tr><td>C. Lokasi, QR &amp; Tautan Lama</td><td class="n">11</td><td class="n">29</td><td></td></tr>
+  <tr><td>D. Pelaporan oleh Pelapor</td><td class="n">23</td><td class="n">37</td><td></td></tr>
+  <tr><td>E. Kamera</td><td class="n">3</td><td class="n">13</td><td>Sisanya butuh perangkat asli</td></tr>
+  <tr><td>F. Halaman Status Laporan</td><td class="n">3</td><td class="n">15</td><td></td></tr>
+  <tr><td>G. Analisis AI Keluhan</td><td class="n">4</td><td class="n">22</td><td>Kualitas jawaban model butuh LLM asli</td></tr>
+  <tr><td>H. Papan Laporan Publik</td><td class="n">11</td><td class="n">26</td><td></td></tr>
+  <tr><td>I. Papan Peringkat</td><td class="n">5</td><td class="n">11</td><td></td></tr>
+  <tr><td>J. Petugas: Keluhan</td><td class="n">28</td><td class="n">46</td><td></td></tr>
+  <tr><td>K. Petugas: Tugas Harian</td><td class="n">22</td><td class="n">57</td><td></td></tr>
+  <tr><td>L. Supervisor: Daftar Keluhan</td><td class="n">9</td><td class="n">27</td><td></td></tr>
+  <tr><td>M. Supervisor: Rekap Kebersihan</td><td class="n">3</td><td class="n">22</td><td>Prioritas berikutnya untuk ditambah</td></tr>
+  <tr><td>N. Supervisor: Ringkasan &amp; Grafik</td><td class="n">7</td><td class="n">22</td><td></td></tr>
+  <tr><td>O. Supervisor: Log</td><td class="n">4</td><td class="n">15</td><td></td></tr>
+  <tr><td>P. Supervisor: Kelola Akun</td><td class="n">21</td><td class="n">32</td><td></td></tr>
+  <tr><td>Q. Supervisor: QR Lokasi</td><td class="n">4</td><td class="n">10</td><td>Pemindaian dan cetak fisik manual</td></tr>
+  <tr><td>R. Kato Bot</td><td class="n">8</td><td class="n">36</td><td>Injeksi prompt butuh LLM asli</td></tr>
+  <tr><td>S. Unggah &amp; Sajikan Foto</td><td class="n">11</td><td class="n">14</td><td></td></tr>
+  <tr><td>T. Hak Akses &amp; Keamanan</td><td class="n">4</td><td class="n">11</td><td></td></tr>
+  <tr><td>U. Antarmuka Umum</td><td class="n">6</td><td class="n">21</td><td></td></tr>
+  <tr><td>V. Non-Fungsional</td><td class="n">0</td><td class="n">13</td><td>Butuh lingkungan produksi atau staging</td></tr>
+  <tr><td><b>Total</b></td><td class="n"><b>220</b></td><td class="n"><b>542</b></td><td></td></tr>
+</table>
+
+<h2 id="temuan">7. Bug yang masih terbuka</h2>
+<p>Test berikut menyatakan perilaku yang benar, lalu ditandai <code>knownIssue()</code> karena aplikasinya belum seperti itu. Semua perilaku di tabel ini terbukti lewat putaran suite, bukan hanya dari membaca kode. Keparahan mengikuti sheet "Temuan Awal".</p>
+<table>
+  <tr><th>Temuan</th><th>Keparahan</th><th>Test case</th><th>Harapan</th><th>Hasil saat ini</th></tr>
+  <tr><td><b>T-01</b> Foto bisa dihapus tanpa login</td><td>Tinggi</td><td>TC-THR-046</td><td>Foto tetap ada (200)</td><td>Foto terhapus (404)</td></tr>
+  <tr><td><b>T-02</b> Foto bukti laporan lain bisa dipakai ulang atau terhapus</td><td>Tinggi</td><td>TC-KLH-045, TC-KLH-046</td><td>Ditolak (400); foto tetap ada</td><td>Diterima (200); foto terhapus (404)</td></tr>
+  <tr><td><b>T-03</b> Sesi supervisor tidak bisa dicabut</td><td>Tinggi</td><td>TC-AUT-043</td><td>Sesi lama ditolak (401)</td><td>Tetap berlaku (200)</td></tr>
+  <tr><td><b>T-05</b> Laporan selesai bisa diselesaikan ulang</td><td>Sedang</td><td>TC-KLH-031</td><td>409</td><td>200, penangan tertimpa</td></tr>
+  <tr><td><b>T-06</b> Teks asli keluhan terbuka untuk publik</td><td>Sedang</td><td>TC-PUB-025</td><td>Teks asli tidak ikut terkirim</td><td>Ikut terkirim</td></tr>
+  <tr><td><b>T-07</b> Laporan diterima dengan foto fiktif atau foto laporan lain</td><td>Sedang</td><td>TC-LAP-029, TC-LAP-030</td><td>400</td><td>201</td></tr>
+  <tr><td><b>T-08</b> Status bisa mundur ke "baru"</td><td>Sedang</td><td>TC-KLH-044</td><td>Ditolak</td><td>200</td></tr>
+  <tr><td><b>T-09</b> Percobaan login tidak dibatasi</td><td>Sedang</td><td>TC-AUT-033</td><td>429 dalam 25 percobaan</td><td>Selalu 401</td></tr>
+  <tr><td><b>T-10</b> Isi berkas unggahan tidak diperiksa</td><td>Sedang</td><td>TC-UPL-011</td><td>415</td><td>201</td></tr>
+  <tr><td><b>T-25</b> Kata panjang tanpa spasi merusak halaman petugas <b>(baru)</b></td><td>Sedang (usulan)</td><td>TC-UIX-009</td><td>Halaman tidak melebar</td><td>Melebar ribuan piksel (terukur 6.494 px di HP, 7.254 px di desktop, untuk 1.000 karakter)</td></tr>
+  <tr><td><b>T-15</b> Tanggal mustahil menimbulkan error server</td><td>Rendah</td><td>TC-SPR-008</td><td>400</td><td>500</td></tr>
+  <tr><td><b>T-17</b> Password pelapor bisa diubah lewat API kelola akun</td><td>Rendah</td><td>TC-AKN-029</td><td>404</td><td>200</td></tr>
+  <tr><td><b>T-20</b> Foto terpakai untuk tugas lain dibalas sukses</td><td>Rendah</td><td>TC-THR-051</td><td>422</td><td>200</td></tr>
+</table>
+<div class="catatan"><b>Tentang T-25.</b> Temuan ini muncul saat suite ini dibuat, dan belum ada di sheet "Temuan Awal". Keluhan boleh berisi 1.000 karakter apa saja, dan siapa pun bisa mengirimnya tanpa login. Kartu keluhan di <code>web/src/components/ComplaintCard.tsx</code> tidak memotong kata panjang, dan halaman petugas menampilkan semua keluhan terbuka. Jadi satu keluhan seperti ini merusak tampilan untuk semua petugas sampai laporannya ditutup atau dihapus. Pada emulasi HP, tombol kartu lain sampai tertimpa sehingga tidak bisa diklik. Kelas CSS seperti <code>break-words</code> pada teks kartu kemungkinan cukup untuk memperbaikinya. Tempat lain yang menampilkan teks yang sama belum diperiksa.</div>
+<p>Temuan lain di sheet tidak punya test di sini: T-04 (perlu dicek di produksi), T-11, T-12, T-13, T-14, T-16, T-18, T-19, dan T-21 sampai T-24. T-14, misalnya, baru terlihat kalau datanya melebihi batas 200 baris, sedangkan suite ini sengaja menjaga datanya tetap sedikit.</p>
+
+<h2 id="batas">8. Yang tidak diotomasi</h2>
+<table>
+  <tr><th>Area</th><th>Mengapa</th><th>Cara mengujinya</th></tr>
+  <tr><td>Kualitas jawaban AI: ketepatan kategori dan prioritas, penilaian foto, injeksi prompt</td><td>Mock selalu menjawab sesuai aturan. Suite membuktikan <em>alur</em> di sekitar model, bukan <em>kecerdasan</em> modelnya.</td><td>Manual dengan LLM asli: TC-AIA, TC-KLH-020 s.d. 023, TC-BOT-023 s.d. 025</td></tr>
+  <tr><td>Browser selain Chromium, dan HP asli</td><td>Kamera sintetis hanya tersedia di Chromium. Proyek <code>mobile</code> adalah emulasi, bukan Safari iOS atau Android asli.</td><td>Manual di perangkat, lewat HTTPS</td></tr>
+  <tr><td>Cron 17.00 WIB</td><td>Dipicu oleh Cloudflare. Yang diuji adalah pembuatan ringkasannya lewat <code>POST /api/summary/generate</code>.</td><td>TC-SPR-005</td></tr>
+  <tr><td>Foto lebih tua dari 3 jam</td><td>Butuh waktu unggah yang dimajukan di R2.</td><td>TC-THR-030</td></tr>
+  <tr><td>Cetak fisik dan memindai QR</td><td>Yang diuji adalah isi stiker, URL, dan unduhan PNG.</td><td>TC-QRS-004, TC-QRS-005, TC-QRS-008</td></tr>
+  <tr><td>Performa dan beban</td><td>Hasil di lokal tidak mewakili Cloudflare.</td><td>TC-NFR, di staging</td></tr>
+  <tr><td>Tampilan visual</td><td>Belum memakai perbandingan screenshot, yang rapuh selama desain masih berubah.</td><td>Periksa mata</td></tr>
+</table>
+
+<h2 id="tulis">9. Menulis test baru</h2>
+<pre><code>import { expect, test, unique } from '../fixtures';
+
+test('TC-KLH-018 foto kotor ditolak', async ({ api, newStaff }) => {
+  const { id } = await api.report({ description: unique('[vision:dirty] keluhan') });
+  const res = await api.resolve(id, (await newStaff()).id);
+  expect(res.status()).toBe(422);
+});</code></pre>
+<ol>
+  <li><b>Impor dari <code>e2e/fixtures.ts</code></b>, bukan langsung dari <code>@playwright/test</code>.</li>
+  <li><b>Mulai judul dengan ID test case</b>, tambahkan <code>@mobile</code> kalau alurnya dipakai di HP, dan <code>@smoke</code> hanya untuk alur paling inti.</li>
+  <li><b>Buat data sendiri dengan <code>unique()</code>.</b> Test berjalan paralel pada satu database, dan teks yang sama di lokasi yang sama dianggap laporan kembar selama dua menit. Jangan menghitung baris global: test lain mungkin sedang menambah data.</li>
+  <li><b>Pakai <code>newStaff()</code></b> agar nama petugas tidak bentrok, dan <code>api.report()</code> karena laporannya dibersihkan otomatis saat test selesai.</li>
+  <li><b>Cari elemen seperti pengguna:</b> <code>getByRole</code>, <code>getByLabel</code>, lalu teks. Jangan memakai kelas Tailwind. Antarmuka pengujian memakai bahasa Indonesia (<code>locale: id-ID</code>).</li>
+  <li><b>Pakai helper yang ada:</b> <code>pick()</code> untuk dropdown (<code>Select.tsx</code> bukan <code>&lt;select&gt;</code> biasa) dan <code>takePhoto()</code> untuk kamera.</li>
+  <li><b>Jangan membiarkan data yang merusak tampilan di database bersama.</b> Suntikkan lewat <code>page.route()</code> untuk halaman itu saja, seperti test TC-UIX-009.</li>
+</ol>
+<h3>Mencatat bug yang belum diperbaiki</h3>
+<p>Tulis test untuk perilaku yang <em>benar</em>, lalu panggil <code>knownIssue()</code> tepat sebelum assertion yang menunjukkan bug-nya. Kegagalan langkah persiapan di atasnya tetap terbaca sebagai kegagalan biasa.</p>
+<pre><code>const res = await request.patch(`/api/reports/${id}`, { data: { status: 'resolved', staff_id: second.id } });
+knownIssue('T-05', 'penangan dan waktu selesai bisa ditimpa tanpa foto');
+expect(res.status()).toBe(409);</code></pre>
+<p>Begitu bug diperbaiki, test ini lulus dan Playwright melaporkannya sebagai kegagalan. Itulah tanda untuk menghapus baris <code>knownIssue</code>, sehingga test berubah menjadi penjaga regresi.</p>
+
+<h2 id="masalah">10. Mengatasi masalah</h2>
+<table>
+  <tr><th>Gejala</th><th>Penyebab dan solusi</th></tr>
+  <tr><td><code>Executable doesn't exist</code></td><td>Browser belum terpasang: <code>npx playwright install chromium</code>.</td></tr>
+  <tr><td><code>http://127.0.0.1:8788 is already used</code></td><td>Stack dari putaran sebelumnya masih hidup. Cari dengan <code>lsof -nP -iTCP:8788 -sTCP:LISTEN</code>, lalu hentikan prosesnya. Atau pakai port lain: <code>E2E_PORT=8790 E2E_MOCK_PORT=8800</code>.</td></tr>
+  <tr><td>Stack gagal menyala atau timeout</td><td>Jalankan <code>node e2e/support/start-stack.mjs</code> langsung untuk melihat keluarannya, biasanya migrasi atau seed yang gagal.</td></tr>
+  <tr><td>Semua test UI <em>skipped</em></td><td>Proyek <code>setup</code> gagal, biasanya karena login admin. Kalau password di migrasi diganti (T-04), perbarui <code>ADMIN</code> di <code>e2e/fixtures.ts</code>.</td></tr>
+  <tr><td>Kamera tidak siap, tombol potret tetap nonaktif</td><td>Bendera kamera sintetis hanya ada di Chromium. Pastikan proyek yang dijalankan <code>desktop</code> atau <code>mobile</code>.</td></tr>
+  <tr><td>Kato Bot membalas 429</td><td>Kuota harian habis, biasanya saat memakai <code>E2E_REUSE=1</code>. Nyalakan ulang stack agar databasenya bersih.</td></tr>
+  <tr><td>Test gagal setelah mengubah teks UI</td><td>Test membaca teks dari <code>web/src/lib/i18n.tsx</code>. Kalau perubahannya disengaja, sesuaikan test-nya.</td></tr>
+  <tr><td>Muncul peringatan <code>API key #1 of 2 refused</code></td><td>Normal. Mock sengaja menolak kunci pertama untuk menguji pergantian kunci.</td></tr>
+</table>
+
+<div class="kaki">Kato Report &middot; UPI Kampus Tasikmalaya &middot; PDF dibuat ulang dengan <code>npm run docs</code>.</div>
+</body></html>
