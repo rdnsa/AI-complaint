@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { HTTP_CACHE } from '../adapters/memo';
-import { wibDate } from '../adapters/clock';
+import { daysInRange, isValidDate, wibDate } from '../adapters/clock';
 import { requireSupervisor } from '../adapters/session';
 import type { AppEnv } from '../env';
 import * as summaries from '../services/summary-service';
@@ -15,6 +15,18 @@ function dateFrom(c: { req: { query: (k: string) => string | undefined } }): str
   return DATE_PATTERN.test(date) ? date : null;
 }
 
+const MAX_RANGE_DAYS = 366;
+const BAD_RANGE = 'Rentang tanggal harus YYYY-MM-DD, urut, dan paling panjang 366 hari';
+
+/** The `from`–`to` of a dashboard request (WIB, both ends inclusive), or null when unusable. */
+function rangeFrom(c: { req: { query: (k: string) => string | undefined } }): { from: string; to: string } | null {
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+  if (!isValidDate(from) || !isValidDate(to)) return null;
+  const days = daysInRange(from, to);
+  return days >= 1 && days <= MAX_RANGE_DAYS ? { from, to } : null;
+}
+
 /** The counters for the summary cards at the top of the dashboard. */
 app.get('/stats', requireSupervisor, async (c) => {
   const date = dateFrom(c);
@@ -24,9 +36,18 @@ app.get('/stats', requireSupervisor, async (c) => {
 
 /** The numbers behind the dashboard charts. */
 app.get('/charts', requireSupervisor, async (c) => {
-  const days = Math.min(Number(c.req.query('days') ?? 14) || 14, 90);
+  const range = rangeFrom(c);
+  if (!range) return c.json({ error: BAD_RANGE }, 400);
   c.header('Cache-Control', HTTP_CACHE.charts);
-  return c.json(await summaries.chartData(c.env, days));
+  return c.json(await summaries.chartData(c.env, range.from, range.to));
+});
+
+/** Every report of a range, one row each, for the dashboard's Excel export. */
+app.get('/export', requireSupervisor, async (c) => {
+  const range = rangeFrom(c);
+  if (!range) return c.json({ error: BAD_RANGE }, 400);
+  c.header('Cache-Control', 'no-store');
+  return c.json({ data: await summaries.exportRows(c.env, range.from, range.to) });
 });
 
 /** The stored summary for one date (default: today). */

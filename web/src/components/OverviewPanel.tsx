@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import AgingBars from './charts/AgingBars';
 import AreaChart from './charts/AreaChart';
 import BarChart from './charts/BarChart';
@@ -12,15 +12,41 @@ import StackedBarChart from './charts/StackedBarChart';
 import StaffRings from './charts/StaffRings';
 import Treemap from './charts/Treemap';
 import { AGING_COLORS, CATEGORY_COLORS, PRIORITY_COLORS, SERIES, SINGLE, STATUS_COLORS } from './charts/colors';
-import { api, type ChartData, type CleaningRecap, type DailyStats, type DailySummary } from '../lib/api';
+import { api, type ChartData, type CleaningRecap, type DailySummary } from '../lib/api';
 import { useLanguage, type Translate } from '../lib/i18n';
 import { buildPlaces } from '../lib/places';
 import { Reveal } from '../lib/motion';
 import { usePolling } from '../lib/polling';
 
-const RANGES = [7, 14, 30, 90] as const;
+interface DateRange {
+  from: string;
+  to: string;
+}
+
+const DEFAULT_DAYS = 90;
+const MAX_RANGE_DAYS = 366;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_BUCKETS = [0, 3, 6, 9, 12, 15, 18, 21];
 const CATEGORY_ORDER = ['cleanliness', 'supplies', 'damage', 'odor', 'flooding', 'other'];
+
+/** A date on the campus clock, 'YYYY-MM-DD', whatever zone the device is in. */
+function wibDate(daysBack = 0): string {
+  return new Date(Date.now() + 7 * 60 * 60 * 1000 - daysBack * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** The view before any date is picked. Worked out afresh so a wall screen moves on at midnight. */
+function rollingRange(): DateRange {
+  return { from: wibDate(DEFAULT_DAYS - 1), to: wibDate() };
+}
+
+/** What is wrong with a range, or null. Half-typed dates count as "not yet", so nothing to say. */
+function rangeProblem({ from, to }: DateRange, t: Translate): string | null {
+  if (!from || !to) return '';
+  const days = (Date.parse(to) - Date.parse(from)) / DAY_MS + 1;
+  if (days < 1) return t('ov.range_invalid');
+  if (days > MAX_RANGE_DAYS) return t('ov.range_too_long', { n: MAX_RANGE_DAYS });
+  return null;
+}
 
 function duration(minutes: number | null, t: Translate): string {
   if (minutes === null) return '—';
@@ -102,34 +128,42 @@ function Tile({
 
 /**
  * The supervisor's landing view: the whole picture in shapes, with as few words
- * as will do. Everything here comes from the existing chart, stats and cleaning
- * recap endpoints; nothing is computed that the server did not already count.
+ * as will do. Everything here comes from the chart and cleaning recap endpoints;
+ * nothing is computed that the server did not already count. The picked dates
+ * drive every chart. The AI summary and the cleaning recap exist per day, so those
+ * two show the last picked date.
  */
 export default function OverviewPanel() {
-  const { t } = useLanguage();
-  const [days, setDays] = useState<(typeof RANGES)[number]>(90);
+  const { t, language } = useLanguage();
+  // null until a date is picked: the rolling default.
+  const [picked, setPicked] = useState<DateRange | null>(null);
+  // What the two date inputs hold, which may be half-typed; only a usable range becomes `picked`.
+  const [draft, setDraft] = useState<DateRange | null>(null);
   const [data, setData] = useState<ChartData | null>(null);
-  const [stats, setStats] = useState<DailyStats | null>(null);
   const [recap, setRecap] = useState<CleaningRecap | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [places, setPlaces] = useState<ReturnType<typeof buildPlaces>>([]);
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
+  const latestLoad = useRef(0);
 
   const load = useCallback(async () => {
-    const today = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const [d, s, r, sum] = await Promise.all([
-      api.charts(days).catch(() => null),
-      api.stats().catch(() => null),
-      api.cleaningRecap(today).catch(() => null),
-      api.summary().catch(() => null),
+    const { from, to } = picked ?? rollingRange();
+    const run = ++latestLoad.current;
+    const [d, r, sum] = await Promise.all([
+      api.charts(from, to).catch(() => null),
+      api.cleaningRecap(to).catch(() => null),
+      api.summary(to).catch(() => null),
     ]);
+    // Dates picked in quick succession: only the newest answer may reach the screen.
+    if (run !== latestLoad.current) return;
     setData(d);
-    setStats(s);
     setRecap(r);
     setSummary(sum);
     setLoading(false);
-  }, [days]);
+  }, [picked]);
 
   usePolling(load, 60_000);
 
@@ -161,6 +195,41 @@ export default function OverviewPanel() {
 
   if (loading) return <p className="mt-6 text-ink-600">{t('common.loading')}</p>;
   if (!data) return <p className="card mt-6 p-10 text-center text-ink-600">{t('charts.no_data')}</p>;
+
+  const range = picked ?? rollingRange();
+  const shown = draft ?? range;
+  const problem = rangeProblem(shown, t);
+  const today = wibDate();
+  const lastDay = new Intl.DateTimeFormat(language === 'id' ? 'id-ID' : 'en-GB', {
+    timeZone: 'UTC',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(range.to));
+
+  const pick = (next: DateRange) => {
+    setDraft(next);
+    if (rangeProblem(next, t) === null) setPicked(next);
+  };
+
+  const exportData = async () => {
+    setExporting(true);
+    setExportFailed(false);
+    try {
+      // Fetched for exactly these dates, so the file cannot disagree with its own period.
+      const [{ exportDashboard }, charts, reports, cleaningRecap] = await Promise.all([
+        import('../lib/export-dashboard'),
+        api.charts(range.from, range.to),
+        api.exportReports(range.from, range.to),
+        api.cleaningRecap(range.to).catch(() => null),
+      ]);
+      await exportDashboard({ ...range, charts, reports: reports.data, recap: cleaningRecap, t });
+    } catch {
+      setExportFailed(true);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const { trend } = data;
   const rate = trend.reports ? Math.round((trend.resolved / trend.reports) * 100) : 0;
@@ -219,12 +288,67 @@ export default function OverviewPanel() {
 
   return (
     <div className="mt-6 space-y-4">
+      {/* Above everything, because everything below answers for these dates. */}
+      <div className="card flex flex-wrap items-end gap-3 p-3">
+        <label className="text-xs text-ink-700">
+          <span className="mb-1 block font-semibold">{t('time.from_date')}</span>
+          <input
+            type="date"
+            className="input !w-auto !py-1.5"
+            value={shown.from}
+            max={shown.to || today}
+            onChange={(e) => pick({ ...shown, from: e.target.value })}
+          />
+        </label>
+        <label className="text-xs text-ink-700">
+          <span className="mb-1 block font-semibold">{t('time.to_date')}</span>
+          <input
+            type="date"
+            className="input !w-auto !py-1.5"
+            value={shown.to}
+            min={shown.from || undefined}
+            max={today}
+            onChange={(e) => pick({ ...shown, to: e.target.value })}
+          />
+        </label>
+        {picked && (
+          <button
+            type="button"
+            onClick={() => {
+              setPicked(null);
+              setDraft(null);
+            }}
+            className="pb-2 text-xs font-semibold text-accent-600 underline underline-offset-2"
+          >
+            {t('time.reset')}
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn-neutral !px-3 !py-1.5 ml-auto text-xs"
+          disabled={exporting || problem !== null}
+          onClick={exportData}
+        >
+          {exporting ? t('ov.exporting') : t('ov.export')}
+        </button>
+        {problem && (
+          <p role="alert" className="w-full text-xs font-semibold text-red-700">
+            {problem}
+          </p>
+        )}
+        {exportFailed && (
+          <p role="alert" className="w-full text-xs font-semibold text-red-700">
+            {t('ov.export_failed')}
+          </p>
+        )}
+      </div>
+
       {/* The day in words, next to the day in shapes: the AI's summary and where reports came from. */}
       <Reveal>
         <section className="card overflow-hidden">
           <div className="flex items-center justify-between gap-3 px-5 pt-5">
             <h3 className="section-title flex items-center gap-2">
-              {t('dashboard.summary')}
+              {range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
               <InfoTip label={t('dashboard.summary_schedule')}>{t('dashboard.summary_schedule')}</InfoTip>
             </h3>
             <button
@@ -233,7 +357,7 @@ export default function OverviewPanel() {
               onClick={async () => {
                 setGenerating(true);
                 try {
-                  setSummary(await api.generateSummary());
+                  setSummary(await api.generateSummary(range.to));
                 } catch {
                   /* leave the previous summary on screen */
                 } finally {
@@ -266,32 +390,15 @@ export default function OverviewPanel() {
               )}
             </div>
 
-            {!!stats?.top_locations.length && (
+            {!!data.top_locations.length && (
               <div>
-                <p className="mb-2 text-nav font-semibold text-ink-600">{t('dashboard.top_locations')}</p>
-                <BarChart data={stats.top_locations.map((l) => ({ label: l.location, value: Number(l.count) }))} />
+                <p className="mb-2 text-nav font-semibold text-ink-600">{t('ov.top_locations')}</p>
+                <BarChart data={data.top_locations.map((l) => ({ label: l.location, value: Number(l.count) }))} />
               </div>
             )}
           </div>
         </section>
       </Reveal>
-
-      <div className="flex justify-end">
-        <div className="inline-flex gap-1 rounded-full bg-mist-200 p-1" role="group">
-          {RANGES.map((n) => (
-            <button
-              key={n}
-              onClick={() => setDays(n)}
-              aria-pressed={days === n}
-              className={`rounded-full px-3.5 py-1 text-nav font-semibold tabular-nums transition ${
-                days === n ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
-              }`}
-            >
-              {t('ov.range', { n })}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* The headline: one dial for the answer, four tiles for the numbers behind it. */}
       <Reveal>
@@ -301,8 +408,8 @@ export default function OverviewPanel() {
           </section>
           <div className="grid grid-cols-2 gap-3">
             <KpiCard
-              label={t('ov.today')}
-              value={stats?.today.total ?? 0}
+              label={t('ov.total_reports')}
+              value={trend.reports}
               series={data.daily.map((d) => d.total)}
               color={SERIES.received}
               change={trend.change}
@@ -310,14 +417,14 @@ export default function OverviewPanel() {
             />
             <KpiCard
               label={t('charts.kpi_high')}
-              value={stats?.today.high ?? 0}
+              value={trend.high}
               series={data.dailyByPriority.map((d) => d.high)}
               color={PRIORITY_COLORS.high}
-              note={t('ov.today')}
+              note={t('ov.days', { n: trend.days })}
             />
             <KpiCard
               label={t('ov.open')}
-              value={stats?.unresolved ?? 0}
+              value={statusSegments[0].value + statusSegments[1].value}
               series={data.daily.map((d) => d.total - d.resolved)}
               color={PRIORITY_COLORS.medium}
             />
@@ -333,7 +440,17 @@ export default function OverviewPanel() {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,280px)]">
         <Tile title={t('ov.days', { n: trend.days })}>
-          <AreaChart data={data.daily} receivedLabel={t('charts.received')} resolvedLabel={t('charts.resolved')} />
+          {/* One day has no line to draw, so its two numbers stand as bars. */}
+          {data.daily.length > 1 ? (
+            <AreaChart data={data.daily} receivedLabel={t('charts.received')} resolvedLabel={t('charts.resolved')} />
+          ) : (
+            <BarChart
+              data={[
+                { label: t('charts.received'), value: data.daily[0].total, color: SERIES.received },
+                { label: t('charts.resolved'), value: data.daily[0].resolved, color: SERIES.resolved },
+              ]}
+            />
+          )}
         </Tile>
         <Tile title={t('ov.status')}>
           <Donut segments={statusSegments} totalLabel={t('ov.total')} />
@@ -341,7 +458,7 @@ export default function OverviewPanel() {
       </div>
 
       {staff.length > 0 && (
-        <Tile title={t('ov.cleaning')}>
+        <Tile title={range.to === today ? t('ov.cleaning') : t('ov.cleaning_on', { date: lastDay })}>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             <div className="w-40 shrink-0 self-center">
               <RadialGauge value={cleaningPct} from="#5E5CE6" to="#30B0C7" />

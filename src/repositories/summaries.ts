@@ -60,9 +60,20 @@ export async function dailyCounts(env: Env, date: string) {
   };
 }
 
+/**
+ * The window the charts cover, as UTC instants: `start` inclusive, `end` exclusive.
+ * Every chart counts the reports that came in during it, so all of them answer for
+ * the same dates. `previousStart` opens the equal window just before, for the trend.
+ */
+export interface ChartWindow {
+  start: string;
+  end: string;
+  previousStart: string;
+}
+
 /** Everything the charts need, computed in one batch. */
-export async function chartCounts(env: Env, days: number) {
-  const [daily, categories, priorities, buildings, resolution] = await env.DB.batch<
+export async function chartCounts(env: Env, w: ChartWindow) {
+  const [daily, categories, priorities, buildings, resolution, topLocations] = await env.DB.batch<
     Record<string, unknown>
   >([
     env.DB.prepare(
@@ -71,31 +82,40 @@ export async function chartCounts(env: Env, days: number) {
               COUNT(*) AS total,
               SUM(status = 'resolved') AS resolved
          FROM reports
-        WHERE created_at >= datetime('now', ?)
+        WHERE created_at >= ? AND created_at < ?
         GROUP BY date ORDER BY date`,
-    ).bind(`-${days} days`),
+    ).bind(w.start, w.end),
     env.DB.prepare(
       `SELECT je.value AS category, COUNT(*) AS count
          FROM reports r, json_each(r.categories) je
-        WHERE r.categories IS NOT NULL
+        WHERE r.categories IS NOT NULL AND r.created_at >= ? AND r.created_at < ?
         GROUP BY je.value ORDER BY count DESC`,
-    ),
+    ).bind(w.start, w.end),
     env.DB.prepare(
       `SELECT priority, COUNT(*) AS count FROM reports
-        WHERE priority IS NOT NULL GROUP BY priority`,
-    ),
+        WHERE priority IS NOT NULL AND created_at >= ? AND created_at < ?
+        GROUP BY priority`,
+    ).bind(w.start, w.end),
     env.DB.prepare(
       // A place outside the buildings (Lapang Voli) is a bar of its own, under its name.
       `SELECT COALESCE(t.building_code, t.name) AS building_code, COALESCE(t.building_name, t.name) AS building_name,
               COUNT(*) AS count
          FROM reports r JOIN location_info t ON t.id = COALESCE(r.area_id, r.toilet_id)
+        WHERE r.created_at >= ? AND r.created_at < ?
         GROUP BY 1 ORDER BY count DESC LIMIT 10`,
-    ),
+    ).bind(w.start, w.end),
     env.DB.prepare(
       `SELECT COUNT(*) AS count,
               AVG((julianday(resolved_at) - julianday(created_at)) * 1440) AS minutes
-         FROM reports WHERE resolved_at IS NOT NULL`,
-    ),
+         FROM reports
+        WHERE resolved_at IS NOT NULL AND created_at >= ? AND created_at < ?`,
+    ).bind(w.start, w.end),
+    env.DB.prepare(
+      `SELECT t.name AS location, COUNT(*) AS count
+         FROM reports r JOIN location_info t ON t.id = COALESCE(r.area_id, r.toilet_id)
+        WHERE r.created_at >= ? AND r.created_at < ?
+        GROUP BY t.id ORDER BY count DESC LIMIT 5`,
+    ).bind(w.start, w.end),
   ]);
 
   return {
@@ -104,6 +124,7 @@ export async function chartCounts(env: Env, days: number) {
     priorities: priorities.results,
     buildings: buildings.results,
     resolution: resolution.results[0] ?? { count: 0, minutes: null },
+    top_locations: topLocations.results,
   };
 }
 
@@ -113,7 +134,7 @@ export async function chartCounts(env: Env, days: number) {
  * Kept in a second batch so the first one stays cheap: these answer questions
  * about pattern and effectiveness rather than about volume.
  */
-export async function advancedCounts(env: Env, days: number) {
+export async function advancedCounts(env: Env, w: ChartWindow) {
   const [hourByDay, matrix, resolutionByPriority, dailyByPriority, trend, statuses, aging] =
     await env.DB.batch<Record<string, unknown>>([
     env.DB.prepare(
@@ -121,59 +142,57 @@ export async function advancedCounts(env: Env, days: number) {
       `SELECT CAST(strftime('%w', created_at, '+7 hours') AS INTEGER) AS day,
               CAST(strftime('%H', created_at, '+7 hours') AS INTEGER) AS hour,
               COUNT(*) AS count
-         FROM reports GROUP BY day, hour`,
-    ),
+         FROM reports
+        WHERE created_at >= ? AND created_at < ?
+        GROUP BY day, hour`,
+    ).bind(w.start, w.end),
     env.DB.prepare(
       `SELECT COALESCE(t.building_code, t.name) AS building_code, je.value AS category, COUNT(*) AS count
          FROM reports r
          JOIN location_info t ON t.id = COALESCE(r.area_id, r.toilet_id), json_each(r.categories) je
-        WHERE r.categories IS NOT NULL
+        WHERE r.categories IS NOT NULL AND r.created_at >= ? AND r.created_at < ?
         GROUP BY 1, je.value`,
-    ),
+    ).bind(w.start, w.end),
     env.DB.prepare(
       `SELECT priority,
               COUNT(*) AS count,
               AVG((julianday(resolved_at) - julianday(created_at)) * 1440) AS minutes
          FROM reports
-        WHERE resolved_at IS NOT NULL AND priority IS NOT NULL
+        WHERE resolved_at IS NOT NULL AND priority IS NOT NULL AND created_at >= ? AND created_at < ?
         GROUP BY priority`,
-    ),
+    ).bind(w.start, w.end),
     env.DB.prepare(
       `SELECT date(created_at, '+7 hours') AS date, priority, COUNT(*) AS count
          FROM reports
-        WHERE created_at >= datetime('now', ?) AND priority IS NOT NULL
+        WHERE created_at >= ? AND created_at < ? AND priority IS NOT NULL
         GROUP BY date, priority`,
-    ).bind(`-${days} days`),
+    ).bind(w.start, w.end),
     env.DB.prepare(
       // Two equal windows side by side, so the dashboard can show a direction
       // of travel instead of a bare number.
       `SELECT
-         SUM(created_at >= datetime('now', ?))                                      AS current_period,
-         SUM(created_at >= datetime('now', ?) AND created_at < datetime('now', ?))  AS previous_period,
-         SUM(created_at >= datetime('now', ?) AND status = 'resolved')              AS resolved_current,
-         SUM(created_at >= datetime('now', ?) AND priority = 'high')                AS high_current
-       FROM reports`,
-    ).bind(
-      `-${days} days`,
-      `-${days * 2} days`,
-      `-${days} days`,
-      `-${days} days`,
-      `-${days} days`,
-    ),
+         SUM(created_at >= ?1)                        AS current_period,
+         SUM(created_at < ?1)                         AS previous_period,
+         SUM(created_at >= ?1 AND status = 'resolved') AS resolved_current,
+         SUM(created_at >= ?1 AND priority = 'high')   AS high_current
+       FROM reports
+       WHERE created_at >= ?2 AND created_at < ?3`,
+    ).bind(w.start, w.previousStart, w.end),
     env.DB.prepare(
       `SELECT status, COUNT(*) AS count FROM reports
-        WHERE created_at >= datetime('now', ?) GROUP BY status`,
-    ).bind(`-${days} days`),
+        WHERE created_at >= ? AND created_at < ? GROUP BY status`,
+    ).bind(w.start, w.end),
     env.DB.prepare(
-      // How long the reports still open have been waiting, in five bands.
+      // How long the reports from these dates still open have been waiting, in five bands.
       `SELECT SUM(h < 2)               AS b0,
               SUM(h >= 2 AND h < 8)    AS b1,
               SUM(h >= 8 AND h < 24)   AS b2,
               SUM(h >= 24 AND h < 72)  AS b3,
               SUM(h >= 72)             AS b4
          FROM (SELECT (julianday('now') - julianday(created_at)) * 24 AS h
-                 FROM reports WHERE status <> 'resolved')`,
-    ),
+                 FROM reports
+                WHERE status <> 'resolved' AND created_at >= ? AND created_at < ?)`,
+    ).bind(w.start, w.end),
   ]);
 
   return {

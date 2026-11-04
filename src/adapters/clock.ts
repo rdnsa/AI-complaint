@@ -21,6 +21,16 @@ export function isValidDate(value: string | undefined): value is string {
   return Boolean(value && DATE_PATTERN.test(value) && !Number.isNaN(Date.parse(value)));
 }
 
+/** The date `n` days after (or, negative, before) a 'YYYY-MM-DD' date. */
+export function addDays(date: string, n: number): string {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + n * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/** How many days a range covers, counting both ends. */
+export function daysInRange(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / (24 * 60 * 60 * 1000)) + 1;
+}
+
 /** Start and end of a WIB date, expressed as UTC strings for D1 queries. */
 export function wibDayRange(date: string): { start: string; end: string } {
   const startMs = Date.parse(`${date}T00:00:00Z`) - WIB_OFFSET_MS;

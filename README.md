@@ -379,7 +379,8 @@ Reports filed before migration 0011 point at a legacy toilet
 | `GET` | `/api/work-logs` | legacy staff work log (read-only); filters `staff_id, toilet_id, building, from, to, hour_from, hour_to` |
 | `GET` | `/api/summary?date=` | the stored daily summary |
 | `GET` | `/api/summary/stats?date=` | counters for the day |
-| `GET` | `/api/summary/charts?days=` | chart data (max 90), including `statuses` and `aging` |
+| `GET` | `/api/summary/charts?from=&to=` | chart data for a WIB date range (max 366 days), including `statuses` and `aging` |
+| `GET` | `/api/summary/export?from=&to=` | every report of the range, one row each, for the dashboard's Excel export |
 | `POST` | `/api/summary/generate` | write the daily summary now |
 | `GET` | `/api/activity` | activity log (action, time filter) |
 | `GET` `POST` | `/api/users` | list; add a staff name `{role:'staff', name}` or a supervisor `{role:'supervisor', username, name, password}` |

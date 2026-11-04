@@ -293,6 +293,42 @@ export async function getForAnalysis(
     .first<{ description: string; location: string }>();
 }
 
+/** One row of the dashboard export. WIB times; no reporter identity and no photo keys. */
+export interface ExportRow {
+  id: string;
+  created_wib: string;
+  resolved_wib: string | null;
+  minutes_to_resolve: number | null;
+  location_name: string;
+  building_code: string | null;
+  building_name: string | null;
+  status: ReportStatus;
+  priority: string | null;
+  categories: string | null;
+  summary: string | null;
+  description: string;
+  recommendation: string | null;
+  staff_name: string | null;
+}
+
+/** Every report that came in during a range, oldest first: the export is unpaged on purpose. */
+export async function findForExport(env: Env, from: string, to: string): Promise<ExportRow[]> {
+  const rows = await env.DB.prepare(
+    `SELECT r.id,
+            datetime(r.created_at, '+7 hours') AS created_wib,
+            datetime(r.resolved_at, '+7 hours') AS resolved_wib,
+            ROUND((julianday(r.resolved_at) - julianday(r.created_at)) * 1440) AS minutes_to_resolve,
+            t.name AS location_name, t.building_code, t.building_name,
+            r.status, r.priority, r.categories, r.summary, r.description, r.recommendation, r.staff_name
+       ${FROM}
+      WHERE r.created_at >= ? AND r.created_at < ?
+      ORDER BY r.created_at`,
+  )
+    .bind(wibDayRange(from).start, wibDayRange(to).end)
+    .all<ExportRow>();
+  return rows.results;
+}
+
 export async function reportsOnDate(
   env: Env,
   date: string,

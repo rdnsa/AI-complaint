@@ -110,6 +110,7 @@ export interface ChartData {
   priorities: Array<{ priority: string; count: number }>;
   buildings: Array<{ building_code: string; building_name: string; count: number }>;
   resolution: { count: number; minutes: number | null };
+  top_locations: Array<{ location: string; count: number }>;
   hourByDay: Array<{ day: number; hour: number; count: number }>;
   statuses: Array<{ status: string; count: number }>;
   /** Open reports by how long they have waited: <2h, 2–8h, 8–24h, 1–3d, 3d+. */
@@ -124,6 +125,24 @@ export interface ChartData {
     resolved: number;
     high: number;
   };
+}
+
+/** One report in the dashboard's Excel export. Times are WIB. */
+export interface ExportReport {
+  id: string;
+  created_wib: string;
+  resolved_wib: string | null;
+  minutes_to_resolve: number | null;
+  location_name: string;
+  building_code: string | null;
+  building_name: string | null;
+  status: ReportStatus;
+  priority: Priority | null;
+  categories: Category[];
+  summary: string | null;
+  description: string;
+  recommendation: string | null;
+  staff_name: string | null;
 }
 
 export type ActivityAction =
@@ -150,19 +169,6 @@ export interface ActivityEntry {
   actor: string;
   summary: string;
   details: Record<string, unknown> | null;
-}
-
-export interface DailyStats {
-  date: string;
-  today: {
-    total: number;
-    high: number | null;
-    medium: number | null;
-    low: number | null;
-    ai_failed: number | null;
-  };
-  unresolved: number;
-  top_locations: Array<{ location: string; count: number }>;
 }
 
 export interface DailySummary {
@@ -426,13 +432,14 @@ export const api = {
   reanalyze: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reanalyze`, { method: 'POST' }),
   deleteReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 
-  charts: (days = 14) => req<ChartData>(`/api/summary/charts?days=${days}`),
+  charts: (from: string, to: string) => req<ChartData>(`/api/summary/charts?from=${from}&to=${to}`),
+  exportReports: (from: string, to: string) =>
+    req<{ data: ExportReport[] }>(`/api/summary/export?from=${from}&to=${to}`),
   activity: (filter: Record<string, string> = {}) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: ActivityEntry[] }>(`/api/activity?${q}`);
   },
 
-  stats: (date?: string) => req<DailyStats>(`/api/summary/stats${date ? `?date=${date}` : ''}`),
   summary: (date?: string) => req<DailySummary>(`/api/summary${date ? `?date=${date}` : ''}`),
   /** Admin only. `history` carries the recent turns so follow-up questions make sense. */
   ask: (question: string, history: AskMessage[]) =>

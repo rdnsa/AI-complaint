@@ -41,7 +41,7 @@ export default function StackedBarChart({
         ))}
       </div>
 
-      <div className="relative flex h-40 items-end gap-1" onMouseLeave={() => setHovered(null)}>
+      <div className={`relative flex h-40 items-end ${data.length > 60 ? '' : 'gap-1'}`} onMouseLeave={() => setHovered(null)}>
         {data.map((d, i) => (
           <div
             key={d.date}

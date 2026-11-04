@@ -1,6 +1,6 @@
 import { summarizeDay } from '../adapters/llm';
 import { forget, memo } from '../adapters/memo';
-import { wibDate } from '../adapters/clock';
+import { addDays, daysInRange, wibDayRange } from '../adapters/clock';
 import type { Env } from '../env';
 import * as reports from '../repositories/reports';
 import * as summaries from '../repositories/summaries';
@@ -61,10 +61,8 @@ export function dailyStats(env: Env, date: string) {
 }
 
 /** The run of dates the charts cover, oldest first. */
-function dateSeries(days: number): string[] {
-  return Array.from({ length: days }, (_, i) =>
-    wibDate(new Date(Date.now() - (days - 1 - i) * 86_400_000)),
-  );
+function dateSeries(from: string, days: number): string[] {
+  return Array.from({ length: days }, (_, i) => addDays(from, i));
 }
 
 /**
@@ -75,17 +73,23 @@ function dateSeries(days: number): string[] {
  * which is the truth.
  */
 /** The dashboard charts: the heaviest queries in the app, and a minute old is fine. */
-export function chartData(env: Env, days: number) {
-  return memo(`charts:${days}`, 60_000, () => loadChartData(env, days));
+export function chartData(env: Env, from: string, to: string) {
+  return memo(`charts:${from}:${to}`, 60_000, () => loadChartData(env, from, to));
 }
 
-async function loadChartData(env: Env, days: number) {
+async function loadChartData(env: Env, from: string, to: string) {
+  const days = daysInRange(from, to);
+  const window = {
+    start: wibDayRange(from).start,
+    end: wibDayRange(to).end,
+    previousStart: wibDayRange(addDays(from, -days)).start,
+  };
   const [counts, advanced] = await Promise.all([
-    summaries.chartCounts(env, days),
-    summaries.advancedCounts(env, days),
+    summaries.chartCounts(env, window),
+    summaries.advancedCounts(env, window),
   ]);
 
-  const series = dateSeries(days);
+  const series = dateSeries(from, days);
 
   const dailyMap = new Map(counts.daily.map((r) => [r.date, r]));
   const daily = series.map((date) => {
@@ -132,6 +136,12 @@ async function loadChartData(env: Env, days: number) {
       high: Number(trend.high_current ?? 0),
     },
   };
+}
+
+/** Every report of a range, for the dashboard's Excel export. */
+export async function exportRows(env: Env, from: string, to: string) {
+  const rows = await reports.findForExport(env, from, to);
+  return rows.map((r) => ({ ...r, categories: r.categories ? (JSON.parse(r.categories) as string[]) : [] }));
 }
 
 export async function leaderboard(env: Env, reporterId: string | null) {
