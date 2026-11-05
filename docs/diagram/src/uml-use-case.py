@@ -41,6 +41,7 @@ uc = {  # id: (x, y, label)
     'sum':     (CM, 290, 'Buat / Buat Ulang Ringkasan'),
     'ai':      (CM, 400, 'Analisis Keluhan (AI)'),
     'qr_scan': (CM, 720, 'Pindai QR / Pilih Lokasi'),
+    'desc':    (CM, 1130, 'Deskripsikan Foto Bukti (AI)'),
     'gps':     (CM, 1215, 'Periksa Posisi GPS'),
     're':      (CR, 610, 'Analisis Ulang Keluhan'),
     'dash':    (CR, 680, 'Pantau Dashboard & Statistik'),
@@ -57,6 +58,7 @@ actors = {  # id: (x, y, label, aktor sistem?)
     'cron': (RIGHT, 70, 'Penjadwal\n(Cron 17.00 WIB)', True),
     'llm':  (RIGHT, 200, 'LLM Teks\n(DeepSeek)', True),
     'spv':  (RIGHT, 640, 'Supervisor', False),
+    'vis':  (RIGHT, 1170, 'LLM Vision\n(Gemini)', True),
 }
 assoc = [
     ('plp', 'pub'), ('plp', 'rank'), ('plp', 'reg'), ('plp', 'lapor'), ('plp', 'lacak'),
@@ -64,6 +66,7 @@ assoc = [
     ('ptg', 'open'), ('ptg', 'claim'), ('ptg', 'take'), ('ptg', 'done'), ('ptg', 'daily'),
     ('cron', 'sum'),
     ('llm', 'ask'), ('llm', 'sum'), ('llm', 'ai'),
+    ('vis', 'desc'),
     ('spv', 'login'), ('spv', 'ask'), ('spv', 'sum'), ('spv', 'dash'), ('spv', 'rep'), ('spv', 're'),
     ('spv', 'logs'), ('spv', 'acct'), ('spv', 'del'), ('spv', 'qr'), ('spv', 'reopen'),
 ]
@@ -71,7 +74,7 @@ assoc = [
 # petugas untuk melihat keluhan, dan tugas harian dimulai dari lokasi yang sama.
 includes = [('lapor', 'ai'), ('re', 'ai'), 
             ('lapor', 'qr_scan'), ('open', 'qr_scan'),
-            ('daily', 'gps')]
+            ('daily', 'gps'), ('done', 'desc')]
 extends = [('take', 'claim')]   # Ambil Alih memperluas Klaim
 label_below = {('re', 'ai')}
 

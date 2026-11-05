@@ -46,10 +46,13 @@ classDiagram
     +recommendation : String
     +proofPhotoKey : String
     +proofVerdict : ProofVerdict «data lama»
-    +proofReason : String «data lama»
+    +proofReason : String «deskripsi foto»
+    +proofModel : String
+    +proofMs : Integer
     +createdAt : DateTime
     +submit(areaId, description, photoKey)
     +runAnalysis()
+    +runProofDescription(photoKey)
     +changeStatus(status, staff, proofPhotoKey)
     +canResolve(status, proofPhoto) Boolean$
     +reopen(actor)

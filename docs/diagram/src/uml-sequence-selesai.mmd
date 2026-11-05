@@ -10,6 +10,7 @@ sequenceDiagram
   participant RS as ReportService
   participant R2 as Penyimpanan Foto (R2)
   participant DB as Database (D1)
+  participant V as LLM Vision (Gemini)
 
   P->>UI: Buka /staff, tab Keluhan (filter gedung/lantai bila perlu)
   UI->>API: GET /api/reports/open
@@ -44,19 +45,38 @@ sequenceDiagram
   UI->>API: PATCH /api/reports/:id {status: resolved, staff_id, proof_photo_key}
   API->>DB: cek petugas aktif
   API->>RS: changeStatus()
-  RS->>R2: kunci berawalan proof/ dan berkasnya ada?
-  alt kunci bukan proof/ atau berkas tidak ada
-    RS-->>API: photo-not-found
-    API-->>UI: 400 foto bukti tidak ditemukan, unggah ulang
-  else tanpa foto bukti (canResolve = false)
-    RS-->>API: proof-missing
-    API-->>UI: 400 foto bukti wajib diunggah
-  else foto sah (canResolve = true)
-    RS->>DB: UPDATE reports (status=resolved, staff_name, resolved_at, proof_photo_key)
-    RS->>DB: INSERT activity_log (status_changed)
-    RS-->>API: ok
-    API-->>UI: 200 {status: resolved}
-    UI-->>P: Keluhan selesai
+  alt keluhan sudah selesai (dengan atau tanpa foto bukti)
+    RS-->>API: already-resolved
+    API-->>UI: 409 laporan sudah selesai
+  else keluhan belum selesai
+    RS->>R2: kunci berawalan proof/ dan berkasnya ada?
+    alt kunci bukan proof/ atau berkas tidak ada
+      RS-->>API: photo-not-found
+      API-->>UI: 400 foto bukti tidak ditemukan, unggah ulang
+    else tanpa foto bukti (canResolve = false)
+      RS-->>API: proof-missing
+      API-->>UI: 400 foto bukti wajib diunggah
+    else foto sah (canResolve = true)
+      RS->>DB: UPDATE reports (status=resolved, staff_name, resolved_at, proof_photo_key)
+      RS->>DB: INSERT activity_log (status_changed)
+      RS-->>API: ok
+      API-->>UI: 200 {status: resolved}
+      UI-->>P: Keluhan selesai
+      rect rgb(241, 234, 251)
+      Note over API,V: Setelah jawaban 200 (ctx.waitUntil): petugas tidak menunggu, tidak bisa menolak, status tidak berubah
+      API-)RS: runProofDescription(id, kunci foto)
+      RS->>DB: ambil lokasi + keluhan
+      RS->>R2: baca foto bukti
+      R2-->>RS: berkas foto
+      RS->>V: foto bukti + lokasi + keluhan
+      alt model berhasil
+        V-->>RS: deskripsi foto (teks)
+        RS->>DB: UPDATE reports (proof_reason, proof_model, proof_ms) WHERE proof_photo_key sama
+      else model gagal / jawaban tidak sah
+        RS->>DB: INSERT activity_log (proof_description_failed)
+      end
+      end
+    end
   end
 
   rect rgb(241, 234, 251)
@@ -83,4 +103,4 @@ sequenceDiagram
   end
   end
 
-  Note over S,DB: Berkas foto bukti tetap di R2. Petugas yang memindahkan keluhan selesai tetap ditolak 409 (langkah 10-11).
+  Note over S,V: Berkas foto bukti tetap di R2. Petugas yang memindahkan keluhan selesai ditolak 409 (langkah 10-11, 25-26). Deskripsi yang tiba setelah dibuka kembali dibuang (kunci foto tidak cocok lagi).

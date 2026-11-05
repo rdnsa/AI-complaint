@@ -37,6 +37,9 @@
 <path d="M1580,837 L1580,593" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
 <path d="M1640,527 L1640,250 L1677,250" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
 <path d="M1750,217 L1750,118" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<path d="M1750,283 L1750,367" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
+<path d="M1700,433 L1700,500 L730,500 L730,1007" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<text x="1270" y="487.0" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1270" dy="0.0">deskripsi foto, tanpa menahan penutupan</tspan></text>
 <path d="M900,1073 L900,1110 L1790,1110 L1790,1073" fill="none" stroke="#C9665F" stroke-width="1.8" marker-end="url(#aC9665F)"/>
 <text x="1300" y="1096.0" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1300" dy="0.0">Penutupan keliru (opsional)</tspan></text>
 <path d="M1790,1007 L1790,602" fill="none" stroke="#C9665F" stroke-width="1.8" marker-end="url(#aC9665F)"/>
@@ -62,6 +65,8 @@
 <text x="1070" y="235.1" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1070" dy="0.0">Keluhan tampil di</tspan><tspan x="1070" dy="15.0">dashboard &amp;</tspan><tspan x="1070" dy="15.0">papan publik</tspan></text>
 <rect x="1677.0" y="217.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
 <text x="1750" y="235.1" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1750" dy="0.0">Status keluhan -&gt;</tspan><tspan x="1750" dy="15.0">selesai, tercatat di</tspan><tspan x="1750" dy="15.0">log aktivitas</tspan></text>
+<rect x="1677.0" y="367.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="1750" y="385.1" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1750" dy="0.0">Model visi menulis</tspan><tspan x="1750" dy="15.0">deskripsi foto untuk</tspan><tspan x="1750" dy="15.0">supervisor</tspan></text>
 <circle cx="390" cy="400" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
 <circle cx="390" cy="400" r="23" fill="none" stroke="#C9665F" stroke-width="1.2"/>
 <text x="390" y="393.2" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="390" dy="0.0">17.00</tspan><tspan x="390" dy="13.7">WIB</tspan></text>
