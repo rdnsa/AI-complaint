@@ -352,6 +352,47 @@ test.describe('Deskripsi foto bukti', () => {
     expect(await api.getReport(id)).toMatchObject({ status: 'resolved', proof_verdict: null, proof_model: 'mock-vision' });
   });
 
+  test('pratinjau memberi deskripsi tanpa mengubah laporan', async ({ api, request }) => {
+    const { id } = await api.report();
+    const proof = await api.upload('proof');
+    const res = await request.post(`/api/reports/${id}/proof-preview`, { data: { proof_photo_key: proof } });
+    expect(res.status()).toBe(200);
+    expect(await res.json()).toEqual({ description: 'Deskripsi foto tiruan dari model.' });
+    expect(await api.getReport(id)).toMatchObject({ status: 'new', proof_photo_url: null, proof_reason: null });
+    // The photo itself is untouched by keeping the description with it.
+    const photo = await request.get(`/api/uploads/${proof}`);
+    expect(photo.headers()['content-type']).toBe('image/jpeg');
+  });
+
+  test('deskripsi yang sudah dilihat petugas dipakai, model tidak dipanggil lagi', async ({ api, request, newStaff }) => {
+    const { id } = await api.report({ description: unique('[vision:once] keluhan') });
+    const staff = await newStaff();
+    const proof = await api.upload('proof');
+    await request.post(`/api/reports/${id}/proof-preview`, { data: { proof_photo_key: proof } });
+    await request.patch(`/api/reports/${id}`, { data: { status: 'resolved', staff_id: staff.id, proof_photo_key: proof } });
+    await expect
+      .poll(async () => (await api.getReport(id)).proof_reason)
+      .toBe('Deskripsi foto tiruan dari model.');
+  });
+
+  test('pratinjau: model gagal tetap 200, foto tidak ditolak', async ({ api, request }) => {
+    const { id } = await api.report({ description: unique('[vision:error] keluhan') });
+    const res = await request.post(`/api/reports/${id}/proof-preview`, { data: { proof_photo_key: await api.upload('proof') } });
+    expect(res.status()).toBe(200);
+    expect(await res.json()).toEqual({ description: null });
+  });
+
+  test('pratinjau: permintaan tidak sah ditolak', async ({ api, request, newStaff }) => {
+    const { id, photoKey } = await api.report();
+    const preview = (reportId: string, key: string) =>
+      request.post(`/api/reports/${reportId}/proof-preview`, { data: { proof_photo_key: key } });
+    expect((await preview(id, photoKey)).status(), 'foto pelapor').toBe(400);
+    expect((await preview(id, 'proof/2026-01-01/tidak-ada.jpg')).status(), 'foto tidak ada').toBe(400);
+    expect((await preview('tidak-ada', await api.upload('proof'))).status(), 'laporan tidak ada').toBe(404);
+    await api.resolve(id, (await newStaff()).id);
+    expect((await preview(id, await api.upload('proof'))).status(), 'sudah selesai').toBe(409);
+  });
+
   test('petugas tidak menunggu model yang lambat', async ({ api, newStaff }) => {
     const { id } = await api.report({ description: unique('[vision:slow] keluhan') });
     const staff = await newStaff();

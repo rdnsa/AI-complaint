@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Camera from './Camera';
 import { CategoryBadge, PriorityBadge, StatusBadge } from './Badges';
 import { api, type Report, type StaffOption } from '../lib/api';
@@ -8,6 +8,17 @@ import ZoomableImage from './ZoomableImage';
 import Select from './Select';
 
 type Step = 'claim' | 'resolve';
+
+/** Long enough for a normal answer; after this staff just see that there is none yet. */
+const DESCRIPTION_WAIT_MS = 15_000;
+
+/** The photo just taken, waiting for "retake" or "send". */
+interface Shot {
+  preview: string;
+  key: string | null;
+  description: string | null;
+  describing: boolean;
+}
 
 /**
  * One complaint the staff member can take on and close with a proof photo.
@@ -43,6 +54,10 @@ export default function ComplaintCard({
   const [who, setWho] = useState('');
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [shot, setShot] = useState<Shot | null>(null);
+
+  // The preview's object URL is released when it is replaced or the card goes away.
+  useEffect(() => (shot ? () => URL.revokeObjectURL(shot.preview) : undefined), [shot?.preview]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const mine = r.status === 'in_progress' && !!staff && r.staff_name === staff.name;
   const heldByOther = r.status === 'in_progress' && !!r.staff_name && !mine;
@@ -77,12 +92,32 @@ export default function ComplaintCard({
     setCamera(true);
   }
 
-  async function resolve(photo: File) {
+  async function capture(photo: File) {
+    const preview = URL.createObjectURL(photo);
+    const update = (next: Partial<Shot>) => setShot((s) => (s?.preview === preview ? { ...s, ...next } : s));
+    setFailure(null);
+    setShot({ preview, key: null, description: null, describing: true });
+    try {
+      const { key } = await api.uploadPhoto(photo, 'proof');
+      update({ key });
+      // Sending is possible from here on: the description only informs, it never holds anything up.
+      const answer = await Promise.race([
+        api.proofPreview(r.id, key).then((p) => p.description),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), DESCRIPTION_WAIT_MS)),
+      ]);
+      update({ description: answer, describing: false });
+    } catch (err) {
+      setFailure(err instanceof Error ? err.message : t('staff.resolve_failed'));
+      update({ describing: false });
+    }
+  }
+
+  async function send() {
+    if (!shot?.key) return;
     setFailure(null);
     setBusy(true);
     try {
-      const { key } = await api.uploadPhoto(photo, 'proof');
-      await api.updateStatus(r.id, 'resolved', { staff_id: who, proof_photo_key: key });
+      await api.updateStatus(r.id, 'resolved', { staff_id: who, proof_photo_key: shot.key });
       setDone(true);
       // Leave the success visible for a moment before the card drops off the list.
       setTimeout(onChanged, 2500);
@@ -187,9 +222,35 @@ export default function ComplaintCard({
         </div>
       )}
 
-      <Camera open={camera} onClose={() => setCamera(false)} onCapture={resolve} />
-      {/* While asking who, the card shows only the name and the two answers. */}
-      {!step && (
+      {shot && (
+        <div className="mt-3 rounded-nav bg-mist-100 p-4">
+          <img src={shot.preview} alt="" className="max-h-72 w-full rounded-xl object-contain" />
+          <p className="mt-3 text-body-sm text-ink-800" aria-live="polite">
+            {shot.describing ? (
+              <span className="italic text-ink-600">{t('staff.proof_describing')}</span>
+            ) : shot.description ? (
+              <>
+                <span className="font-bold">{t('dashboard.proof_description')}: </span>
+                {shot.description}
+              </>
+            ) : (
+              <span className="italic text-ink-600">{t('staff.proof_no_description')}</span>
+            )}
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setCamera(true)} disabled={busy} className="btn-neutral !px-3 py-2.5">
+              {t('staff.proof_retake')}
+            </button>
+            <button type="button" onClick={send} disabled={busy || !shot.key} className="btn-primary !px-3 py-2.5">
+              {busy || !shot.key ? t('dashboard.uploading') : t('clean.send')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Camera open={camera} onClose={() => setCamera(false)} onCapture={capture} />
+      {/* While asking who, or showing the photo just taken, the card offers only those choices. */}
+      {!step && !shot && (
       <div className="mt-3 flex flex-col gap-2">
         <button
           type="button"

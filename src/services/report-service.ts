@@ -1,5 +1,5 @@
 import { describeProofPhoto } from '../adapters/llm';
-import { photoUploadedAt, readPhoto, FOLDER, deletePhoto } from '../adapters/storage';
+import { photoUploadedAt, readPhoto, readProofNote, saveProofNote, FOLDER, deletePhoto } from '../adapters/storage';
 import {
   canResolve,
   toDTO,
@@ -182,35 +182,66 @@ export async function requestReanalysis(env: Env, id: string): Promise<boolean> 
  * into the activity log first. That copy is what lets management inspect a
  * report that disappeared, along with who removed it.
  */
-/**
- * Asks the vision model what a proof photo shows, for the supervisor.
- *
- * Invoked through `ctx.waitUntil()` once the report is already closed, so staff
- * never wait on it and it can never refuse anything. It deliberately never
- * throws: a failure only means the photo has no description, and is logged.
- */
-export async function runProofDescription(env: Env, reportId: string, photoKey: string): Promise<void> {
+type ProofDescription = { text: string; ms: number };
+
+/** Asks the vision model what a photo shows. Never throws: a failure is logged and means no description. */
+async function describe(env: Env, row: ReportRow, photoKey: string): Promise<ProofDescription | null> {
   const start = Date.now();
   try {
-    const row = await reports.findById(env, reportId);
     const photo = await readPhoto(env, photoKey);
-    if (!row || !photo) return;
+    if (!photo) return null;
     const text = await describeProofPhoto(env, photo, {
       location: row.location_name ?? row.area_id ?? '',
       complaint: row.description,
     });
-    await reports.saveProofDescription(env, reportId, photoKey, { text, model: env.VISION_MODEL, ms: Date.now() - start });
+    const note = { text, ms: Date.now() - start };
+    await saveProofNote(env, photoKey, photo, note);
+    return note;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`Proof description failed for report ${reportId}: ${message}`);
+    console.error(`Proof description failed for report ${row.id}: ${message}`);
     await log(env, {
       action: 'proof_description_failed',
-      report_id: reportId,
+      report_id: row.id,
       actor: SYSTEM,
       summary: 'Deskripsi foto bukti gagal dibuat',
       details: { error: message.slice(0, 300), model: env.VISION_MODEL },
     });
+    return null;
   }
+}
+
+export type ProofPreviewResult =
+  | { kind: 'ok'; description: string | null }
+  | { kind: 'not-found' }
+  | { kind: 'already-resolved' }
+  | { kind: 'photo-not-found' };
+
+/**
+ * What staff see before sending: the model's description of the photo just taken.
+ * It only informs. The report does not change, and a failed description (null)
+ * does not stop staff from sending the photo.
+ */
+export async function previewProof(env: Env, reportId: string, photoKey: string): Promise<ProofPreviewResult> {
+  const row = await reports.findById(env, reportId);
+  if (!row) return { kind: 'not-found' };
+  if (row.status === 'resolved') return { kind: 'already-resolved' };
+  if (!photoKey.startsWith(`${FOLDER.proof}/`) || !(await photoUploadedAt(env, photoKey))) {
+    return { kind: 'photo-not-found' };
+  }
+  return { kind: 'ok', description: (await describe(env, row, photoKey))?.text ?? null };
+}
+
+/**
+ * Puts the description on the closed report, for the supervisor: the one staff
+ * already saw, or a new try when there was none. Runs through `ctx.waitUntil()`,
+ * after the response, so it can never hold up or refuse the close.
+ */
+export async function runProofDescription(env: Env, reportId: string, photoKey: string): Promise<void> {
+  const row = await reports.findById(env, reportId);
+  if (!row) return;
+  const note = (await readProofNote(env, photoKey)) ?? (await describe(env, row, photoKey));
+  if (note) await reports.saveProofDescription(env, reportId, photoKey, { ...note, model: env.VISION_MODEL });
 }
 
 export type ReopenResult = { kind: 'ok' } | { kind: 'not-found' } | { kind: 'not-resolved' };

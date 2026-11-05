@@ -66,15 +66,15 @@
 
 <h2 id="ringkas">1. Ringkasan</h2>
 <div class="grid">
-  <div class="kartu"><div class="angka">271</div><div class="angka-ket">eksekusi test lulus</div></div>
+  <div class="kartu"><div class="angka">278</div><div class="angka-ket">eksekusi test lulus</div></div>
   <div class="kartu"><div class="angka">14</div><div class="angka-ket">gagal sesuai harapan: mencatat 12 bug terbuka</div></div>
   <div class="kartu"><div class="angka">0</div><div class="angka-ket">gagal tak terduga atau flaky</div></div>
   <div class="kartu"><div class="angka">&plusmn;1 mnt</div><div class="angka-ket">satu putaran penuh, 4 worker</div></div>
 </div>
-<p>Hasil di atas berasal dari basis commit <code>c58b49c</code>, 5 November 2026. Suite terdiri dari 284 test ditambah 1 langkah login: 170 test API, 92 test UI desktop, dan 22 test UI HP.</p>
+<p>Hasil di atas berasal dari basis commit <code>c58b49c</code>, 5 November 2026. Suite terdiri dari 291 test ditambah 1 langkah login: 174 test API, 95 test UI desktop, dan 22 test UI HP.</p>
 <p>Kepekaan suite juga sudah diuji dengan sengaja merusak empat aturan di kode aplikasi, lalu memulihkannya: laporan selesai bisa dibuka kembali, API akun tanpa pemeriksaan hak akses, klaim tanpa nama, dan kirim laporan tanpa foto. Keempatnya ditangkap suite.</p>
 <div class="tolak"><b>Hijau bukan berarti bebas bug.</b> Ada 12 bug nyata yang masih terbuka, tiga di antaranya berat: lihat <a href="#temuan">bagian 7</a>. Suite tetap hijau karena bug itu ditandai sebagai <em>known issue</em>.</div>
-<div class="catatan"><b>Foto bukti tidak pernah ditolak AI.</b> Petugas cukup mengambil foto, dan laporan langsung selesai. Setelah itu model visi menuliskan apa yang terlihat di foto untuk dibaca supervisor. Test case yang menjelaskan perilaku lama (TC-KLH-018 s.d. 026, TC-KLH-046, TC-NFR-004) berstatus "Tidak berlaku" di sheet manual. Supervisor bisa membuka kembali laporan yang keliru ditutup, dan alur itu juga diuji.</div>
+<div class="catatan"><b>Foto bukti tidak pernah ditolak AI.</b> Setelah foto diambil, petugas melihat foto dan deskripsinya, lalu memilih Foto ulang atau Kirim. Hanya Kirim yang menutup laporan. Kirim tetap bisa ditekan walaupun deskripsinya lambat atau gagal. Test case yang menjelaskan perilaku lama (TC-KLH-018 s.d. 026, TC-KLH-046, TC-NFR-004) berstatus "Tidak berlaku" di sheet manual. Supervisor bisa membuka kembali laporan yang keliru ditutup, dan alur itu juga diuji.</div>
 
 <h2 id="jalan">2. Cara menjalankan</h2>
 <p>Hanya perlu dipasang sekali:</p>
@@ -129,7 +129,7 @@ npx playwright install chromium</code></pre>
   <tr><td><code>[llm:not-json]</code></td><td>Balasan bukan JSON</td></tr>
   <tr><td><code>[llm:odd]</code></td><td>Kategori dan prioritas karangan, yang harus dinormalkan Worker</td></tr>
   <tr><td><code>[llm:slow]</code></td><td>Analisis butuh 3 detik</td></tr>
-  <tr><td><code>[vision:error]</code>, <code>[vision:slow]</code></td><td>Model deskripsi foto gagal, atau butuh 3 detik</td></tr>
+  <tr><td><code>[vision:error]</code>, <code>[vision:slow]</code>, <code>[vision:once]</code></td><td>Model deskripsi foto gagal, butuh 3 detik, atau hanya menjawab sekali</td></tr>
   <tr><td><code>[ask:error]</code></td><td>Kato Bot gagal menjawab</td></tr>
   <tr><td><code>per petugas</code> (pada pertanyaan)</td><td>Model meminta data per petugas, untuk menguji batas akses publik</td></tr>
 </table>
@@ -141,7 +141,7 @@ e2e/
   support/
     start-stack.mjs         menyiapkan database, mock, dan Worker
     mock-llm.mjs            tiruan penyedia LLM
-  api/                      170 test tanpa browser
+  api/                      174 test tanpa browser
     auth.spec.ts            registrasi, login, sesi, cookie
     access.spec.ts          matriks hak akses tiap endpoint
     reports.spec.ts         laporan, analisis AI, status, foto bukti, papan publik, peringkat
@@ -149,7 +149,7 @@ e2e/
     uploads.spec.ts         format, ukuran, folder, path traversal
     users.spec.ts           kelola akun petugas dan supervisor
     insight.spec.ts         isolasi, ringkasan, grafik, Kato Bot
-  ui/                       114 eksekusi di browser
+  ui/                       117 eksekusi di browser
     auth.setup.ts           menyimpan sesi supervisor
     home.spec.ts            beranda, tautan lama, bahasa, tema, lebar layar, login
     report.spec.ts          form laporan, kamera, halaman status

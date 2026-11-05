@@ -118,7 +118,7 @@ Two models, split by input. Neither decides whether a report may close, and dail
 |---|---|---|
 | Input | complaint text; the day's list of summaries; admin questions | staff proof photo of a complaint, with the location and original complaint as context |
 | Job | features 1–3: classify, prioritise, summarise, daily summary; feature 5: answer questions via tool calls | say what the proof photo shows, for the supervisor to read |
-| Called | on every new report (async, after the response), once a day by cron, and per question | every time staff close a complaint (async, after the response) |
+| Called | on every new report (async, after the response), once a day by cron, and per question | every proof photo taken, retakes included, while staff look at the preview |
 | On failure | report is kept unlabelled, can be re-analysed | report stays closed, the photo has no description, the activity log gets `proof_description_failed` |
 | Code | `analyzeComplaint()`, `summarizeDay()`, `chatWithTools()` in `src/adapters/llm.ts` | `describeProofPhoto()` in the same file |
 | Config | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | `VISION_BASE_URL`, `VISION_MODEL`, `VISION_API_KEY` (optional) |
@@ -339,6 +339,7 @@ Reports filed before migration 0011 point at a legacy toilet
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/api/reports` | dashboard list; filters `status, priority, area_id, building, from, to, hour_from, hour_to` (WIB; hours as `H` or `HH:MM`) |
+| `POST` | `/api/reports/:id/proof-preview` | staff: `{proof_photo_key}`; the model's description of a photo just taken, `{description}` (null when it fails); changes nothing on the report |
 | `POST` | `/api/reports/:id/reanalyze` | re-run a failed analysis |
 | `POST` | `/api/reports/:id/reopen` | supervisor: send a resolved report back to the staff list (`409` if it is not resolved) |
 | `DELETE` | `/api/reports/:id` | delete permanently, logged with a full copy |
@@ -500,7 +501,7 @@ but keeps the photo in storage and the activity log. Both photos are enforced on
 The proof photo is shown on the public board so that "already handled" can be checked
 by anyone.
 
-**The proof photo is described, never judged.** An automatic check used to refuse photos that looked dirty or showed the wrong place, but it refused genuine work too often and made closing a report too hard. Now a report closes as soon as its photo is uploaded, and only afterwards does a vision model write one or two sentences on what the photo shows, which the supervisor reads beside it (`proof_reason`). It has no say over the close, staff do not wait for it, and when it fails the photo just has no description. On Google's free tier submitted photos may be used to improve its products; enabling billing turns that off. Reports closed while the old check ran keep their `proof_verdict`, and old `proof_rejected` and `verification_failed` rows stay in the activity log. What keeps a close honest is people: the photo is public, the name and photo are logged, and a supervisor can reopen the report.
+**The proof photo is described, never judged.** An automatic check used to refuse photos that looked dirty or showed the wrong place, but it refused genuine work too often and made closing a report too hard. Now, once a photo is taken, a vision model writes one or two sentences on what it shows (`POST /api/reports/:id/proof-preview`), and staff see the photo and those words with two buttons: retake or send. Only sending closes the report. The supervisor reads the same words beside the photo (`proof_reason`). The model has no say over the close: staff can send before it answers, and when it fails the photo just has no description. The words wait with the photo in R2 until it is sent, so a client can never supply them. On Google's free tier submitted photos may be used to improve its products; enabling billing turns that off. Reports closed while the old check ran keep their `proof_verdict`, and old `proof_rejected` and `verification_failed` rows stay in the activity log. What keeps a close honest is people: the photo is public, the name and photo are logged, and a supervisor can reopen the report.
 
 **Questions are answered through tools, not by reading the table.** The
 model receives four function definitions (`count_reports`, `resolution_time`,

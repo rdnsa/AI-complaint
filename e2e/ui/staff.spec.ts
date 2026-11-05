@@ -31,6 +31,11 @@ test.describe('Keluhan', () => {
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
 
+    // Nothing is closed until the photo is sent.
+    await expect(card.getByText('Deskripsi AI: Deskripsi foto tiruan dari model.')).toBeVisible();
+    expect((await api.getReport(report.id)).status).toBe('in_progress');
+    await card.getByRole('button', { name: 'Kirim', exact: true }).click();
+
     await expect(page.getByText('Laporan selesai. Terima kasih!')).toBeVisible();
     expect((await api.getReport(report.id)).status).toBe('resolved');
     // The card leaves the list by itself shortly after.
@@ -109,9 +114,65 @@ test.describe('Keluhan', () => {
     expect((await api.getReport(report.id)).status).toBe('new');
 
     await page.unroute('**/api/uploads**');
+    await card.getByRole('button', { name: 'Foto ulang' }).click();
+    await takePhoto(page);
+    await card.getByRole('button', { name: 'Kirim', exact: true }).click();
+    await expect(page.getByText('Laporan selesai. Terima kasih!')).toBeVisible();
+  });
+
+  test('foto ulang mengganti foto, dan deskripsinya ikut terbaru', async ({ api, newStaff, page }) => {
+    const report = await api.report();
+    const staff = await newStaff();
+    await page.goto('/staff');
+    const card = cardOf(page, report.description);
     await card.getByRole('button', { name: /Sudah selesai/ }).click();
+    await answerWho(page, card, staff.name);
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
+    await expect(card.getByText(/^Deskripsi AI:/)).toBeVisible();
+    await expect(card.getByRole('button', { name: /Sudah selesai|Saya kerjakan/ })).toHaveCount(0);
+
+    const previews: string[] = [];
+    page.on('request', (r) => {
+      if (r.url().endsWith('/proof-preview')) previews.push(r.postDataJSON().proof_photo_key);
+    });
+    await card.getByRole('button', { name: 'Foto ulang' }).click();
+    await takePhoto(page);
+    await expect.poll(() => previews.length).toBe(1);
+    expect((await api.getReport(report.id)).status).toBe('new');
+
+    await card.getByRole('button', { name: 'Kirim', exact: true }).click();
+    await expect(page.getByText('Laporan selesai. Terima kasih!')).toBeVisible();
+    expect((await api.getReport(report.id)).proof_photo_url).toContain(previews[0]);
+  });
+
+  test('AI gagal: pesan tampil dan foto tetap bisa dikirim', async ({ api, newStaff, page }) => {
+    const report = await api.report({ description: unique('[vision:error] lantai kotor') });
+    const staff = await newStaff();
+    await page.goto('/staff');
+    const card = cardOf(page, report.description);
+    await card.getByRole('button', { name: /Sudah selesai/ }).click();
+    await answerWho(page, card, staff.name);
+    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
+    await takePhoto(page);
+
+    await expect(card.getByText('Deskripsi AI belum tersedia. Foto tetap bisa dikirim.')).toBeVisible();
+    await card.getByRole('button', { name: 'Kirim', exact: true }).click();
+    await expect(page.getByText('Laporan selesai. Terima kasih!')).toBeVisible();
+  });
+
+  test('AI lambat: foto bisa dikirim tanpa menunggu deskripsi', async ({ api, newStaff, page }) => {
+    const report = await api.report({ description: unique('[vision:slow] lantai kotor') });
+    const staff = await newStaff();
+    await page.goto('/staff');
+    const card = cardOf(page, report.description);
+    await card.getByRole('button', { name: /Sudah selesai/ }).click();
+    await answerWho(page, card, staff.name);
+    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
+    await takePhoto(page);
+
+    await expect(card.getByText('AI sedang membaca foto…')).toBeVisible();
+    await card.getByRole('button', { name: 'Kirim', exact: true }).click();
     await expect(page.getByText('Laporan selesai. Terima kasih!')).toBeVisible();
   });
 

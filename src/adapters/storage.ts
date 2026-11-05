@@ -54,6 +54,27 @@ export async function readPhoto(
   return { bytes: await obj.arrayBuffer(), type: obj.httpMetadata?.contentType ?? 'image/jpeg' };
 }
 
+/**
+ * Keeps the vision model's description with the photo until the report is closed.
+ * It lives on the server, so a client can only send the key, never the words.
+ */
+export async function saveProofNote(
+  env: Env,
+  key: string,
+  photo: { bytes: ArrayBuffer; type: string },
+  note: { text: string; ms: number },
+): Promise<void> {
+  await env.BUCKET.put(key, photo.bytes, {
+    httpMetadata: { contentType: photo.type, cacheControl: 'public, max-age=31536000' },
+    customMetadata: { description: note.text, ms: String(note.ms) },
+  });
+}
+
+export async function readProofNote(env: Env, key: string): Promise<{ text: string; ms: number } | null> {
+  const meta = (await env.BUCKET.head(key))?.customMetadata;
+  return meta?.description ? { text: meta.description, ms: Number(meta.ms) || 0 } : null;
+}
+
 /** When the server received a photo, or null when it does not exist. */
 export async function photoUploadedAt(env: Env, key: string): Promise<Date | null> {
   if (!isAllowedKey(key)) return null;

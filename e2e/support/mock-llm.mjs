@@ -12,6 +12,7 @@
  *   [llm:slow]       the analysis takes three seconds
  *   [vision:error]   the vision model answers HTTP 500
  *   [vision:slow]    describing the proof photo takes three seconds
+ *   [vision:once]    a normal description the first time, HTTP 500 afterwards
  *   [ask:error]      (in a question) the text model answers HTTP 500
  *   per petugas      (in a question) the model asks to group by staff member
  *
@@ -83,6 +84,10 @@ async function answer(body) {
     stats.vision++;
     if (lastText.includes('[vision:error]')) return null;
     if (lastText.includes('[vision:slow]')) await sleep(3000);
+    if (lastText.includes('[vision:once]')) {
+      if (failedOnce.has(lastText)) return null;
+      failedOnce.add(lastText);
+    }
     return json({ description: 'Deskripsi foto tiruan dari model.' });
   }
   if (String(first.content).includes('laporan harian')) {

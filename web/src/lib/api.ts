@@ -424,6 +424,11 @@ export const api = {
   cleaningRecap: (date: string) => req<CleaningRecap>(`/api/cleaning/recap?date=${date}`),
 
   reanalyze: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reanalyze`, { method: 'POST' }),
+  proofPreview: (id: string, key: string) =>
+    req<{ description: string | null }>(`/api/reports/${id}/proof-preview`, {
+      method: 'POST',
+      body: JSON.stringify({ proof_photo_key: key }),
+    }),
   reopenReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reopen`, { method: 'POST' }),
   deleteReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 

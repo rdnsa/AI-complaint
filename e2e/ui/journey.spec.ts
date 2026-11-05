@@ -38,6 +38,7 @@ test.describe('Perjalanan penuh @smoke', () => {
     await card.getByRole('button', { name: /Sudah selesai/ }).click();
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(cleaner);
+    await card.getByRole('button', { name: 'Kirim', exact: true }).click();
     await expect(cleaner.getByText('Laporan selesai. Terima kasih!')).toBeVisible();
 
     // 3. The reporter sees it finished on the page they kept open.

@@ -125,6 +125,28 @@ app.get('/', requireSupervisor, async (c) => {
   });
 });
 
+/**
+ * Staff: the model's description of a proof photo just taken, shown next to the
+ * "retake" and "send" buttons. Changes nothing on the report and refuses no photo;
+ * `description` is null when the model could not answer.
+ */
+app.post('/:id/proof-preview', async (c) => {
+  const parsed = z.object({ proof_photo_key: z.string().min(1).max(200) }).safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json({ error: 'Foto bukti tidak ditemukan. Unggah ulang.' }, 400);
+
+  const result = await reports.previewProof(c.env, c.req.param('id'), parsed.data.proof_photo_key);
+  switch (result.kind) {
+    case 'not-found':
+      return c.json({ error: 'Laporan tidak ditemukan' }, 404);
+    case 'already-resolved':
+      return c.json({ error: 'Laporan ini sudah selesai.' }, 409);
+    case 'photo-not-found':
+      return c.json({ error: 'Foto bukti tidak ditemukan. Unggah ulang.' }, 400);
+    default:
+      return c.json({ description: result.description });
+  }
+});
+
 const StatusChangeSchema = z.object({
   status: z.enum(STATUSES),
   proof_photo_key: z.string().max(200).nullish(),
@@ -141,8 +163,8 @@ const StatusChangeSchema = z.object({
  * Staff do not sign in; they send the `staff_id` picked on the dropdown,
  * which must belong to an active staff member. A signed-in supervisor may act
  * under their own name instead. Closing needs a proof photo; the photo is shown
- * on the public board and logged. Afterwards a vision model describes it for the
- * supervisor, without any say over the close.
+ * on the public board and logged. A vision model describes it (see /proof-preview)
+ * without any say over the close.
  */
 app.patch('/:id', async (c) => {
   const parsed = StatusChangeSchema.safeParse(await c.req.json().catch(() => ({})));
@@ -178,7 +200,7 @@ app.patch('/:id', async (c) => {
     case 'proof-missing':
       return c.json({ error: 'Foto bukti penyelesaian wajib diunggah lebih dulu.' }, 400);
     default:
-      // After the response, like the complaint analysis: staff never wait on it.
+      // After the response, so it can never hold up the close.
       if (result.status === 'resolved' && parsed.data.proof_photo_key) {
         c.executionCtx.waitUntil(reports.runProofDescription(c.env, c.req.param('id'), parsed.data.proof_photo_key));
       }
