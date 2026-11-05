@@ -135,8 +135,8 @@ const StatusChangeSchema = z.object({
  * Staff: mark a report as being worked on, or as resolved.
  *
  * Claiming ("I'm on it") is not a lock: until a proof photo closes the report, any other
- * staff member may claim it in turn, and the handover is logged. A resolved report
- * cannot be reopened.
+ * staff member may claim it in turn, and the handover is logged. Staff cannot
+ * reopen a resolved report; only a supervisor can (POST /:id/reopen).
  *
  * Staff do not sign in; they send the `staff_id` picked on the dropdown,
  * which must belong to an active staff member. A signed-in supervisor may act
@@ -188,6 +188,14 @@ app.post('/:id/reanalyze', requireSupervisor, async (c) => {
     return c.json({ error: 'Laporan tidak ditemukan' }, 404);
   }
   c.executionCtx.waitUntil(reports.runAnalysis(c.env, id));
+  return c.json({ ok: true });
+});
+
+/** Supervisor: send a resolved report back to the staff list. */
+app.post('/:id/reopen', requireSupervisor, async (c) => {
+  const result = await reports.reopenReport(c.env, c.req.param('id'), c.get('session').name);
+  if (result.kind === 'not-found') return c.json({ error: 'Laporan tidak ditemukan' }, 404);
+  if (result.kind === 'not-resolved') return c.json({ error: 'Laporan ini belum selesai.' }, 409);
   return c.json({ ok: true });
 });
 

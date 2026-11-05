@@ -7,6 +7,7 @@ import { expect, test } from '../fixtures';
 const SUPERVISOR_ONLY: Array<[method: 'get' | 'post' | 'patch' | 'delete', path: string, tc: string]> = [
   ['get', '/api/reports', 'daftar keluhan'],
   ['delete', '/api/reports/tidak-ada', 'TC-SPL-024'],
+  ['post', '/api/reports/tidak-ada/reopen', 'buka kembali'],
   ['post', '/api/reports/tidak-ada/reanalyze', 'TC-SPL-026'],
   ['get', '/api/cleaning/reports', 'TC-SPK-022'],
   ['get', '/api/cleaning/recap', 'TC-SPK-022'],

@@ -66,12 +66,12 @@
 
 <h2 id="ringkas">1. Ringkasan</h2>
 <div class="grid">
-  <div class="kartu"><div class="angka">259</div><div class="angka-ket">eksekusi test lulus</div></div>
+  <div class="kartu"><div class="angka">263</div><div class="angka-ket">eksekusi test lulus</div></div>
   <div class="kartu"><div class="angka">15</div><div class="angka-ket">gagal sesuai harapan: mencatat 13 bug terbuka</div></div>
   <div class="kartu"><div class="angka">0</div><div class="angka-ket">gagal tak terduga atau flaky</div></div>
   <div class="kartu"><div class="angka">&plusmn;1 mnt</div><div class="angka-ket">satu putaran penuh, 4 worker</div></div>
 </div>
-<p>Hasil di atas berasal dari basis commit <code>2df5b88</code> ditambah penghapusan pemeriksaan foto oleh AI, 5 November 2026. Suite terdiri dari 273 test ditambah 1 langkah login: 163 test API, 89 test UI desktop, dan 21 test UI HP.</p>
+<p>Hasil di atas berasal dari basis commit <code>2df5b88</code> ditambah penghapusan pemeriksaan foto oleh AI, 5 November 2026. Suite terdiri dari 277 test ditambah 1 langkah login: 166 test API, 90 test UI desktop, dan 21 test UI HP.</p>
 <p>Kepekaan suite juga sudah diuji dengan sengaja merusak empat aturan di kode aplikasi, lalu memulihkannya: laporan selesai bisa dibuka kembali, API akun tanpa pemeriksaan hak akses, klaim tanpa nama, dan kirim laporan tanpa foto. Keempatnya ditangkap suite.</p>
 <div class="tolak"><b>Hijau bukan berarti bebas bug.</b> Ada 13 bug nyata yang masih terbuka, tiga di antaranya berat: lihat <a href="#temuan">bagian 7</a>. Suite tetap hijau karena bug itu ditandai sebagai <em>known issue</em>.</div>
 <div class="catatan"><b>Foto bukti tidak lagi dinilai AI.</b> Petugas cukup mengambil foto, dan laporan langsung selesai. Test case TC-KLH-018 sampai TC-KLH-026 dan TC-KLH-046 di sheet manual menjelaskan perilaku lama, jadi tidak perlu dijalankan lagi.</div>
@@ -140,7 +140,7 @@ e2e/
   support/
     start-stack.mjs         menyiapkan database, mock, dan Worker
     mock-llm.mjs            tiruan penyedia LLM
-  api/                      163 test tanpa browser
+  api/                      166 test tanpa browser
     auth.spec.ts            registrasi, login, sesi, cookie
     access.spec.ts          matriks hak akses tiap endpoint
     reports.spec.ts         laporan, analisis AI, status, foto bukti, papan publik, peringkat
@@ -148,7 +148,7 @@ e2e/
     uploads.spec.ts         format, ukuran, folder, path traversal
     users.spec.ts           kelola akun petugas dan supervisor
     insight.spec.ts         isolasi, ringkasan, grafik, Kato Bot
-  ui/                       110 eksekusi di browser
+  ui/                       111 eksekusi di browser
     auth.setup.ts           menyimpan sesi supervisor
     home.spec.ts            beranda, tautan lama, bahasa, tema, lebar layar, login
     report.spec.ts          form laporan, kamera, halaman status

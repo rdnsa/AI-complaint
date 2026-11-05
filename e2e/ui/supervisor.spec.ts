@@ -67,6 +67,29 @@ test.describe('Dashboard supervisor', () => {
     await expect(row.getByRole('button', { name: 'Analisis ulang' })).toHaveCount(0);
   });
 
+  test('buka kembali laporan selesai, dengan konfirmasi', async ({ api, newStaff, page }) => {
+    const report = await api.report();
+    const staff = await newStaff();
+    const unresolved = await api.report();
+    await api.resolve(report.id, staff.id);
+    await openComplaints(page);
+
+    await expect(
+      page.locator('article').filter({ hasText: unresolved.description }).getByRole('button', { name: 'Buka kembali' }),
+    ).toHaveCount(0);
+
+    const row = page.locator('article').filter({ hasText: report.description });
+    page.once('dialog', (dialog) => dialog.dismiss());
+    await row.getByRole('button', { name: 'Buka kembali' }).click();
+    expect((await api.getReport(report.id)).status).toBe('resolved');
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await row.getByRole('button', { name: 'Buka kembali' }).click();
+    await expect(row.getByRole('button', { name: 'Buka kembali' })).toHaveCount(0);
+    expect(await api.getReport(report.id)).toMatchObject({ status: 'new', staff_name: null });
+    await expect(row.getByText(`Ditangani: ${staff.name}`)).toHaveCount(0);
+  });
+
   test('TC-SPL-020 batal hapus membiarkan laporan', async ({ api, page }) => {
     const report = await api.report();
     await openComplaints(page);

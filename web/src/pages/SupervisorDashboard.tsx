@@ -263,6 +263,18 @@ function ReportRow({
   const { t } = useLanguage();
   const relativeTime = useRelativeTime();
   const formatTime = useFormatTime();
+  const [reopenError, setReopenError] = useState<string | null>(null);
+
+  async function reopen() {
+    if (!confirm(t('dashboard.reopen_confirm'))) return;
+    setReopenError(null);
+    try {
+      await api.reopenReport(r.id);
+    } catch (err) {
+      setReopenError(err instanceof Error ? err.message : t('dashboard.reopen_failed'));
+    }
+    onRefresh();
+  }
 
   return (
     <article className="card p-4 sm:p-6">
@@ -349,6 +361,12 @@ function ReportRow({
             {t('dashboard.reanalyze')}
           </button>
         )}
+        {/* Closing needs only a photo, so a badly closed report must be recoverable. */}
+        {r.status === 'resolved' && (
+          <button onClick={reopen} className="btn-neutral !py-1.5 text-xs">
+            {t('dashboard.reopen')}
+          </button>
+        )}
         {/* The report list is open to the public, so spam and inappropriate content
             must be removable — and only the supervisor may do it. */}
         <button
@@ -363,6 +381,11 @@ function ReportRow({
           <span className="text-xs text-ink-600">{t('dashboard.handled_by', { name: r.staff_name })}</span>
         )}
       </div>
+      {reopenError && (
+        <p role="alert" className="mt-2 text-xs font-medium text-red-800">
+          {reopenError}
+        </p>
+      )}
     </article>
   );
 }

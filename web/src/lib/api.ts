@@ -126,6 +126,7 @@ export type ActivityAction =
   | 'analysis'
   | 'analysis_failed'
   | 'status_changed'
+  | 'report_reopened'
   | 'report_deleted'
   | 'login'
   | 'daily_summary'
@@ -420,6 +421,7 @@ export const api = {
   cleaningRecap: (date: string) => req<CleaningRecap>(`/api/cleaning/recap?date=${date}`),
 
   reanalyze: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reanalyze`, { method: 'POST' }),
+  reopenReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reopen`, { method: 'POST' }),
   deleteReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 
   charts: (from: string, to: string) => req<ChartData>(`/api/summary/charts?from=${from}&to=${to}`),

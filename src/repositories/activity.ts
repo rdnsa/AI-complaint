@@ -6,6 +6,7 @@ export type ActivityAction =
   | 'analysis'
   | 'analysis_failed'
   | 'status_changed'
+  | 'report_reopened'
   | 'report_deleted'
   | 'login'
   | 'daily_summary'
@@ -21,6 +22,7 @@ const ACTIVITY_ACTIONS: ActivityAction[] = [
   'analysis',
   'analysis_failed',
   'status_changed',
+  'report_reopened',
   'report_deleted',
   'login',
   'daily_summary',

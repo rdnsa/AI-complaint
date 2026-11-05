@@ -218,6 +218,24 @@ export async function updateStatus(
     .run();
 }
 
+/**
+ * Back to the staff list, as if nobody had touched it. Only a resolved report
+ * changes, so two supervisors pressing at once reopen it, and log it, once.
+ */
+export async function reopen(env: Env, id: string): Promise<boolean> {
+  const result = await env.DB.prepare(
+    `UPDATE reports
+        SET status = 'new', staff_name = NULL, resolved_at = NULL,
+            proof_photo_key = NULL, proof_verdict = NULL, proof_reason = NULL,
+            proof_model = NULL, proof_ms = NULL,
+            updated_at = datetime('now')
+      WHERE id = ? AND status = 'resolved'`,
+  )
+    .bind(id)
+    .run();
+  return result.meta.changes > 0;
+}
+
 export async function markAnalysisPending(env: Env, id: string): Promise<void> {
   await env.DB.prepare(`UPDATE reports SET ai_status = 'pending', ai_error = NULL WHERE id = ?`)
     .bind(id)

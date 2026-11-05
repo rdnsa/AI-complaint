@@ -378,6 +378,40 @@ test.describe('Papan publik dan data pribadi', () => {
 });
 
 test.describe('Moderasi supervisor', () => {
+  test('laporan selesai dibuka kembali lalu bisa dikerjakan lagi', async ({ api, admin, request, newStaff }) => {
+    const { id } = await api.report();
+    const [first, second] = [await newStaff('Pertama'), await newStaff('Kedua')];
+    await api.resolve(id, first.id);
+    const proof = (await api.getReport(id)).proof_photo_url;
+
+    expect((await admin.post(`/api/reports/${id}/reopen`)).status()).toBe(200);
+
+    expect(await api.getReport(id)).toMatchObject({ status: 'new', staff_name: null, resolved_at: null, proof_photo_url: null });
+    const open = await (await request.get('/api/reports/open?limit=200')).json();
+    expect(open.data.map((r: { id: string }) => r.id)).toContain(id);
+    const board = await (await request.get('/api/reports/public?limit=200')).json();
+    expect(board.data.find((r: { id: string }) => r.id === id).proof_photo_url).toBeNull();
+
+    // The photo it was closed with stays as evidence, and the log says who did what.
+    expect((await request.get(proof)).status()).toBe(200);
+    const log = await (await admin.get(`/api/activity?action=report_reopened&report_id=${id}`)).json();
+    expect(log.data).toHaveLength(1);
+    expect(log.data[0].actor).toBe('Administrator');
+    expect(log.data[0].summary).toContain(first.name);
+
+    expect((await api.resolve(id, second.id)).status()).toBe(200);
+    expect((await api.getReport(id)).staff_name).toBe(second.name);
+  });
+
+  test('laporan yang belum selesai tidak bisa dibuka kembali', async ({ api, admin, newStaff }) => {
+    const { id } = await api.report();
+    expect((await admin.post(`/api/reports/${id}/reopen`)).status()).toBe(409);
+    await api.claim(id, (await newStaff()).id);
+    expect((await admin.post(`/api/reports/${id}/reopen`)).status()).toBe(409);
+    expect((await api.getReport(id)).status).toBe('in_progress');
+    expect((await admin.post('/api/reports/tidak-ada/reopen')).status()).toBe(404);
+  });
+
   test('TC-SPL-019 dan TC-LOG-008 laporan dihapus, jejaknya tetap ada', async ({ api, admin, request }) => {
     const { id, description, photoKey } = await api.report();
     expect((await admin.delete(`/api/reports/${id}`)).status()).toBe(200);

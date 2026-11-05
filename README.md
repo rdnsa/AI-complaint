@@ -85,7 +85,7 @@ both through the `location_info` view.
     "Sudah beres" asks who finished and opens the camera. A claim is not a
     lock: until a proof photo closes the report another staff member may take
     it over, and the handover is logged ("X took over … from Y"). A resolved
-    report cannot be reopened (`409`)
+    report cannot be reopened by staff (`409`), only by a supervisor
   - **Tugas harian** (daily tasks, `/staff` or `/clean/<area>`): pick a name
     and a location, then six tasks, the same everywhere — sweep & mop, wipe the
     windows, clean the toilet, empty the bins, refill the water gallon, tidy
@@ -339,6 +339,7 @@ Reports filed before migration 0011 point at a legacy toilet
 |---|---|---|
 | `GET` | `/api/reports` | dashboard list; filters `status, priority, area_id, building, from, to, hour_from, hour_to` (WIB; hours as `H` or `HH:MM`) |
 | `POST` | `/api/reports/:id/reanalyze` | re-run a failed analysis |
+| `POST` | `/api/reports/:id/reopen` | supervisor: send a resolved report back to the staff list (`409` if it is not resolved) |
 | `DELETE` | `/api/reports/:id` | delete permanently, logged with a full copy |
 | `GET` | `/api/cleaning/reports` | daily-task reports; filters `staff_id, area_id, alerts=1, from, to, hour_from, hour_to` |
 | `GET` | `/api/cleaning/recap?date=` | one WIB day per area: tasks reported, by whom, and gaps; plus work per staff member |
@@ -492,8 +493,9 @@ handled, they just do not rank.
 **Closing a report demands evidence, not a claim.** Reporters must attach a photo
 of the condition, and staff must upload a proof photo before a report can be
 marked resolved. Claiming a report is deliberately *not* a lock (a colleague may
-take over, and the handover is logged), but closing is final: a resolved report
-cannot be reopened. Both photos are enforced on the server, not merely hidden in the UI.
+take over, and the handover is logged), and staff cannot reopen a resolved report;
+only a supervisor can, which clears the handler and the proof photo from the report
+but keeps the photo in storage and the activity log. Both photos are enforced on the server, not merely hidden in the UI.
 The proof photo is shown on the public board so that "already handled" can be checked
 by anyone.
 

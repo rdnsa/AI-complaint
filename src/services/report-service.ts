@@ -180,6 +180,32 @@ export async function requestReanalysis(env: Env, id: string): Promise<boolean> 
  * into the activity log first. That copy is what lets management inspect a
  * report that disappeared, along with who removed it.
  */
+export type ReopenResult = { kind: 'ok' } | { kind: 'not-found' } | { kind: 'not-resolved' };
+
+/**
+ * A supervisor sends a badly closed report back to the staff list. The photo it
+ * was closed with stays in storage and in the log: it is the evidence of why.
+ */
+export async function reopenReport(env: Env, id: string, actor: string): Promise<ReopenResult> {
+  const row = await reports.findById(env, id);
+  if (!row) return { kind: 'not-found' };
+  if (!(await reports.reopen(env, id))) return { kind: 'not-resolved' };
+  reportsChanged();
+
+  await log(env, {
+    action: 'report_reopened',
+    report_id: id,
+    actor,
+    summary: `Membuka kembali laporan di ${row.location_name} yang diselesaikan ${row.staff_name ?? 'petugas'}`,
+    details: {
+      closed_by: row.staff_name,
+      resolved_at: row.resolved_at,
+      proof_photo: row.proof_photo_key,
+    },
+  });
+  return { kind: 'ok' };
+}
+
 export async function deleteReport(env: Env, id: string, actor: string): Promise<boolean> {
   const row = await reports.findById(env, id);
   if (!row) return false;
