@@ -85,7 +85,7 @@ both through the `location_info` view.
     "Sudah beres" asks who finished and opens the camera. A claim is not a
     lock: until a proof photo closes the report another staff member may take
     it over, and the handover is logged ("X took over … from Y"). A resolved
-    report cannot be reopened by staff (`409`), only by a supervisor
+    report cannot be changed by staff (`409`), only reopened by a supervisor
   - **Tugas harian** (daily tasks, `/staff` or `/clean/<area>`): pick a name
     and a location, then six tasks, the same everywhere — sweep & mop, wipe the
     windows, clean the toilet, empty the bins, refill the water gallon, tidy
@@ -112,18 +112,17 @@ both through the `location_info` view.
 
 ## Which model does what
 
-One model, `deepseek-chat` from DeepSeek, for text only. Photos are never judged by a model: a proof photo closes a report as soon as it is uploaded, and daily-task photos are checked by rules (age, reuse, GPS).
+Two models, split by input. Neither decides whether a report may close, and daily-task photos go to neither: they are checked by rules (age, reuse, GPS).
 
-| | |
-|---|---|
-| Input | complaint text; the day's list of summaries; admin questions |
-| Job | features 1–3: classify, prioritise, summarise, daily summary; feature 5: answer questions via tool calls |
-| Called | on every new report (async, after the response), once a day by cron, and per question |
-| On failure | report is kept unlabelled, can be re-analysed |
-| Code | `analyzeComplaint()`, `summarizeDay()`, `chatWithTools()` in `src/adapters/llm.ts` |
-| Config | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` |
-| Stored in | `reports.categories/priority/summary/recommendation/ai_*`, `daily_summaries` |
-| Cost | paid, very cheap |
+| | DeepSeek `deepseek-chat` | Gemini `gemini-3.6-flash` |
+|---|---|---|
+| Input | complaint text; the day's list of summaries; admin questions | staff proof photo of a complaint, with the location and original complaint as context |
+| Job | features 1–3: classify, prioritise, summarise, daily summary; feature 5: answer questions via tool calls | say what the proof photo shows, for the supervisor to read |
+| Called | on every new report (async, after the response), once a day by cron, and per question | every time staff close a complaint (async, after the response) |
+| On failure | report is kept unlabelled, can be re-analysed | report stays closed, the photo has no description, the activity log gets `proof_description_failed` |
+| Code | `analyzeComplaint()`, `summarizeDay()`, `chatWithTools()` in `src/adapters/llm.ts` | `describeProofPhoto()` in the same file |
+| Config | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | `VISION_BASE_URL`, `VISION_MODEL`, `VISION_API_KEY` (optional) |
+| Stored in | `reports.categories/priority/summary/recommendation/ai_*`, `daily_summaries` | `reports.proof_reason`, `proof_model`, `proof_ms` |
 
 ## Roles
 
@@ -167,6 +166,7 @@ salt via WebCrypto. The plaintext is never stored anywhere.
 | File storage | Cloudflare R2, served through the Worker |
 | Frontend | React 18 + Vite + Tailwind CSS, glassmorphism design (see `design.md`) |
 | i18n | hand-rolled dictionary in `web/src/lib/i18n.tsx`, no library |
+| LLM (vision) | any OpenAI-compatible vision model, default Gemini `gemini-3.6-flash` — describes proof photos |
 | LLM (text) | DeepSeek `deepseek-chat` in JSON mode — no training, no dataset |
 
 The frontend and the API live in the same Worker on the same origin, so there is
@@ -179,7 +179,7 @@ cron (`0 10 * * *` UTC = 17:00 WIB) that writes the daily summary.
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY and AUTH_SECRET (without it sign-in fails with 500)
+cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY, VISION_API_KEY and AUTH_SECRET (without it sign-in fails with 500)
 
 npm run db:local                 # apply migrations to the local D1
 npm run db:seed                  # legacy toilets (older reports point at them)
@@ -243,6 +243,7 @@ that line is removed. The list of open bugs and everything else is in
 
 ```bash
 npx wrangler secret put LLM_API_KEY
+npx wrangler secret put VISION_API_KEY # optional: without it proof photos get no description
 npx wrangler secret put AUTH_SECRET   # a long random string
 
 npm run db:remote                     # migrations against production D1
@@ -388,7 +389,7 @@ src/
   env.ts                 infrastructure bindings and configuration
   domain/types.ts        entities, enums, DTO mapping, closing rule
   adapters/
-    llm.ts               prompts, few-shot examples, output validation
+    llm.ts               prompts, few-shot examples, output validation, proof-photo description
     storage.ts           R2 photo storage, prefixes and limits
     session.ts           JWT cookie sessions and role guards
     password.ts          PBKDF2 hashing
@@ -499,7 +500,7 @@ but keeps the photo in storage and the activity log. Both photos are enforced on
 The proof photo is shown on the public board so that "already handled" can be checked
 by anyone.
 
-**The proof photo is not judged by a model.** An automatic check used to refuse photos that looked dirty or showed the wrong place, but it refused genuine work too often and made closing a report too hard, so it was removed. Reports closed while it ran keep their old `proof_*` values in the database, and the old `proof_rejected` and `verification_failed` rows stay in the activity log. What keeps a close honest now is people: the photo is public, and the name and photo are logged.
+**The proof photo is described, never judged.** An automatic check used to refuse photos that looked dirty or showed the wrong place, but it refused genuine work too often and made closing a report too hard. Now a report closes as soon as its photo is uploaded, and only afterwards does a vision model write one or two sentences on what the photo shows, which the supervisor reads beside it (`proof_reason`). It has no say over the close, staff do not wait for it, and when it fails the photo just has no description. On Google's free tier submitted photos may be used to improve its products; enabling billing turns that off. Reports closed while the old check ran keep their `proof_verdict`, and old `proof_rejected` and `verification_failed` rows stay in the activity log. What keeps a close honest is people: the photo is public, the name and photo are logged, and a supervisor can reopen the report.
 
 **Questions are answered through tools, not by reading the table.** The
 model receives four function definitions (`count_reports`, `resolution_time`,

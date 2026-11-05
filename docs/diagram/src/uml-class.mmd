@@ -32,7 +32,7 @@ classDiagram
   class Report {
     +id : String «PK»
     +areaId : String «FK»
-    +toiletId : String «FK» (data lama)
+    +toiletId : String «FK» «data lama»
     +reporterId : String «FK»
     +description : String
     +photoKey : String
@@ -45,13 +45,14 @@ classDiagram
     +summary : String
     +recommendation : String
     +proofPhotoKey : String
-    +proofVerdict : ProofVerdict
-    +proofReason : String
+    +proofVerdict : ProofVerdict «data lama»
+    +proofReason : String «data lama»
     +createdAt : DateTime
     +submit(areaId, description, photoKey)
     +runAnalysis()
     +changeStatus(status, staff, proofPhotoKey)
-    +canResolve() Boolean
+    +canResolve(status, proofPhoto) Boolean$
+    +reopen(actor)
     +requestReanalysis()
     +delete(actor)
   }
@@ -102,13 +103,13 @@ classDiagram
     +active : Boolean
   }
 
-  note "Daftar nilai tetap (enumeration)\nRole: supervisor | staff | reporter\nReportStatus: new | in_progress | resolved\nPriority: low | medium | high\nCategory: cleanliness | supplies | damage | odor | flooding | other\nProofVerdict: clean | dirty | wrong_place\nAiStatus: pending | ok | failed\nCleaningTask: sweep_mop | glass | toilet | trash | gallon | tidy\n(data lama: sweep, mop)\nLocationStatus: ok | far | unknown"
+  note "Daftar nilai tetap (enumeration)<br/>Role: supervisor | staff | reporter<br/>ReportStatus: new | in_progress | resolved<br/>Priority: low | medium | high<br/>Category: cleanliness | supplies | damage | odor | flooding | other<br/>ProofVerdict (data lama): clean | dirty | wrong_place<br/>AiStatus: pending | ok | failed<br/>CleaningTask: sweep_mop | glass | toilet | trash | gallon | tidy<br/>(data lama: sweep, mop)<br/>LocationStatus: ok | far | unknown"
 
-  CleaningArea "1" <-- "0..*" Report : dilaporkan pada
-  Toilet "0..1" <-- "0..*" Report : dilaporkan pada (data lama)
-  User "0..1" <-- "0..*" Report : dibuat oleh (pelapor)
   CleaningArea "1" <-- "0..*" CleaningReport : dikerjakan di
   User "1" <-- "0..*" CleaningReport : dilaporkan oleh (petugas)
   CleaningReport "1" *-- "1..6" CleaningReportTask : memuat
+  CleaningArea "1" <-- "0..*" Report : dilaporkan pada
+  Toilet "0..1" <-- "0..*" Report : dilaporkan pada (data lama)
+  User "0..1" <-- "0..*" Report : dibuat oleh (pelapor)
   Report "0..1" <.. "0..*" ActivityLog : mencatat
   DailySummary ..> Report : merangkum

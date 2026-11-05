@@ -43,6 +43,8 @@ export interface Report {
   description: string;
   photo_url: string | null;
   proof_photo_url: string | null;
+  /** What the vision model sees in the proof photo; arrives shortly after the close. */
+  proof_reason: string | null;
   status: ReportStatus;
   staff_name: string | null;
   resolved_at: string | null;
@@ -127,6 +129,7 @@ export type ActivityAction =
   | 'analysis_failed'
   | 'status_changed'
   | 'report_reopened'
+  | 'proof_description_failed'
   | 'report_deleted'
   | 'login'
   | 'daily_summary'

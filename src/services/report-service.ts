@@ -1,4 +1,5 @@
-import { photoUploadedAt, FOLDER, deletePhoto } from '../adapters/storage';
+import { describeProofPhoto } from '../adapters/llm';
+import { photoUploadedAt, readPhoto, FOLDER, deletePhoto } from '../adapters/storage';
 import {
   canResolve,
   toDTO,
@@ -11,7 +12,7 @@ import { reportsChanged } from '../adapters/memo';
 import type { Env } from '../env';
 import * as cleaning from '../repositories/cleaning';
 import * as reports from '../repositories/reports';
-import { log, REPORTER } from './activity-service';
+import { log, REPORTER, SYSTEM } from './activity-service';
 import { runAnalysis } from './analysis-service';
 
 /**
@@ -123,8 +124,9 @@ export async function changeStatus(
   const before = await reports.findById(env, id);
   if (!before) return { kind: 'not-found' };
 
-  // Closed is closed: reopening it would also wipe the proof photo it was closed with.
-  if (before.status === 'resolved' && status !== 'resolved') return { kind: 'already-resolved' };
+  // Closed is closed: nobody overwrites the name, time or photo of a finished report.
+  // Only a supervisor can change it, by reopening it first (reopenReport).
+  if (before.status === 'resolved') return { kind: 'already-resolved' };
 
   // Claiming what you already hold changes nothing, so it is neither written nor logged twice.
   if (status === 'in_progress' && before.status === 'in_progress' && before.staff_name === staffName) {
@@ -180,6 +182,37 @@ export async function requestReanalysis(env: Env, id: string): Promise<boolean> 
  * into the activity log first. That copy is what lets management inspect a
  * report that disappeared, along with who removed it.
  */
+/**
+ * Asks the vision model what a proof photo shows, for the supervisor.
+ *
+ * Invoked through `ctx.waitUntil()` once the report is already closed, so staff
+ * never wait on it and it can never refuse anything. It deliberately never
+ * throws: a failure only means the photo has no description, and is logged.
+ */
+export async function runProofDescription(env: Env, reportId: string, photoKey: string): Promise<void> {
+  const start = Date.now();
+  try {
+    const row = await reports.findById(env, reportId);
+    const photo = await readPhoto(env, photoKey);
+    if (!row || !photo) return;
+    const text = await describeProofPhoto(env, photo, {
+      location: row.location_name ?? row.area_id ?? '',
+      complaint: row.description,
+    });
+    await reports.saveProofDescription(env, reportId, photoKey, { text, model: env.VISION_MODEL, ms: Date.now() - start });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`Proof description failed for report ${reportId}: ${message}`);
+    await log(env, {
+      action: 'proof_description_failed',
+      report_id: reportId,
+      actor: SYSTEM,
+      summary: 'Deskripsi foto bukti gagal dibuat',
+      details: { error: message.slice(0, 300), model: env.VISION_MODEL },
+    });
+  }
+}
+
 export type ReopenResult = { kind: 'ok' } | { kind: 'not-found' } | { kind: 'not-resolved' };
 
 /**

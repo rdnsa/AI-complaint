@@ -1,3 +1,6 @@
 # Copy this to `.dev.vars` for local development. The .dev.vars file is NOT committed.
 LLM_API_KEY="sk-replace-with-your-deepseek-key"
+# Key for the model that describes proof photos (VISION_BASE_URL/VISION_MODEL in wrangler.jsonc).
+# Without it reports still close; the photos just get no description.
+VISION_API_KEY="key-1,key-2"
 AUTH_SECRET="a-long-random-string-for-signing-cookies"

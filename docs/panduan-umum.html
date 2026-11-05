@@ -52,7 +52,7 @@
   .pecah { page-break-before: always; }
 </style></head><body>
 <div class="sampul">
-  <span class="lencana">Panduan untuk Pengguna &amp; Pimpinan &middot; Edisi 4 November 2026</span>
+  <span class="lencana">Panduan untuk Pengguna &amp; Pimpinan &middot; Edisi 5 November 2026</span>
   <h1>Kato Report</h1>
   <p class="sub">Sistem pelaporan kebersihan kampus &middot; UPI Kampus Tasikmalaya &middot; Jln. Dadaha No. 18<br>
   Dokumen ini menjelaskan apa yang sudah dibuat dan cara memakainya, tanpa istilah teknis.</p>
@@ -87,8 +87,8 @@ Akibatnya masalah kecil dibiarkan sampai menjadi besar.</p>
 
 <p>Kato Report memotong jarak itu. Siapa saja di kampus (mahasiswa, dosen, staf, tamu) cukup memindai QR
 di lokasi dan menulis keluhan dengan bahasa sehari-hari. Petugas kebersihan melihat keluhan itu, mengerjakannya, lalu
-memotret hasilnya. Sisanya dikerjakan sistem, termasuk memastikan bahwa &ldquo;sudah dibersihkan&rdquo;
-benar-benar sudah bersih. Di luar keluhan, petugas juga mengirim bukti pekerjaan rutin hariannya
+memotret hasilnya. Sisanya dikerjakan sistem: tulisan keluhan dirapikan dan diberi prioritas, dan foto hasil kerja tampil terbuka
+di papan umum, sehingga siapa pun bisa melihat sendiri apakah tempat itu sudah bersih. Di luar keluhan, petugas juga mengirim bukti pekerjaan rutin hariannya
 (enam tugas tetap per lokasi), sehingga pimpinan melihat kerja nyata, bukan hanya reaksi terhadap keluhan.</p>
 
 <p>Yang dilaporkan bukan lagi hanya toilet. <strong>Lokasi</strong> bisa lantai sebuah gedung, halaman gedung,
@@ -106,7 +106,7 @@ halaman Gedung A sampai I, serta Lapang Voli.</p>
   </div>
   <div class="kartu">
     <div class="angka">Kamera</div>
-    <div class="angka-ket">semua foto diambil langsung dari kamera, bukan dari galeri; foto bukti penyelesaian keluhan diperiksa AI</div>
+    <div class="angka-ket">semua foto diambil langsung dari kamera, bukan dari galeri; foto bukti penyelesaian keluhan tampil terbuka di papan umum</div>
   </div>
   <div class="kartu">
     <div class="angka">0 akun</div>
@@ -120,9 +120,9 @@ halaman Gedung A sampai I, serta Lapang Voli.</p>
   <tr><td>Masuk</td><td>Pelapor</td><td>Pindai QR di lokasi (atau pilih lokasi sendiri), tulis keluhan, ambil foto dengan kamera, kirim. Langsung muncul halaman &ldquo;Laporan kamu sudah masuk&rdquo;.</td></tr>
   <tr><td>Dipahami AI</td><td>Kecerdasan buatan (teks)</td><td>Beberapa detik setelah terkirim: jenis masalah, tingkat prioritas, ringkasan rapi, dan perintah kerja untuk petugas.</td></tr>
   <tr><td>Dikerjakan</td><td>Petugas</td><td>Di tab <strong>Keluhan</strong>, petugas melihat semua keluhan yang belum selesai, yang mendesak lebih dulu. Ia menekan <span class="tombol netral">Saya kerjakan sekarang</span> lalu memilih namanya; pelapor melihat statusnya berubah. Bila petugas itu tidak sempat menyelesaikannya, petugas lain boleh menekan <span class="tombol netral">Ambil alih</span>.</td></tr>
-  <tr><td>Foto bukti diperiksa AI</td><td>Kecerdasan buatan (foto)</td><td>Setelah dibereskan, petugas menekan <span class="tombol">Sudah beres &mdash; foto buktinya</span> dan memotret lokasinya. Foto dinilai: benar tempat yang dikeluhkan? sudah bersih? Bila belum, ditolak beserta alasannya.</td></tr>
-  <tr><td>Selesai</td><td>Sistem</td><td>Hanya setelah foto dinilai bersih, laporan berstatus selesai. Foto tampil di papan umum berbingkai hijau dengan tulisan &ldquo;Selesai ditangani&rdquo;. Laporan yang sudah selesai tidak bisa dibuka kembali.</td></tr>
-  <tr><td>Dipantau</td><td>SPV</td><td>Di dashboard terlihat semua laporan dengan jam masuk dan jam selesainya, serta siapa yang menanganinya.</td></tr>
+  <tr><td>Foto bukti</td><td>Petugas</td><td>Setelah dibereskan, petugas menekan <span class="tombol">Sudah beres &mdash; foto buktinya</span>, memilih namanya, lalu memotret lokasinya dengan kamera. Foto ini wajib. Isinya tidak dinilai AI.</td></tr>
+  <tr><td>Selesai</td><td>Sistem</td><td>Begitu foto bukti terkirim, laporan berstatus selesai. Foto tampil di papan umum berbingkai hijau dengan tulisan &ldquo;Selesai ditangani&rdquo;. Petugas tidak bisa membuka kembali laporan yang sudah selesai; hanya SPV yang bisa, bila penyelesaiannya keliru.</td></tr>
+  <tr><td>Dipantau</td><td>SPV</td><td>Di dashboard terlihat semua laporan dengan jam masuk dan jam selesainya, siapa yang menanganinya, dan foto buktinya. SPV sebaiknya memeriksa sebagian foto bukti secara acak.</td></tr>
   <tr><td>Direkap</td><td>Sistem</td><td>Setiap pukul 17.00 WIB, satu paragraf ringkasan hari itu untuk pimpinan.</td></tr>
 </table>
 <p>Selain keluhan, petugas mengirim <strong>tugas harian</strong>: menyapu &amp; mengepel, mengelap kaca jendela,
@@ -131,20 +131,20 @@ diambil langsung dari kamera. Foto tugas harian dicap nama, lokasi, jam server, 
 menutup keluhan pelapor; keluhan hanya selesai lewat tombol foto bukti pada keluhan itu sendiri.</p>
 
 <h2>3. Cara kecerdasan buatan (AI) dipakai</h2>
-<p>Sistem memakai dua layanan <strong>kecerdasan buatan (AI)</strong> untuk tiga pekerjaan:
-<strong>memahami tulisan keluhan</strong>, <strong>memeriksa foto bukti</strong>, dan <strong>Kato Bot</strong> yang menjawab
-pertanyaan tentang data laporan. Tempat yang memakai AI ditandai jelas di aplikasi: &ldquo;Hasil analisis&rdquo; pada laporan,
-&ldquo;Diverifikasi AI: bersih&rdquo; pada foto bukti di dashboard SPV, &ldquo;Penilaian AI&rdquo; pada foto yang ditolak, dan &ldquo;Jawaban Kato Bot&rdquo; pada jawaban chat.</p>
+<p>Sistem memakai satu layanan <strong>kecerdasan buatan (AI)</strong>, yaitu DeepSeek, dan hanya untuk teks:
+<strong>memahami tulisan keluhan</strong>, <strong>membuat ringkasan harian</strong>, dan <strong>Kato Bot</strong> yang menjawab
+pertanyaan tentang data laporan. Tempat yang memakai AI ditandai jelas di aplikasi: &ldquo;Hasil analisis&rdquo; pada laporan
+dan &ldquo;Jawaban Kato Bot&rdquo; pada jawaban chat.</p>
 <table>
-  <tr><th></th><th>DeepSeek</th><th>Google Gemini</th></tr>
-  <tr><td>Yang dibaca</td><td>Tulisan pelapor, dan angka-angka data laporan</td><td>Foto bukti penyelesaian keluhan dari petugas</td></tr>
-  <tr><td>Tugasnya</td><td><strong>Memahami keluhan</strong> (menggolongkan jenis masalah, menentukan prioritas, menyusun ringkasan dan perintah kerja), <strong>membuat ringkasan harian</strong>, dan menjadi otak <strong>Kato Bot</strong></td><td><strong>Memeriksa foto</strong>: apakah foto benar-benar menunjukkan tempat yang dikeluhkan, dan apakah tempat itu sudah bersih</td></tr>
-  <tr><td>Kapan bekerja</td><td>Setiap ada laporan masuk, setiap sore pukul 17.00 WIB (atau saat SPV menekan &ldquo;Buat ulang&rdquo;), dan setiap ada pertanyaan ke Kato Bot</td><td>Setiap petugas menyelesaikan sebuah keluhan dengan foto bukti</td></tr>
-  <tr><td>Kalau layanannya sedang gangguan</td><td>Laporan tetap masuk dan tetap tampil, hanya tanpa label; SPV bisa menekan &ldquo;Analisis ulang&rdquo;. Kato Bot menjawab bahwa ia tidak dapat menjawab saat ini</td><td>Keluhan belum bisa ditutup; petugas diminta mencoba lagi beberapa saat kemudian. Foto tidak diloloskan begitu saja</td></tr>
+  <tr><th></th><th>DeepSeek</th></tr>
+  <tr><td>Yang dibaca</td><td>Tulisan pelapor, dan angka-angka data laporan. Tidak pernah foto</td></tr>
+  <tr><td>Tugasnya</td><td><strong>Memahami keluhan</strong> (menggolongkan jenis masalah, menentukan prioritas, menyusun ringkasan dan perintah kerja), <strong>membuat ringkasan harian</strong>, dan menjadi otak <strong>Kato Bot</strong></td></tr>
+  <tr><td>Kapan bekerja</td><td>Setiap ada laporan masuk, setiap sore pukul 17.00 WIB (atau saat SPV menekan &ldquo;Buat ulang&rdquo;), dan setiap ada pertanyaan ke Kato Bot</td></tr>
+  <tr><td>Kalau layanannya sedang gangguan</td><td>Laporan tetap masuk dan tetap tampil, hanya tanpa label; SPV bisa menekan &ldquo;Analisis ulang&rdquo;. Kato Bot menjawab bahwa ia tidak dapat menjawab saat ini. Petugas tetap bisa menutup keluhan, karena penutupan tidak memakai AI</td></tr>
 </table>
-<p>Foto tugas harian <em>tidak</em> diperiksa AI; keabsahannya dijaga oleh aturan lain (foto dari kamera langsung, batas umur foto, GPS; lihat bagian 6B).
-Foto dari pelapor juga tidak dikirim ke AI, hanya tulisannya.
-DeepSeek dipilih untuk teks karena tidak bisa melihat gambar; karena itu foto diserahkan ke Gemini.
+<p><strong>AI tidak pernah menilai foto.</strong> Foto dari pelapor, foto bukti, dan foto tugas harian tidak dikirim ke AI.
+Foto tugas harian dijaga oleh aturan lain (foto dari kamera langsung, batas umur foto, GPS; lihat bagian 6B).
+Foto bukti keluhan dijaga dengan cara lain lagi: tampil terbuka, tercatat, dan bisa ditindaklanjuti SPV (lihat bagian 11).
 Keluhan berbahasa Inggris pun dipahami, tetapi ringkasan dan rekomendasi AI selalu berbahasa Indonesia karena pembacanya petugas dan pimpinan kampus.</p>
 
 <h3>Contoh nyata: memahami tulisan</h3>
@@ -160,20 +160,6 @@ Keluhan berbahasa Inggris pun dipahami, tetapi ringkasan dan rekomendasi AI sela
 jatuh. Sistem tidak sekadar mendaftar masalah, tetapi menimbang mana yang paling membahayakan.
 Bahasa gaul dipahami, dan keluhan tidak harus tentang toilet. Contoh lain: <em>&ldquo;Selokan depan lab mampet, airnya naik ke paving abis hujan, banyak sampah plastik&rdquo;</em>
 dikenali sebagai genangan dan kebersihan berprioritas tinggi; <em>&ldquo;daun kering lumayan banyak di pinggir lapangan&rdquo;</em> dikenali sebagai keluhan kecil berprioritas rendah.</p>
-
-<h3>Contoh nyata: memeriksa foto</h3>
-<div class="tolak">
-  <strong>Foto:</strong> lantai masih basah merata, ada sampah di sudut<br>
-  <strong>Putusan:</strong> ditolak, dengan kotak merah &ldquo;Foto ditolak&rdquo;, &ldquo;Masih terlihat kotor. Bersihkan, lalu foto ulang.&rdquo;, dan alasan dari AI di bawahnya<br>
-  <strong>Yang terjadi:</strong> laporan tetap terbuka; foto yang ditolak dihapus; petugas diminta membersihkan lagi lalu memotret ulang.
-</div>
-<div class="hasil">
-  <strong>Foto:</strong> lantai dan sudut yang dikeluhkan kering dan bersih<br>
-  <strong>Putusan:</strong> diterima<br>
-  <strong>Yang terjadi:</strong> laporan berstatus selesai; foto tampil di papan umum berbingkai hijau, dan di dashboard SPV bertanda &ldquo;Diverifikasi AI: bersih&rdquo;.
-</div>
-<p>Kalau foto bukan tempat yang dikeluhkan (misalnya foto dinding, foto gelap, atau foto orang), putusannya &ldquo;Foto bukan lokasi yang dilaporkan.&rdquo;
-Keluhan yang tidak bisa dilihat dari foto (bau, sabun habis) tidak dijadikan alasan menolak. Bila pemeriksa ragu antara bersih dan kotor, ia memilih kotor.</p>
 
 <h3>Contoh nyata: Kato Bot menjawab pertanyaan</h3>
 <p>Siapa saja bisa mengetik pertanyaan biasa, misalnya <em>&ldquo;Gedung mana yang paling banyak laporan 30 hari terakhir?&rdquo;</em>,
@@ -199,12 +185,12 @@ Petugas tidak pernah login, cukup memilih namanya dari daftar.</p>
   <tr>
     <td><strong>Petugas kebersihan</strong></td>
     <td><strong>Tidak pernah.</strong> SPV menambahkan namanya; petugas memilih namanya dari daftar saat bertindak</td>
-    <td>Mengerjakan <strong>Keluhan</strong> (mengklaim, mengambil alih, menyelesaikan dengan foto bukti yang lolos pemeriksaan AI) dan mengirim <strong>Tugas harian</strong> (enam tugas, masing-masing dengan foto)</td>
+    <td>Mengerjakan <strong>Keluhan</strong> (mengklaim, mengambil alih, menyelesaikan dengan foto bukti dari kamera) dan mengirim <strong>Tugas harian</strong> (enam tugas, masing-masing dengan foto)</td>
   </tr>
   <tr>
     <td><strong>SPV</strong><br>(pengawas)</td>
     <td>Ya, dengan username dan password. Satu akun bawaan sudah tersedia; SPV dapat menambah akun SPV lain</td>
-    <td>Memantau semua laporan dan pekerjaan petugas, membaca grafik dan log, mengekspor data ke Excel, mengelola nama petugas dan akun SPV, mencetak stiker QR, menghapus laporan spam, meminta analisis ulang</td>
+    <td>Memantau semua laporan dan pekerjaan petugas, membaca grafik dan log, mengekspor data ke Excel, mengelola nama petugas dan akun SPV, mencetak stiker QR, menghapus laporan spam, meminta analisis ulang, membuka kembali laporan yang sudah selesai</td>
   </tr>
   <tr>
     <td><strong>Pimpinan</strong></td>
@@ -381,7 +367,7 @@ adalah membuka halaman petugas.</p>
     <h3>Tekan <span class="tombol">Sudah beres &mdash; foto buktinya</span></h3>
     <p>Muncul pertanyaan <em>&ldquo;Siapa yang menyelesaikan?&rdquo;</em>. Pilih namamu, tekan <span class="tombol">Lanjut foto bukti</span>, lalu kamera terbuka.
     Foto tempat yang <em>sudah</em> bersih, bagian yang dikeluhkan terlihat jelas, lampu menyala, <strong>tanpa orang</strong>. Tekan
-    <span class="tombol">Ambil foto</span>. Tunggu sebentar: tulisan berubah &ldquo;Mengunggah&hellip;&rdquo; lalu &ldquo;AI memeriksa foto&hellip;&rdquo;.</p>
+    <span class="tombol">Ambil foto</span>. Tunggu sebentar: tulisan pada tombol berubah menjadi &ldquo;Mengunggah&hellip;&rdquo;.</p>
   </div>
 </div>
 
@@ -389,12 +375,12 @@ adalah membuka halaman petugas.</p>
   <div class="nomor">6</div>
   <div>
     <h3>Lihat hasilnya</h3>
-    <p><strong>Diterima:</strong> muncul <em>&ldquo;Laporan selesai. Terima kasih!&rdquo;</em> dan keluhan hilang dari daftar. Laporan yang sudah selesai tidak bisa dibuka lagi.<br>
-    <strong>Ditolak:</strong> muncul kotak merah <em>&ldquo;Foto ditolak&rdquo;</em>. Di bawahnya tertulis <em>&ldquo;Masih terlihat kotor. Bersihkan, lalu foto ulang.&rdquo;</em>
-    atau <em>&ldquo;Foto bukan lokasi yang dilaporkan.&rdquo;</em>, disusul <em>Penilaian AI</em> yang menyebut apa yang terlihat. Bereskan yang disebut,
-    lalu tekan lagi <em>Sudah beres &mdash; foto buktinya</em>. Laporan tetap terbuka dan foto yang ditolak tidak disimpan.<br>
-    <strong>&ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo;</strong> bukan penolakan: pemeriksa foto sedang tidak bisa dihubungi. Tunggu
-    setengah menit, lalu coba lagi. Kalau terus begitu, beri tahu SPV.</p>
+    <p><strong>Berhasil:</strong> muncul <em>&ldquo;Laporan selesai. Terima kasih!&rdquo;</em> dan beberapa detik kemudian keluhan hilang dari daftar. Petugas tidak bisa membuka kembali laporan yang sudah selesai;
+    kalau ternyata keliru, beri tahu SPV, karena hanya SPV yang bisa.<br>
+    <strong>Gagal:</strong> muncul kotak merah berisi pesan kesalahannya, misalnya <em>&ldquo;Gagal menghubungi server&rdquo;</em>. Bila sinyal putus, pesannya bisa berupa tulisan dari browser, kadang berbahasa Inggris. Laporan tetap terbuka. Periksa sinyal, lalu tekan lagi
+    <em>Sudah beres &mdash; foto buktinya</em>. Kalau terus begitu, beri tahu SPV.<br>
+    <strong>Fotonya dilihat orang.</strong> Sistem tidak menilai isi foto, tetapi foto itu tampil terbuka di papan umum dan tersimpan bersama namamu. SPV bisa memeriksanya dan mengembalikan keluhan ke daftar;
+    bila itu terjadi, keluhan muncul lagi sebagai keluhan baru dan dikerjakan seperti biasa.</p>
   </div>
 </div>
 
@@ -447,7 +433,7 @@ adalah membuka halaman petugas.</p>
 <div class="catatan">
   <strong>Aturan foto tugas harian.</strong> Foto hanya dari kamera langsung. Jam yang dihitung adalah jam server saat foto diterima, bukan jam di HP.
   Foto yang sudah lebih dari 3 jam tidak diterima (&ldquo;Ambil foto baru.&rdquo;), dan satu foto hanya bisa membuktikan satu tugas satu kali.
-  Foto tugas harian <em>tidak</em> dinilai AI; yang diperiksa SPV adalah fotonya, jamnya, dan posisinya. Pengiriman ganda yang tak sengaja (tombol tertekan dua kali dengan foto yang sama) tidak dihitung dua kali.<br><br>
+  Seperti semua foto di sistem ini, foto tugas harian tidak dikirim ke AI; yang diperiksa SPV adalah fotonya, jamnya, dan posisinya. Pengiriman ganda yang tak sengaja (tombol tertekan dua kali dengan foto yang sama) tidak dihitung dua kali.<br><br>
   <strong>Ronde harian.</strong> SPV melihat, untuk setiap lokasi, tugas mana saja yang sudah dikirim hari itu, oleh siapa, dan mana yang belum
   (bagian 7, tab Laporan &rarr; Kebersihan). Tugas yang tak dikirim terlihat sebagai celah. Jadi kirim tiap tugas begitu selesai.
   Tugas harian tidak menutup keluhan pelapor; keluhan hanya selesai lewat tombol foto bukti pada kartu keluhan.
@@ -460,7 +446,7 @@ adalah membuka halaman petugas.</p>
 
 <h2 class="pecah">7. Panduan SPV (pengawas)</h2>
 <p>SPV memantau; <strong>menyelesaikan keluhan adalah tugas petugas</strong> di lokasi, dengan foto. Karena itu
-di dashboard tidak ada tombol untuk menandai laporan selesai.</p>
+di dashboard tidak ada tombol untuk menandai laporan selesai. Sebaliknya, hanya SPV yang bisa <strong>membuka kembali</strong> laporan yang sudah selesai (dijelaskan di bawah).</p>
 
 <h3>Masuk</h3>
 <p>Di halaman depan tekan <span class="tombol netral">Masuk</span>, isi <em>Username</em> dan <em>Password</em>, tekan
@@ -510,11 +496,29 @@ ia ikon melayang yang ada di setiap halaman (bagian 9). Bila SPV sedang masuk, K
   <tr><td>Lokasi</td><td>Mis. &ldquo;Gedung Dewi Sartika (Perkuliahan) - Lantai 2&rdquo;, &ldquo;Halaman Gedung Dr. Sutomo&rdquo;, atau &ldquo;Lapang Voli&rdquo;.</td></tr>
   <tr><td>Kalimat ringkasan + &ldquo;Laporan asli&rdquo;</td><td>Versi rapi dari sistem, dan tulisan pelapor apa adanya.</td></tr>
   <tr><td>Kotak &ldquo;Tindakan:&rdquo;</td><td>Perintah kerja untuk petugas.</td></tr>
-  <tr><td>Foto</td><td>Foto keadaan dari pelapor; setelah selesai, foto bukti berbingkai hijau dengan tulisan &ldquo;Bukti penyelesaian &middot; Diverifikasi AI: bersih&rdquo; dan penilaian singkat AI.</td></tr>
+  <tr><td>Foto</td><td>Foto keadaan dari pelapor; setelah selesai, foto bukti berbingkai hijau dengan tulisan &ldquo;Bukti penyelesaian&rdquo;.</td></tr>
   <tr><td>&ldquo;Ditangani: nama&rdquo;</td><td>Nama petugas yang terakhir mengklaim atau menyelesaikan laporan itu.</td></tr>
   <tr><td><span class="tombol netral">Analisis ulang</span></td><td>Hanya muncul bila analisis otomatis gagal. Tekan sekali; hasilnya muncul beberapa detik kemudian.</td></tr>
+  <tr><td><span class="tombol netral">Buka kembali</span></td><td>Hanya muncul pada laporan yang sudah selesai. Mengembalikan laporan ke daftar petugas; ada konfirmasi (dijelaskan di bawah tabel ini).</td></tr>
   <tr><td><span class="tombol netral">Hapus</span></td><td>Untuk laporan yang jelas spam atau tidak pantas, karena daftar laporan terbuka untuk umum dan tidak ada pembatas jumlah kiriman. Ada konfirmasi. Penghapusan <strong>tercatat permanen</strong> beserta isi laporannya dan nama SPV; pakai hanya bila memang perlu.</td></tr>
 </table>
+
+<h3>Membuka kembali laporan yang sudah selesai</h3>
+<p>Pakai tombol <span class="tombol netral">Buka kembali</span> bila foto buktinya tidak meyakinkan atau keluhannya ternyata belum beres. Tombol ini ada di kartu laporan berstatus selesai, di tab Laporan &rarr; Keluhan.
+Muncul konfirmasi: <em>&ldquo;Buka kembali laporan ini? Laporan kembali ke daftar petugas sebagai laporan baru, dan foto buktinya tidak lagi tampil di papan publik.&rdquo;</em> Setelah disetujui:</p>
+<ul>
+  <li>Laporan berstatus <em>baru</em> dan kembali ke daftar petugas. Nama penangan dan jam selesai dikosongkan. Di halaman status, pelapor melihat &ldquo;Laporan diterima&rdquo; lagi.</li>
+  <li>Foto bukti tidak lagi tampil pada kartu laporan maupun di papan umum. <strong>Lihat fotonya sebelum menekan tombol</strong>, karena sesudahnya foto itu tidak bisa dibuka lagi dari aplikasi. Berkasnya tetap tersimpan dan rujukannya ada di data log, tetapi tidak ditampilkan di tab Log aktivitas.</li>
+  <li>Log aktivitas mencatat &ldquo;Dibuka kembali&rdquo;, dengan nama SPV yang membuka dan nama petugas yang tadinya menutup.</li>
+  <li>Laporan itu tidak lagi terhitung selesai pada angka dan grafik.</li>
+</ul>
+<p>Bila muncul pesan merah di bawah tombol, misalnya &ldquo;Gagal menghubungi server&rdquo;, tekan sekali lagi. Bila tertulis &ldquo;Laporan ini belum selesai.&rdquo;, laporan itu sudah dibuka kembali, misalnya oleh SPV lain. Petugas tidak punya tombol ini.</p>
+
+<div class="catatan">
+  <strong>Periksa foto bukti secara acak.</strong> Menutup keluhan tidak melewati pemeriksaan otomatis: siapa pun yang memilih nama petugas bisa menutup keluhan dengan foto apa pun.
+  Pemeriksaan oleh SPV-lah yang menjaganya. Caranya: saring tab Laporan &rarr; Keluhan ke status <em>selesai</em> dan pilih rentang Waktu (saringan ini mengikuti jam laporan masuk, bukan jam selesai), lalu bandingkan foto bukti dengan foto keadaan dari pelapor dan keluhannya.
+  Bila ada yang tidak cocok, tanyakan ke petugas yang namanya tercatat dan buka kembali laporannya.
+</div>
 
 <h3>Tab Laporan &rarr; Kebersihan</h3>
 <p>Dua tampilan, dipilih dengan sakelar kecil: <span class="tombol netral">Rekap harian</span> dan <span class="tombol netral">Laporan &amp; foto</span>.
@@ -543,11 +547,12 @@ Tidak ada tombol untuk mengubah atau menghapus catatan ini, bagi siapa pun. Untu
   <tr><td>Laporan masuk</td><td>Laporan baru diterima, dengan lokasinya. Teks keluhan ada pada kartu laporannya di tab Laporan &rarr; Keluhan.</td></tr>
   <tr><td>Laporan kebersihan</td><td>Petugas mengirim tugas harian.</td></tr>
   <tr><td>Lapor di luar kampus</td><td>Tugas harian dikirim dari luar kampus atau tanpa GPS, dengan jaraknya.</td></tr>
-  <tr><td>Ubah status</td><td>Nama petugas yang mengklaim, mengambil alih (&ldquo;X mengambil alih &hellip; dari Y&rdquo;), atau menyelesaikan. Putusan pemeriksa foto ikut disimpan, tetapi tidak ditampilkan di tab ini.</td></tr>
-  <tr><td>Bukti ditolak</td><td>Foto bukti yang tidak lolos beserta alasan pemeriksa. Berguna untuk melihat pola: nama mana yang sering ditolak, alasan apa yang berulang.</td></tr>
+  <tr><td>Ubah status</td><td>Nama petugas yang mengklaim, mengambil alih (&ldquo;X mengambil alih &hellip; dari Y&rdquo;), atau menyelesaikan. Rujukan foto bukti ikut disimpan, tetapi tidak ditampilkan di tab ini; fotonya sendiri terlihat pada kartu laporan.</td></tr>
+  <tr><td>Dibuka kembali</td><td>SPV membuka kembali laporan yang sudah selesai, dengan lokasi dan nama petugas yang tadinya menutup. Rujukan foto bukti lama ikut disimpan, tetapi tidak ditampilkan di tab ini.</td></tr>
+  <tr><td>Bukti ditolak</td><td>Hanya catatan lama, dari saat foto bukti masih diperiksa otomatis. Catatan baru tidak dibuat lagi.</td></tr>
   <tr><td>Penghapusan</td><td>Laporan yang dihapus SPV; <strong>isinya dibentangkan utuh</strong> di sini, beserta nama penghapus dan waktunya.</td></tr>
   <tr><td>Analisis / Analisis gagal</td><td>Hasil pemahaman otomatis, atau kegagalannya.</td></tr>
-  <tr><td>Verifikasi gagal</td><td>Layanan pemeriksa foto tidak dapat dihubungi saat itu.</td></tr>
+  <tr><td>Verifikasi gagal</td><td>Hanya catatan lama, seperti <em>Bukti ditolak</em>. Catatan baru tidak dibuat lagi.</td></tr>
   <tr><td>Supervisor masuk</td><td>Siapa login ke dashboard dan kapan.</td></tr>
   <tr><td>Ringkasan harian</td><td>Ringkasan disusun (otomatis atau manual).</td></tr>
   <tr><td>Tanya data</td><td>Setiap pertanyaan ke Kato Bot. Data yang ditariknya ikut disimpan, tetapi tidak ditampilkan di tab ini.</td></tr>
@@ -696,7 +701,8 @@ Ringkasan hanya mencakup keluhan pelapor, bukan tugas harian.</p>
   <li>Pilih hari ini pada <em>Rekap harian</em>: lokasi dan tugas yang belum terkirim (&#10007;) terlihat jelas, begitu juga siapa yang sudah mengerjakan apa.</li>
   <li>Buka <em>Laporan &amp; foto</em> dan pilih satu nama, atau ketuk gelembungnya di tab Ringkasan untuk melihat rentang tanggal sekaligus: terlihat lokasi, tugas, jam foto, dan fotonya.</li>
   <li>Bandingkan dengan <em>Laporan &rarr; Keluhan</em>: lokasi yang sering dikeluhkan tetapi jarang tercatat dibersihkan menunjuk ke jadwal ronde yang perlu diubah.</li>
-  <li>Pakai tab <em>Log aktivitas</em> dengan saringan jenis dan jam untuk menelusuri satu kejadian: siapa mengambil alih, foto mana yang ditolak dan mengapa, laporan mana yang dihapus.</li>
+  <li>Pakai tab <em>Log aktivitas</em> dengan saringan jenis dan jam untuk menelusuri satu kejadian: siapa mengambil alih, laporan mana yang dibuka kembali dan siapa yang tadinya menutupnya, laporan mana yang dihapus.</li>
+  <li>Minta SPV memeriksa sebagian foto bukti secara acak (bagian 7). Angka &ldquo;Selesai&rdquo; dan &ldquo;Waktu selesai&rdquo; hanya dapat dipercaya sejauh foto buktinya dapat dipercaya, karena penutupan keluhan tidak diperiksa otomatis (bagian 11).</li>
 </ul>
 
 <h3>Papan peringkat sebagai alat mendorong partisipasi</h3>
@@ -765,7 +771,7 @@ yang membuahkan perbaikan. Kampus dapat memakainya untuk apresiasi berkala.</p>
   <tr><td><strong>Halaman depan</strong>, <strong>Masuk</strong>, <strong>Daftar</strong></td><td>Pintu masuk, akun pelapor, dan daftar &ldquo;Laporan saya&rdquo; bagi pelapor yang login.</td><td>&mdash;</td></tr>
   <tr><td><strong>Kato Bot</strong> (ikon melayang di semua halaman)</td><td>Jawaban atas pertanyaan bebas tentang data keluhan.</td><td>Tulisan asli pelapor dan (bagi pengunjung umum) nama petugas. Ada batas pertanyaan harian (bagian 9).</td></tr>
 </table>
-<p>Menyelesaikan keluhan dan mengirim tugas harian bisa dilakukan dari halaman petugas tanpa login. Keluhan hanya selesai dengan foto baru yang lolos pemeriksaan AI; tugas harian hanya diterima dengan foto baru dari kamera. Menghapus laporan, melihat rekap dan foto kebersihan lengkap, log aktivitas,
+<p>Menyelesaikan keluhan dan mengirim tugas harian bisa dilakukan dari halaman petugas tanpa login. Keluhan hanya selesai dengan foto bukti; tugas harian hanya diterima dengan foto baru dari kamera. Membuka kembali laporan yang sudah selesai, menghapus laporan, melihat rekap dan foto kebersihan lengkap, log aktivitas,
 dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi server, bukan sekadar tombol yang disembunyikan.</p>
 
 <h2>11. Pengaman agar laporan tidak menguap</h2>
@@ -773,7 +779,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 <div class="kartu">
   <h3>1. Menutup keluhan wajib disertai foto bukti</h3>
   <p>Keluhan tidak bisa dinyatakan &ldquo;selesai&rdquo; hanya dengan menekan tombol. Sistem menolaknya sampai
-  foto kondisi setelah dibereskan diunggah dan lolos pemeriksaan. Foto dari pelapor tidak bisa dipakai ulang sebagai bukti.</p>
+  foto kondisi setelah dibereskan diunggah. Foto dari pelapor tidak bisa dipakai ulang sebagai bukti.</p>
 </div>
 
 <div class="kartu">
@@ -785,10 +791,9 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 </div>
 
 <div class="kartu">
-  <h3>3. Foto bukti dari petugas diperiksa kecerdasan buatan</h3>
-  <p>Bila tempatnya masih terlihat kotor, atau fotonya bukan tempat yang dikeluhkan, foto ditolak beserta alasannya dan tidak disimpan. Bila layanan pemeriksanya sedang
-  gangguan, foto <em>tidak</em> diloloskan begitu saja; keluhan ditunda sampai bisa diperiksa. Foto bukti yang diterima ditampilkan
-  terbuka di papan umum, sehingga siapa pun dapat menilai sendiri; tanda &ldquo;Diverifikasi AI&rdquo; tampil di dashboard SPV.</p>
+  <h3>3. Foto bukti tampil terbuka dan tercatat</h3>
+  <p>Foto bukti ditampilkan terbuka di papan umum, sehingga siapa pun dapat menilai sendiri, dan di dashboard SPV. Nama yang menutup tampil di log aktivitas, dan rujukan fotonya ikut tersimpan di sana.
+  Isi foto tidak dinilai oleh AI maupun oleh sistem; yang menilainya adalah orang (lihat catatan di akhir bagian ini).</p>
 </div>
 
 <div class="kartu">
@@ -798,8 +803,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 
 <div class="kartu">
   <h3>5. Log aktivitas yang tidak bisa dihapus</h3>
-  <p>Setiap pergerakan tercatat: laporan masuk, hasil analisis, perubahan status dan pengambilalihan, tugas harian (termasuk yang dikirim dari luar kampus), foto yang ditolak
-  beserta alasannya, siapa yang login, perubahan akun, dan penghapusan. Tindakan petugas tercatat atas
+  <p>Setiap pergerakan tercatat: laporan masuk, hasil analisis, perubahan status dan pengambilalihan, tugas harian (termasuk yang dikirim dari luar kampus), laporan yang dibuka kembali, siapa yang login, perubahan akun, dan penghapusan. Tindakan petugas tercatat atas
   <strong>nama yang dipilihnya</strong>, bersama jamnya. <strong>Bila sebuah laporan dihapus, seluruh isinya
   tetap tersimpan di log</strong> lengkap dengan nama penghapus dan waktunya.</p>
 </div>
@@ -812,8 +816,14 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 </div>
 
 <div class="kartu">
-  <h3>7. Laporan yang sudah selesai tidak bisa dibuka lagi</h3>
-  <p>Setelah ditutup dengan foto bukti yang lolos, status laporan tidak dapat diubah kembali, sehingga foto bukti dan jam selesai tidak bisa dihapus atau digeser dari belakang layar.</p>
+  <h3>7. Hanya SPV yang bisa membuka kembali laporan yang sudah selesai</h3>
+  <p>Petugas tidak bisa mengembalikan laporan yang sudah selesai; sistem menolaknya. SPV bisa, dengan tombol <span class="tombol netral">Buka kembali</span>, bila penyelesaiannya keliru. Laporan kembali ke daftar petugas sebagai laporan baru, dan tindakan itu tercatat di log beserta nama SPV dan nama petugas yang tadinya menutup.</p>
+</div>
+
+<div class="catatan">
+  <strong>Yang perlu diketahui dengan jujur: menutup keluhan tidak diperiksa otomatis.</strong> Siapa pun yang memilih nama petugas dapat menutup keluhan dengan foto apa pun; sistem tidak menilai apakah foto itu benar tempatnya atau sudah bersih.
+  Pemeriksaan otomatis sengaja tidak dipakai, karena membuat penutupan keluhan terlalu sulit dan menolak pekerjaan yang benar-benar sudah beres. Yang menjaga kejujuran: fotonya terbuka untuk umum, nama dan fotonya tercatat, dan SPV bisa membuka kembali laporannya.
+  Penjagaan ini hanya berjalan bila ada yang melihat, jadi SPV sebaiknya memeriksa sebagian foto bukti secara acak (bagian 7).
 </div>
 
 <div class="catatan">
@@ -833,7 +843,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <tr><th>Data</th><th>Disimpan?</th><th>Siapa yang bisa melihat</th></tr>
   <tr><td>Teks keluhan asli</td><td>Ya</td><td>SPV, termasuk di berkas Ekspor Excel. Selama keluhan <strong>belum selesai</strong>, juga siapa saja yang membuka halaman petugas (tanpa login, karena petugas membutuhkannya), dan pemegang tautan laporan itu. Tidak tampil di papan umum.</td></tr>
   <tr><td>Foto keadaan dari pelapor</td><td>Ya</td><td>SPV, pemegang tautan laporan itu, dan selama keluhan belum selesai juga siapa saja yang membuka halaman petugas. Tidak tampil di papan umum. Tidak dikirim ke AI.</td></tr>
-  <tr><td>Foto bukti penyelesaian keluhan</td><td>Hanya yang lolos pemeriksaan</td><td>Siapa saja, di papan umum. Foto yang ditolak dihapus.</td></tr>
+  <tr><td>Foto bukti penyelesaian keluhan</td><td>Ya</td><td>Siapa saja, di papan umum, dan SPV. Tidak dikirim ke AI. Karena terbuka, <strong>petugas sebaiknya tidak ikut memotret orang</strong>. Bila laporan dibuka kembali, foto tidak lagi tampil, tetapi berkasnya tetap tersimpan dan rujukannya ada di log.</td></tr>
   <tr><td>Foto tugas harian</td><td>Ya</td><td>SPV, dan di papan umum pada tab &ldquo;Dari petugas&rdquo;. Tidak dikirim ke AI. Foto ini dicap nama petugas, tugas, lokasi, jam, dan koordinat GPS <strong>di dalam gambarnya</strong>, jadi cap itu ikut terlihat oleh siapa pun yang membuka fotonya.</td></tr>
   <tr><td>Posisi GPS saat mengirim tugas harian (koordinat, ketelitian, jarak ke kampus)</td><td>Ya, hanya pada tugas harian</td><td>SPV (tab Laporan &rarr; Kebersihan). Tidak tampil di teks papan umum. Posisi pelapor keluhan tidak diminta sama sekali.</td></tr>
   <tr><td>Nama pelapor</td><td>Hanya bila melapor dengan akun</td><td>SPV; dan di papan peringkat.</td></tr>
@@ -845,9 +855,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 </table>
 <h3>Layanan luar yang menerima data</h3>
 <ul>
-  <li><strong>DeepSeek</strong> (model <em>deepseek-chat</em>) menerima teks keluhan dan nama lokasi, tanpa nama pelapor; daftar ringkasan keluhan sehari untuk ringkasan harian; serta, untuk Kato Bot, pertanyaan penanya dan angka atau ringkasan hasil pencarian data (bagi SPV yang login termasuk nama petugas), bukan tulisan asli pelapor.</li>
-  <li><strong>Google Gemini</strong> menerima foto bukti penyelesaian keluhan beserta nama lokasi, kategori, dan teks keluhan asli sebagai pembanding. Foto berisi tempat yang dikeluhkan, tetapi <strong>petugas sebaiknya tidak ikut memotret orang</strong>.
-  Aturan pemakaian data oleh Google bergantung pada jenis akun layanan yang dipakai; hal itu tidak dapat dipastikan dari kode, jadi pengelola perlu memeriksanya (lihat bagian 16).</li>
+  <li><strong>DeepSeek</strong> (model <em>deepseek-chat</em>) menerima teks keluhan dan nama lokasi, tanpa nama pelapor; daftar ringkasan keluhan sehari untuk ringkasan harian; serta, untuk Kato Bot, pertanyaan penanya dan angka atau ringkasan hasil pencarian data (bagi SPV yang login termasuk nama petugas), bukan tulisan asli pelapor. Foto tidak dikirim ke DeepSeek.</li>
   <li><strong>Cloudflare</strong> menjalankan aplikasi serta menyimpan data laporan (basis data) dan foto.</li>
 </ul>
 
@@ -863,14 +871,16 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 <p><strong>Bolehkah melapor lokasi yang sama lagi?</strong> Boleh, bila masalahnya masih ada atau berbeda. Hanya laporan dengan lokasi dan tulisan yang <em>sama persis</em> dalam dua menit yang digabung.</p>
 <p><strong>Stiker QR-nya kelihatan lama. Masih bisa dipakai?</strong> Bisa. Stiker yang dicetak sebelum pembaruan sistem tetap membuka halaman yang benar.</p>
 <p><strong>Bahasa Inggris bisa?</strong> Bisa. Tombol <em>ID</em>/<em>EN</em> di bagian atas mengganti tampilan, dan keluhan berbahasa Inggris dipahami. Ringkasan dan rekomendasi AI tetap berbahasa Indonesia karena pembacanya petugas dan pimpinan.</p>
+<p><strong>Laporan saya tadinya selesai, sekarang kembali ke &ldquo;Laporan diterima&rdquo;.</strong> Artinya SPV membukanya kembali karena penyelesaiannya perlu diulang. Laporanmu kembali ke daftar petugas; kamu tidak perlu melapor lagi.</p>
 <p><strong>Apa itu ikon gelembung chat yang melayang?</strong> Itu Kato Bot, tempat bertanya tentang data laporan dengan bahasa biasa. Lihat bagian 9.</p>
 
 <h3>Petugas</h3>
 <p><strong>Apakah saya perlu password?</strong> Tidak. Cukup pilih namamu saat bertindak. HP akan mengingatnya.</p>
 <p><strong>Nama saya tidak ada di daftar.</strong> Minta SPV menambahkan namamu. Setelah ditambahkan, muat ulang halamannya, lalu pilih namamu. Kalau tertulis &ldquo;Belum ada nama petugas.&rdquo;, artinya belum ada satu nama pun di daftar.</p>
 <p><strong>Tombol &ldquo;Saya kerjakan sekarang&rdquo; hilang.</strong> Tombol itu hanya muncul pada keluhan yang berstatus <em>baru</em>. Bila sudah ada yang mengerjakan, tombolnya <em>Ambil alih</em>.</p>
-<p><strong>Ada petugas lain yang sudah menekan &ldquo;Saya kerjakan sekarang&rdquo; tetapi belum selesai-selesai.</strong> Tekan <em>Ambil alih</em>. Selama belum ada foto bukti yang lolos, siapa pun boleh, dan pengambilalihan tercatat.</p>
-<p><strong>Foto saya ditolak padahal sudah bersih.</strong> Baca alasannya di kotak merah. Yang paling sering: lantai masih basah merata (keringkan dulu), foto terlalu gelap atau buram, atau bagian yang dikeluhkan tidak kelihatan. Foto ulang dari arah yang memperlihatkan masalahnya dengan lampu menyala.</p>
+<p><strong>Ada petugas lain yang sudah menekan &ldquo;Saya kerjakan sekarang&rdquo; tetapi belum selesai-selesai.</strong> Tekan <em>Ambil alih</em>. Selama keluhan belum selesai dengan foto bukti, siapa pun boleh, dan pengambilalihan tercatat.</p>
+<p><strong>Foto bukti saya gagal terkirim.</strong> Baca pesan di kotak merah. Laporan tetap terbuka. Periksa sinyal, lalu tekan lagi <em>Sudah beres &mdash; foto buktinya</em> dan ambil foto lagi.</p>
+<p><strong>Keluhan yang sudah saya selesaikan muncul lagi.</strong> SPV membukanya kembali. Tanyakan alasannya ke SPV, lalu kerjakan seperti keluhan baru. Petugas sendiri tidak bisa membuka kembali laporan yang sudah selesai.</p>
 <p><strong>Bolehkah memakai foto dari galeri?</strong> Tidak bisa. Foto hanya bisa diambil dengan kamera langsung, supaya yang terlihat memang tempat itu, saat itu.</p>
 <p><strong>Apakah tugas harian menutup keluhan?</strong> Tidak. Keluhan hanya selesai lewat <em>Sudah beres &mdash; foto buktinya</em> pada kartu keluhan itu.</p>
 <p><strong>Saya di luar kampus, atau GPS tidak terbaca. Bisa mengirim?</strong> Bisa, lewat <em>Tetap kirim (supervisor diberi tahu)</em>, tetapi laporannya ditandai kepada SPV. Bila mungkin, nyalakan GPS dan coba lagi dari dalam kampus.</p>
@@ -879,7 +889,9 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 <p><strong>Kenapa ada keluhan tanpa prioritas?</strong> Analisis otomatisnya gagal. Kerjakan berdasarkan tulisan pelapor; SPV dapat meminta analisis ulang.</p>
 
 <h3>SPV dan pimpinan</h3>
-<p><strong>Kenapa tidak ada tombol &ldquo;Tandai selesai&rdquo; di dashboard?</strong> Karena keluhan harus diselesaikan di tempat, dengan foto baru yang diperiksa AI. SPV memantau; petugas menyelesaikan.</p>
+<p><strong>Kenapa tidak ada tombol &ldquo;Tandai selesai&rdquo; di dashboard?</strong> Karena keluhan harus diselesaikan di tempat, dengan foto dari kamera. SPV memantau; petugas menyelesaikan.</p>
+<p><strong>Apakah foto bukti diperiksa otomatis?</strong> Tidak. Siapa pun yang memilih nama petugas bisa menutup keluhan dengan foto apa pun. Pemeriksaan otomatis tidak dipakai karena membuat penutupan terlalu sulit dan menolak pekerjaan yang benar-benar beres. Karena itu periksa sebagian foto bukti secara acak (bagian 7 dan 11).</p>
+<p><strong>Laporan ditutup dengan foto yang tidak meyakinkan. Apa yang bisa dilakukan?</strong> Lihat fotonya, tanyakan ke petugas yang namanya tercatat, lalu tekan <em>Buka kembali</em> pada kartu laporan di tab Laporan &rarr; Keluhan. Laporan kembali ke daftar petugas sebagai laporan baru (bagian 7).</p>
 <p><strong>Bisakah seseorang memakai nama petugas lain?</strong> Bisa, karena petugas tidak login. Setiap tindakan tercatat atas nama yang dipilih bersama jamnya, sehingga SPV dapat menelusurinya (bagian 11).</p>
 <p><strong>Bisakah jejak dihapus?</strong> Tidak. Petugas tidak bisa menghapus apa pun. Penghapusan laporan oleh SPV justru menyalin isinya ke log aktivitas, dan log itu tidak dapat diubah dari aplikasi.</p>
 <p><strong>Kenapa penghapusan akun petugas ditolak?</strong> Karena akun itu sudah punya riwayat (laporan atau pekerjaan). Pakai <em>Nonaktifkan</em>; namanya hilang dari pilihan tetapi riwayatnya utuh.</p>
@@ -887,7 +899,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 <p><strong>Kenapa ringkasan AI tidak ikut berubah saat saya mengganti rentang tanggal?</strong> Karena ringkasan itu dibuat per hari; yang tampil adalah hari pada <em>Sampai tanggal</em>. Semua grafik lain mengikuti rentang (lihat tabel di bagian 8).</p>
 <p><strong>Kenapa &ldquo;Belum selesai&rdquo; lebih kecil daripada jumlah keluhan yang masih terbuka?</strong> Karena kartu itu hanya menghitung keluhan yang masuk dalam rentang tanggal. Keluhan yang lebih lama ada di tab Laporan &rarr; Keluhan dengan saringan Waktu <em>Semua</em>.</p>
 <p><strong>Kenapa petugas tidak punya target di rekap?</strong> Petugas tidak punya lokasi tetap; siapa pun boleh mengerjakan apa pun. Rekap menunjukkan, per lokasi, apa yang belum dilaporkan dan siapa mengerjakan apa (bagian 7).</p>
-<p><strong>Seberapa akurat kecerdasan buatannya?</strong> Untuk teks, lama proses dan hasil tiap laporan tersimpan dan dapat dibandingkan dengan penilaian manusia. Untuk foto, putusan bersifat perkiraan: bisa salah tolak atau salah terima, dan alasannya selalu tercatat sehingga dapat diperiksa. Angka akurasi yang sesungguhnya belum diukur dalam dokumen ini.</p>
+<p><strong>Seberapa akurat kecerdasan buatannya?</strong> Untuk teks, lama proses dan hasil tiap laporan tersimpan dan dapat dibandingkan dengan penilaian manusia. Foto tidak dinilai AI sama sekali. Angka akurasi yang sesungguhnya belum diukur dalam dokumen ini.</p>
 
 <h2>14. Bila ada masalah</h2>
 <table>
@@ -901,8 +913,9 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <tr><td>&ldquo;QR tidak dikenal. Pilih lokasi di atas.&rdquo;</td><td>Stiker dari daftar lokasi lama, atau lokasi itu dinonaktifkan</td><td>Pilih lokasi manual; laporkan stiker itu ke SPV agar dicetak ulang dari tab <em>QR lokasi</em></td></tr>
   <tr><td>Nama petugas tidak ada di pilihan nama</td><td>Belum ditambahkan, atau sudah dinonaktifkan</td><td>SPV menambahkan atau mengaktifkannya di tab Petugas &amp; Supervisor; petugas memuat ulang halaman</td></tr>
   <tr><td>HP pelapor membuka halaman petugas</td><td>HP itu pernah dipakai memilih nama petugas</td><td>Ketuk <em>Saya pelapor</em> di bagian atas halaman</td></tr>
-  <tr><td>&ldquo;Foto ditolak&rdquo;</td><td>Pemeriksa menilai masih kotor atau bukan lokasi yang dilaporkan</td><td>Baca alasannya, bereskan, foto ulang (bagian 6A)</td></tr>
-  <tr><td>&ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo;</td><td>Layanan pemeriksa foto tidak terjangkau, kuota habis, atau pengaturan layanan bermasalah</td><td>Coba lagi setelah beberapa saat; bila berulang sepanjang hari, SPV menghubungi pengelola sistem. Penyebab pastinya tercatat di log aktivitas (&ldquo;Verifikasi gagal&rdquo;)</td></tr>
+  <tr><td>Kotak merah saat mengirim foto bukti, misalnya &ldquo;Gagal menghubungi server&rdquo; atau &ldquo;Foto bukti tidak ditemukan. Unggah ulang.&rdquo;</td><td>Foto gagal terunggah atau permintaan gagal, misalnya karena sinyal. Laporan tetap terbuka</td><td>Periksa sinyal, tekan lagi <em>Sudah beres &mdash; foto buktinya</em>, dan ambil foto lagi (bagian 6A); bila berulang, beri tahu SPV</td></tr>
+  <tr><td>Pesan merah di bawah tombol <em>Buka kembali</em>, misalnya &ldquo;Gagal menghubungi server&rdquo;</td><td>Permintaan gagal, misalnya karena jaringan</td><td>Tekan <em>Buka kembali</em> sekali lagi</td></tr>
+  <tr><td>&ldquo;Laporan ini belum selesai.&rdquo; saat menekan <em>Buka kembali</em></td><td>Laporan itu sudah dibuka kembali, misalnya oleh SPV lain</td><td>Tidak perlu tindakan; daftarnya akan menyegarkan diri</td></tr>
   <tr><td>&ldquo;Laporan ini sudah selesai.&rdquo; saat menekan <em>Saya kerjakan sekarang</em> atau <em>Ambil alih</em></td><td>Keluhan itu baru saja diselesaikan petugas lain</td><td>Muat ulang halaman; keluhan itu tidak perlu dikerjakan lagi</td></tr>
   <tr><td>&ldquo;Nama petugas tidak dikenal. Pilih ulang namamu.&rdquo;</td><td>Namamu dinonaktifkan atau dihapus SPV</td><td>Hubungi SPV</td></tr>
   <tr><td>Tugas harian: &ldquo;Foto &hellip; sudah terlalu lama&rdquo; atau &ldquo;sudah pernah dipakai&rdquo;</td><td>Foto lebih dari 3 jam, atau sudah dipakai untuk tugas lain</td><td>Ambil foto baru dengan kamera</td></tr>
@@ -923,7 +936,6 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <tr><th>Komponen</th><th>Keterangan</th></tr>
   <tr><td>Hosting, basis data, dan penyimpanan foto (Cloudflare)</td><td>Mengikuti paket akun Cloudflare yang dipakai kampus. Pemakaian nyata belum diukur.</td></tr>
   <tr><td>Pemahaman teks, ringkasan harian, dan Kato Bot (DeepSeek)</td><td>Berbayar per pemakaian. Pemakaian dibatasi oleh volume laporan, satu ringkasan per hari, dan jatah Kato Bot 50 pertanyaan per hari.</td></tr>
-  <tr><td>Pemeriksaan foto bukti (Google Gemini)</td><td>Satu pemeriksaan untuk setiap upaya menutup keluhan, termasuk yang ditolak. Biayanya bergantung pada jenis akun dan batas harian dari Google; perlu dipantau. Tugas harian tidak memakai pemeriksaan ini.</td></tr>
   <tr><td>Stiker QR</td><td>Cetak sendiri dari tab <em>QR lokasi</em>; menurut data awal ada 29 lokasi. Cetak ulang hanya bila stiker rusak atau daftar lokasi berubah.</td></tr>
 </table>
 
@@ -934,8 +946,8 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <tr><td>Titik pusat kampus untuk pemeriksaan GPS</td><td>Pengaturan sistem memuat titik pusat dan radius 500 m, dan titik itu diberi catatan sebagai titik sementara di sekitar Jln. Dadaha. Bila belum diganti dengan titik kampus yang sebenarnya, tugas harian yang sah bisa ditandai &ldquo;luar kampus&rdquo;. Perlu dipastikan</td></tr>
   <tr><td>Petugas tanpa login</td><td>Dipilih demi kemudahan petugas; konsekuensinya, nama bisa dipilih orang lain. Perlu disepakati bahwa SPV rutin memeriksa rekap kebersihan dan log aktivitas</td></tr>
   <tr><td>Foto tugas harian di papan umum</td><td>Tab &ldquo;Dari petugas&rdquo; menampilkan foto tugas harian secara terbuka, dan foto itu memuat cap nama petugas dan koordinat GPS di dalam gambarnya. Kampus perlu memutuskan apakah ini dapat diterima</td></tr>
-  <tr><td>Tugas harian belum diperiksa AI</td><td>Keabsahannya dijaga oleh kamera langsung, jam server, batas umur foto, dan GPS. Perlu diputuskan apakah pemeriksaan isi foto juga diperlukan</td></tr>
-  <tr><td>Layanan pemeriksa foto</td><td>Memakai layanan Google. Aturan pemakaian data bergantung pada jenis akun; kampus perlu memeriksa dan memutuskan jenis akun yang dipakai</td></tr>
+  <tr><td>Pemeriksaan foto bukti keluhan</td><td>Menutup keluhan tidak diperiksa otomatis; siapa pun yang memilih nama petugas bisa menutupnya dengan foto apa pun. Perlu disepakati siapa yang memeriksa foto bukti secara acak, seberapa sering, dan apa tindak lanjutnya</td></tr>
+  <tr><td>Isi foto tugas harian</td><td>Keabsahannya dijaga oleh kamera langsung, jam server, batas umur foto, dan GPS; isi fotonya tidak dinilai sistem. Perlu disepakati seberapa sering SPV memeriksanya</td></tr>
   <tr><td>Laporan spam</td><td>Tidak ada pembatas jumlah kiriman; saat ini hanya SPV yang menghapus secara manual</td></tr>
   <tr><td>Arahan untuk petugas</td><td>Selalu pilih nama sendiri; foto cukup memperlihatkan tempatnya, hindari memotret orang; kirim tugas harian begitu selesai</td></tr>
   <tr><td>Siapa memegang akun SPV</td><td>Perlu ditetapkan penanggung jawab (sebaiknya dua orang), dan pengelola teknis untuk keadaan darurat (semua SPV lupa password, gangguan layanan)</td></tr>
@@ -950,14 +962,14 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
   <tr><td>Tugas harian</td><td>Enam tugas tetap per lokasi yang dikirim petugas dengan foto: menyapu &amp; mengepel, mengelap kaca jendela, membersihkan toilet, membuang sampah, mengisi ulang galon, merapikan ruangan</td></tr>
   <tr><td>Klaim (&ldquo;Saya kerjakan sekarang&rdquo;)</td><td>Petugas menandai bahwa ia sedang mengerjakan sebuah keluhan. Bukan kunci</td></tr>
   <tr><td>Ambil alih</td><td>Petugas lain meneruskan keluhan yang belum selesai dari petugas sebelumnya; tercatat di log</td></tr>
-  <tr><td>Bukti / foto bukti</td><td>Foto dari petugas setelah membereskan keluhan; wajib lolos pemeriksaan AI</td></tr>
+  <tr><td>Bukti / foto bukti</td><td>Foto dari petugas setelah membereskan keluhan; wajib untuk menutup keluhan, dan tampil terbuka di papan umum</td></tr>
   <tr><td>Foto keadaan</td><td>Foto dari pelapor saat melapor</td></tr>
   <tr><td>Kamera langsung</td><td>Kamera yang menyala di dalam halaman; satu-satunya cara mengambil foto, galeri tidak bisa dipakai</td></tr>
-  <tr><td>Diverifikasi AI</td><td>Foto bukti yang dinilai benar tempatnya dan bersih oleh pemeriksa foto</td></tr>
+  <tr><td>Buka kembali</td><td>SPV mengembalikan laporan yang sudah selesai ke daftar petugas sebagai laporan baru; tercatat di log. Petugas tidak bisa melakukannya</td></tr>
   <tr><td>SPV (supervisor)</td><td>Pengawas: satu-satunya pengguna yang wajib login, memantau laporan dan kerja petugas</td></tr>
   <tr><td>Kato Bot</td><td>Asisten AI berbentuk ikon melayang di semua halaman, yang menjawab pertanyaan tentang data keluhan</td></tr>
   <tr><td>Prioritas</td><td>Rendah / sedang / tinggi. Tinggi berarti ada risiko keselamatan atau lokasi tidak bisa dipakai</td></tr>
-  <tr><td>Status</td><td>baru &rarr; diproses &rarr; selesai</td></tr>
+  <tr><td>Status</td><td>baru &rarr; diproses &rarr; selesai. Laporan selesai kembali menjadi baru bila dibuka kembali oleh SPV</td></tr>
   <tr><td>QR</td><td>Kode berbentuk kotak pada stiker yang dipindai kamera ponsel untuk membuka halaman lokasi</td></tr>
   <tr><td>GPS</td><td>Penentu posisi pada ponsel. Dipakai hanya pada tugas harian, untuk menandai kiriman dari luar kampus</td></tr>
   <tr><td>Ditandai</td><td>Kiriman tugas harian dari luar kampus atau tanpa GPS: tetap diterima, tetapi diberi tahu kepada SPV</td></tr>
@@ -969,7 +981,7 @@ dan mengelola nama petugas hanya bisa dilakukan SPV. Aturan itu dijaga di sisi s
 
 <div class="kaki">
   Sistem sudah berjalan dan dapat diakses di <strong>ai-complaint.yvrtz.workers.dev</strong>.
-  Antarmuka tersedia dalam Bahasa Indonesia dan Bahasa Inggris. Panduan ini diperbarui 4 November 2026.
+  Antarmuka tersedia dalam Bahasa Indonesia dan Bahasa Inggris. Panduan ini diperbarui 5 November 2026.
   Rincian teknis ada pada <em>Dokumentasi Teknis</em> yang menyertai dokumen ini.
 </div>
 

@@ -219,6 +219,24 @@ export async function updateStatus(
 }
 
 /**
+ * The vision model's description of a proof photo, kept in `proof_reason`. Only
+ * written while that photo is still the report's proof, since it arrives late.
+ */
+export async function saveProofDescription(
+  env: Env,
+  id: string,
+  photoKey: string,
+  description: { text: string; model: string; ms: number },
+): Promise<void> {
+  await env.DB.prepare(
+    `UPDATE reports SET proof_reason = ?, proof_model = ?, proof_ms = ?
+      WHERE id = ? AND proof_photo_key = ?`,
+  )
+    .bind(description.text, description.model, description.ms, id, photoKey)
+    .run();
+}
+
+/**
  * Back to the staff list, as if nobody had touched it. Only a resolved report
  * changes, so two supervisors pressing at once reopen it, and log it, once.
  */

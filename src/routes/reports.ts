@@ -135,13 +135,14 @@ const StatusChangeSchema = z.object({
  * Staff: mark a report as being worked on, or as resolved.
  *
  * Claiming ("I'm on it") is not a lock: until a proof photo closes the report, any other
- * staff member may claim it in turn, and the handover is logged. Staff cannot
- * reopen a resolved report; only a supervisor can (POST /:id/reopen).
+ * staff member may claim it in turn, and the handover is logged. A resolved report
+ * cannot be changed from here at all; only a supervisor can reopen it (POST /:id/reopen).
  *
  * Staff do not sign in; they send the `staff_id` picked on the dropdown,
  * which must belong to an active staff member. A signed-in supervisor may act
  * under their own name instead. Closing needs a proof photo; the photo is shown
- * on the public board and written to the activity log, so anyone can check it.
+ * on the public board and logged. Afterwards a vision model describes it for the
+ * supervisor, without any say over the close.
  */
 app.patch('/:id', async (c) => {
   const parsed = StatusChangeSchema.safeParse(await c.req.json().catch(() => ({})));
@@ -177,6 +178,10 @@ app.patch('/:id', async (c) => {
     case 'proof-missing':
       return c.json({ error: 'Foto bukti penyelesaian wajib diunggah lebih dulu.' }, 400);
     default:
+      // After the response, like the complaint analysis: staff never wait on it.
+      if (result.status === 'resolved' && parsed.data.proof_photo_key) {
+        c.executionCtx.waitUntil(reports.runProofDescription(c.env, c.req.param('id'), parsed.data.proof_photo_key));
+      }
       return c.json({ ok: true, status: result.status });
   }
 });

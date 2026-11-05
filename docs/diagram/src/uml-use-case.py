@@ -42,7 +42,6 @@ uc = {  # id: (x, y, label)
     'ai':      (CM, 400, 'Analisis Keluhan (AI)'),
     'qr_scan': (CM, 720, 'Pindai QR / Pilih Lokasi'),
     'gps':     (CM, 1215, 'Periksa Posisi GPS'),
-    'vp':      (CM, 1130, 'Verifikasi Foto Bukti (AI)'),
     're':      (CR, 610, 'Analisis Ulang Keluhan'),
     'dash':    (CR, 680, 'Pantau Dashboard & Statistik'),
     'rep':     (CR, 750, 'Lihat Laporan Keluhan & Kebersihan'),
@@ -50,6 +49,7 @@ uc = {  # id: (x, y, label)
     'del':     (CR, 890, 'Hapus Keluhan'),
     'acct':    (CR, 960, 'Kelola Akun & Petugas'),
     'qr':      (CR, 1030, 'Cetak Stiker QR'),
+    'reopen':  (CR, 1100, 'Buka Kembali Keluhan'),
 }
 actors = {  # id: (x, y, label, aktor sistem?)
     'plp':  (LEFT, 640, 'Pelapor\n(siapa saja)', False),
@@ -57,7 +57,6 @@ actors = {  # id: (x, y, label, aktor sistem?)
     'cron': (RIGHT, 70, 'Penjadwal\n(Cron 17.00 WIB)', True),
     'llm':  (RIGHT, 200, 'LLM Teks\n(DeepSeek)', True),
     'spv':  (RIGHT, 640, 'Supervisor', False),
-    'vis':  (RIGHT, 1130, 'LLM Vision\n(Gemini)', True),
 }
 assoc = [
     ('plp', 'pub'), ('plp', 'rank'), ('plp', 'reg'), ('plp', 'lapor'), ('plp', 'lacak'),
@@ -66,14 +65,13 @@ assoc = [
     ('cron', 'sum'),
     ('llm', 'ask'), ('llm', 'sum'), ('llm', 'ai'),
     ('spv', 'login'), ('spv', 'ask'), ('spv', 'sum'), ('spv', 'dash'), ('spv', 'rep'), ('spv', 're'),
-    ('spv', 'logs'), ('spv', 'acct'), ('spv', 'del'), ('spv', 'qr'),
-    ('vis', 'vp'),
+    ('spv', 'logs'), ('spv', 'acct'), ('spv', 'del'), ('spv', 'qr'), ('spv', 'reopen'),
 ]
 # Stiker QR di lokasi adalah titik masuk: pelapor memindainya untuk melapor,
 # petugas untuk melihat keluhan, dan tugas harian dimulai dari lokasi yang sama.
 includes = [('lapor', 'ai'), ('re', 'ai'), 
             ('lapor', 'qr_scan'), ('open', 'qr_scan'),
-            ('done', 'vp'), ('daily', 'gps')]
+            ('daily', 'gps')]
 extends = [('take', 'claim')]   # Ambil Alih memperluas Klaim
 label_below = {('re', 'ai')}
 

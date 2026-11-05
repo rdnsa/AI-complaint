@@ -58,6 +58,11 @@
   "vars": {
     "LLM_BASE_URL": "https://api.deepseek.com",
     "LLM_MODEL": "deepseek-chat",
+    // deepseek-chat cannot see images, so a separate model describes proof photos
+    // for the supervisor. It never refuses a photo. Any OpenAI-compatible chat
+    // endpoint that accepts image_url works.
+    "VISION_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "VISION_MODEL": "gemini-3.6-flash",
     // The campus boundary for cleaning reports: a report filed further than
     // CAMPUS_RADIUS_M from this point is flagged to the supervisor. The centre
     // is a placeholder on Jl. Dadaha; replace it with the campus pin from Google
@@ -69,6 +74,7 @@
 
   // Secrets (do NOT put them here, use `wrangler secret put`):
   //   LLM_API_KEY
+  //   VISION_API_KEY   (optional: without it proof photos get no description)
   //   AUTH_SECRET
 
 }

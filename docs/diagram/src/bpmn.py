@@ -70,6 +70,7 @@ BL, PU, OR = 'blue', 'purple', 'orange'
 A, B, C, D, E, F, G, Hh, I = 390, 560, 730, 900, 1070, 1240, 1410, 1580, 1750
 PY, RA, RB, RC = 85, 250, 400, 560        # baris pelapor, sistem A/B/C
 KY, MY, TY, SY = 720, 790, 870, 1040      # petugas: atas, tengah, bawah; supervisor
+RX = 1790                                 # kolom buka kembali keluhan
 
 elements = []
 def add(fn, *a, **k):
@@ -91,8 +92,8 @@ add(event, A, RB, '17.00\nWIB', True)
 add(box, B, RB, 'LLM membuat\nringkasan harian', PU)
 add(box, G, RB, 'Menyimpan laporan\nkebersihan: foto <= 3 jam,\nbelum dipakai; GPS vs\nkampus (luar / tanpa GPS\nditandai)', PU, w=170, h=84)
 add(event, Hh + 10, RB, 'Selesai')
-add(box, Hh, RC, 'Vision AI memeriksa\nfoto bukti', PU)
-add(gate, I, RC, 'Lokasi sesuai\n& bersih?')
+add(box, Hh, RC, 'Memeriksa foto bukti\ntersimpan (folder proof/)', PU)
+add(box, RX, RC, 'Status kembali baru;\npetugas, waktu selesai &\nbukti dikosongkan; foto\ntetap tersimpan, tercatat\ndi log aktivitas', PU, w=170, h=84)
 # Petugas
 add(event, D, MY, 'MULAI')
 add(box, E, MY, 'Buka /staff,\npilih nama', BL)
@@ -105,6 +106,7 @@ add(box, B, SY, 'Menerima ringkasan\nharian AI', OR)
 add(box, C, SY, 'Memantau dashboard:\nstatistik, keluhan,\nlaporan kebersihan, log', OR)
 add(box, D, SY, 'Menindaklanjuti:\nperingatan luar kampus,\nkeluhan prioritas tinggi', OR)
 add(box, E, SY, 'Menugaskan petugas\nsecara langsung', OR)
+add(box, RX, SY, 'Membuka kembali\nkeluhan selesai\nyang keliru', OR)
 
 # ------------------------------------------------------------------ render
 o(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Arial, Helvetica, sans-serif" fill="#222">')
@@ -143,13 +145,15 @@ arrow([(F, MY + 40), (F, TY), (G - 73, TY)], BLUE, 'Keluhan', (F + 12, 892))
 # tugas harian -> sistem
 arrow([(G, KY - 33), (G, RB + 42)], GRAY)
 arrow([(G + 85, RB), (Hh - 29 + 10, RB)], PURP)
-# keluhan: klaim -> bersihkan -> vision
+# keluhan: klaim -> bersihkan -> foto bukti -> langsung selesai
 arrow([(G + 73, TY), (Hh - 73, TY)], BLUE)
 arrow([(Hh, TY - 33), (Hh, RC + 33)], GRAY)
-arrow([(Hh + 73, RC), (I - 48, RC)], PURP)
-arrow([(I, RC - 40), (I, RA + 33)], PURP, 'Ya', (I + 18, 420))
-arrow([(I, RC + 40), (I, TY), (Hh + 73, TY)], RED, 'Tidak: foto ditolak,\nbersihkan & foto ulang', (I - 75, 760), )
+arrow([(1640, RC - 33), (1640, RA), (I - 73, RA)], PURP)
 arrow([(I, RA - 33), (I, PY + 33)], GRAY)
+# supervisor membuka kembali keluhan selesai -> kembali ke daftar petugas
+arrow([(D, SY + 33), (D, 1110), (RX, 1110), (RX, SY + 33)], RED, 'Penutupan keliru (opsional)', (1300, 1096))
+arrow([(RX, SY - 33), (RX, RC + 42)], RED)
+arrow([(RX - 50, RC + 42), (RX - 50, 620), (E + 40, 620), (E + 40, MY - 33)], RED, 'kembali ke daftar petugas', (1270, 607))
 
 for fn, a, k in elements:
     fn(*a, **k)

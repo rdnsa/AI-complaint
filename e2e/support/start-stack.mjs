@@ -41,7 +41,10 @@ console.log(`[e2e] mock LLM di port ${MOCK_PORT}`);
 const mockUrl = `http://127.0.0.1:${MOCK_PORT}`;
 const vars = {
   LLM_BASE_URL: mockUrl,
+  VISION_BASE_URL: mockUrl,
   LLM_MODEL: 'mock-text',
+  VISION_MODEL: 'mock-vision',
+  VISION_API_KEY: 'e2e-vision-key',
   // Fake, and safe to commit. The refused key comes first, so failover is exercised too.
   LLM_API_KEY: `${REFUSED_KEY},e2e-text-key`,
   AUTH_SECRET: 'e2e-auth-secret-not-used-anywhere-else',

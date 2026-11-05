@@ -9,11 +9,9 @@
 <polyline points="646.8,597.3 255.0,769.1" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
 <polyline points="761.0,172.0 761.0,422.5" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
 <polyline points="739.0,422.5 739.0,172.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
-<polyline points="859.7,496.5 1281.4,282.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
-<polyline points="1245.0,275.8 849.7,476.9" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
-<polyline points="867.5,529.0 1245.0,529.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
-<polyline points="1245.0,551.0 867.5,551.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
-<polyline points="1257.1,798.0 855.2,593.5" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="862.0,502.9 1274.4,322.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="1245.0,310.9 853.2,482.7" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
+<polyline points="1249.8,768.0 857.4,589.0" fill="none" stroke="#555555" stroke-width="1.4" marker-end="url(#panah)"/>
 <circle cx="750" cy="540" r="118" fill="url(#bola)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
 <text x="750" y="519.2" font-size="13.5" text-anchor="middle" font-weight="bold">0</text>
 <text x="750" y="536.1" font-size="13.5" text-anchor="middle">Kato Report:</text>
@@ -27,15 +25,12 @@
 <text x="180.0" y="804.1" font-size="15" text-anchor="middle">Kebersihan</text>
 <rect x="675.0" y="108.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
 <text x="750.0" y="144.5" font-size="15" text-anchor="middle">Supervisor</text>
-<rect x="1245.0" y="218.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
-<text x="1320.0" y="244.9" font-size="15" text-anchor="middle">LLM Teks</text>
-<text x="1320.0" y="264.1" font-size="15" text-anchor="middle">(DeepSeek)</text>
-<rect x="1245.0" y="508.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
-<text x="1320.0" y="534.9" font-size="15" text-anchor="middle">LLM Vision</text>
-<text x="1320.0" y="554.1" font-size="15" text-anchor="middle">(Gemini)</text>
-<rect x="1238.2" y="798.0" width="163.6" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
-<text x="1320.0" y="824.9" font-size="15" text-anchor="middle">Penjadwal</text>
-<text x="1320.0" y="844.1" font-size="15" text-anchor="middle">(Cron 17.00 WIB)</text>
+<rect x="1245.0" y="258.0" width="150.0" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="1320.0" y="284.9" font-size="15" text-anchor="middle">LLM Teks</text>
+<text x="1320.0" y="304.1" font-size="15" text-anchor="middle">(DeepSeek)</text>
+<rect x="1238.2" y="768.0" width="163.6" height="64" fill="url(#kotak)" stroke="#333333" stroke-width="1.5" filter="url(#bayang)"/>
+<text x="1320.0" y="794.9" font-size="15" text-anchor="middle">Penjadwal</text>
+<text x="1320.0" y="814.1" font-size="15" text-anchor="middle">(Cron 17.00 WIB)</text>
 <text x="479.6" y="320.0" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">lokasi (QR / pilihan), keluhan,</text>
 <text x="479.6" y="336.0" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">foto kondisi, data akun &amp; login,</text>
 <text x="479.6" y="352.0" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pertanyaan Kato Bot</text>
@@ -45,25 +40,22 @@
 <text x="402.6" y="589.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">nama petugas, klaim / ambil alih,</text>
 <text x="402.6" y="605.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">foto bukti, tugas harian</text>
 <text x="402.6" y="621.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">(foto + posisi GPS)</text>
-<text x="475.8" y="728.3" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">keluhan terbuka, hasil</text>
-<text x="475.8" y="744.3" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pemeriksaan foto, status</text>
-<text x="475.8" y="760.3" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">lokasi laporan kebersihan</text>
-<text x="861.5" y="232.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kredensial, data akun</text>
-<text x="861.5" y="248.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">&amp; petugas, filter waktu,</text>
-<text x="861.5" y="264.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">perintah analisis ulang /</text>
-<text x="861.5" y="280.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">hapus / buat ulang ringkasan</text>
+<text x="474.7" y="725.9" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">keluhan terbuka, status</text>
+<text x="474.7" y="741.9" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">keluhan, status lokasi</text>
+<text x="474.7" y="757.9" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">laporan kebersihan</text>
+<text x="851.4" y="224.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kredensial, data akun</text>
+<text x="851.4" y="240.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">&amp; petugas, filter waktu,</text>
+<text x="851.4" y="256.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">perintah analisis ulang /</text>
+<text x="851.4" y="272.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">buka kembali / hapus /</text>
+<text x="851.4" y="288.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">buat ulang ringkasan</text>
 <text x="645.2" y="232.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">dashboard &amp; statistik,</text>
 <text x="645.2" y="248.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">laporan keluhan &amp;</text>
 <text x="645.2" y="264.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kebersihan, log aktivitas,</text>
 <text x="645.2" y="280.7" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">ringkasan AI, stiker QR</text>
-<text x="1099.8" y="443.4" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">teks keluhan, laporan harian,</text>
-<text x="1099.8" y="459.4" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pertanyaan + data agregat</text>
-<text x="1013.4" y="298.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kategori, prioritas, ringkasan,</text>
-<text x="1013.4" y="314.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">rekomendasi, ringkasan harian,</text>
-<text x="1013.4" y="330.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">jawaban Kato Bot</text>
-<text x="1056.2" y="503.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">foto bukti + lokasi</text>
-<text x="1056.2" y="519.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">+ keluhan</text>
-<text x="1056.2" y="569.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">verdict (clean / dirty /</text>
-<text x="1056.2" y="585.5" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">wrong_place) + alasan</text>
-<text x="1071.1" y="670.8" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pemicu harian</text>
+<text x="1092.3" y="463.9" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">teks keluhan, laporan harian,</text>
+<text x="1092.3" y="479.9" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pertanyaan + data agregat</text>
+<text x="1021.0" y="321.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">kategori, prioritas, ringkasan,</text>
+<text x="1021.0" y="337.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">rekomendasi, ringkasan harian,</text>
+<text x="1021.0" y="353.2" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">jawaban Kato Bot</text>
+<text x="1066.7" y="654.3" font-size="12.5" text-anchor="middle" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke">pemicu harian</text>
 </svg>

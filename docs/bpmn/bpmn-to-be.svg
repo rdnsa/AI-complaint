@@ -35,12 +35,13 @@
 <path d="M1495,400 L1561,400" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
 <path d="M1483,870 L1507,870" fill="none" stroke="#5B9BD5" stroke-width="1.8" marker-end="url(#a5B9BD5)"/>
 <path d="M1580,837 L1580,593" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
-<path d="M1653,560 L1702,560" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
-<path d="M1750,520 L1750,283" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
-<text x="1768" y="420.0" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1768" dy="0.0">Ya</tspan></text>
-<path d="M1750,600 L1750,870 L1653,870" fill="none" stroke="#C9665F" stroke-width="1.8" marker-end="url(#aC9665F)"/>
-<text x="1675" y="753.2" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1675" dy="0.0">Tidak: foto ditolak,</tspan><tspan x="1675" dy="13.7">bersihkan &amp; foto ulang</tspan></text>
+<path d="M1640,527 L1640,250 L1677,250" fill="none" stroke="#8E6CD1" stroke-width="1.8" marker-end="url(#a8E6CD1)"/>
 <path d="M1750,217 L1750,118" fill="none" stroke="#555555" stroke-width="1.8" marker-end="url(#a555555)"/>
+<path d="M900,1073 L900,1110 L1790,1110 L1790,1073" fill="none" stroke="#C9665F" stroke-width="1.8" marker-end="url(#aC9665F)"/>
+<text x="1300" y="1096.0" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1300" dy="0.0">Penutupan keliru (opsional)</tspan></text>
+<path d="M1790,1007 L1790,602" fill="none" stroke="#C9665F" stroke-width="1.8" marker-end="url(#aC9665F)"/>
+<path d="M1740,602 L1740,620 L1110,620 L1110,757" fill="none" stroke="#C9665F" stroke-width="1.8" marker-end="url(#aC9665F)"/>
+<text x="1270" y="607.0" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1270" dy="0.0">kembali ke daftar petugas</tspan></text>
 <circle cx="240" cy="85" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
 <text x="240" y="85.0" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="240" dy="0.0">MULAI</tspan></text>
 <rect x="317.0" y="52.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
@@ -71,9 +72,9 @@
 <circle cx="1590" cy="400" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
 <text x="1590" y="400.0" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1590" dy="0.0">Selesai</tspan></text>
 <rect x="1507.0" y="527.0" width="146" height="66" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
-<text x="1580" y="552.5" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1580" dy="0.0">Vision AI memeriksa</tspan><tspan x="1580" dy="15.0">foto bukti</tspan></text>
-<polygon points="1750,520 1798,560 1750,600 1702,560" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
-<text x="1750" y="553.2" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1750" dy="0.0">Lokasi sesuai</tspan><tspan x="1750" dy="13.7">&amp; bersih?</tspan></text>
+<text x="1580" y="552.5" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1580" dy="0.0">Memeriksa foto bukti</tspan><tspan x="1580" dy="15.0">tersimpan (folder proof/)</tspan></text>
+<rect x="1705.0" y="518.0" width="170" height="84" rx="4" fill="#D9C8F5" stroke="#8E6CD1" stroke-width="1.5"/>
+<text x="1790" y="530.1" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1790" dy="0.0">Status kembali baru;</tspan><tspan x="1790" dy="15.0">petugas, waktu selesai &amp;</tspan><tspan x="1790" dy="15.0">bukti dikosongkan; foto</tspan><tspan x="1790" dy="15.0">tetap tersimpan, tercatat</tspan><tspan x="1790" dy="15.0">di log aktivitas</tspan></text>
 <circle cx="900" cy="790" r="29" fill="#E8958F" stroke="#C9665F" stroke-width="1.5"/>
 <text x="900" y="790.0" font-size="10.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="900" dy="0.0">MULAI</tspan></text>
 <rect x="997.0" y="757.0" width="146" height="66" rx="4" fill="#9DCBF3" stroke="#5B9BD5" stroke-width="1.5"/>
@@ -94,4 +95,6 @@
 <text x="900" y="1025.0" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="900" dy="0.0">Menindaklanjuti:</tspan><tspan x="900" dy="15.0">peringatan luar kampus,</tspan><tspan x="900" dy="15.0">keluhan prioritas tinggi</tspan></text>
 <rect x="997.0" y="1007.0" width="146" height="66" rx="4" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
 <text x="1070" y="1032.5" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1070" dy="0.0">Menugaskan petugas</tspan><tspan x="1070" dy="15.0">secara langsung</tspan></text>
+<rect x="1717.0" y="1007.0" width="146" height="66" rx="4" fill="#F9CFA8" stroke="#E3A36B" stroke-width="1.5"/>
+<text x="1790" y="1025.0" font-size="11.5" font-weight="normal" text-anchor="middle" dominant-baseline="central"><tspan x="1790" dy="0.0">Membuka kembali</tspan><tspan x="1790" dy="15.0">keluhan selesai</tspan><tspan x="1790" dy="15.0">yang keliru</tspan></text>
 </svg>

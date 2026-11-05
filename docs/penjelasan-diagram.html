@@ -53,7 +53,7 @@
 </style></head><body>
 
 <div class="sampul">
-  <span class="lencana">Dokumentasi Diagram &middot; DFD, UML &amp; BPMN &middot; Edisi 29 Oktober 2026</span>
+  <span class="lencana">Dokumentasi Diagram &middot; DFD, UML &amp; BPMN &middot; Edisi 5 November 2026</span>
   <h1>Membaca Diagram Sistem Kato Report</h1>
   <p class="sub">UPI Kampus Tasikmalaya &middot; Sistem pelaporan kebersihan lokasi kampus<br>
   Penjelasan lengkap setiap Data Flow Diagram (Level 0, 1, 2), diagram UML (Use Case, Class,
@@ -76,7 +76,7 @@
   <li>Use Case Diagram</li>
   <li>Class Diagram</li>
   <li>Sequence Diagram: mengirim keluhan</li>
-  <li>Sequence Diagram: klaim, ambil alih, dan menyelesaikan keluhan</li>
+  <li>Sequence Diagram: klaim, ambil alih, menyelesaikan, dan membuka kembali keluhan</li>
   <li>Sequence Diagram: tugas harian dengan foto dan GPS</li>
   <li>Diagram proses bisnis (BPMN)</li>
   <li>Bagaimana semua diagram saling terhubung</li>
@@ -91,7 +91,7 @@ sistem menggambarkan &ldquo;cara kerja&rdquo; sebuah aplikasi di atas kertas, sa
 denah sebelum membangun rumah.</p>
 <p>Setiap diagram di sini dibuat dari sistem yang <strong>benar-benar sudah berjalan</strong>, bukan
 sekadar rencana. Nama proses, isi data, urutan langkah, dan nama tabel diambil langsung dari kode
-program dan basis datanya (versi 29 Oktober 2026).</p>
+program dan basis datanya (versi 5 November 2026).</p>
 
 <div class="kutip"><strong>Cara membaca dokumen ini.</strong> Anda tidak perlu membaca dari awal
 sampai akhir. Bagian 2&ndash;6 adalah bekal: ceritanya, siapa pemakainya, dan arti setiap simbol.
@@ -121,10 +121,11 @@ keluhan itu dan mengubahnya menjadi &ldquo;tiket kerja&rdquo; yang rapi: jenis m
 tanpa harus memilih apa pun; gedung dan lantai hanya <em>penyaring</em>. Petugas menekan
 <strong>&ldquo;Saya kerjakan sekarang&rdquo;</strong> dan memilih namanya. Klaim ini <strong>bukan kunci</strong>:
 selama keluhan belum selesai, petugas lain boleh <strong>mengambil alih</strong>, dan perpindahannya
-tercatat. Setelah membersihkan, petugas memotret hasilnya. Foto itu diperiksa oleh <strong>AI pembaca gambar</strong>:
-apakah ini benar lokasi yang dilaporkan, dan apakah sudah bersih? Hanya bila AI menilai bersih,
-keluhan boleh ditandai <em>selesai</em>. Bila masih kotor atau salah tempat, foto ditolak beserta
-alasannya. Keluhan yang sudah selesai tidak dapat dibuka kembali.</p>
+tercatat. Setelah membersihkan, petugas memotret hasilnya dengan kamera. Begitu foto bukti tersimpan,
+keluhan langsung ditandai <em>selesai</em>; foto itu tidak dinilai oleh AI, tetapi tampil di papan publik
+dan tercatat di log sehingga siapa pun bisa memeriksanya. Petugas tidak bisa memindahkan keluhan yang sudah
+selesai. Bila ternyata penutupannya keliru, hanya <strong>supervisor</strong> yang bisa
+<strong>membukanya kembali</strong>: keluhan kembali ke daftar petugas sebagai keluhan baru.</p>
 <p>Selain keluhan, petugas juga punya <strong>tugas harian</strong>: enam pekerjaan tetap per lokasi
 (menyapu &amp; mengepel, mengelap kaca, membersihkan toilet, membuang sampah, mengisi galon,
 merapikan ruangan). Tiap tugas difoto langsung dari kamera dan dikirim bersama posisi GPS ponsel.
@@ -145,27 +146,26 @@ memakai kode lokasi yang sama untuk melihat keluhan di lokasi itu. Stiker lama b
 data pertama yang dikirim pelapor.</div>
 
 <div class="penting"><strong>Inti sistem dalam satu kalimat:</strong> keluhan masuk dengan mudah,
-dipahami otomatis oleh AI, dikerjakan petugas, dan hanya dianggap selesai bila ada bukti foto
-yang dinilai bersih oleh AI; sementara pekerjaan rutin petugas dibuktikan dengan foto langsung,
-waktu server, dan posisi GPS.</div>
+dipahami otomatis oleh AI, dikerjakan petugas, dan hanya dianggap selesai bila ada foto bukti
+yang bisa diperiksa semua orang, dan supervisor dapat membukanya kembali bila keliru; sementara pekerjaan
+rutin petugas dibuktikan dengan foto langsung, waktu server, dan posisi GPS.</div>
 
 <!-- ================================================================ 3 -->
 <h2>3. Siapa saja yang terlibat</h2>
 <p>Dalam diagram, &ldquo;pihak yang terlibat&rdquo; disebut <strong>aktor</strong> (di UML) atau
 <strong>entitas eksternal</strong> (di DFD). Keduanya berarti pihak di luar sistem yang memberi atau
-menerima data. Ada enam pihak:</p>
+menerima data. Ada lima pihak:</p>
 <table>
   <tr><th style="width:22%">Pihak</th><th style="width:14%">Jenis</th><th>Perannya</th></tr>
   <tr><td><strong>Pelapor (siapa saja)</strong></td><td>Manusia</td><td>Melaporkan keluhan, melihat papan publik, dan bertanya kepada Kato Bot. Boleh siapa saja, tanpa akun. Akun hanya perlu bila ingin tampil di papan peringkat pelapor teraktif.</td></tr>
   <tr><td><strong>Petugas Kebersihan</strong></td><td>Manusia</td><td>Menangani keluhan (klaim, ambil alih, selesai dengan foto bukti) dan mengirim tugas harian. Tidak perlu login: cukup memilih namanya dari daftar yang dibuat supervisor.</td></tr>
-  <tr><td><strong>Supervisor</strong></td><td>Manusia</td><td>Pengawas (SPV). Satu-satunya yang wajib login. Memantau keluhan, laporan kebersihan, statistik, dan log; mengelola nama petugas dan akun; menghapus keluhan bila perlu; mencetak stiker QR.</td></tr>
+  <tr><td><strong>Supervisor</strong></td><td>Manusia</td><td>Pengawas (SPV). Satu-satunya yang wajib login. Memantau keluhan, laporan kebersihan, statistik, dan log; mengelola nama petugas dan akun; membuka kembali keluhan yang keliru ditutup; menghapus keluhan bila perlu; mencetak stiker QR.</td></tr>
   <tr><td><strong>LLM Teks (DeepSeek)</strong></td><td>Layanan AI</td><td>&ldquo;Otak&rdquo; pembaca teks. Menggolongkan keluhan, membuat ringkasan harian, dan menjawab pertanyaan Kato Bot.</td></tr>
-  <tr><td><strong>LLM Vision (Gemini)</strong></td><td>Layanan AI</td><td>&ldquo;Mata&rdquo; sistem. Menilai foto bukti penyelesaian keluhan: apakah lokasinya benar dan sudah bersih. Tugas harian <em>tidak</em> melewati pemeriksaan ini.</td></tr>
   <tr><td><strong>Penjadwal (Cron)</strong></td><td>Jam otomatis</td><td>Semacam alarm yang berbunyi setiap hari pukul 17.00 WIB (10.00 UTC) untuk memicu pembuatan ringkasan harian.</td></tr>
 </table>
 <p><em>LLM</em> (Large Language Model) adalah nama teknis untuk jenis AI yang memahami bahasa,
-seperti ChatGPT. Sistem ini memakai dua LLM dari perusahaan berbeda karena tugasnya berbeda:
-satu untuk teks, satu untuk gambar. Karena siapa saja boleh melapor, melihat papan publik, dan bertanya
+seperti ChatGPT. Sistem ini hanya memakai satu LLM, yaitu DeepSeek, dan hanya untuk teks; foto tidak pernah
+dinilai oleh model AI. Karena siapa saja boleh melapor, melihat papan publik, dan bertanya
 kepada Kato Bot, semuanya digambar sebagai satu pihak: Pelapor.</p>
 
 <!-- ================================================================ 4 -->
@@ -189,7 +189,7 @@ tetapi dari sudut pandang yang berbeda.</p>
 <div class="kartu">
   <h4>BPMN &mdash; Business Process Model and Notation</h4>
   <p style="margin:0">Diagram <strong>alur kerja antarpihak</strong> dalam bentuk lajur renang (<em>swimlane</em>).
-  Menjawab: <em>siapa mengerjakan langkah apa, dan apa yang terjadi bila hasilnya tidak memenuhi syarat?</em>
+  Menjawab: <em>siapa mengerjakan langkah apa, dan apa yang terjadi bila ada langkah yang perlu diulang?</em>
   Cocok untuk dibaca pimpinan dan pengelola yang ingin melihat proses dari awal sampai akhir.</p>
 </div>
 <table>
@@ -270,18 +270,18 @@ tempat penyimpanan foto. Nama dalam kurung adalah nama tabel sebenarnya di basis
   <tr><th style="width:24%">Data store</th><th>Isinya</th><th style="width:30%">Contoh satu baris</th></tr>
   <tr><td><strong>D1 Pengguna</strong> (users)</td><td>Semua akun: supervisor, pelapor yang mendaftar, dan nama petugas. Kata sandi tidak disimpan apa adanya, tetapi diacak satu arah (<em>hash</em>) sehingga tidak bisa dibaca siapa pun. Petugas hanya berupa nama, tanpa nama pengguna dan kata sandi.</td><td>Budi &middot; peran: staff &middot; aktif</td></tr>
   <tr><td><strong>D2 Lokasi</strong> (cleaning_areas)</td><td>Daftar lokasi: lantai gedung, halaman gedung, gedung utuh, atau tempat di luar gedung. Tiap lokasi punya kode (yang dibawa QR), nama, enam tugas harian yang berlaku, dan urutan tampil. Pencarian memakai view <code>location_info</code>, yang menggabungkan lokasi baru dengan data lama <code>buildings</code> dan <code>toilets</code>.</td><td>C-2 &middot; Gedung C (Perkuliahan) &ndash; Lantai 2</td></tr>
-  <tr><td><strong>D3 Laporan</strong> (reports)</td><td>Setiap keluhan: teks asli, foto kondisi, lokasi (<code>area_id</code>, atau <code>toilet_id</code> untuk data lama), status, petugas yang memegang, hasil analisis AI (kategori, prioritas, ringkasan, saran), serta foto bukti dan penilaian AI atas foto itu.</td><td>&ldquo;lantai becek&rdquo; &middot; genangan &middot; prioritas sedang &middot; status in_progress</td></tr>
+  <tr><td><strong>D3 Laporan</strong> (reports)</td><td>Setiap keluhan: teks asli, foto kondisi, lokasi (<code>area_id</code>, atau <code>toilet_id</code> untuk data lama), status, petugas yang memegang, hasil analisis AI (kategori, prioritas, ringkasan, saran), serta foto bukti. Kolom penilaian foto (<code>proof_verdict</code>, <code>proof_reason</code>, dan sejenisnya) hanya berisi data lama.</td><td>&ldquo;lantai becek&rdquo; &middot; genangan &middot; prioritas sedang &middot; status in_progress</td></tr>
   <tr><td><strong>D4 Laporan Kebersihan</strong> (cleaning_reports)</td><td>Laporan tugas harian: lokasi, petugas, catatan, posisi GPS, jarak ke pusat kampus, dan status lokasi (<em>ok</em>, <em>far</em>, <em>unknown</em>). Tabel <code>cleaning_report_tasks</code> menyimpan tiap tugas beserta fotonya dan waktu server menerima foto itu.</td><td>Siti &middot; C-2 &middot; membuang sampah &middot; 08.15 &middot; ok</td></tr>
   <tr><td><strong>D6 Ringkasan Harian</strong> (daily_summaries)</td><td>Satu paragraf ringkasan per hari dan poin-poin sorotannya.</td><td>29-10-2026 &middot; 7 keluhan &middot; &ldquo;Gedung C paling banyak&hellip;&rdquo;</td></tr>
-  <tr><td><strong>D7 Log Aktivitas</strong> (activity_log)</td><td>&ldquo;Buku besar&rdquo; semua kejadian penting (13 jenis): keluhan masuk, analisis, perubahan status dan pengambilalihan, foto ditolak, login, perubahan akun, penghapusan, pertanyaan, laporan kebersihan, laporan di luar kampus. Hanya ditambah, tidak pernah diubah atau dihapus.</td><td>14.02 &middot; Budi &middot; mengambil alih keluhan dari Siti</td></tr>
-  <tr><td><strong>D8 Foto</strong> (R2 bucket)</td><td>Berkas foto: foto kondisi dari pelapor, foto bukti, dan foto tugas harian. Foto bukti yang ditolak AI dan foto tugas yang terlalu lama langsung dihapus.</td><td>proof/3f2a&hellip;.jpg</td></tr>
+  <tr><td><strong>D7 Log Aktivitas</strong> (activity_log)</td><td>&ldquo;Buku besar&rdquo; semua kejadian penting (14 jenis): keluhan masuk, analisis dan analisis gagal, perubahan status dan pengambilalihan, pembukaan kembali keluhan, penghapusan, login, ringkasan harian, perubahan akun, pertanyaan, laporan kebersihan, laporan di luar kampus. Dua jenis lainnya (<code>proof_rejected</code>, <code>verification_failed</code>) hanya ada pada catatan lama dan tidak lagi dihasilkan. Hanya ditambah, tidak pernah diubah atau dihapus.</td><td>14.02 &middot; Budi &middot; mengambil alih keluhan dari Siti</td></tr>
+  <tr><td><strong>D8 Foto</strong> (R2 bucket)</td><td>Berkas foto: foto kondisi dari pelapor, foto bukti, dan foto tugas harian. Foto tugas yang terlalu lama langsung dihapus. Foto bukti tetap tersimpan meski keluhannya dibuka kembali.</td><td>proof/3f2a&hellip;.jpg</td></tr>
 </table>
 
 <!-- ================================================================ 7 -->
 <h2 class="pecah">7. DFD Level 0 &mdash; Diagram Konteks</h2>
 <figure>
   <img src="diagram/dfd-level-0.svg" alt="DFD Level 0">
-  <figcaption>Gambar 1. DFD Level 0: seluruh sistem sebagai satu proses, dikelilingi enam entitas eksternal.</figcaption>
+  <figcaption>Gambar 1. DFD Level 0: seluruh sistem sebagai satu proses, dikelilingi lima entitas eksternal.</figcaption>
 </figure>
 <h3>Apa yang ditunjukkan</h3>
 <p>Diagram konteks adalah pandangan paling luas. Seluruh aplikasi digambar sebagai
@@ -295,17 +295,16 @@ sistem. Pihak manusia digambar di kiri dan atas, layanan AI dan penjadwal di kan
 <table>
   <tr><th style="width:18%">Entitas</th><th style="width:41%">Data yang dikirim ke sistem</th><th>Data yang diterima dari sistem</th></tr>
   <tr><td><strong>Pelapor</strong></td><td>Lokasi (dari QR atau pilihan gedung dan lantai); teks keluhan; foto kondisi; data registrasi dan login (bila ingin punya akun); pertanyaan untuk Kato Bot.</td><td>Nomor dan status keluhan; papan publik dan papan peringkat; jawaban Kato Bot.</td></tr>
-  <tr><td><strong>Petugas</strong></td><td>Nama petugas (dipilih dari daftar); permintaan klaim atau ambil alih; foto bukti; tugas harian berupa foto per tugas dan posisi GPS.</td><td>Daftar keluhan terbuka; hasil pemeriksaan foto (diterima, atau ditolak beserta alasannya); status lokasi laporan kebersihan.</td></tr>
-  <tr><td><strong>Supervisor</strong></td><td>Nama pengguna dan kata sandi; data akun dan petugas; filter waktu; perintah analisis ulang, hapus keluhan, atau buat ulang ringkasan.</td><td>Dashboard dan statistik; laporan keluhan dan kebersihan; log aktivitas; ringkasan AI; stiker QR siap cetak.</td></tr>
+  <tr><td><strong>Petugas</strong></td><td>Nama petugas (dipilih dari daftar); permintaan klaim atau ambil alih; foto bukti; tugas harian berupa foto per tugas dan posisi GPS.</td><td>Daftar keluhan terbuka; status keluhan; status lokasi laporan kebersihan.</td></tr>
+  <tr><td><strong>Supervisor</strong></td><td>Nama pengguna dan kata sandi; data akun dan petugas; filter waktu; perintah analisis ulang, buka kembali keluhan, hapus keluhan, atau buat ulang ringkasan.</td><td>Dashboard dan statistik; laporan keluhan dan kebersihan; log aktivitas; ringkasan AI; stiker QR siap cetak.</td></tr>
   <tr><td><strong>LLM Teks</strong></td><td>Hasil kerjanya: kategori, prioritas, ringkasan, rekomendasi; paragraf ringkasan harian; jawaban Kato Bot.</td><td>Teks keluhan; daftar ringkasan keluhan hari itu; pertanyaan beserta data rekap.</td></tr>
-  <tr><td><strong>LLM Vision</strong></td><td>Penilaian foto (<em>clean</em>, <em>dirty</em>, atau <em>wrong_place</em>) dan alasannya.</td><td>Foto bukti beserta lokasi dan keluhan aslinya.</td></tr>
   <tr><td><strong>Penjadwal</strong></td><td>Sinyal pemicu setiap pukul 17.00 WIB.</td><td>(tidak menerima apa pun)</td></tr>
 </table>
-<div class="penting"><strong>Yang patut dicatat:</strong> kedua layanan AI berada <em>di luar</em>
+<div class="penting"><strong>Yang patut dicatat:</strong> layanan AI berada <em>di luar</em>
 sistem. Sistem hanya mengirim pertanyaan dan menerima jawaban, dan jawaban itu tidak dipercaya
 mentah: hasilnya divalidasi dulu. Karena itu, bila layanan AI sedang bermasalah, sistem tetap berjalan:
-keluhan tetap tersimpan, hanya belum berlabel, dan bisa dianalisis ulang nanti. Satu-satunya yang
-berhenti adalah penutupan keluhan, sebab bukti yang belum diperiksa tidak dihitung.</div>
+keluhan tetap tersimpan, hanya belum berlabel, dan bisa dianalisis ulang nanti. Penutupan keluhan juga
+tetap berjalan, karena tidak memakai AI sama sekali.</div>
 
 <!-- ================================================================ 8 -->
 <h2 class="pecah">8. DFD Level 1 &mdash; Sembilan proses utama</h2>
@@ -320,7 +319,7 @@ gambar tetap tajam.</p>
 <p>Cara membaca susunannya, dari atas ke bawah:</p>
 <ul>
   <li><strong>Pita atas</strong>: keluhan masuk dari pelapor (2.0) lalu dianalisis AI (3.0).</li>
-  <li><strong>Pita tengah</strong>: pekerjaan petugas, yaitu menangani keluhan (4.0, memakai LLM Vision) dan melaporkan tugas harian (5.0, tanpa LLM Vision).</li>
+  <li><strong>Pita tengah</strong>: pekerjaan petugas, yaitu menangani keluhan (4.0, termasuk supervisor membuka kembali keluhan) dan melaporkan tugas harian (5.0). Keduanya tanpa AI.</li>
   <li><strong>Pita bawah</strong>: akun (1.0), pemantauan supervisor (8.0), informasi publik (7.0), Kato Bot (9.0), dan ringkasan harian (6.0).</li>
 </ul>
 
@@ -339,7 +338,7 @@ proses 8.0 (Tampilkan Log). Bila pencatatan gagal, tindakan yang dicatat tetap b
   <tr><td class="no">1.0 Kelola Akun &amp; Autentikasi</td><td>Pendaftaran akun pelapor, pemeriksaan login, pembuatan &ldquo;tiket masuk&rdquo; (sesi), serta pengelolaan akun dan daftar petugas oleh supervisor, termasuk menghapus akun yang belum punya riwayat.</td><td>D1 (baca &amp; tulis), D7</td></tr>
   <tr><td class="no">2.0 Terima &amp; Lacak Keluhan</td><td>Menampilkan pilihan lokasi setelah QR dipindai, menerima foto dan keluhan, memeriksa kelengkapan, menyimpan keluhan, dan menjawab pertanyaan &ldquo;keluhan saya sudah sampai mana?&rdquo;.</td><td>D2 (baca), D3, D8, D7</td></tr>
   <tr><td class="no">3.0 Analisis Keluhan (AI)</td><td>Mengirim teks keluhan ke LLM Teks dan menyimpan hasilnya: kategori, prioritas, ringkasan, saran tindakan. Berjalan di belakang layar, sehingga pelapor tidak perlu menunggu.</td><td>D3 (baca &amp; tulis), D7</td></tr>
-  <tr><td class="no">4.0 Tangani Keluhan</td><td>Menampilkan keluhan terbuka kepada petugas, mencatat klaim dan pengambilalihan, menerima foto bukti, meminta LLM Vision menilainya, dan mengubah status menjadi selesai hanya bila foto dinilai bersih.</td><td>D1 (baca), D3, D8, D7</td></tr>
+  <tr><td class="no">4.0 Tangani Keluhan</td><td>Menampilkan keluhan terbuka kepada petugas, mencatat klaim dan pengambilalihan, menerima foto bukti, mengubah status menjadi selesai bila foto buktinya ada, dan melayani supervisor yang membuka kembali keluhan yang keliru ditutup.</td><td>D1 (baca), D3, D8, D7</td></tr>
   <tr><td class="no">5.0 Laporkan Tugas Harian</td><td>Menerima laporan enam tugas harian per lokasi: foto langsung dari kamera, waktu server, dan posisi GPS yang dibandingkan dengan batas kampus. Laporan di luar kampus atau tanpa GPS tetap diterima tetapi ditandai.</td><td>D1 (baca), D2 (baca), D4, D8, D7</td></tr>
   <tr><td class="no">6.0 Buat Ringkasan Harian</td><td>Setiap pukul 17.00, atau saat supervisor meminta, mengumpulkan keluhan hari itu dan meminta LLM Teks menyusun satu paragraf ringkasan.</td><td>D3 (baca), D6, D7</td></tr>
   <tr><td class="no">7.0 Sajikan Informasi Publik</td><td>Menampilkan papan keluhan dan papan laporan kebersihan untuk umum (tanpa data pribadi), papan peringkat pelapor, dan foto.</td><td>D1, D3, D4, D8 (semua baca)</td></tr>
@@ -402,18 +401,16 @@ menjadi tiket kerja rapi. Semuanya berjalan otomatis setelah keluhan tersimpan.<
 <h3 class="pecah">9.4 Proses 4.0 &mdash; Tangani Keluhan</h3>
 <figure><img src="diagram/dfd-level-2-4.svg" alt="DFD Level 2 proses 4.0"><figcaption>Gambar 6. Rincian proses 4.0.</figcaption></figure>
 <p>Proses ini memegang aturan terpenting sistem: <strong>keluhan hanya boleh selesai bila ada foto
-bukti yang dinilai bersih oleh AI.</strong> Tidak ada tahap &ldquo;memilih nama&rdquo; di awal; nama ditanyakan
+bukti yang tersimpan, dan hanya supervisor yang bisa membukanya kembali.</strong> Foto bukti tidak dinilai oleh AI;
+foto itu tampil di papan publik dan tercatat di log. Tidak ada tahap &ldquo;memilih nama&rdquo; di awal; nama ditanyakan
 <em>saat petugas bertindak</em> (klaim atau menyelesaikan), dengan nama terakhir di ponsel sebagai isian awal.</p>
 <table>
   <tr><th style="width:16%">Sub-proses</th><th>Penjelasan</th><th style="width:19%">Masuk</th><th style="width:19%">Keluar</th></tr>
   <tr><td class="no">4.1 Tampilkan Keluhan Terbuka</td><td>Semua keluhan yang belum selesai tampil tanpa harus memilih apa pun, yang paling mendesak di atas, lengkap dengan ringkasan dan saran dari AI. Gedung dan lantai hanya <em>penyaring</em> (&ldquo;Semua gedung&rdquo;, &ldquo;Semua&rdquo;). Daftar nama petugas aktif dimuat untuk pilihan nama.</td><td>Filter (Petugas); D1; keluhan belum selesai (D3)</td><td>Keluhan terbuka + ringkasan AI (Petugas)</td></tr>
-  <tr><td class="no">4.2 Klaim / Ambil Alih</td><td>&ldquo;Saya kerjakan sekarang&rdquo; membuka pertanyaan &ldquo;Siapa yang mengerjakan?&rdquo;. Setelah nama dipilih, status menjadi <em>in_progress</em> dengan nama petugas itu. Klaim <strong>bukan kunci</strong>: selama belum selesai dengan foto bukti, petugas lain boleh <strong>mengambil alih</strong>, dan perpindahan tercatat di D7 (&ldquo;X mengambil alih &hellip; dari Y&rdquo;). Klaim ulang oleh orang yang sama tidak dicatat dua kali. Keluhan yang sudah selesai tidak bisa dibuka lagi (kode 409).</td><td>Nama &amp; klaim (Petugas); D1; status &amp; pemegang saat ini (D3)</td><td>Klaim (D3); log (D7); konfirmasi (Petugas)</td></tr>
+  <tr><td class="no">4.2 Klaim / Ambil Alih</td><td>&ldquo;Saya kerjakan sekarang&rdquo; membuka pertanyaan &ldquo;Siapa yang mengerjakan?&rdquo;. Setelah nama dipilih, status menjadi <em>in_progress</em> dengan nama petugas itu. Klaim <strong>bukan kunci</strong>: selama belum selesai dengan foto bukti, petugas lain boleh <strong>mengambil alih</strong>, dan perpindahan tercatat di D7 (&ldquo;X mengambil alih &hellip; dari Y&rdquo;). Klaim ulang oleh orang yang sama tidak dicatat dua kali. Petugas tidak bisa memindahkan keluhan yang sudah selesai (kode 409); hanya supervisor yang bisa membukanya kembali (4.5).</td><td>Nama &amp; klaim (Petugas); D1; status &amp; pemegang saat ini (D3)</td><td>Klaim (D3); log (D7); konfirmasi atau penolakan (Petugas)</td></tr>
   <tr><td class="no">4.3 Terima Foto Bukti</td><td>Setelah membersihkan, petugas menekan &ldquo;Sudah beres - foto buktinya&rdquo; (sekali lagi ditanya siapa yang menyelesaikan), lalu memotret dengan kamera. Foto disimpan di folder khusus &ldquo;proof&rdquo;. Foto kondisi dari pelapor tidak bisa dipakai ulang sebagai bukti.</td><td>Foto &amp; permintaan selesai (Petugas)</td><td>Foto (D8); kunci foto (4.4)</td></tr>
-  <tr><td class="no">4.4 Verifikasi Foto (AI)</td><td>Foto dikirim ke LLM Vision bersama nama lokasi dan keluhan aslinya. Ada tiga kemungkinan hasil:
-    <ul style="margin:1mm 0 0"><li><strong>Bersih</strong> (<em>clean</em>): bukti diterima, lanjut ke 4.5.</li>
-    <li><strong>Kotor atau salah tempat</strong> (<em>dirty</em>, <em>wrong_place</em>): foto dihapus dari D8, penolakan dicatat di D7, dan petugas menerima alasannya (misalnya &ldquo;masih ada genangan di lantai&rdquo;).</li>
-    <li><strong>Pemeriksa gagal</strong> (layanan AI error): foto dihapus, dicatat di D7, dan petugas diminta mencoba lagi. Ini berbeda dari ditolak: petugas tidak perlu membersihkan ulang.</li></ul></td><td>Kunci (4.3); foto (D8); keluhan (D3); penilaian (LLM Vision)</td><td>Foto + konteks (LLM Vision); hapus foto (D8); log (D7); alasan (Petugas); bukti diterima (4.5)</td></tr>
-  <tr><td class="no">4.5 Perbarui Status (Selesai)</td><td>Perubahan ke <em>resolved</em> diperiksa sekali lagi: harus ada foto bukti yang dinilai bersih. Nama petugas, waktu selesai, foto, putusan, dan alasan disimpan bersama, lalu dicatat di D7. Sejak saat itu foto bukti tampil di papan publik.</td><td>Bukti diterima (4.4); konfirmasi (Petugas)</td><td>Status, nama, waktu selesai, data bukti (D3); log (D7); status selesai (Petugas)</td></tr>
+  <tr><td class="no">4.4 Perbarui Status (Selesai)</td><td>Perubahan ke <em>resolved</em> diperiksa: kunci foto harus berawalan <code>proof/</code> dan berkasnya ada di D8; bila tidak, ditolak dengan kode 400 dan petugas diminta mengunggah ulang. Tanpa foto bukti sama sekali, aturan <code>canResolve(status, proofPhoto)</code> juga menolak dengan kode 400. Bila sah, status, nama petugas, waktu selesai, dan kunci foto disimpan, lalu dicatat di D7. Tidak ada penilaian AI. Sejak saat itu foto bukti tampil di papan publik.</td><td>Kunci foto (4.3); foto ada? (D8); status keluhan (D3); nama &amp; konfirmasi (Petugas)</td><td>Status, nama, waktu selesai, kunci foto (D3); log (D7); status selesai atau penolakan (Petugas)</td></tr>
+  <tr><td class="no">4.5 Buka Kembali Keluhan</td><td>Hanya untuk supervisor, lewat tombol &ldquo;Buka kembali&rdquo; pada keluhan yang sudah selesai. Keluhan yang tidak dikenal ditolak dengan kode 404; keluhan yang belum selesai ditolak dengan kode 409. Dalam satu perintah basis data, status kembali menjadi <em>new</em> dan nama petugas, waktu selesai, serta data bukti dikosongkan, sehingga dua supervisor yang menekan bersamaan hanya membukanya sekali. Keluhan kembali ke daftar petugas (4.1) dan foto buktinya tidak lagi tampil di papan publik. Berkas foto tetap ada di D8, dan D7 mencatat <em>report_reopened</em> beserta siapa yang menutup, kapan, dan fotonya, sebagai bukti alasan pembukaan.</td><td>Perintah (Supervisor); penutup, waktu selesai, foto bukti (D3)</td><td>Status <em>new</em> dan data yang dikosongkan (D3); log (D7); konfirmasi atau penolakan (Supervisor)</td></tr>
 </table>
 
 <!-- 9.5 -->
@@ -422,7 +419,7 @@ bukti yang dinilai bersih oleh AI.</strong> Tidak ada tahap &ldquo;memilih nama&
 <p>Tidak semua pembersihan berawal dari keluhan. Proses ini menerima <strong>laporan kerja rutin</strong>:
 enam tugas tetap per lokasi, difoto satu per satu. Dulu bukti kerja dikirim lewat pesan WhatsApp
 dengan foto yang bisa saja lama; aturan di bawah dibuat supaya foto lama tidak bisa menggantikan kerja hari ini.
-Proses ini <strong>tidak memakai LLM Vision</strong>: bukti kerja adalah foto langsung, waktu server, dan posisi.</p>
+Proses ini <strong>tidak memakai AI</strong>: bukti kerja adalah foto langsung, waktu server, dan posisi.</p>
 <table>
   <tr><th style="width:16%">Sub-proses</th><th>Penjelasan</th><th style="width:19%">Masuk</th><th style="width:19%">Keluar</th></tr>
   <tr><td class="no">5.1 Tampilkan Lokasi &amp; Tugas</td><td>Petugas memilih lokasi (atau membuka stiker <code>/clean/&lt;kode&gt;</code> yang langsung menuju tab Tugas harian) dan melihat enam tugas: menyapu &amp; mengepel, mengelap kaca jendela, membersihkan toilet, membuang sampah, mengisi ulang galon, merapikan ruangan. Petugas boleh mengirim di lokasi mana pun; petugas tidak punya lokasi tetap.</td><td>QR atau pilihan (Petugas); lokasi, tugas (D2)</td><td>Lokasi + enam tugas (Petugas)</td></tr>
@@ -450,7 +447,7 @@ Proses ini <strong>tidak memakai LLM Vision</strong>: bukti kerja adalah foto la
 <strong>membaca</strong> data; tidak ada yang ditulis.</p>
 <table>
   <tr><th style="width:16%">Sub-proses</th><th>Penjelasan</th><th style="width:19%">Masuk</th><th style="width:19%">Keluar</th></tr>
-  <tr><td class="no">7.1 Papan Keluhan Publik</td><td>Menampilkan keluhan kepada umum dengan menyaring data pribadi: <strong>teks asli keluhan, foto dari pelapor, dan nama petugas tidak ditampilkan</strong>. Yang tampil adalah lokasi, kategori, status, ringkasan, dan foto bukti yang sudah diverifikasi, karena foto itulah yang membuktikan pekerjaan benar-benar selesai.</td><td>Keluhan tersaring (D3); foto bukti (7.4)</td><td>Papan keluhan (Pelapor)</td></tr>
+  <tr><td class="no">7.1 Papan Keluhan Publik</td><td>Menampilkan keluhan kepada umum dengan menyaring data pribadi: <strong>teks asli keluhan, foto dari pelapor, dan nama petugas tidak ditampilkan</strong>. Yang tampil adalah lokasi, kategori, status, ringkasan, dan foto bukti, karena foto itulah yang membuat siapa pun bisa memeriksa bahwa pekerjaan benar-benar selesai. Bila keluhan dibuka kembali, foto buktinya tidak lagi tampil.</td><td>Keluhan tersaring (D3); foto bukti (7.4)</td><td>Papan keluhan (Pelapor)</td></tr>
   <tr><td class="no">7.2 Papan Laporan Kebersihan</td><td>Menampilkan laporan tugas harian terbaru: lokasi, tugas beserta fotonya, catatan, dan waktu. Seperti papan keluhan, <strong>tanpa nama petugas</strong>, dan posisi GPS beserta tandanya hanya untuk supervisor.</td><td>Laporan kebersihan (D4); foto tugas (7.4)</td><td>Papan laporan kebersihan (Pelapor)</td></tr>
   <tr><td class="no">7.3 Hitung Papan Peringkat</td><td>Menghitung 20 pelapor terdaftar dengan keluhan terbanyak, beserta berapa keluhannya yang sudah selesai. Pelapor yang login juga melihat posisinya sendiri.</td><td>Jumlah keluhan (D3); nama pelapor (D1)</td><td>Papan peringkat (Pelapor)</td></tr>
   <tr><td class="no">7.4 Sajikan Foto</td><td>Mengirim berkas foto dari D8 lewat aplikasi sendiri, bukan lewat alamat penyimpanan luar. Alasannya: sebagian penyedia internet di Indonesia memblokir alamat penyimpanan itu, sehingga foto bisa gagal tampil di jaringan kampus.</td><td>Berkas foto (D8)</td><td>Foto (7.1, 7.2)</td></tr>
@@ -495,22 +492,22 @@ dirancang</em>. Dokumen ini memuat tiga jenis diagram UML, masing-masing untuk p
 <ul>
   <li><strong>Use Case Diagram</strong>: fitur apa saja yang tersedia, dan untuk siapa.</li>
   <li><strong>Class Diagram</strong>: jenis data apa yang dicatat, apa isinya, dan bagaimana hubungannya.</li>
-  <li><strong>Sequence Diagram</strong>: dalam satu kejadian tertentu, urutan &ldquo;percakapan&rdquo; antarbagian sistem. Ada tiga: mengirim keluhan, menangani dan menyelesaikan keluhan, dan melaporkan tugas harian.</li>
+  <li><strong>Sequence Diagram</strong>: dalam satu kejadian tertentu, urutan &ldquo;percakapan&rdquo; antarbagian sistem. Ada tiga: mengirim keluhan, menangani, menyelesaikan, dan membuka kembali keluhan, serta melaporkan tugas harian.</li>
 </ul>
 
 <!-- ================================================================ 11 -->
 <h2 class="pecah">11. Use Case Diagram</h2>
-<p>Gambar berikut (halaman berikutnya, kertas A3 mendatar) memperlihatkan seluruh fitur Kato Report: 24 use case untuk tiga aktor manusia dan tiga aktor sistem.</p>
+<p>Gambar berikut (halaman berikutnya, kertas A3 mendatar) memperlihatkan seluruh fitur Kato Report: 24 use case untuk tiga aktor manusia dan dua aktor sistem.</p>
 <div class="halaman-besar">
   <img src="diagram/uml-use-case.svg" alt="UML Use Case" style="width:auto;max-width:100%;max-height:255mm">
-  <p style="font-size:9pt;color:#7A3628;margin:2mm 0 0">Gambar 12. Use case diagram: 24 use case, 3 aktor manusia, 3 aktor sistem.</p>
+  <p style="font-size:9pt;color:#7A3628;margin:2mm 0 0">Gambar 12. Use case diagram: 24 use case, 3 aktor manusia, 2 aktor sistem.</p>
 </div>
 
 <h3>Cara membaca simbolnya</h3>
 <table>
   <tr><th style="width:28%">Simbol</th><th>Arti</th></tr>
   <tr><td>Orang-orangan (stick figure)</td><td><strong>Aktor manusia</strong>: orang yang memakai sistem.</td></tr>
-  <tr><td>Orang-orangan berkepala kotak</td><td><strong>Aktor sistem</strong>: sistem lain yang ikut terlibat, yaitu kedua layanan AI dan penjadwal.</td></tr>
+  <tr><td>Orang-orangan berkepala kotak</td><td><strong>Aktor sistem</strong>: sistem lain yang ikut terlibat, yaitu layanan AI (LLM Teks) dan penjadwal.</td></tr>
   <tr><td>Kotak besar berlabel di pojok kiri atas</td><td><strong>Batas sistem</strong>. Semua yang di dalamnya adalah fitur aplikasi ini.</td></tr>
   <tr><td>Elips (oval)</td><td><strong>Use case</strong>: satu fitur atau tujuan yang bisa dicapai pengguna, ditulis sebagai kata kerja (&ldquo;Kirim Keluhan&rdquo;).</td></tr>
   <tr><td>Garis polos</td><td><strong>Asosiasi</strong>: aktor ini memakai atau terlibat dalam fitur ini.</td></tr>
@@ -530,14 +527,15 @@ dirancang</em>. Dokumen ini memuat tiga jenis diagram UML, masing-masing untuk p
   <tr><td>Tanya Kato Bot</td><td>Bertanya dalam bahasa sehari-hari; dijawab AI berdasarkan rekap data.</td></tr>
   <tr><td rowspan="5"><strong>Petugas Kebersihan</strong></td><td>Lihat Keluhan Terbuka</td><td>Diawali Pindai QR / Pilih Lokasi (sebagai penyaring). Menampilkan semua keluhan yang belum selesai, urut dari yang paling mendesak.</td></tr>
   <tr><td>Klaim Keluhan</td><td>&ldquo;Saya kerjakan sekarang&rdquo;, dengan memilih nama saat bertindak.</td></tr>
-  <tr><td>Ambil Alih Keluhan</td><td>Variasi klaim: mengambil keluhan dari petugas lain selama belum selesai dengan foto bukti. Tercatat di log aktivitas.</td></tr>
-  <tr><td>Selesaikan dg Foto Bukti</td><td>Mengubah status menjadi selesai dengan foto bukti. Selalu memicu Verifikasi Foto Bukti (AI).</td></tr>
+  <tr><td>Ambil Alih Keluhan</td><td>Variasi klaim: mengambil keluhan dari petugas lain selama belum selesai. Tercatat di log aktivitas.</td></tr>
+  <tr><td>Selesaikan dg Foto Bukti</td><td>Mengubah status menjadi selesai dengan foto bukti. Foto hanya diperiksa keberadaannya, tidak dinilai AI.</td></tr>
   <tr><td>Laporkan Tugas Harian</td><td>Mengirim foto per tugas dari enam tugas harian. Selalu memicu Periksa Posisi GPS.</td></tr>
   <tr><td><em>(di-include)</em></td><td>Pindai QR / Pilih Lokasi</td><td>Memindai stiker QR di lokasi, atau memilih gedung dan lantai/halaman. Tidak berdiri sendiri: menjadi langkah pertama Kirim Keluhan (pelapor) dan Lihat Keluhan Terbuka (petugas).</td></tr>
-  <tr><td rowspan="8"><strong>Supervisor</strong></td><td>Login</td><td>Wajib untuk masuk dashboard.</td></tr>
+  <tr><td rowspan="9"><strong>Supervisor</strong></td><td>Login</td><td>Wajib untuk masuk dashboard.</td></tr>
   <tr><td>Tanya Kato Bot</td><td>Sama seperti pelapor, tetapi boleh bertanya soal kinerja petugas per nama.</td></tr>
   <tr><td>Buat / Buat Ulang Ringkasan</td><td>Membuat ulang ringkasan harian kapan saja (selain otomatis setiap 17.00 oleh penjadwal).</td></tr>
   <tr><td>Analisis Ulang Keluhan</td><td>Mengulang analisis yang gagal. Menjalankan Analisis Keluhan (AI).</td></tr>
+  <tr><td>Buka Kembali Keluhan</td><td>Mengembalikan keluhan yang keliru ditutup ke daftar petugas sebagai keluhan baru. Hanya supervisor; tercatat di log aktivitas.</td></tr>
   <tr><td>Pantau Dashboard &amp; Statistik</td><td>Ringkasan, grafik, dan angka-angka ringkas.</td></tr>
   <tr><td>Lihat Laporan Keluhan &amp; Kebersihan</td><td>Daftar keluhan dengan filter waktu; rekap harian per petugas dan peringatan GPS.</td></tr>
   <tr><td>Lihat Log Aktivitas</td><td>Menelusuri siapa melakukan apa.</td></tr>
@@ -546,14 +544,13 @@ dirancang</em>. Dokumen ini memuat tiga jenis diagram UML, masing-masing untuk p
 <table>
   <tr><th style="width:20%">Aktor sistem</th><th>Terlibat dalam</th></tr>
   <tr><td><strong>LLM Teks</strong></td><td>Analisis Keluhan (AI), Buat Ringkasan Harian, Tanya Kato Bot</td></tr>
-  <tr><td><strong>LLM Vision</strong></td><td>Verifikasi Foto Bukti (AI)</td></tr>
   <tr><td><strong>Penjadwal</strong></td><td>Buat Ringkasan Harian (setiap pukul 17.00 WIB)</td></tr>
 </table>
 <p>Tugas harian tidak digambar sebagai include &ldquo;Pindai QR / Pilih Lokasi&rdquo; karena lokasinya bisa dipilih manual maupun lewat stiker <code>/clean/&lt;kode&gt;</code>.</p>
 
 <!-- ================================================================ 12 -->
 <h2 class="pecah">12. Class Diagram</h2>
-<figure><img src="diagram/uml-class.svg" alt="UML Class" style="max-height:215mm"><figcaption>Gambar 13. Class diagram: sembilan kelas data (satu di antaranya data lama) dan daftar nilai tetap (enumeration) dalam satu kotak catatan.</figcaption></figure>
+<figure><img src="diagram/uml-class.svg" alt="UML Class" style="max-height:215mm"><figcaption>Gambar 13. Class diagram: delapan kelas data (satu di antaranya data lama) dan daftar nilai tetap (enumeration) dalam satu kotak catatan.</figcaption></figure>
 
 <h3>Cara membaca simbolnya</h3>
 <p>Setiap <strong>kotak</strong> adalah satu <em>kelas</em>, yaitu satu jenis &ldquo;formulir&rdquo; yang
@@ -581,7 +578,7 @@ dicatat sistem. Kotak dibagi tiga bagian dari atas ke bawah:</p>
   <tr><th style="width:17%">Kelas</th><th>Isi dan maknanya</th></tr>
   <tr><td><strong>CleaningArea</strong><br>(Lokasi)</td><td>Satu lokasi yang bisa dilaporkan atau dibersihkan. Kode unik seperti <code>C-2</code> (dibawa oleh QR), nama, kode gedung, lantai (0 berarti halaman, kosong berarti tempat utuh seperti Lapang Voli), daftar tugas harian yang berlaku, dan status aktif. Pencarian memakai view <code>location_info</code> yang menggabungkan lokasi dengan data lama.</td></tr>
   <tr><td><strong>User</strong><br>(Pengguna)</td><td>Satu kelas untuk tiga peran (supervisor, petugas, pelapor), dibedakan oleh atribut <code>role</code>. Kata sandi disimpan sebagai <code>passwordHash</code> dan <code>passwordSalt</code> (acakan satu arah), bertanda rahasia. Petugas tidak punya nama pengguna maupun kata sandi.</td></tr>
-  <tr><td><strong>Report</strong><br>(Keluhan)</td><td>Kelas terpenting. Isinya terbagi tiga kelompok: <em>isi keluhan</em> (teks, foto, lokasi, pelapor); <em>alur kerja</em> (status, nama petugas yang memegang, waktu selesai); <em>hasil AI</em> (kategori, prioritas, ringkasan, rekomendasi, serta foto bukti dan penilaiannya). Tepat satu dari <code>areaId</code> atau <code>toiletId</code> terisi; <code>toiletId</code> hanya untuk data lama. Operasi <code>changeStatus()</code> menangani klaim, ambil alih, dan penyelesaian; <code>canResolve()</code> adalah aturan &ldquo;hanya boleh selesai bila ada foto bukti bersih&rdquo;.</td></tr>
+  <tr><td><strong>Report</strong><br>(Keluhan)</td><td>Kelas terpenting. Isinya terbagi tiga kelompok: <em>isi keluhan</em> (teks, foto, lokasi, pelapor); <em>alur kerja</em> (status, nama petugas yang memegang, waktu selesai); <em>hasil AI</em> (kategori, prioritas, ringkasan, rekomendasi); dan <em>bukti</em> (<code>proofPhotoKey</code>). Atribut <code>proofVerdict</code> dan <code>proofReason</code> hanya berisi data lama dan tidak lagi diisi. Tepat satu dari <code>areaId</code> atau <code>toiletId</code> terisi; <code>toiletId</code> hanya untuk data lama. Operasi <code>changeStatus()</code> menangani klaim, ambil alih, dan penyelesaian; <code>canResolve(status, proofPhoto)</code> adalah aturan &ldquo;hanya boleh selesai bila ada foto bukti&rdquo;; <code>reopen()</code> mengembalikan keluhan selesai menjadi baru, khusus supervisor.</td></tr>
   <tr><td><strong>CleaningReport</strong><br>(Laporan Kebersihan)</td><td>Satu kiriman tugas harian: lokasi, petugas (namanya disimpan juga sebagai teks, supaya tetap benar bila nama kemudian diganti), catatan, posisi GPS, jarak ke pusat kampus, dan status lokasi (<em>ok</em>, <em>far</em>, <em>unknown</em>).</td></tr>
   <tr><td><strong>CleaningReportTask</strong></td><td>Tugas yang dikerjakan dalam satu laporan kebersihan, dengan foto dan waktu server menerima foto itu. Kunci foto bersifat <em>unik</em>: satu foto tidak bisa membuktikan dua tugas atau dua laporan.</td></tr>
   <tr><td><strong>DailySummary</strong><br>(Ringkasan Harian)</td><td>Satu per tanggal: jumlah keluhan, paragraf ringkasan, poin sorotan.</td></tr>
@@ -603,10 +600,10 @@ dicatat sistem. Kotak dibagi tiga bagian dari atas ke bawah:</p>
 <table>
   <tr><th style="width:18%">Enumeration</th><th>Nilai (Inggris) &rarr; arti</th></tr>
   <tr><td>Role</td><td>supervisor &rarr; pengawas &middot; staff &rarr; petugas &middot; reporter &rarr; pelapor</td></tr>
-  <tr><td>ReportStatus</td><td>new &rarr; baru &middot; in_progress &rarr; dikerjakan &middot; resolved &rarr; selesai (tidak dapat dibuka kembali)</td></tr>
+  <tr><td>ReportStatus</td><td>new &rarr; baru &middot; in_progress &rarr; dikerjakan &middot; resolved &rarr; selesai (hanya supervisor yang dapat membukanya kembali)</td></tr>
   <tr><td>Priority</td><td>low &rarr; rendah &middot; medium &rarr; sedang &middot; high &rarr; tinggi</td></tr>
   <tr><td>Category</td><td>cleanliness &rarr; kebersihan &middot; supplies &rarr; perlengkapan &middot; damage &rarr; kerusakan &middot; odor &rarr; bau &middot; flooding &rarr; genangan &middot; other &rarr; lainnya</td></tr>
-  <tr><td>ProofVerdict</td><td>clean &rarr; bersih &middot; dirty &rarr; masih kotor &middot; wrong_place &rarr; bukan lokasi yang dilaporkan (di data lama, nilai ini dulu bernama not_toilet)</td></tr>
+  <tr><td>ProofVerdict</td><td>Hanya untuk data lama; sistem tidak lagi menilai foto. clean &rarr; bersih &middot; dirty &rarr; masih kotor &middot; wrong_place &rarr; bukan lokasi yang dilaporkan (di data lebih lama, nilai ini bernama not_toilet)</td></tr>
   <tr><td>AiStatus</td><td>pending &rarr; menunggu analisis &middot; ok &rarr; berhasil &middot; failed &rarr; gagal</td></tr>
   <tr><td>CleaningTask</td><td>sweep_mop &rarr; menyapu &amp; mengepel &middot; glass &rarr; mengelap kaca jendela &middot; toilet &rarr; membersihkan toilet &middot; trash &rarr; membuang sampah &middot; gallon &rarr; mengisi ulang galon &middot; tidy &rarr; merapikan ruangan. Dua nilai lama, sweep (menyapu) dan mop (mengepel), hanya ada di laporan sebelum migrasi 0010.</td></tr>
   <tr><td>LocationStatus</td><td>ok &rarr; di dalam kampus &middot; far &rarr; di luar kampus &middot; unknown &rarr; tanpa posisi GPS</td></tr>
@@ -650,29 +647,35 @@ detik, apalagi bila layanannya sedang sibuk. Dengan memisahkan &ldquo;simpan kel
 membuat keluhan hilang.</div>
 
 <!-- ================================================================ 14 -->
-<h2 class="pecah">14. Sequence Diagram: klaim, ambil alih, dan menyelesaikan keluhan</h2>
-<p>Gambar berikut (halaman berikutnya, kertas A3 mendatar) memperlihatkan tiga bagian: membuka daftar keluhan, klaim atau ambil alih (kotak ungu muda), dan penyelesaian dengan foto bukti yang diperiksa AI.</p>
+<h2 class="pecah">14. Sequence Diagram: klaim, ambil alih, menyelesaikan, dan membuka kembali keluhan</h2>
+<p>Gambar berikut (halaman berikutnya, kertas A3 mendatar) memperlihatkan empat bagian: membuka daftar keluhan, klaim atau ambil alih (kotak ungu muda pertama), penyelesaian dengan foto bukti, dan supervisor membuka kembali keluhan (kotak ungu muda kedua).</p>
 <div class="halaman-besar">
-  <img src="diagram/uml-sequence-selesai.svg" alt="UML Sequence klaim dan menyelesaikan keluhan" style="width:auto;max-width:100%;max-height:255mm">
-  <p style="font-size:9pt;color:#7A3628;margin:2mm 0 0">Gambar 15. Urutan kejadian saat petugas mengklaim, mengambil alih, lalu menyelesaikan keluhan dengan foto bukti.</p>
+  <img src="diagram/uml-sequence-selesai.svg" alt="UML Sequence klaim, menyelesaikan, dan membuka kembali keluhan" style="width:auto;max-width:100%;max-height:255mm">
+  <p style="font-size:9pt;color:#7A3628;margin:2mm 0 0">Gambar 15. Urutan kejadian saat petugas mengklaim, mengambil alih, lalu menyelesaikan keluhan dengan foto bukti, dan saat supervisor membukanya kembali.</p>
 </div>
 <table>
   <tr><th style="width:11%">Langkah</th><th>Apa yang terjadi</th></tr>
   <tr><td class="no">1&ndash;5</td><td>Petugas membuka halaman petugas, tab Keluhan. Aplikasi meminta keluhan yang belum selesai; server mengambilnya dari basis data dan menampilkannya bersama ringkasan AI. Tidak perlu memilih nama atau lokasi lebih dulu.</td></tr>
   <tr><td class="no">6&ndash;9</td><td><strong>Klaim.</strong> Petugas menekan &ldquo;Saya kerjakan sekarang&rdquo; dan memilih namanya. Aplikasi meminta status diubah menjadi <em>in_progress</em> dengan identitas petugas. Server memastikan petugas itu terdaftar dan aktif, lalu meneruskan ke <em>ReportService</em>.</td></tr>
-  <tr><td class="no">10&ndash;12</td><td><strong>Cabang &ldquo;sudah selesai&rdquo;:</strong> ditolak dengan kode 409; keluhan yang sudah selesai tidak dapat dibuka kembali. <strong>Cabang &ldquo;sama dengan pemegang klaim&rdquo;:</strong> tidak ada yang berubah dan tidak dicatat dua kali.</td></tr>
+  <tr><td class="no">10&ndash;12</td><td><strong>Cabang &ldquo;sudah selesai&rdquo;:</strong> ditolak dengan kode 409; petugas tidak bisa memindahkan keluhan yang sudah selesai. <strong>Cabang &ldquo;sama dengan pemegang klaim&rdquo;:</strong> tidak ada yang berubah dan tidak dicatat dua kali.</td></tr>
   <tr><td class="no">13&ndash;16</td><td><strong>Cabang &ldquo;keluhan baru atau pemegang klaim lain&rdquo;:</strong> status dan nama petugas disimpan. Bila sebelumnya dipegang petugas lain, ini adalah <strong>ambil alih</strong>, dan log mencatat &ldquo;X mengambil alih &hellip; dari Y&rdquo;. Klaim bukan kunci, jadi tidak ada petugas yang bisa &ldquo;mengunci&rdquo; keluhan tanpa menyelesaikannya.</td></tr>
   <tr><td class="no">17&ndash;21</td><td>Petugas membersihkan lokasi, menekan &ldquo;Sudah beres - foto buktinya&rdquo;, memilih nama, lalu memotret. Foto bukti diunggah (jenis &ldquo;proof&rdquo;) dan disimpan; server membalas dengan kunci foto.</td></tr>
-  <tr><td class="no">22&ndash;26</td><td>Aplikasi meminta status diubah menjadi <em>resolved</em> dengan kunci foto. ReportService membaca foto dan mengirimnya ke LLM Vision bersama lokasi dan keluhan asli, sehingga AI tahu apa yang harus diperiksa (misalnya: keluhannya genangan, apakah lantainya sudah kering dan apakah ini lokasi yang benar?).</td></tr>
-  <tr><td class="no">27&ndash;30</td><td><strong>Cabang &ldquo;pemeriksaan gagal&rdquo;</strong> (layanan AI error atau terlalu lama): foto dihapus, kejadian dicatat, petugas diminta mencoba lagi (kode 502). Petugas tidak perlu membersihkan ulang.</td></tr>
-  <tr><td class="no">31&ndash;36</td><td><strong>Cabang &ldquo;kotor / salah tempat&rdquo;</strong>: AI mengembalikan penilaian dan alasannya. Foto dihapus, penolakan dicatat, dan petugas melihat pesan seperti &ldquo;Lokasi pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang&rdquo; (kode 422).</td></tr>
-  <tr><td class="no">37&ndash;42</td><td><strong>Cabang &ldquo;bersih&rdquo;</strong>: status menjadi <em>resolved</em>, beserta nama petugas, waktu selesai, dan data bukti. Perubahan dicatat di log, dan petugas melihat konfirmasi. Sejak saat itu foto bukti tampil di papan publik.</td></tr>
+  <tr><td class="no">22&ndash;25</td><td>Aplikasi meminta status diubah menjadi <em>resolved</em> dengan kunci foto. Server memastikan petugas aktif, lalu <em>ReportService</em> memeriksa bahwa kunci foto berawalan <code>proof/</code> dan berkasnya ada di penyimpanan. Foto tidak dikirim ke AI mana pun.</td></tr>
+  <tr><td class="no">26&ndash;27</td><td><strong>Cabang &ldquo;kunci bukan proof/ atau berkas tidak ada&rdquo;:</strong> ditolak dengan kode 400, dan petugas diminta mengunggah ulang. Karena itu foto kondisi dari pelapor tidak bisa dipakai sebagai bukti.</td></tr>
+  <tr><td class="no">28&ndash;29</td><td><strong>Cabang &ldquo;tanpa foto bukti&rdquo;:</strong> aturan <code>canResolve(status, proofPhoto)</code> menolak, dengan kode 400.</td></tr>
+  <tr><td class="no">30&ndash;34</td><td><strong>Cabang &ldquo;foto sah&rdquo;:</strong> status menjadi <em>resolved</em>, beserta nama petugas, waktu selesai, dan kunci foto. Perubahan dicatat di log, dan petugas melihat konfirmasi. Sejak saat itu foto bukti tampil di papan publik.</td></tr>
+  <tr><td class="no">35&ndash;39</td><td><strong>Buka kembali.</strong> Supervisor menekan &ldquo;Buka kembali&rdquo; pada keluhan yang sudah selesai dan mengonfirmasi. Server memastikan pemintanya supervisor (tanpa sesi: kode 401; bukan supervisor: kode 403), lalu <em>ReportService</em> mengambil keluhannya.</td></tr>
+  <tr><td class="no">40&ndash;41</td><td><strong>Cabang &ldquo;keluhan tidak dikenal&rdquo;:</strong> ditolak dengan kode 404.</td></tr>
+  <tr><td class="no">42&ndash;44</td><td><strong>Cabang &ldquo;keluhan ada&rdquo;:</strong> satu perintah basis data mengembalikan status ke <em>new</em> dan mengosongkan nama petugas, waktu selesai, dan data bukti, hanya bila statusnya masih <em>resolved</em>. Bila tidak ada baris yang berubah, keluhan itu belum selesai dan ditolak dengan kode 409.</td></tr>
+  <tr><td class="no">45&ndash;48</td><td><strong>Cabang &ldquo;berhasil&rdquo;:</strong> log mencatat <em>report_reopened</em> beserta siapa yang menutup, kapan, dan fotonya. Supervisor melihat keluhan kembali ke daftar petugas. Berkas foto tetap ada di penyimpanan sebagai bukti alasan pembukaan.</td></tr>
 </table>
-<div class="kutip"><strong>Tentang kode 200, 409, 422, 502.</strong> Ini adalah kode jawaban standar internet
+<div class="kutip"><strong>Tentang kode 200, 400, 401, 403, 404, 409.</strong> Ini adalah kode jawaban standar internet
 yang dipakai server untuk memberi tahu aplikasi hasil permintaannya. <strong>200</strong> = berhasil;
-<strong>409</strong> = bertentangan dengan keadaan sekarang (keluhan sudah selesai);
-<strong>422</strong> = permintaannya benar tetapi isinya tidak memenuhi syarat (fotonya ditolak);
-<strong>502</strong> = layanan pihak ketiga (AI) sedang bermasalah.</div>
+<strong>400</strong> = permintaannya tidak lengkap atau tidak sah (foto bukti tidak ada);
+<strong>401</strong> = belum masuk (login); <strong>403</strong> = tidak berhak;
+<strong>404</strong> = yang diminta tidak ditemukan;
+<strong>409</strong> = bertentangan dengan keadaan sekarang (keluhan sudah selesai, atau belum selesai saat hendak dibuka kembali).
+Kode <strong>422</strong> tidak dipakai di sini; kode itu muncul di tugas harian (Gambar 16), yang berarti permintaannya benar tetapi isinya tidak memenuhi syarat.</div>
 
 <!-- ================================================================ 15 -->
 <h2 class="pecah">15. Sequence Diagram: tugas harian dengan foto dan GPS</h2>
@@ -697,7 +700,7 @@ dikirim sendiri-sendiri. Bagian di dalam loop adalah satu kiriman.</p>
 </table>
 <div class="penting"><strong>Mengapa tidak ada pemeriksaan AI?</strong> Bukti kerja harian dijaga oleh empat hal yang
 tidak bergantung pada AI: foto hanya dari kamera, waktu yang dihitung adalah waktu server, satu foto hanya sekali pakai,
-dan posisi dibandingkan dengan kampus. Pemeriksaan AI hanya dipakai pada penyelesaian keluhan (Gambar 15).</div>
+dan posisi dibandingkan dengan kampus. Penyelesaian keluhan (Gambar 15) juga tidak memakai pemeriksaan AI; foto tidak pernah dinilai oleh model.</div>
 
 <!-- ================================================================ 16 -->
 <h2 class="pecah">16. Diagram proses bisnis (BPMN)</h2>
@@ -705,18 +708,19 @@ dan posisi dibandingkan dengan kampus. Pemeriksaan AI hanya dipakai pada penyele
 dari awal sampai akhir. Setiap lajur adalah satu pelaku. Kotak biru adalah langkah manusia di lapangan
 (pelapor dan petugas), kotak ungu adalah langkah sistem dan AI, kotak oranye adalah langkah supervisor,
 bulatan merah adalah awal dan akhir, belah ketupat adalah percabangan, dan panah merah adalah jalur
-ketika syarat tidak terpenuhi.</p>
+ketika supervisor membuka kembali keluhan yang keliru ditutup.</p>
 <div class="halaman-besar">
   <img src="bpmn/bpmn-to-be.svg" alt="BPMN proses Kato Report">
   <p style="font-size:9pt;color:#7A3628;margin:2mm 0 0">Gambar 17. BPMN proses Kato Report: keluhan, tugas harian, dan pemantauan supervisor.</p>
 </div>
 <h3>Cara membaca alurnya</h3>
 <ul>
-  <li><strong>Keluhan.</strong> Pelapor menemukan kondisi kotor, memindai QR atau memilih lokasi, menulis keluhan dan memotret. Sistem menyimpan, AI mengklasifikasi, dan keluhan tampil di dashboard serta papan publik. Petugas membuka halaman petugas dan memilih jenis pekerjaan <em>Keluhan</em>, mengklaim (atau mengambil alih dari petugas lain), membersihkan, lalu memotret bukti. Vision AI memeriksa foto: bila lokasi sesuai dan bersih, status menjadi selesai dan tercatat di log, lalu pelapor melihatnya di papan publik; bila tidak, petugas membersihkan dan memotret ulang.</li>
+  <li><strong>Keluhan.</strong> Pelapor menemukan kondisi kotor, memindai QR atau memilih lokasi, menulis keluhan dan memotret. Sistem menyimpan, AI mengklasifikasi, dan keluhan tampil di dashboard serta papan publik. Petugas membuka halaman petugas dan memilih jenis pekerjaan <em>Keluhan</em>, mengklaim (atau mengambil alih dari petugas lain), membersihkan, lalu memotret bukti. Sistem memeriksa bahwa foto bukti tersimpan, status langsung menjadi selesai dan tercatat di log, lalu pelapor melihatnya di papan publik.</li>
   <li><strong>Tugas harian.</strong> Petugas memilih jenis <em>Tugas harian</em>, memilih lokasi, memotret tiap tugas dengan kamera langsung, dan mengirim bersama posisi GPS. Sistem memeriksa umur dan pemakaian foto serta posisi terhadap kampus; laporan di luar kampus atau tanpa GPS tetap tersimpan tetapi ditandai.</li>
   <li><strong>Pemantauan.</strong> Setiap pukul 17.00 WIB, LLM membuat ringkasan harian untuk supervisor. Supervisor memantau dashboard (statistik, keluhan, laporan kebersihan, log), menindaklanjuti peringatan dan keluhan prioritas tinggi, dan menugaskan petugas secara langsung.</li>
+  <li><strong>Buka kembali (panah merah).</strong> Bila keluhan yang selesai ternyata keliru ditutup, supervisor dapat membukanya kembali. Status kembali menjadi baru, nama petugas, waktu selesai, dan data bukti dikosongkan, foto tetap tersimpan, kejadiannya tercatat di log, dan keluhan kembali ke daftar petugas.</li>
 </ul>
-<div class="awas"><strong>Perlu diingat:</strong> pemeriksaan foto oleh AI hanya berlaku untuk penyelesaian keluhan, bukan tugas harian. Bukti tugas harian adalah foto langsung dari kamera, waktu server, dan posisi GPS.</div>
+<div class="awas"><strong>Perlu diingat:</strong> foto tidak dinilai oleh AI, baik pada penyelesaian keluhan maupun tugas harian. Bukti penyelesaian keluhan adalah foto yang tampil di papan publik dan tercatat di log. Bukti tugas harian adalah foto langsung dari kamera, waktu server, dan posisi GPS.</div>
 
 <!-- ================================================================ 17 -->
 <h2 class="pecah">17. Bagaimana semua diagram saling terhubung</h2>
@@ -728,7 +732,8 @@ ke diagram lain.</p>
   <tr><td>Mengirim keluhan</td><td>Kirim Keluhan</td><td>Proses 2.0 (2.1&ndash;2.3)</td><td>Report, CleaningArea, User</td><td>Gambar 14 langkah 1&ndash;19; BPMN lajur Pelapor</td></tr>
   <tr><td>Analisis AI keluhan</td><td>Analisis Keluhan (AI)</td><td>Proses 3.0 (3.2&ndash;3.4)</td><td>Report (atribut AI), AiStatus</td><td>Gambar 14 langkah 20&ndash;27</td></tr>
   <tr><td>Klaim dan ambil alih</td><td>Klaim Keluhan, Ambil Alih Keluhan</td><td>Proses 4.2</td><td>Report (status, staffName), ReportStatus</td><td>Gambar 15 langkah 6&ndash;16</td></tr>
-  <tr><td>Menyelesaikan keluhan</td><td>Selesaikan dg Foto Bukti + Verifikasi Foto Bukti</td><td>Proses 4.0 (4.3&ndash;4.5)</td><td>Report (atribut proof), ProofVerdict</td><td>Gambar 15 langkah 17&ndash;42; BPMN</td></tr>
+  <tr><td>Menyelesaikan keluhan</td><td>Selesaikan dg Foto Bukti</td><td>Proses 4.0 (4.3&ndash;4.4)</td><td>Report (proofPhotoKey, <code>canResolve()</code>)</td><td>Gambar 15 langkah 17&ndash;34; BPMN</td></tr>
+  <tr><td>Membuka kembali keluhan</td><td>Buka Kembali Keluhan</td><td>Proses 4.5</td><td>Report (<code>reopen()</code>), ReportStatus, ActivityLog</td><td>Gambar 15 langkah 35&ndash;48; BPMN (panah merah)</td></tr>
   <tr><td>Tugas harian</td><td>Laporkan Tugas Harian + Periksa Posisi GPS</td><td>Proses 5.0</td><td>CleaningReport, CleaningReportTask, LocationStatus</td><td>Gambar 16; BPMN</td></tr>
   <tr><td>Ringkasan harian</td><td>Buat / Buat Ulang Ringkasan</td><td>Proses 6.0</td><td>DailySummary</td><td>BPMN (jam 17.00)</td></tr>
   <tr><td>Papan publik dan peringkat</td><td>Lihat Papan Publik, Papan Peringkat</td><td>Proses 7.0</td><td>(membaca Report, CleaningReport, User)</td><td>&mdash;</td></tr>
@@ -741,8 +746,8 @@ ke diagram lain.</p>
   <h4>Lima pengaman yang terlihat di semua diagram</h4>
   <ol style="margin:0">
     <li><strong>Tidak ada keluhan yang hilang karena AI gagal</strong>: keluhan disimpan dulu, dianalisis kemudian (Proses 3.4, Gambar 14).</li>
-    <li><strong>&ldquo;Selesai&rdquo; harus dibuktikan</strong>: tanpa foto bersih yang dinilai AI, status tidak bisa selesai, dan keluhan yang sudah selesai tidak bisa dibuka kembali (Proses 4.4&ndash;4.5, operasi <code>canResolve()</code>, Gambar 15). Kerja harian dibuktikan dengan foto langsung, waktu server, dan GPS (Proses 5.0, Gambar 16).</li>
-    <li><strong>Semua tindakan tercatat</strong>: hampir setiap proses menulis ke D7 Log Aktivitas, yang tidak pernah diubah. Pengambilalihan, foto ditolak, dan laporan di luar kampus juga tercatat.</li>
+    <li><strong>&ldquo;Selesai&rdquo; harus dibuktikan</strong>: tanpa foto bukti, status tidak bisa selesai (Proses 4.4, operasi <code>canResolve()</code>, Gambar 15). Fotonya terbuka di papan publik, dan bila penutupan keliru, hanya supervisor yang bisa membukanya kembali (Proses 4.5). Kerja harian dibuktikan dengan foto langsung, waktu server, dan GPS (Proses 5.0, Gambar 16).</li>
+    <li><strong>Semua tindakan tercatat</strong>: hampir setiap proses menulis ke D7 Log Aktivitas, yang tidak pernah diubah. Pengambilalihan, pembukaan kembali keluhan, dan laporan di luar kampus juga tercatat.</li>
     <li><strong>Penghapusan tetap berjejak</strong>: salinan keluhan disimpan di log sebelum dihapus (Proses 8.5). Akun yang sudah punya riwayat tidak bisa dihapus (Proses 1.4).</li>
     <li><strong>Privasi dijaga</strong>: papan publik menyaring data pribadi (7.1, 7.2), Kato Bot tidak membuka nama petugas kepada selain supervisor (9.3), dan kata sandi tidak pernah disimpan apa adanya (1.1).</li>
   </ol>
@@ -753,13 +758,14 @@ ke diagram lain.</p>
 <table>
   <tr><th style="width:24%">Istilah</th><th>Arti sederhana</th></tr>
   <tr><td>Aktor / Entitas eksternal</td><td>Pihak di luar sistem yang memakai atau berhubungan dengan sistem.</td></tr>
-  <tr><td>AI / Kecerdasan buatan</td><td>Program komputer yang bisa &ldquo;memahami&rdquo; teks atau gambar dan memberi penilaian.</td></tr>
+  <tr><td>AI / Kecerdasan buatan</td><td>Program komputer yang bisa &ldquo;memahami&rdquo; teks dan memberi penilaian.</td></tr>
   <tr><td>Ambil alih</td><td>Petugas lain mengambil keluhan yang sedang dikerjakan seseorang dan belum selesai dengan foto bukti. Klaim bukan kunci.</td></tr>
   <tr><td>Area kebersihan (lokasi)</td><td>Tempat yang dilaporkan atau dibersihkan: lantai gedung, halaman, gedung utuh, atau tempat di luar gedung.</td></tr>
   <tr><td>Asinkron</td><td>Dikerjakan di belakang layar tanpa membuat pengguna menunggu.</td></tr>
   <tr><td>Balancing</td><td>Aturan DFD: aliran data di level rinci harus sama dengan di level induknya.</td></tr>
   <tr><td>Basis data (database)</td><td>Tempat penyimpanan data yang terstruktur, seperti lemari arsip digital.</td></tr>
   <tr><td>BPMN</td><td>Business Process Model and Notation: bagan alur kerja berlajur per pelaku.</td></tr>
+  <tr><td>Buka kembali</td><td>Supervisor mengembalikan keluhan yang sudah selesai ke daftar petugas sebagai keluhan baru. Foto buktinya tetap tersimpan.</td></tr>
   <tr><td>Cache</td><td>Salinan sementara data yang sering dibaca, disimpan sebentar di memori supaya halaman cepat tampil.</td></tr>
   <tr><td>Cookie / Sesi</td><td>&ldquo;Tiket masuk&rdquo; kecil yang disimpan peramban (browser) supaya pengguna tidak perlu login berulang kali.</td></tr>
   <tr><td>Cron / Penjadwal</td><td>Pengatur waktu yang menjalankan tugas otomatis pada jam tertentu.</td></tr>
@@ -781,11 +787,11 @@ ke diagram lain.</p>
   <tr><td>Swimlane (lajur renang)</td><td>Pembagian diagram proses menjadi lajur per pelaku.</td></tr>
   <tr><td>Tugas harian</td><td>Enam pekerjaan tetap per lokasi: menyapu &amp; mengepel, mengelap kaca, membersihkan toilet, membuang sampah, mengisi galon, merapikan ruangan.</td></tr>
   <tr><td>UML</td><td>Unified Modeling Language: bahasa gambar standar untuk merancang perangkat lunak.</td></tr>
-  <tr><td>Verdict</td><td>Putusan atau penilaian AI atas foto bukti: bersih (clean), masih kotor (dirty), atau bukan lokasi yang dilaporkan (wrong_place).</td></tr>
+  <tr><td>Verdict</td><td>Penilaian foto bukti yang hanya tersisa pada data lama: bersih (clean), masih kotor (dirty), atau bukan lokasi yang dilaporkan (wrong_place). Sistem sekarang tidak lagi menilai foto.</td></tr>
   <tr><td>WIB</td><td>Waktu Indonesia Barat; semua jam di sistem memakai zona waktu ini.</td></tr>
 </table>
 
-<div class="kaki">Dokumen ini disusun dari kode sumber Kato Report (UPI Kampus Tasikmalaya), versi 29 Oktober 2026.
+<div class="kaki">Dokumen ini disusun dari kode sumber Kato Report (UPI Kampus Tasikmalaya), versi 5 November 2026.
 Berkas sumber setiap diagram tersedia di folder <code>docs/diagram/src/</code>: DFD dan BPMN sebagai
 skrip Python (<code>dfd.py</code>, <code>bpmn.py</code>), diagram class dan sequence dalam format Mermaid (<code>.mmd</code>), dan
 use case sebagai skrip Python. Gambar siap pakai (PNG dan SVG) ada di <code>docs/diagram/</code> dan <code>docs/bpmn/</code>.</div>

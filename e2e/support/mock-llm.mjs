@@ -1,7 +1,7 @@
 /**
- * A stand-in for the LLM provider, speaking the OpenAI chat-completions format.
+ * A stand-in for both LLM providers, speaking the OpenAI chat-completions format.
  *
- * The Worker under test is pointed here through LLM_BASE_URL,
+ * The Worker under test is pointed here through LLM_BASE_URL and VISION_BASE_URL,
  * so a test run costs nothing, never reaches a real provider, and gets the same
  * answer every time. Which answer is steered by a marker in the complaint text:
  *
@@ -10,6 +10,8 @@
  *   [llm:not-json]   the text model answers with prose instead of JSON
  *   [llm:odd]        an invented category and priority, which the Worker must coerce
  *   [llm:slow]       the analysis takes three seconds
+ *   [vision:error]   the vision model answers HTTP 500
+ *   [vision:slow]    describing the proof photo takes three seconds
  *   [ask:error]      (in a question) the text model answers HTTP 500
  *   per petugas      (in a question) the model asks to group by staff member
  *
@@ -21,7 +23,7 @@ import { createServer } from 'node:http';
 /** The first key in the Worker's list; refused, so every call also exercises key failover. */
 export const REFUSED_KEY = 'e2e-refused-key';
 
-const stats = { total: 0, analysis: 0, summary: 0, ask: 0, refused: 0, keys: [] };
+const stats = { total: 0, analysis: 0, vision: 0, summary: 0, ask: 0, refused: 0, keys: [] };
 const failedOnce = new Set();
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -70,12 +72,18 @@ function ask(body) {
 async function answer(body) {
   const first = body.messages[0];
   const last = body.messages[body.messages.length - 1];
-  const lastText = String(last.content ?? '');
+  const lastText = Array.isArray(last.content) ? last.content.map((p) => p.text ?? '').join('') : String(last.content ?? '');
 
   if (body.tools) {
     stats.ask++;
     const question = [...body.messages].reverse().find((m) => m.role === 'user')?.content ?? '';
     return String(question).includes('[ask:error]') ? null : ask(body);
+  }
+  if (String(first.content).startsWith('Kamu membantu supervisor')) {
+    stats.vision++;
+    if (lastText.includes('[vision:error]')) return null;
+    if (lastText.includes('[vision:slow]')) await sleep(3000);
+    return json({ description: 'Deskripsi foto tiruan dari model.' });
   }
   if (String(first.content).includes('laporan harian')) {
     stats.summary++;

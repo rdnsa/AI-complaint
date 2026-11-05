@@ -46,9 +46,9 @@
 </style></head><body>
 
 <div class="sampul">
-  <span class="lencana">Dokumentasi Teknis &middot; Edisi lengkap &middot; 4 November 2026</span>
+  <span class="lencana">Dokumentasi Teknis &middot; Edisi lengkap &middot; 5 November 2026</span>
   <h1>Kato Report</h1>
-  <p class="sub">Pelaporan dan penanganan kebersihan kampus: keluhan dikelompokkan dan diprioritaskan oleh LLM, penyelesaiannya dibuktikan dengan foto yang diperiksa model vision, dan pekerjaan harian petugas dicatat dengan foto kamera, waktu server, dan GPS<br>
+  <p class="sub">Pelaporan dan penanganan kebersihan kampus: keluhan dikelompokkan dan diprioritaskan oleh LLM, penyelesaiannya dibuktikan dengan foto yang tampil di papan publik, dan pekerjaan harian petugas dicatat dengan foto kamera, waktu server, dan GPS<br>
   UPI Kampus Tasikmalaya &middot; <span class="mono" style="background:rgba(255,255,255,.15);color:#fff">ai-complaint.yvrtz.workers.dev</span> &middot;
   <span class="mono" style="background:rgba(255,255,255,.15);color:#fff">github.com/rdnsa/AI-complaint</span></p>
 </div>
@@ -56,14 +56,14 @@
 <h2 style="margin-top:0">Daftar isi</h2>
 <div class="toc"><ol>
   <li>Ringkasan sistem</li>
-  <li>Tumpukan teknologi dan pembagian kerja dua model</li>
+  <li>Tumpukan teknologi dan pemakaian model</li>
   <li>Arsitektur dan struktur proyek</li>
   <li>Model data: tabel, kolom, migrasi, seed</li>
   <li>Lokasi dan kode QR</li>
   <li>Alur keluhan dari ujung ke ujung</li>
   <li>Tugas harian dan laporan kebersihan</li>
   <li>Analisis LLM teks, ringkasan harian, dan Kato Bot</li>
-  <li>Verifikasi foto (LLM vision)</li>
+  <li>Foto bukti penutup keluhan</li>
   <li>Akun, sesi, dan wewenang</li>
   <li>Jejak audit dan filter waktu</li>
   <li>Ringkasan harian, statistik, dan grafik dashboard</li>
@@ -88,8 +88,8 @@ Lapang Voli. Siapa saja (<em>pelapor</em>) memindai QR di lokasi itu, menulis ke
 memotret keadaannya dengan kamera langsung. <em>Pretrained LLM</em> mengubah keluhan itu menjadi tiket kerja
 terstruktur: kategori, prioritas, ringkasan netral, dan rekomendasi tindakan. Petugas kebersihan memakai satu halaman
 <strong>tanpa login</strong> (nama dipilih dari daftar, ditanyakan saat bertindak) untuk dua jenis pekerjaan:
-<strong>Keluhan</strong> (menangani laporan pelapor sampai selesai, hanya dengan foto bukti yang <strong>dinilai bersih
-dan benar lokasinya oleh model vision</strong>) dan <strong>Tugas harian</strong> (enam tugas tetap per lokasi, tiap tugas
+<strong>Keluhan</strong> (menangani laporan pelapor sampai selesai, dengan <strong>foto bukti wajib yang tampil di papan
+publik</strong>; model tidak menilai foto itu) dan <strong>Tugas harian</strong> (enam tugas tetap per lokasi, tiap tugas
 difoto dari kamera langsung dan dicap nama, lokasi, waktu server, dan GPS). Supervisor (SPV) satu-satunya pihak yang masuk
 dengan akun; ia memantau lewat dashboard lima tab. <strong>Kato Bot</strong>, asisten tanya-data berbasis <em>tool
 calling</em>, mengambang di setiap halaman. Tidak ada pelatihan model dan tidak ada dataset yang perlu dilabeli;
@@ -99,7 +99,7 @@ kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
                                                                       ↓
         tab Keluhan (petugas, tanpa login) + dashboard SPV  +  cron 17.00 WIB → ringkasan harian
                      ↓
- "Saya kerjakan sekarang" / "Ambil alih"  →  "Sudah beres": foto bukti  →  LLM vision (Gemini): bersih dan benar lokasi?  →  selesai
+ "Saya kerjakan sekarang" / "Ambil alih"  →  "Sudah beres": foto bukti  →  selesai  (SPV dapat "Buka kembali")
 
  tab Tugas harian (petugas): pilih nama + lokasi → tiap tugas: foto kamera (cap nama/lokasi/waktu/GPS) → cek umur foto,
                              pakai-ulang, radius kampus → laporan kebersihan → rekap harian per area untuk SPV</pre>
@@ -107,8 +107,8 @@ kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
 <table>
   <tr><th>Pihak</th><th>Peran di kode</th><th>Masuk?</th><th>Yang dilakukan</th></tr>
   <tr><td>Pelapor (mahasiswa, dosen, staf, tamu)</td><td class="mono">reporter</td><td>Tidak. Akun opsional, hanya agar laporan masuk papan peringkat</td><td>Melapor dari <span class="mono">/report/&lt;id&gt;</span> (QR) atau Beranda &rarr; &ldquo;Saya pelapor&rdquo; (<span class="mono">/student</span>)</td></tr>
-  <tr><td>Petugas kebersihan</td><td class="mono">staff</td><td><strong>Tidak pernah</strong>; memilih nama dari dropdown</td><td>Menangani keluhan sampai selesai dengan foto bukti; mengirim tugas harian per lokasi</td></tr>
-  <tr><td>SPV (supervisor)</td><td class="mono">supervisor</td><td>Ya (<span class="mono">/login</span>)</td><td>Memantau, menghapus spam, menganalisis ulang, mengelola nama petugas dan akun SPV, mencetak QR</td></tr>
+  <tr><td>Petugas kebersihan</td><td class="mono">staff</td><td><strong>Tidak pernah</strong>; memilih nama dari dropdown</td><td>Menangani keluhan sampai selesai dengan foto bukti (tidak dapat membuka kembali keluhan yang sudah selesai); mengirim tugas harian per lokasi</td></tr>
+  <tr><td>SPV (supervisor)</td><td class="mono">supervisor</td><td>Ya (<span class="mono">/login</span>)</td><td>Memantau, menghapus spam, menganalisis ulang, membuka kembali keluhan yang keliru ditutup, mengelola nama petugas dan akun SPV, mencetak QR</td></tr>
 </table>
 
 <table>
@@ -119,7 +119,6 @@ kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
       <li><strong>Penentuan prioritas</strong> rendah/sedang/tinggi berbasis risiko keselamatan dan keterpakaian lokasi</li>
       <li><strong>Ringkasan harian</strong> satu paragraf, otomatis pukul 17.00 WIB</li>
       <li><strong>Papan peringkat pelapor</strong> beserta jumlah laporan yang benar-benar selesai</li>
-      <li><strong>Verifikasi foto</strong>: benar lokasi yang dilaporkan, dan sudah bersih? &mdash; syarat menutup keluhan</li>
       <li><strong>Kato Bot</strong>: pertanyaan bahasa sehari-hari dijawab model lewat <em>tool calling</em> ke query agregat</li>
       <li><strong>Tugas harian</strong> dengan bukti foto kamera, cap waktu server, dan pemeriksaan GPS terhadap radius kampus</li>
     </ol>
@@ -128,6 +127,7 @@ kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
       <li>Papan laporan publik (keluhan dan laporan kebersihan), dapat dibaca siapa saja</li>
       <li>Semua foto hanya dari kamera langsung di halaman, tanpa pilihan galeri</li>
       <li>Klaim keluhan yang bukan kunci: petugas lain dapat <em>mengambil alih</em>; semuanya tercatat</li>
+      <li>Penutupan keluhan wajib foto bukti kamera; SPV dapat <em>membuka kembali</em> keluhan yang keliru ditutup, dan foto penutupnya tetap tersimpan sebagai bukti</li>
       <li>Jejak audit yang tidak dapat dihapus dari aplikasi</li>
       <li>Dashboard SPV: ringkasan AI, grafik per rentang tanggal, ekspor Excel, rekap kebersihan per area, filter waktu menit (WIB), stiker QR</li>
       <li>Pelacakan status untuk pelapor tanpa akun</li>
@@ -139,19 +139,19 @@ kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
 <h3>Angka yang dapat diperiksa di repositori</h3>
 <table>
   <tr><th>Hal</th><th>Nilai</th><th>Sumber</th></tr>
-  <tr><td>Penangan HTTP</td><td>37 (36 titik akhir API + <span class="mono">/api/health</span>); 36 itu dalam 10 modul route</td><td class="mono">src/index.ts, src/routes/*.ts</td></tr>
+  <tr><td>Penangan HTTP</td><td>38 (37 titik akhir API + <span class="mono">/api/health</span>); 37 itu dalam 10 modul route</td><td class="mono">src/index.ts, src/routes/*.ts</td></tr>
   <tr><td>Migrasi D1</td><td>13 (0001&ndash;0013)</td><td class="mono">migrations/</td></tr>
   <tr><td>Tabel dan view</td><td>9 tabel (<span class="mono">buildings, toilets, users, reports, cleaning_areas, cleaning_reports, cleaning_report_tasks, daily_summaries, activity_log</span>) dan 2 view (<span class="mono">toilet_info, location_info</span>)</td><td class="mono">migrations/0008, 0009, 0011, 0012, 0013</td></tr>
   <tr><td>Lokasi aktif (area kebersihan)</td><td>29: 9 halaman gedung (A&ndash;I), 19 lantai, 1 tempat di luar gedung (Lapang Voli)</td><td class="mono">seed/cleaning-areas.sql</td></tr>
   <tr><td>Toilet aktif (data lama)</td><td>26, di gedung A, B, C, G, H, I</td><td class="mono">seed/toilets.sql</td></tr>
   <tr><td>Nama petugas di seed</td><td>11</td><td class="mono">seed/cleaning-areas.sql</td></tr>
-  <tr><td>Tugas harian / kategori / prioritas / status / putusan bukti</td><td>6 / 6 / 3 / 3 / 3</td><td class="mono">src/domain/types.ts</td></tr>
-  <tr><td>Jenis aksi jejak audit</td><td>13</td><td class="mono">src/repositories/activity.ts</td></tr>
+  <tr><td>Tugas harian / kategori / prioritas / status / putusan bukti (data lama)</td><td>6 / 6 / 3 / 3 / 3</td><td class="mono">src/domain/types.ts</td></tr>
+  <tr><td>Jenis aksi jejak audit</td><td>14 (2 di antaranya tidak lagi ditulis, bab 9)</td><td class="mono">src/repositories/activity.ts</td></tr>
   <tr><td>Rute halaman</td><td>12 rute berhalaman, 12 pengalihan (11 URL lama + <span class="mono">/clean</span>), 9 berkas halaman</td><td class="mono">web/src/main.tsx, web/src/pages/</td></tr>
   <tr><td>Dependensi runtime Worker</td><td>2 (<span class="mono">hono</span>, <span class="mono">zod</span>); sisanya <span class="mono">devDependencies</span> (dibundel ke frontend atau alat bangun)</td><td class="mono">package.json</td></tr>
 </table>
 
-<h2>2. Tumpukan teknologi dan pembagian kerja dua model</h2>
+<h2>2. Tumpukan teknologi dan pemakaian model</h2>
 <table>
   <tr><th>Lapisan</th><th>Pilihan</th><th>Alasan</th></tr>
   <tr><td>Bahasa</td><td>TypeScript 5, mode <span class="mono">strict</span></td><td>Binding D1 dan R2 hanya tersedia di runtime JS/TS Workers</td></tr>
@@ -163,36 +163,33 @@ kendali mutu dilakukan lewat rekayasa prompt dan validasi keluaran.</p>
   <tr><td>Frontend</td><td>React 18 + Vite 6 + Tailwind 3, react-router 6</td><td>Dilayani Worker yang sama (<span class="mono">assets</span> + <span class="mono">single-page-application</span>), sehingga tanpa CORS</td></tr>
   <tr><td>Kode QR</td><td>Pustaka <span class="mono">qrcode</span></td><td>Di browser (tab QR lokasi) dan di skrip CLI (<span class="mono">npm run qr</span>)</td></tr>
   <tr><td>i18n</td><td>Kamus buatan sendiri (<span class="mono">web/src/lib/i18n.tsx</span>)</td><td>Bahasa Indonesia mendefinisikan bentuk kamus; TypeScript menolak kunci yang belum diterjemahkan</td></tr>
-  <tr><td>LLM teks</td><td>DeepSeek <span class="mono">deepseek-chat</span> (<span class="mono">https://api.deepseek.com</span>)</td><td>JSON mode dan <em>function calling</em>; tidak bisa membaca gambar</td></tr>
-  <tr><td>LLM vision</td><td>Google Gemini <span class="mono">gemini-3.6-flash</span> lewat endpoint kompatibel OpenAI (<span class="mono">generativelanguage.googleapis.com/v1beta/openai</span>)</td><td>Menilai foto bukti; endpoint kompatibel OpenAI sehingga penyedia dapat diganti lewat variabel, tanpa mengubah kode</td></tr>
+  <tr><td>LLM (teks saja)</td><td>DeepSeek <span class="mono">deepseek-chat</span> (<span class="mono">https://api.deepseek.com</span>)</td><td>JSON mode dan <em>function calling</em>; satu-satunya model di sistem ini</td></tr>
   <tr><td>Ekspor Excel</td><td>Pustaka <span class="mono">write-excel-file</span></td><td>Di browser, dimuat hanya saat tombol ekspor ditekan (<span class="mono">web/src/lib/export-dashboard.ts</span>, bab 12)</td></tr>
   <tr><td>Dokumen</td><td>HTML + Chrome headless &rarr; PDF</td><td>Satu sumber untuk layar dan cetak (<span class="mono">npm run docs</span>)</td></tr>
 </table>
 
-<h3>Pembagian kerja dua model</h3>
-<p>Kedua model tidak pernah dipanggil untuk pekerjaan yang sama. Pemisahannya mengikuti jenis masukan: teks ke DeepSeek,
-gambar ke Gemini. Nama model dan alamat penyedia adalah variabel di <span class="mono">wrangler.jsonc</span>
-(<span class="mono">LLM_MODEL</span>, <span class="mono">VISION_MODEL</span>, dst.), bukan konstanta di kode.</p>
+<h3>Pemakaian model</h3>
+<p>Sistem memakai satu model: DeepSeek <span class="mono">deepseek-chat</span>. Yang dikirim kepadanya hanya teks; tidak ada foto yang sampai ke model, baik foto keluhan, foto bukti, maupun foto tugas harian.
+Nama model dan alamat penyedia adalah variabel di <span class="mono">wrangler.jsonc</span> (<span class="mono">LLM_BASE_URL</span>, <span class="mono">LLM_MODEL</span>), bukan konstanta di kode.</p>
 <table>
-  <tr><th></th><th>DeepSeek <span class="mono">deepseek-chat</span></th><th>Gemini <span class="mono">gemini-3.6-flash</span></th></tr>
-  <tr><td>Masukan</td><td>Teks keluhan beserta nama lokasi; daftar keluhan sehari; pertanyaan Kato Bot dan hasil alatnya</td><td>Foto bukti dari petugas + konteks: nama lokasi, kategori, dan teks keluhan asli</td></tr>
-  <tr><td>Pekerjaan</td><td>(1) kategori, (2) prioritas + ringkasan + rekomendasi, (3) ringkasan harian, (4) Kato Bot lewat <em>tool calling</em></td><td>(5) Menilai foto penutup keluhan: benar lokasinya? sudah bersih?</td></tr>
-  <tr><td>Kapan dipanggil</td><td>Tiap keluhan masuk (asinkron, setelah respons dikirim); sekali sehari lewat cron atau tombol &ldquo;Buat ulang&rdquo;; tiap pertanyaan Kato Bot (sinkron, maks. 50/hari)</td><td>Tiap petugas menyelesaikan keluhan dengan foto (sinkron; petugas menunggu putusan). <strong>Tugas harian tidak diperiksa model</strong></td></tr>
-  <tr><td>Parameter</td><td><span class="mono">temperature 0.1</span>, <span class="mono">max_tokens</span> 500 (analisis) / 700 (ringkasan), <span class="mono">response_format json_object</span>, <em>timeout</em> 30 dtk; Kato Bot: <span class="mono">temperature 0.2</span>, <span class="mono">max_tokens 600</span>, <span class="mono">tool_choice auto</span> (maks. 4 putaran)</td><td><span class="mono">temperature 0.1</span>, <span class="mono">max_tokens 2000</span>, <span class="mono">response_format json_object</span>, gambar <span class="mono">detail: low</span>, <em>timeout</em> 30 dtk</td></tr>
-  <tr><td>Bila gagal</td><td>Keluhan tetap tersimpan tanpa label (<span class="mono">ai_status='failed'</span>), dapat dianalisis ulang; Kato Bot membalas 502</td><td>Penutupan ditolak (502); foto dibuang; petugas diminta mencoba lagi</td></tr>
-  <tr><td>Fungsi di kode</td><td class="mono">analyzeComplaint(), summarizeDay(), chatWithTools()</td><td class="mono">checkProofPhoto()</td></tr>
-  <tr><td>Konfigurasi</td><td class="mono">LLM_BASE_URL, LLM_MODEL, LLM_API_KEY</td><td class="mono">VISION_BASE_URL, VISION_MODEL, VISION_API_KEY (bila kosong, memakai LLM_API_KEY)</td></tr>
-  <tr><td>Hasil disimpan di</td><td class="mono">reports.categories, priority, summary, recommendation, ai_*; daily_summaries; activity_log (question)</td><td class="mono">reports.proof_*; activity_log (proof_rejected, verification_failed)</td></tr>
-  <tr><td>Biaya dan latensi</td><td colspan="2">Belum diringkas di dokumen ini. Datanya tersedia di basis data: <span class="mono">reports.ai_ms</span> dan <span class="mono">proof_ms</span> (latensi per panggilan), serta jumlah token tiap pertanyaan Kato Bot di <span class="mono">activity_log.details</span>.</td></tr>
+  <tr><th></th><th>DeepSeek <span class="mono">deepseek-chat</span></th></tr>
+  <tr><td>Masukan</td><td>Teks keluhan beserta nama lokasi; daftar keluhan sehari; pertanyaan Kato Bot dan hasil alatnya</td></tr>
+  <tr><td>Pekerjaan</td><td>(1) kategori, (2) prioritas + ringkasan + rekomendasi, (3) ringkasan harian, (5) Kato Bot lewat <em>tool calling</em>. Nomor mengikuti daftar fitur inti di bab 1; fitur lainnya tidak memanggil model</td></tr>
+  <tr><td>Kapan dipanggil</td><td>Tiap keluhan masuk (asinkron, setelah respons dikirim); sekali sehari lewat cron atau tombol &ldquo;Buat ulang&rdquo;; tiap pertanyaan Kato Bot (sinkron, maks. 50/hari). <strong>Menutup keluhan dan tugas harian tidak memanggil model</strong></td></tr>
+  <tr><td>Parameter</td><td><span class="mono">temperature 0.1</span>, <span class="mono">max_tokens</span> 500 (analisis) / 700 (ringkasan), <span class="mono">response_format json_object</span>, <em>timeout</em> 30 dtk; Kato Bot: <span class="mono">temperature 0.2</span>, <span class="mono">max_tokens 600</span>, <span class="mono">tool_choice auto</span> (maks. 4 putaran)</td></tr>
+  <tr><td>Bila gagal</td><td>Keluhan tetap tersimpan tanpa label (<span class="mono">ai_status='failed'</span>), dapat dianalisis ulang; Kato Bot membalas 502</td></tr>
+  <tr><td>Fungsi di kode</td><td class="mono">analyzeComplaint(), summarizeDay(), chatWithTools()</td></tr>
+  <tr><td>Konfigurasi</td><td class="mono">LLM_BASE_URL, LLM_MODEL, LLM_API_KEY</td></tr>
+  <tr><td>Hasil disimpan di</td><td class="mono">reports.categories, priority, summary, recommendation, ai_*; daily_summaries; activity_log (question)</td></tr>
+  <tr><td>Biaya dan latensi</td><td>Belum diringkas di dokumen ini. Datanya tersedia di basis data: <span class="mono">reports.ai_ms</span> (latensi per panggilan) dan jumlah token tiap pertanyaan Kato Bot di <span class="mono">activity_log.details</span>.</td></tr>
 </table>
-<p>Analisis, ringkasan, dan pemeriksaan foto dipanggil lewat satu fungsi dasar, <span class="mono">chatJSON()</span> di
-<span class="mono">src/adapters/llm.ts</span>, karena kedua penyedia memakai format <em>chat completions</em> OpenAI. Yang
-berbeda hanya tujuan (URL, model, kunci) dan isi pesan. Kato Bot memakai fungsi kedua, <span class="mono">chatWithTools()</span>,
+<p>Analisis dan ringkasan dipanggil lewat satu fungsi dasar, <span class="mono">chatJSON()</span> di
+<span class="mono">src/adapters/llm.ts</span>, dengan format <em>chat completions</em> OpenAI. Kato Bot memakai fungsi kedua, <span class="mono">chatWithTools()</span>,
 yang menjalankan putaran <em>tool calling</em> (bab 8). Keduanya memanggil <span class="mono">postChat()</span>, yang
 <strong>berpindah ke kunci berikutnya</strong> bila satu kunci ditolak dengan 401, 403, atau 429: secret
-<span class="mono">LLM_API_KEY</span> dan <span class="mono">VISION_API_KEY</span> boleh berisi beberapa kunci dipisah koma.</p>
+<span class="mono">LLM_API_KEY</span> boleh berisi beberapa kunci dipisah koma.</p>
 <p><strong>Bahasa.</strong> Prosa prompt berbahasa Indonesia. Teks yang ditulis model untuk dibaca petugas dan SPV (ringkasan,
-rekomendasi, alasan penilaian foto, ringkasan harian) berbahasa Indonesia, apa pun bahasa antarmukanya; satu-satunya
+rekomendasi, ringkasan harian) berbahasa Indonesia, apa pun bahasa antarmukanya; satu-satunya
 pengecualian adalah Kato Bot, yang menjawab dalam bahasa penanya (Indonesia atau Inggris). Kunci JSON dan token enum yang
 diminta dari model berbahasa Inggris (mis. <span class="mono">"priority":"high"</span>), dan prompt menyebutnya secara eksplisit.</p>
 
@@ -207,10 +204,10 @@ lokasi) tetap berbahasa Indonesia.</p>
 
 <table>
   <tr><th>Lapisan</th><th>Tanggung jawab</th><th>Aturan yang dipatuhi</th></tr>
-  <tr><td class="mono">domain/</td><td>Kosakata (enum peran, kategori, prioritas, status, putusan bukti, tugas harian), entitas, pemetaan DTO, aturan penutupan (<span class="mono">canResolve</span>), rumus jarak dan status lokasi (<span class="mono">distanceMeters</span>, <span class="mono">locationStatus</span>)</td><td>Tidak mengimpor apa pun &mdash; tanpa Hono, D1, R2</td></tr>
+  <tr><td class="mono">domain/</td><td>Kosakata (enum peran, kategori, prioritas, status, putusan bukti lama, tugas harian), entitas, pemetaan DTO, aturan penutupan (<span class="mono">canResolve</span>), rumus jarak dan status lokasi (<span class="mono">distanceMeters</span>, <span class="mono">locationStatus</span>)</td><td>Tidak mengimpor apa pun &mdash; tanpa Hono, D1, R2</td></tr>
   <tr><td class="mono">repositories/</td><td>Seluruh pernyataan SQL, satu berkas per agregat</td><td>Tahu basis data, tidak tahu HTTP</td></tr>
   <tr><td class="mono">services/</td><td><em>Use case</em> dan aturan bisnis</td><td>Tidak menyebut Hono sama sekali</td></tr>
-  <tr><td class="mono">adapters/</td><td>LLM (teks + vision), R2, hash sandi, sesi JWT, konversi waktu WIB, cache memori</td><td>Membungkus dunia luar di balik antarmuka kecil</td></tr>
+  <tr><td class="mono">adapters/</td><td>LLM teks, R2, hash sandi, sesi JWT, konversi waktu WIB, cache memori</td><td>Membungkus dunia luar di balik antarmuka kecil</td></tr>
   <tr><td class="mono">routes/</td><td>Parse, validasi, delegasi, format respons</td><td>Nol SQL; aturan bisnis hanya yang menyangkut bentuk permintaan</td></tr>
   <tr><td class="mono">index.ts</td><td><em>Composition root</em>: pasang route, validator ETag, fallback SPA, penangan cron</td><td>Satu-satunya berkas yang melihat semua lapisan</td></tr>
 </table>
@@ -218,8 +215,8 @@ lokasi) tetap berbahasa Indonesia.</p>
 <div class="catatan">
   <strong>Konsekuensi yang dapat diuji:</strong> seluruh pernyataan SQL berada di <span class="mono">repositories/</span>.
   Berpindah dari D1 ke Postgres berarti menulis ulang satu direktori, bukan seluruh berkas route. Aturan &ldquo;keluhan hanya
-  boleh ditutup bila ada bukti <em>yang lolos verifikasi</em>&rdquo; tinggal di lapisan domain
-  (<span class="mono">canResolve(status, proofPhoto, proofVerdict)</span>), sehingga setiap pemanggil memutuskan dengan cara
+  boleh ditutup bila ada foto bukti&rdquo; tinggal di lapisan domain
+  (<span class="mono">canResolve(status, proofPhoto)</span>), sehingga setiap pemanggil memutuskan dengan cara
   yang sama. Dua pengecualian jujur: <span class="mono">services/*</span> memanggil beberapa repositori sekaligus
   (mis. <span class="mono">report-service</span> memakai <span class="mono">repositories/cleaning</span> untuk memeriksa lokasi), dan
   <span class="mono">adapters/memo.ts</span> menyimpan cache yang dipakai lintas lapisan.
@@ -233,22 +230,22 @@ lokasi) tetap berbahasa Indonesia.</p>
                            photoUrl(), toDTO(), canResolve(), distanceMeters(), locationStatus()
   adapters/
     llm.ts                 prompt, few-shot, validasi keluaran, postChat() (failover kunci), chatJSON(),
-                           chatWithTools(), analyzeComplaint(), summarizeDay(), checkProofPhoto()
-    storage.ts             R2: prefix baru + lama, batas ukuran/tipe, savePhoto/getPhoto/readPhoto/photoUploadedAt/deletePhoto
+                           chatWithTools(), analyzeComplaint(), summarizeDay()
+    storage.ts             R2: prefix baru + lama, batas ukuran/tipe, savePhoto/getPhoto/photoUploadedAt/deletePhoto
     session.ts             JWT dalam cookie `session`, currentSession(), requireSupervisor
     password.ts            PBKDF2-SHA256 lewat WebCrypto, perbandingan waktu-konstan
     clock.ts               wibDate(), wibDayRange(), isValidDate(), addDays(), daysInRange()
     memo.ts                cache memori per-isolate: memo(), forget(), reportsChanged(), cleaningChanged(), HTTP_CACHE
   repositories/
-    reports.ts             keluhan: daftar dashboard, publik, terbuka, milik pelapor, kembar, analisis, baris ekspor
+    reports.ts             keluhan: daftar dashboard, publik, terbuka, milik pelapor, kembar, buka kembali, analisis, baris ekspor
     cleaning.ts            area, laporan kebersihan, angka grafik, foto terpakai
     time-filter.ts         filter waktu bersama (from, to, hour_from, hour_to; WIB, inklusif)
     users.ts               akun SPV/pelapor dan nama petugas
-    activity.ts            jejak audit (activity_log) dan 13 jenis aksinya
+    activity.ts            jejak audit (activity_log) dan 14 jenis aksinya
     summaries.ts           ringkasan harian, kartu angka, data grafik, papan peringkat
     analytics.ts           query agregat untuk Kato Bot (GROUPINGS, filter terikat)
   services/
-    report-service.ts      kirim, ubah status (+ verifikasi bukti), hapus keluhan
+    report-service.ts      kirim, ubah status, buka kembali, hapus keluhan
     analysis-service.ts    analisis satu keluhan, dijalankan setelah respons dikirim
     cleaning-service.ts    daftar area, kirim laporan kebersihan, rekap harian (dailyRecap), data grafik (chartData)
     summary-service.ts     ringkasan harian, statistik, data grafik, baris ekspor, papan peringkat
@@ -339,9 +336,9 @@ AI, kalimat jejak audit, nama lokasi) tetap bahasa Indonesia.</p>
   <tr><td>priority</td><td>TEXT (CHECK)</td><td><span class="mono">low</span> | <span class="mono">medium</span> | <span class="mono">high</span>; NULL sebelum dianalisis</td></tr>
   <tr><td>summary, recommendation</td><td>TEXT</td><td>Dari LLM; maks. 300 dan 500 karakter setelah dipotong</td></tr>
   <tr><td>ai_error, ai_model, ai_ms</td><td>TEXT, TEXT, INTEGER</td><td>Galat terakhir (maks. 500 karakter), model, dan latensi panggilan</td></tr>
-  <tr><td>proof_photo_key</td><td>TEXT</td><td>Foto bukti penyelesaian (<span class="mono">proof/&hellip;</span>); hanya foto yang lolos yang pernah disimpan</td></tr>
-  <tr><td>proof_verdict</td><td>TEXT (CHECK)</td><td><span class="mono">clean</span> | <span class="mono">dirty</span> | <span class="mono">wrong_place</span>. Dalam praktik hanya <span class="mono">clean</span> yang tersimpan. Pada data lama, <span class="mono">not_toilet</span> diubah menjadi <span class="mono">wrong_place</span> oleh migrasi 0011</td></tr>
-  <tr><td>proof_reason, proof_model, proof_ms</td><td>TEXT, TEXT, INTEGER</td><td>Alasan satu kalimat dari model, nama model, latensi</td></tr>
+  <tr><td>proof_photo_key</td><td>TEXT</td><td>Foto bukti penyelesaian (<span class="mono">proof/&hellip;</span>). Dikosongkan saat SPV membuka kembali keluhan; fotonya sendiri tetap di R2</td></tr>
+  <tr><td>proof_verdict</td><td>TEXT (CHECK)</td><td><strong>Kolom lama, tidak lagi ditulis</strong> (bab 9). <span class="mono">clean</span> | <span class="mono">dirty</span> | <span class="mono">wrong_place</span>; pada data lama hanya <span class="mono">clean</span> yang tersimpan, dan <span class="mono">not_toilet</span> diubah menjadi <span class="mono">wrong_place</span> oleh migrasi 0011</td></tr>
+  <tr><td>proof_reason, proof_model, proof_ms</td><td>TEXT, TEXT, INTEGER</td><td><strong>Kolom lama, tidak lagi ditulis</strong> (bab 9): alasan dari model, nama model, latensi pemeriksaan foto yang sudah dihapus</td></tr>
   <tr><td>reporter_id</td><td>TEXT FK &rarr; users, NULL</td><td>NULL untuk pelapor anonim; hanya laporan berpemilik yang masuk papan peringkat</td></tr>
   <tr><td>created_at, updated_at</td><td>TEXT</td><td>UTC</td></tr>
 </table>
@@ -395,7 +392,7 @@ AI, kalimat jejak audit, nama lokasi) tetap bahasa Indonesia.</p>
   <tr><td colspan="3"><strong>activity_log</strong>: sengaja <em>tanpa foreign key</em> ke <span class="mono">reports</span></td></tr>
   <tr><td>id</td><td>INTEGER PK AUTOINCREMENT</td><td></td></tr>
   <tr><td>created_at</td><td>TEXT</td><td>UTC</td></tr>
-  <tr><td>action</td><td>TEXT</td><td>Salah satu dari 13 jenis (bab 11)</td></tr>
+  <tr><td>action</td><td>TEXT</td><td>Salah satu dari 14 jenis (bab 11)</td></tr>
   <tr><td>report_id</td><td>TEXT, NULL</td><td>Tetap tercatat walau keluhannya sudah dihapus</td></tr>
   <tr><td>actor</td><td>TEXT</td><td>Nama seseorang, atau <span class="mono">reporter</span> / <span class="mono">system</span> / <span class="mono">visitor</span></td></tr>
   <tr><td>summary, details</td><td>TEXT, TEXT (JSON)</td><td>Satu kalimat yang langsung terbaca; rincian terstruktur (mis. salinan keluhan yang dihapus)</td></tr>
@@ -419,7 +416,7 @@ bernilai NULL dan <span class="mono">building_order</span> bernilai 999 bila tid
   <tr><td class="mono">0002_gedung_upi.sql</td><td>Nama gedung UPI Tasikmalaya (A&ndash;J) dalam tabel sendiri; satu QR per lantai (bukan per toilet); view <span class="mono">toilet_info</span></td></tr>
   <tr><td class="mono">0003_bukti_dan_aktivitas.sql</td><td>Foto bukti penyelesaian; jejak audit (tanpa FK ke keluhan)</td></tr>
   <tr><td class="mono">0004_pengguna.sql</td><td>Akun berperan menggantikan satu sandi bersama; <span class="mono">pelapor_id</span> pada keluhan; akun admin bawaan (PBKDF2, 100.000 iterasi)</td></tr>
-  <tr><td class="mono">0005_verifikasi_bukti.sql</td><td>Putusan model vision atas foto bukti disimpan di keluhan</td></tr>
+  <tr><td class="mono">0005_verifikasi_bukti.sql</td><td>Putusan model vision atas foto bukti disimpan di keluhan (pemeriksaannya sudah dihapus, kolomnya tetap; bab 9)</td></tr>
   <tr><td class="mono">0006_laporan_pekerjaan.sql</td><td>Tabel <span class="mono">pekerjaan</span> (laporan pekerjaan petugas), terpisah dari keluhan agar tidak mengacaukan statistik</td></tr>
   <tr><td class="mono">0007_peran_spv.sql</td><td>Tiga pihak: <span class="mono">admin</span> menjadi <span class="mono">spv</span>; petugas tidak lagi masuk (username dan sandi opsional, <span class="mono">CHECK</span> baru). Tabel dibangun ulang dengan trik <span class="mono">defer_foreign_keys</span> dan salinan sementara</td></tr>
   <tr><td class="mono">0008_english_schema.sql</td><td>Seluruh skema diterjemahkan ke bahasa Inggris (tabel, kolom, nilai enum, isi kolom JSON, id toilet <span class="mono">-PRIA</span> &rarr; <span class="mono">-MEN</span>); tabel dibangun ulang anak dahulu. Foto di R2 tidak dipindah: awalan lama (<span class="mono">laporan/ bukti/ kerja/</span>) tetap dapat dibaca</td></tr>
@@ -509,7 +506,7 @@ lama tidak boleh tertinggal: QR yang sudah tidak terdaftar akan ditolak sistem b
 sebagai pilihan), tanpa <span class="mono">&lt;input type="file"&gt;</span> dan tanpa pilihan galeri. Bingkai diperkecil (sisi terpanjang maksimal 1600 piksel), dikodekan JPEG kualitas 0,85,
 dan diunggah ke <span class="mono">POST /api/uploads?kind=&hellip;</span> (<span class="mono">report</span>, <span class="mono">proof</span>, <span class="mono">cleaning</span>). Tanpa HTTPS atau tanpa kamera, tidak ada foto.
 <strong>Kejujuran batas:</strong> larangan galeri adalah sifat <em>frontend</em>. Server tidak dapat membedakan unggahan kamera dari unggahan lain (hanya memeriksa tipe JPEG/PNG/WebP dan ukuran 5 MB), sehingga
-pertahanan sisi server terhadap foto lama adalah batas umur dan pemakaian tunggal (bab 7) serta pemeriksaan model vision (bab 9).</p>
+pertahanan sisi server terhadap foto lama hanya ada pada tugas harian: batas umur dan pemakaian tunggal (bab 7). Foto bukti penutup keluhan hanya diperiksa awalan dan keberadaannya (bab 9).</p>
 
 <h3>A. Pelapor: pengiriman</h3>
 <ol>
@@ -535,8 +532,8 @@ pertahanan sisi server terhadap foto lama adalah batas umur dan pemakaian tungga
   <li><strong>Ambil alih</strong>: klaim <em>bukan kunci</em>. Selama belum ditutup dengan foto bukti, keluhan yang dipegang orang lain menampilkan &ldquo;Sedang dikerjakan X&rdquo; dan tombol <em>Ambil alih</em>. Server mencatat
       &ldquo;X mengambil alih laporan di &hellip; dari Y&rdquo; di jejak audit (<span class="mono">details.handed_over_from</span>). Alasan rancangan: keluhan yang tidak diselesaikan pemegangnya tidak boleh menggantung selamanya.</li>
   <li><strong>Selesai</strong>: &ldquo;Sudah beres &mdash; foto buktinya&rdquo; menanyakan &ldquo;Siapa yang menyelesaikan?&rdquo; (isian awal: pemegang klaim), lalu membuka kamera. Foto diunggah (<span class="mono">kind=proof</span>), lalu
-      <span class="mono">PATCH</span> <span class="mono">{status:"resolved", staff_id, proof_photo_key}</span>; server memeriksa foto dengan model vision (bab 9) sebelum mengubah apa pun. Tombol menampilkan &ldquo;Mengunggah&hellip;&rdquo; lalu &ldquo;AI memeriksa foto&hellip;&rdquo;.
-      Ditolak &rarr; kotak merah dengan alasan model; lolos &rarr; kartu &ldquo;selesai&rdquo; 2,5 detik, lalu hilang dari daftar.</li>
+      <span class="mono">PATCH</span> <span class="mono">{status:"resolved", staff_id, proof_photo_key}</span>; server hanya memeriksa foto itu ada dan berjenis bukti (bab 9), tanpa memanggil model, sehingga penutupan hampir seketika. Tombol hanya menampilkan &ldquo;Mengunggah&hellip;&rdquo;.
+      Permintaan gagal &rarr; kotak merah dengan pesan dari server, keluhan tidak berubah; berhasil &rarr; kartu &ldquo;selesai&rdquo; 2,5 detik, lalu hilang dari daftar.</li>
 </ol>
 
 <h3>Aturan transisi status di server</h3>
@@ -545,31 +542,35 @@ pertahanan sisi server terhadap foto lama adalah batas umur dan pemakaian tungga
 <table>
   <tr><th>#</th><th>Kondisi</th><th>Hasil</th></tr>
   <tr><td>1</td><td>Keluhan tidak ada</td><td>404 &ldquo;Laporan tidak ditemukan&rdquo;</td></tr>
-  <tr><td>2</td><td>Sudah <span class="mono">resolved</span> dan permintaan bukan <span class="mono">resolved</span></td><td><strong>409</strong> &ldquo;Laporan ini sudah selesai.&rdquo; Selesai tidak dapat dibuka kembali (membuka lagi akan menghapus foto buktinya)</td></tr>
+  <tr><td>2</td><td>Sudah <span class="mono">resolved</span> dan permintaan bukan <span class="mono">resolved</span></td><td><strong>409</strong> &ldquo;Laporan ini sudah selesai.&rdquo; Juga berlaku bagi SPV: <span class="mono">PATCH</span> tidak pernah membuka kembali keluhan; hanya rute tersendiri <span class="mono">POST /api/reports/:id/reopen</span> (di bawah) yang dapat</td></tr>
   <tr><td>3</td><td>Klaim ulang oleh pemegang yang sama (<span class="mono">in_progress</span> &rarr; <span class="mono">in_progress</span>, nama sama)</td><td>200 tanpa menulis dan <strong>tanpa mencatat</strong> dua kali</td></tr>
   <tr><td>4</td><td>Klaim oleh orang lain atas keluhan <span class="mono">in_progress</span> berpemegang</td><td>Diterima sebagai <em>ambil alih</em>; <span class="mono">staff_name</span> diganti; dicatat khusus</td></tr>
-  <tr><td>5</td><td>Ada <span class="mono">proof_photo_key</span> baru</td><td>Harus berawalan <span class="mono">proof/</span> dan terbaca dari R2 (selain itu 400 &ldquo;Foto bukti tidak ditemukan&rdquo;); lalu pemeriksaan vision: ditolak &rarr; <strong>422</strong> (foto dibuang dari R2, jejak <span class="mono">proof_rejected</span>), gagal teknis &rarr; <strong>502</strong> (foto dibuang, jejak <span class="mono">verification_failed</span>)</td></tr>
-  <tr><td>6</td><td><span class="mono">canResolve(status, proof, verdict)</span> salah</td><td>400 &ldquo;Foto bukti penyelesaian wajib diunggah lebih dulu.&rdquo; (target <span class="mono">resolved</span> tanpa bukti yang lolos)</td></tr>
-  <tr><td>7</td><td>Lolos semua</td><td><span class="mono">UPDATE</span> status, nama, dan bukti <em>sekaligus</em> (foto dan putusan tidak pernah terpisah); <span class="mono">resolved_at</span> diisi bila <span class="mono">resolved</span> dan dikosongkan bila tidak; <span class="mono">reportsChanged()</span>; jejak <span class="mono">status_changed</span>; respons <span class="mono">{ok, status, verification}</span></td></tr>
+  <tr><td>5</td><td>Ada <span class="mono">proof_photo_key</span> baru</td><td>Harus berawalan <span class="mono">proof/</span> dan ada di R2 (<span class="mono">photoUploadedAt</span>), selain itu 400 &ldquo;Foto bukti tidak ditemukan. Unggah ulang.&rdquo;. Foto yang dipakai: yang baru, bila tidak ada, yang sudah tersimpan</td></tr>
+  <tr><td>6</td><td><span class="mono">canResolve(status, proofPhoto)</span> salah</td><td>400 &ldquo;Foto bukti penyelesaian wajib diunggah lebih dulu.&rdquo; (target <span class="mono">resolved</span> tanpa foto bukti)</td></tr>
+  <tr><td>7</td><td>Lolos semua</td><td><span class="mono">UPDATE</span> status, nama, dan foto bukti <em>sekaligus</em>; <span class="mono">resolved_at</span> diisi bila <span class="mono">resolved</span> dan dikosongkan bila tidak; <span class="mono">reportsChanged()</span>; jejak <span class="mono">status_changed</span>; respons <span class="mono">{ok, status}</span></td></tr>
+  <tr><td>&mdash;</td><td>Rute terpisah, hanya SPV: <span class="mono">POST /api/reports/:id/reopen</span> (<span class="mono">reopenReport()</span>)</td><td>404 bila keluhan tidak ada; 409 &ldquo;Laporan ini belum selesai.&rdquo; bila bukan <span class="mono">resolved</span>; selain itu kembali ke <span class="mono">new</span>, dan jejak <span class="mono">report_reopened</span> ditulis</td></tr>
 </table>
 
 <div class="peringatan">
-  <strong>Celah yang diketahui pada <span class="mono">changeStatus()</span></strong> (<span class="mono">src/services/report-service.ts</span>, baris 214&ndash;268): (a) permintaan <span class="mono">resolved</span> atas keluhan yang
-  <em>sudah</em> <span class="mono">resolved</span> tidak ditolak; ia menimpa <span class="mono">staff_name</span> dan <span class="mono">resolved_at</span>, dan bila disertai foto baru yang lolos, mengganti foto bukti lama tanpa menghapusnya dari R2.
-  (b) <span class="mono">status:"new"</span> diterima oleh skema dan oleh <span class="mono">changeStatus()</span>: keluhan <span class="mono">in_progress</span> dapat dikembalikan ke <span class="mono">new</span> oleh siapa pun yang mengetahui sebuah <span class="mono">staff_id</span>.
-  Keduanya konsisten dengan model kepercayaan petugas (bab 10) dan tercatat di jejak audit, tetapi bukan perilaku yang disengaja.
+  <strong>Celah yang diketahui pada <span class="mono">changeStatus()</span></strong> (<span class="mono">src/services/report-service.ts</span>, baris 116&ndash;168): (a) permintaan <span class="mono">resolved</span> atas keluhan yang
+  <em>sudah</em> <span class="mono">resolved</span> tidak ditolak dan tidak perlu foto baru, karena foto yang tersimpan sudah memenuhi <span class="mono">canResolve</span>; ia menimpa <span class="mono">staff_name</span> dan <span class="mono">resolved_at</span> dan menulis <span class="mono">status_changed</span>, dan bila disertai foto baru, mengganti foto bukti lama tanpa menghapusnya dari R2 (temuan T-05).
+  (b) <span class="mono">status:"new"</span> diterima oleh skema dan oleh <span class="mono">changeStatus()</span>: keluhan <span class="mono">in_progress</span> dapat dikembalikan ke <span class="mono">new</span> oleh siapa pun yang mengetahui sebuah <span class="mono">staff_id</span> (temuan T-08).
+  (c) Foto bukti tidak harus baru: kunci <span class="mono">proof/</span> mana pun yang ada di R2 diterima, termasuk foto yang sudah menutup keluhan lain (temuan T-02).
+  Ketiganya konsisten dengan model kepercayaan petugas (bab 10) dan tercatat di jejak audit, tetapi bukan perilaku yang disengaja. Nomor temuan merujuk ke <span class="mono">docs/dokumentasi-testing.html</span>, bagian 7.
 </div>
 
-<h3>C. SPV: memantau, menghapus, menganalisis ulang</h3>
+<h3>C. SPV: memantau, menghapus, menganalisis ulang, membuka kembali</h3>
 <ul>
   <li><strong>Memantau</strong>: <span class="mono">GET /api/reports</span> (SPV) dengan filter <span class="mono">status, priority, area_id, building</span>, filter waktu bersama, dan <span class="mono">limit</span> (bawaan 100, maks. 200). Urutan: status (baru, diproses, selesai), lalu prioritas, lalu terbaru.</li>
   <li><strong>Menganalisis ulang</strong>: <span class="mono">POST /api/reports/:id/reanalyze</span> menandai <span class="mono">ai_status='pending'</span> (galat lama dikosongkan), lalu menjalankan <span class="mono">runAnalysis</span> lewat <span class="mono">waitUntil</span>. Berguna untuk keluhan <span class="mono">failed</span>.</li>
+  <li><strong>Membuka kembali</strong>: <span class="mono">POST /api/reports/:id/reopen</span> mengirim keluhan yang keliru ditutup kembali ke daftar petugas. <span class="mono">reports.reopen()</span> adalah satu <span class="mono">UPDATE</span> atomik dengan syarat <span class="mono">WHERE status='resolved'</span>: <span class="mono">status</span> menjadi <span class="mono">new</span>, dan <span class="mono">staff_name, resolved_at, proof_photo_key, proof_verdict, proof_reason, proof_model, proof_ms</span> dikosongkan. Bila dua SPV menekan bersamaan, hanya satu yang berhasil dan tercatat; yang lain 409.
+      Foto penutupnya <strong>tidak dihapus dari R2</strong>; kuncinya disalin ke jejak <span class="mono">report_reopened</span> bersama nama penutup dan waktu selesai, sebagai bukti mengapa keluhan dibuka kembali.</li>
   <li><strong>Menghapus</strong>: <span class="mono">DELETE /api/reports/:id</span> adalah satu-satunya aksi yang menghancurkan data, maka <span class="mono">deleteReport()</span> lebih dahulu menyalin keluhan ke jejak audit (<span class="mono">report_deleted</span>, rincian: nama lokasi, teks, status, prioritas, kategori, ringkasan, waktu dibuat, apakah ada foto),
       baru menghapus baris dan kedua foto di R2 (kegagalan hapus foto diabaikan). Jejak tetap menjawab apa yang hilang, siapa yang menghapus, dan kapan.</li>
 </ul>
 
 <h3>Diagram urutan: dari laporan sampai selesai</h3>
-<pre>Pelapor            Worker (Hono)                D1 / R2            LLM teks     Petugas            LLM vision
+<pre>Pelapor            Worker (Hono)                D1 / R2            LLM teks     Petugas
    │ foto kamera ─────▶ POST /api/uploads ───────▶ R2: report/…
    │ keluhan ─────────▶ POST /api/reports
    │                    validasi · lokasi aktif? · duplikat 2 menit?
@@ -582,10 +583,10 @@ pertahanan sisi server terhadap foto lama adalah batas umur dan pemakaian tungga
    │                                                                    PATCH in_progress {staff_id}  (klaim / ambil alih)
    │                                                                    foto bukti ──▶ POST /api/uploads?kind=proof
    │                                                                    PATCH resolved {staff_id, proof_photo_key}
-   │                                     readPhoto(proof/…) ─────────────────────────────────────────────▶ checkProofPhoto
-   │                                     bersih + benar lokasi? ◀──────────────────────────────────────── {is_location, clean}
-   │                                     ya: UPDATE status=resolved + bukti; tidak: hapus foto, 422 / 502
-   │ ◀─ halaman status menunjukkan "selesai" pada pemuatan ulang berikutnya</pre>
+   │                    awalan proof/ + ada di R2? · canResolve      tidak: 400, keluhan tidak berubah
+   │                    UPDATE status=resolved + bukti ──▶ D1 ; log status_changed
+   │ ◀─ halaman status menunjukkan "selesai" pada pemuatan ulang berikutnya
+   │                    POST /api/reports/:id/reopen (SPV): status=new, foto tetap di R2 ; log report_reopened</pre>
 
 <h2 class="pecah">7. Tugas harian dan laporan kebersihan</h2>
 <p>Keluhan menjawab &ldquo;ada masalah di sini&rdquo;; tugas harian menjawab &ldquo;pekerjaan rutin sudah dilakukan&rdquo;. Tab <em>Tugas harian</em> lahir dari masalah manajemen: laporan kerja petugas
@@ -637,9 +638,8 @@ status = distance === null ? 'unknown'
 (&ldquo;&lt;lokasi&gt;: &lt;daftar tugas&gt;&rdquo;), dan dihitung sebagai peringatan di dashboard.</p>
 
 <div class="catatan">
-  <strong>Bukti tugas harian tidak diperiksa model vision.</strong> Berbeda dari penutupan keluhan, foto tugas harian tidak dinilai bersih atau kotor. Buktinya berlapis lain: kamera langsung (di klien), cap nama-lokasi-waktu server-GPS pada gambar,
-  umur foto di R2 maksimal 3 jam, satu foto hanya untuk satu tugas (batas <span class="mono">UNIQUE</span> di basis data), dan pemeriksaan posisi. Alasan: tugas rutin tidak punya &ldquo;keluhan&rdquo; untuk dicocokkan, dan memeriksa tiap foto
-  akan menambah biaya serta latensi pada pekerjaan yang dikirim berkali-kali sehari.
+  <strong>Foto tugas harian tidak diperiksa model.</strong> Isinya tidak dinilai bersih atau kotor; begitu pula foto penutup keluhan (bab 9). Bedanya, bukti tugas harian punya lapisan lain: kamera langsung (di klien), cap nama-lokasi-waktu server-GPS pada gambar,
+  umur foto di R2 maksimal 3 jam, satu foto hanya untuk satu tugas (batas <span class="mono">UNIQUE</span> di basis data), dan pemeriksaan posisi.
 </div>
 
 <h3>Rekap harian per area: <span class="mono">dailyRecap(env, date)</span></h3>
@@ -748,43 +748,32 @@ berisi teks pertanyaan, alat yang dipanggil, token, model, dan waktu. Karena ang
   (<span class="mono">date, week, month, hour</span>), <span class="mono">countReports</span> mengurutkan menaik menurut label, jadi rentang lebih dari 20 hari menampilkan <em>20 hari tertua</em> dan <span class="mono">hour</span> (24 label) kehilangan jam 20.00&ndash;23.00. <span class="mono">resolutionTime</span> selalu mengurutkan menurut <span class="mono">resolved_count</span> menurun, jadi yang tersisa adalah 20 label dengan penyelesaian terbanyak, tidak urut waktu. Model hanya melihat potongan itu dan tidak diberi tahu bahwa ada yang terpotong.
 </div>
 
-<h2 class="pecah">9. Verifikasi foto (LLM vision)</h2>
-<p>Model vision (Gemini <span class="mono">gemini-3.6-flash</span>) memutuskan satu hal: apakah foto yang diunggah petugas boleh menutup sebuah keluhan. Fungsinya <span class="mono">checkProofPhoto(env, photo, context)</span> di <span class="mono">src/adapters/llm.ts</span>; dipanggil dari
-<span class="mono">checkNewProof()</span> di <span class="mono">report-service.ts</span>. Tugas harian <em>tidak</em> melalui pemeriksaan ini (bab 7).</p>
+<h2 class="pecah">9. Foto bukti penutup keluhan</h2>
+<p>Keluhan ditutup dengan foto bukti yang diambil petugas di lokasi. Server mewajibkan foto itu ada, tetapi tidak ada model yang menilai isinya. Pemeriksaan otomatis yang dulu berada di sini sudah dihapus (commit <span class="mono">976c426</span>); yang tersisa darinya hanya kolom dan baris log lama.</p>
 
-<h3>Masukan</h3>
-<p>Foto dibaca dari R2 oleh Worker (<span class="mono">readPhoto</span>, hanya kunci berawalan <span class="mono">proof/</span> yang diterima untuk penutupan keluhan, sehingga foto keadaan dari pelapor tidak dapat dipakai ulang sebagai bukti), diubah ke <em>data URL</em> base64 (dipotong per 32.768 byte agar tidak meluap tumpukan), dan dikirim <em>inline</em> dengan
-<span class="mono">detail: "low"</span>. URL publik memang bukan pilihan: bucket privat dan hanya Worker yang dapat membacanya. Teks pendamping: <span class="mono">Lokasi</span>, <span class="mono">Kategori keluhan</span> (kode Inggris, atau &ldquo;belum dianalisis&rdquo;), dan <span class="mono">Keluhan asli</span>.</p>
-
-<h3>Kriteria dalam prompt</h3>
-<p>Model menjawab dua pertanyaan, bukan satu:</p>
+<h3>Cara menutup keluhan sekarang</h3>
 <ol>
-  <li><span class="mono">is_location</span>: apakah foto benar-benar memperlihatkan tempat yang dikeluhkan, dicocokkan dengan lokasi dan isi keluhan. Keluhan toilet harus memperlihatkan bagian dalam toilet; ruangan/koridor memperlihatkan lantai, meja, atau jendela; halaman, taman, selokan, atau lapangan memperlihatkan area luar itu. Foto orang, layar, hanya langit-langit, gelap/buram yang tidak dapat dinilai, atau tempat yang jelas berbeda &rarr; <span class="mono">false</span>.</li>
-  <li><span class="mono">clean</span>: apakah kondisi yang terlihat sudah bersih dan layak pakai. Tidak bersih bila terlihat sampah berserakan, kotoran atau noda, genangan atau lantai basah merata, tempat sampah meluap, selokan masih tersumbat, coretan, lumut/kerak tebal, atau bekas keluhan yang jelas belum ditangani. Noda permanen kecil, lantai tua, sedikit daun yang baru jatuh, dan lantai lembap tipis setelah dipel masih boleh dianggap bersih.</li>
+  <li>Petugas memilih nama, memotret dengan kamera, dan foto diunggah ke <span class="mono">POST /api/uploads?kind=proof</span>.</li>
+  <li><span class="mono">PATCH /api/reports/:id</span> dengan <span class="mono">{status:"resolved", staff_id, proof_photo_key}</span>. <span class="mono">changeStatus()</span> memeriksa foto baru: harus berawalan <span class="mono">proof/</span> dan ada di R2 (<span class="mono">photoUploadedAt</span>), selain itu 400 &ldquo;Foto bukti tidak ditemukan. Unggah ulang.&rdquo;. Awalan itu mencegah foto keadaan dari pelapor dipakai ulang sebagai bukti.</li>
+  <li>Foto yang berlaku adalah yang baru, atau bila tidak ada, yang sudah tersimpan. Bila tidak ada keduanya, <span class="mono">canResolve(status, proofPhoto)</span> menjawab 400 &ldquo;Foto bukti penyelesaian wajib diunggah lebih dulu.&rdquo;.</li>
+  <li>Status, nama, foto, dan <span class="mono">resolved_at</span> ditulis bersama; jejak <span class="mono">status_changed</span> mencatat <span class="mono">proof_photo</span>; respons <span class="mono">{ok, status}</span>.</li>
 </ol>
-<p>Aturan tambahan: bila keluhannya terlihat pada foto (sampah, genangan), periksa apakah hal itu sudah hilang; keluhan yang tidak terlihat dari foto (bau, sabun habis) <em>tidak</em> boleh dijadikan alasan menolak; <strong>bila ragu antara bersih dan kotor, pilih <span class="mono">clean: false</span></strong>; jangan mengarang detail yang tidak ada di foto. Keluaran: <span class="mono">{is_location, clean, confidence, reason}</span> dengan alasan satu kalimat Indonesia maksimal 25 kata yang menyebut apa yang terlihat.</p>
+<p>Tidak ada panggilan model pada jalur ini, jadi tidak ada 422 atau 502 darinya, dan penutupan hampir seketika: tombol hanya menampilkan &ldquo;Mengunggah&hellip;&rdquo;. Bila permintaan gagal, kartu menampilkan kotak merah berisi pesan dari server dan keluhan tidak berubah. Foto yang sudah terlanjur diunggah tertinggal di R2 (bab 14).</p>
 
-<h3>Validasi keluaran dan pemetaan putusan</h3>
+<h3>Mengapa pemeriksaan foto dihapus</h3>
+<p>Pemeriksaan itu menolak pekerjaan yang benar-benar sudah dilakukan dan membuat keluhan terlalu sulit ditutup. Maka penutupan tidak lagi menunggu putusan model, dan sistem tidak lagi memerlukan model atau penyedia kedua.</p>
+
+<h3>Yang menjaga penutupan tetap jujur</h3>
+<p>Bukan mesin, melainkan orang: foto bukti tampil di papan publik, nama dan foto tercatat di jejak audit, dan SPV dapat membuka kembali keluhan yang keliru ditutup (<span class="mono">POST /api/reports/:id/reopen</span>, bab 6). Batasnya dicatat terus terang: siapa pun yang memilih sebuah nama petugas dapat menutup keluhan dengan foto apa pun (bab 10, bab 23).</p>
+
+<h3>Kolom dan baris log lama</h3>
 <table>
-  <tr><th>Langkah</th><th>Aturan</th></tr>
-  <tr><td>Skema</td><td><span class="mono">ProofCheckSchema</span>: <span class="mono">is_location</span> dan <span class="mono">clean</span> boolean; <span class="mono">confidence</span> angka 0&ndash;1 (opsional, dipaksa dengan <span class="mono">z.coerce</span>); <span class="mono">reason</span> tidak kosong</td></tr>
-  <tr><td>Boolean longgar</td><td><span class="mono">looseBool</span>: string <span class="mono">true/ya/yes/1</span> dibaca benar, string lain salah. <span class="mono">z.coerce.boolean()</span> tidak dipakai karena mengubah string &ldquo;false&rdquo; menjadi <span class="mono">true</span>, kesalahan yang berbahaya di sini</td></tr>
-  <tr><td>Putusan</td><td><span class="mono">!is_location</span> &rarr; <span class="mono">wrong_place</span>; selain itu <span class="mono">clean</span> &rarr; <span class="mono">clean</span>, bila tidak <span class="mono">dirty</span>. Salah tempat lebih dahulu daripada kotor</td></tr>
-  <tr><td>Alasan</td><td>Dipangkas 300 karakter</td></tr>
+  <tr><th>Peninggalan</th><th>Keadaan sekarang</th></tr>
+  <tr><td class="mono">reports.proof_verdict, proof_reason, proof_model, proof_ms</td><td>Kolomnya tetap ada dan keluhan yang ditutup semasa pemeriksaan berjalan masih menyimpan nilainya. Penutupan baru tidak menulisnya; membuka kembali mengosongkannya; antarmuka tidak menampilkannya. <span class="mono">toDTO</span> masih mengembalikannya, jadi muncul di respons <span class="mono">GET /api/reports/:id</span>, <span class="mono">GET /api/reports</span>, dan <span class="mono">/mine</span>; <span class="mono">/open</span> membuang <span class="mono">proof_model</span> dan <span class="mono">proof_ms</span>. Penyelesaian ulang lewat <span class="mono">PATCH</span> tidak menyentuhnya, jadi keluhan lama dapat menyimpan putusan lama di samping foto baru</td></tr>
+  <tr><td class="mono">proof_rejected, verification_failed</td><td>Baris lama tetap terbaca, dan kedua nilai tetap ada di daftar filter API dan tab Log aktivitas; tidak ada baris baru yang ditulis (bab 11)</td></tr>
+  <tr><td><span class="mono">details.verification</span> pada <span class="mono">status_changed</span></td><td>Hanya ada pada baris lama; baris baru tidak memuatnya</td></tr>
+  <tr><td class="mono">0005_verifikasi_bukti.sql</td><td>Migrasi tetap ada dan sudah dijalankan; tidak ada migrasi yang menghapus kolomnya (lampiran B)</td></tr>
 </table>
-
-<h3>Anggaran token untuk model &ldquo;berpikir&rdquo;</h3>
-<p><span class="mono">max_tokens</span> diset <strong>2000</strong>, jauh di atas ukuran JSON yang diminta (sekitar seratus token). Model keluarga Gemini 3.x memakai sebagian anggaran itu untuk menalar sebelum menjawab; anggaran beberapa ratus membuat JSON terpotong di tengah dan penutupan gagal tanpa sebab yang terlihat. Latensi tiap pemeriksaan tercatat di <span class="mono">reports.proof_ms</span>.</p>
-
-<h3>Apa yang disimpan, apa yang dibuang</h3>
-<table>
-  <tr><th>Hasil</th><th>Foto di R2</th><th>Basis data</th><th>Jejak audit</th><th>Respons ke petugas</th></tr>
-  <tr><td><span class="mono">clean</span> (diterima)</td><td>Disimpan</td><td><span class="mono">proof_photo_key, proof_verdict, proof_reason, proof_model, proof_ms</span> ditulis bersama status <span class="mono">resolved</span></td><td><span class="mono">status_changed</span> dengan <span class="mono">details.verification</span></td><td>200</td></tr>
-  <tr><td><span class="mono">dirty</span> / <span class="mono">wrong_place</span></td><td><strong>Dihapus</strong></td><td>Tidak ada perubahan</td><td><span class="mono">proof_rejected</span>: putusan, alasan, <span class="mono">confidence</span>, model, <span class="mono">ms</span></td><td>422 &ldquo;Lokasi pada foto masih terlihat kotor&hellip;&rdquo; atau &ldquo;Foto tidak menunjukkan lokasi yang dilaporkan&hellip;&rdquo;, ditambah <span class="mono">verdict</span> dan <span class="mono">reason</span></td></tr>
-  <tr><td>Gagal teknis (HTTP, JSON, skema, <em>timeout</em>)</td><td><strong>Dihapus</strong> (percobaan ulang mengunggah salinan baru)</td><td>Tidak ada perubahan</td><td><span class="mono">verification_failed</span> dengan galat dan model</td><td>502 &ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo;</td></tr>
-</table>
-<p><strong>Pemadaman vision tidak diloloskan.</strong> Bila pemeriksa mati, keluhan tidak dapat ditutup: bukti yang tidak diperiksa tidak dihitung. Konsekuensinya diterima sengaja (bab 22): lebih baik keluhan menunggu daripada ditutup tanpa pemeriksaan. Bukti yang tersimpan hanya yang lolos, jadi
-bucket tidak menumpuk foto bukti palsu; riwayat penolakan hidup di jejak audit, bukan di R2.</p>
 
 <h2 class="pecah">10. Akun, sesi, dan wewenang</h2>
 
@@ -817,7 +806,7 @@ bucket tidak menumpuk foto bukti palsu; riwayat penolakan hidup di jejak audit, 
   <tr><th>Golongan</th><th>Rute</th><th>Cara identitas</th></tr>
   <tr><td>Publik, tanpa identitas</td><td><span class="mono">POST /api/reports</span> (sesi <span class="mono">reporter</span> opsional mengikat laporan), <span class="mono">GET /api/reports/public|open|:id</span>, <span class="mono">GET /api/reports/mine</span>, <span class="mono">GET /api/cleaning/areas[/:id]</span>, <span class="mono">GET /api/cleaning/reports/public</span>, <span class="mono">GET /api/staff</span>, <span class="mono">GET /api/leaderboard</span>, <span class="mono">POST|GET /api/ask</span>, <span class="mono">POST /api/uploads</span>, <span class="mono">GET /api/uploads/*</span>, <span class="mono">GET /api/health</span></td><td>&mdash;</td></tr>
   <tr><td>Petugas tanpa login</td><td><span class="mono">PATCH /api/reports/:id</span> (klaim, ambil alih, selesai), <span class="mono">POST /api/cleaning/reports</span></td><td><span class="mono">staff_id</span> di body, harus petugas aktif; <span class="mono">PATCH</span> juga menerima sesi supervisor</td></tr>
-  <tr><td>Hanya supervisor</td><td><span class="mono">GET /api/reports</span>, <span class="mono">POST /api/reports/:id/reanalyze</span>, <span class="mono">DELETE /api/reports/:id</span>, <span class="mono">GET /api/cleaning/reports</span>, <span class="mono">GET /api/cleaning/recap</span>, <span class="mono">GET /api/activity</span>, <span class="mono">GET /api/summary</span>, <span class="mono">/stats</span>, <span class="mono">/charts</span>, <span class="mono">/cleaning-charts</span>, <span class="mono">/export</span>, <span class="mono">POST /api/summary/generate</span>, seluruh <span class="mono">/api/users</span></td><td>Cookie sesi, peran <span class="mono">supervisor</span></td></tr>
+  <tr><td>Hanya supervisor</td><td><span class="mono">GET /api/reports</span>, <span class="mono">POST /api/reports/:id/reanalyze</span>, <span class="mono">POST /api/reports/:id/reopen</span>, <span class="mono">DELETE /api/reports/:id</span>, <span class="mono">GET /api/cleaning/reports</span>, <span class="mono">GET /api/cleaning/recap</span>, <span class="mono">GET /api/activity</span>, <span class="mono">GET /api/summary</span>, <span class="mono">/stats</span>, <span class="mono">/charts</span>, <span class="mono">/cleaning-charts</span>, <span class="mono">/export</span>, <span class="mono">POST /api/summary/generate</span>, seluruh <span class="mono">/api/users</span></td><td>Cookie sesi, peran <span class="mono">supervisor</span></td></tr>
 </table>
 <p>Seperti papan publik, daftar terbuka untuk petugas (<span class="mono">/open</span>) membuang akun pelapor dan internal AI (bab 6). Pengecualian: <span class="mono">GET /api/reports/:id</span> (halaman status) mengembalikan seluruh DTO, termasuk <span class="mono">reporter_id</span>, <span class="mono">staff_name</span>, dan <span class="mono">ai_error</span>; satu-satunya pengamannya adalah UUID yang tidak dapat ditebak (bab 23). <span class="mono">GET /api/reports/mine</span> mengembalikan daftar kosong, bukan 401, bagi yang bukan <span class="mono">reporter</span>. Kato Bot menilai peran dari sesi (bab 8): sesi bukan <span class="mono">reporter</span> = SPV.</p>
 
@@ -826,8 +815,8 @@ bucket tidak menumpuk foto bukti palsu; riwayat penolakan hidup di jejak audit, 
 <ul>
   <li><strong>Divalidasi tiap aksi</strong>: id harus milik petugas dengan <span class="mono">role='staff'</span> dan <span class="mono">active=1</span> (<span class="mono">findActiveStaff</span>). Petugas yang dinonaktifkan atau dihapus SPV langsung tidak dapat bertindak, dan HP yang mengingat id lamanya jatuh kembali ke &ldquo;belum memilih nama&rdquo;. <span class="mono">localStorage "selected-staff"</span> hanya kenyamanan, bukan identitas.</li>
   <li><strong>Nama ditanyakan saat bertindak</strong> di tab Keluhan (dengan isian awal nama terakhir), karena HP bersama; tab Tugas harian menanyakannya di muka karena satu putaran milik satu orang.</li>
-  <li><strong>Apa yang mencegah penyalahgunaan</strong> bukan kerahasiaan id (daftar itu publik, jadi siapa pun dapat bertindak atas nama siapa pun), melainkan: penutupan keluhan butuh foto yang lolos pemeriksaan vision; tugas harian butuh foto yang baru, tunggal-pakai, dan bertanda GPS; semua aksi tercatat dengan nama; dan SPV dapat menghapus, menganalisis ulang, dan menelusuri jejak.</li>
-  <li><strong>Yang tidak dicegah</strong>: seseorang yang mengetahui nama petugas dapat mengirim atas namanya, dan dapat mengklaim atau mengambil alih keluhan atas namanya (dicatat sebagai nama itu). Pertimbangan ini diterima karena akibat terburuknya terbatas pada catatan kerja yang salah nama, dan dapat ditelusuri dari jejak serta foto.</li>
+  <li><strong>Apa yang mencegah penyalahgunaan</strong> bukan kerahasiaan id (daftar itu publik, jadi siapa pun dapat bertindak atas nama siapa pun) dan bukan pemeriksaan isi foto (tidak ada). Yang ada hanyalah pengendali sesudah kejadian: foto bukti wajib dan tampil di papan publik; tugas harian butuh foto yang baru, tunggal-pakai, dan bertanda GPS; semua aksi tercatat dengan nama; dan SPV dapat membuka kembali, menghapus, menganalisis ulang, dan menelusuri jejak.</li>
+  <li><strong>Yang tidak dicegah</strong>: seseorang yang mengetahui nama petugas dapat mengirim atas namanya, dapat mengklaim atau mengambil alih keluhan atas namanya, dan <strong>dapat menutup keluhan dengan foto apa pun</strong> (dicatat sebagai nama itu). Pertimbangan ini diterima karena akibatnya dapat ditelusuri dari jejak serta foto, dan keluhan yang keliru ditutup dapat dibuka kembali oleh SPV.</li>
 </ul>
 
 <h3>Mengelola akun (tab Petugas &amp; Supervisor)</h3>
@@ -880,15 +869,16 @@ bucket tidak menumpuk foto bukti palsu; riwayat penolakan hidup di jejak audit, 
 </ul>
 
 <h3>Jenis aksi (<span class="mono">ActivityAction</span>)</h3>
-<p>Tiga belas nilai, didefinisikan di <span class="mono">repositories/activity.ts</span>. Daftar yang sama dipakai untuk memvalidasi filter <span class="mono">action</span> di API.</p>
+<p>Empat belas nilai, didefinisikan di <span class="mono">repositories/activity.ts</span>. Daftar yang sama dipakai untuk memvalidasi filter <span class="mono">action</span> di API.</p>
 <table>
   <tr><th class="mono">action</th><th>Pelaku (<span class="mono">actor</span>)</th><th>Kapan ditulis</th><th>Isi <span class="mono">details</span></th></tr>
   <tr><td class="mono">report_created</td><td>nama pelapor berakun, atau <span class="mono">reporter</span></td><td>Keluhan baru diterima (kiriman kembar tidak dicatat dua kali)</td><td>area_id, description</td></tr>
   <tr><td class="mono">analysis</td><td class="mono">system</td><td>Analisis teks selesai (<span class="mono">runAnalysis</span>)</td><td>categories, priority, model</td></tr>
   <tr><td class="mono">analysis_failed</td><td class="mono">system</td><td>Analisis teks gagal</td><td>error (maks. 300 karakter)</td></tr>
-  <tr><td class="mono">status_changed</td><td>nama petugas yang dipilih saat bertindak, atau SPV</td><td>Keluhan diklaim, diambil alih, atau diselesaikan</td><td>from, to, handed_over_from (nama pemegang sebelumnya atau null), proof_photo, verification {verdict, reason, model, ms} atau null</td></tr>
-  <tr><td class="mono">proof_rejected</td><td>petugas</td><td>Foto bukti dinilai <span class="mono">dirty</span> atau <span class="mono">wrong_place</span></td><td>verdict, reason, confidence, model, ms</td></tr>
-  <tr><td class="mono">verification_failed</td><td>petugas</td><td>Layanan vision tidak dapat dihubungi atau responsnya rusak</td><td>error (maks. 300 karakter), model</td></tr>
+  <tr><td class="mono">status_changed</td><td>nama petugas yang dipilih saat bertindak, atau SPV</td><td>Keluhan diklaim, diambil alih, atau diselesaikan</td><td>from, to, handed_over_from (nama pemegang sebelumnya atau null), proof_photo. Baris lama juga memuat verification {verdict, reason, model, ms}</td></tr>
+  <tr><td class="mono">report_reopened</td><td>SPV</td><td>Keluhan yang sudah selesai dibuka kembali</td><td>closed_by (nama penutup), resolved_at (waktu ditutup), proof_photo (kunci foto penutup, yang tetap di R2)</td></tr>
+  <tr><td class="mono">proof_rejected</td><td>petugas</td><td><strong>Tidak lagi ditulis</strong> (bab 9). Baris lama: foto bukti dinilai <span class="mono">dirty</span> atau <span class="mono">wrong_place</span></td><td>verdict, reason, confidence, model, ms</td></tr>
+  <tr><td class="mono">verification_failed</td><td>petugas</td><td><strong>Tidak lagi ditulis</strong> (bab 9). Baris lama: pemeriksaan foto gagal secara teknis</td><td>error (maks. 300 karakter), model</td></tr>
   <tr><td class="mono">report_deleted</td><td>SPV</td><td>Keluhan dihapus</td><td>salinan: location_name, description, status, priority, categories (teks JSON), summary, created_at, had_photo</td></tr>
   <tr><td class="mono">login</td><td>SPV</td><td>Masuk ke dashboard berhasil</td><td>tidak ada</td></tr>
   <tr><td class="mono">daily_summary</td><td class="mono">system</td><td>Ringkasan harian disusun (cron atau tombol &ldquo;Buat ulang&rdquo;)</td><td>tidak ada; <span class="mono">summary</span> memuat tanggal dan jumlah laporan</td></tr>
@@ -1075,7 +1065,7 @@ Daftar 20 besar dibagikan ke semua orang lewat cache memori 30 detik, dan hanya 
 Peringkat berdasar jumlah, tetapi jumlah yang <em>selesai</em> ditampilkan berdampingan agar yang dihargai bukan sekadar volume.</p>
 <h2>14. Penyimpanan foto</h2>
 <p>Semua foto berada di satu <em>bucket</em> R2 (<span class="mono">kato</span>, <em>binding</em> <span class="mono">BUCKET</span>) yang <strong>tidak punya akses publik</strong>. Kodenya ada di
-<span class="mono">adapters/storage.ts</span> (fungsi <span class="mono">savePhoto</span>, <span class="mono">getPhoto</span>, <span class="mono">readPhoto</span>, <span class="mono">photoUploadedAt</span>, <span class="mono">deletePhoto</span>)
+<span class="mono">adapters/storage.ts</span> (fungsi <span class="mono">savePhoto</span>, <span class="mono">getPhoto</span>, <span class="mono">photoUploadedAt</span>, <span class="mono">deletePhoto</span>)
 dan <span class="mono">routes/uploads.ts</span>.</p>
 <table>
   <tr><th>Aspek</th><th>Penerapan</th></tr>
@@ -1086,18 +1076,17 @@ dan <span class="mono">routes/uploads.ts</span>.</p>
   <tr><td>Batas unggah</td><td>&le; 5 MB; tipe <span class="mono">image/jpeg</span>, <span class="mono">image/png</span>, <span class="mono">image/webp</span> (415 bila lain, 413 bila terlalu besar, 400 bila tanpa berkas). Kamera di halaman memperkecil bingkai ke sisi terpanjang 1600 px sebelum diunggah (bab 16)</td></tr>
   <tr><td>Unggah</td><td>Lewat <em>binding</em>: Worker mengalirkan isi berkas ke bucket (<span class="mono">file.stream()</span>), bukan <em>presigned URL</em>, sehingga tidak ada kredensial S3 di mana pun. Endpoint ini <strong>terbuka tanpa login</strong> karena pelapor dan petugas tidak login</td></tr>
   <tr><td>Penyajian</td><td><span class="mono">GET /api/uploads/&lt;kunci&gt;</span> hanya untuk tujuh awalan di atas (<span class="mono">isAllowedKey</span>); lainnya 404. <span class="mono">Cache-Control: public, max-age=31536000, immutable</span> karena nama UUID tidak pernah ditimpa; <span class="mono">ETag</span> objek dan <span class="mono">If-None-Match</span> menghasilkan 304 (R2 <span class="mono">onlyIf</span>)</td></tr>
-  <tr><td>Pembacaan untuk vision</td><td><span class="mono">readPhoto()</span> memuat seluruh objek ke memori lalu dikodekan base64 menjadi <em>data URL</em>: 5 MB menjadi sekitar 6,7 MB, jauh di bawah batas memori Worker</td></tr>
   <tr><td>Waktu foto</td><td><span class="mono">photoUploadedAt()</span> membaca waktu penerimaan objek di R2 (<span class="mono">head().uploaded</span>). Inilah &ldquo;jam foto&rdquo; laporan kebersihan: jam server, bukan jam ponsel (bab 7)</td></tr>
-  <tr><td>Penghapusan</td><td>Keluhan yang dihapus: foto keadaan dan foto bukti dihapus <em>setelah</em> log ditulis dan baris dihapus. Foto bukti yang ditolak model atau gagal diperiksa dihapus seketika; foto laporan kebersihan yang terlalu tua (&gt; 3 jam) atau berlokasi tak dikenal juga dihapus. <span class="mono">deletePhoto()</span> menelan galatnya sehingga tidak pernah menggagalkan operasi induk</td></tr>
+  <tr><td>Penghapusan</td><td>Keluhan yang dihapus: foto keadaan dan foto bukti yang sedang terpasang dihapus <em>setelah</em> log ditulis dan baris dihapus. Foto laporan kebersihan yang terlalu tua (&gt; 3 jam) atau berlokasi tak dikenal juga dihapus. <strong>Tidak dihapus:</strong> foto penutup keluhan yang dibuka kembali (kuncinya ada di jejak <span class="mono">report_reopened</span>) dan foto bukti yang diganti lewat penyelesaian ulang; keduanya tetap di R2 walau keluhannya kemudian dihapus. <span class="mono">deletePhoto()</span> menelan galatnya sehingga tidak pernah menggagalkan operasi induk</td></tr>
   <tr><td>Mengapa bukan <span class="mono">r2.dev</span></td><td>DNS <span class="mono">pub-*.r2.dev</span> dibajak sebagian ISP Indonesia: terverifikasi saat pengembangan, resolver lokal mengembalikan alamat non-Cloudflare dan TLS gagal, sedangkan lewat 1.1.1.1 benar. Menyajikan dari <em>origin</em> sendiri menghilangkan ketergantungan itu, dan bucket tidak perlu dibuka ke publik</td></tr>
 </table>
 <div class="peringatan">
   <strong>Batasan yang jujur:</strong> unggahan tidak dibatasi laju dan tidak butuh login, serta foto yang sudah diunggah tetapi tidak pernah dilampirkan ke laporan (pengguna menutup halaman di tengah jalan) tidak dibersihkan otomatis.
-  Foto yang sudah diterima (bukti bersih, foto keadaan, foto tugas harian) disimpan tanpa batas waktu; tidak ada kebijakan retensi. Lihat bab 23.
+  Foto yang sudah diterima (foto bukti, foto keadaan, foto tugas harian) disimpan tanpa batas waktu; tidak ada kebijakan retensi. Lihat bab 23.
 </div>
 
 <h2 class="pecah">15. Referensi API lengkap</h2>
-<p>Seluruhnya <strong>37 rute</strong> (36 titik akhir API + <span class="mono">/api/health</span>), dicocokkan satu per satu dengan <span class="mono">src/index.ts</span> dan <span class="mono">src/routes/*.ts</span>. Semua respons berupa JSON kecuali penyajian foto. Galat selalu
+<p>Seluruhnya <strong>38 rute</strong> (37 titik akhir API + <span class="mono">/api/health</span>), dicocokkan satu per satu dengan <span class="mono">src/index.ts</span> dan <span class="mono">src/routes/*.ts</span>. Semua respons berupa JSON kecuali penyajian foto. Galat selalu
 <span class="mono">{"error": "pesan"}</span> (berbahasa Indonesia), kadang dengan bidang tambahan. Isi permintaan JSON kecuali unggah (<em>multipart</em>). Sesi SPV dibawa oleh <em>cookie</em> <span class="mono">session</span>
 (JWT HS256, HttpOnly, SameSite=Lax, berlaku 12 jam, <span class="mono">Secure</span> pada HTTPS). Arti kolom &ldquo;Siapa&rdquo;: <strong>Publik</strong> = tanpa sesi; <strong>Pelapor</strong> = sesi opsional yang diperhatikan bila berperan pelapor;
 <strong>Nama</strong> = tanpa login, tetapi memakai <span class="mono">staff_id</span> petugas aktif; <strong>SPV</strong> = <span class="mono">requireSupervisor</span> (401 tanpa sesi, 403 untuk peran lain).
@@ -1111,12 +1100,12 @@ Daftar lokasi ada di <span class="mono">/api/cleaning/areas</span> (tidak ada la
   <tr><td class="mono">400</td><td>Validasi gagal, atau aturan bisnis sederhana (nama petugas tak dikenal, foto tak ditemukan, bukti belum ada, akun sendiri tak bisa dinonaktifkan/dihapus, SPV aktif terakhir tak bisa dihapus)</td></tr>
   <tr><td class="mono">401 / 403</td><td>Belum masuk, atau salah sandi / peran tidak berhak</td></tr>
   <tr><td class="mono">404</td><td>Tidak ditemukan (lokasi, keluhan, akun, berkas). Path <span class="mono">/api/*</span> yang tak dikenal juga 404 JSON &ldquo;Endpoint tidak ditemukan&rdquo;</td></tr>
-  <tr><td class="mono">409</td><td><strong>Konflik</strong>: username sudah dipakai; keluhan sudah selesai dan tak bisa dibuka lagi; akun yang punya riwayat tak bisa dihapus</td></tr>
+  <tr><td class="mono">409</td><td><strong>Konflik</strong>: username sudah dipakai; keluhan sudah selesai dan petugas tak bisa membukanya lagi; keluhan yang belum selesai tak bisa dibuka kembali; akun yang punya riwayat tak bisa dihapus</td></tr>
   <tr><td class="mono">413 / 415</td><td>Berkas &gt; 5 MB / tipe bukan JPG, PNG, WebP</td></tr>
-  <tr><td class="mono">422</td><td><strong>Foto ditolak</strong> (foto bukti dinilai kotor atau bukan lokasi; foto tugas harian terlalu lama atau sudah pernah dipakai); permintaan benar bentuknya, hanya fotonya yang tidak lolos</td></tr>
+  <tr><td class="mono">422</td><td><strong>Foto tugas harian ditolak</strong> (terlalu lama atau sudah pernah dipakai); permintaan benar bentuknya, hanya fotonya yang tidak lolos. Tidak dipakai pada penutupan keluhan</td></tr>
   <tr><td class="mono">429</td><td>Batas pertanyaan Kato Bot (50 per hari, 20 per alamat)</td></tr>
   <tr><td class="mono">500</td><td>Galat tak tertangani (<span class="mono">app.onError</span>): &ldquo;Terjadi kesalahan pada server&rdquo;. Termasuk login bila <span class="mono">AUTH_SECRET</span> kosong (bab 19)</td></tr>
-  <tr><td class="mono">502</td><td>Layanan LLM atau vision gagal (pemeriksaan foto, ringkasan, Kato Bot)</td></tr>
+  <tr><td class="mono">502</td><td>Layanan LLM gagal (ringkasan, Kato Bot). Tidak dipakai pada penutupan keluhan</td></tr>
 </table>
 <p>Path di luar <span class="mono">/api/</span> yang bukan aset statis dijawab <span class="mono">index.html</span> (fallback SPA, <span class="mono">app.notFound</span> dan <span class="mono">not_found_handling</span>).
 Path API lama berbahasa Indonesia (<span class="mono">/api/lokasi</span>, <span class="mono">/api/pengguna</span>, &hellip;) <strong>tidak</strong> dialihkan dan menjawab 404.</p>
@@ -1140,19 +1129,22 @@ Path API lama berbahasa Indonesia (<span class="mono">/api/lokasi</span>, <span 
   <tr><td class="mono">GET /api/reports/mine<br><span class="kecil">Pelapor</span></td><td>&mdash;</td><td><span class="mono">{data:[Report]}</span>, 50 terbaru milik akun; kosong bila bukan pelapor</td><td></td></tr>
   <tr><td class="mono">GET /api/reports/:id<br><span class="kecil">Publik</span></td><td>&mdash;</td><td>Report (DTO lengkap, lampiran A)</td><td>404</td></tr>
   <tr><td class="mono">GET /api/reports<br><span class="kecil">SPV</span></td><td><span class="mono">?status, priority, area_id, building, from, to, hour_from, hour_to, date, limit</span> (bawaan 100, maks. 200). Nilai <span class="mono">status</span>/<span class="mono">priority</span> di luar enum diabaikan</td><td><span class="mono">{data:[Report]}</span>: baru, lalu diproses, lalu selesai; di dalamnya prioritas tinggi dulu, lalu terbaru</td><td>401/403</td></tr>
-  <tr><td class="mono">PATCH /api/reports/:id<br><span class="kecil">Nama atau SPV</span></td><td><span class="mono">{status: new | in_progress | resolved, staff_id?, proof_photo_key?}</span>. Dengan <span class="mono">staff_id</span> (petugas aktif) pelakunya petugas itu; tanpanya hanya sesi SPV yang diterima, atas nama SPV</td><td><span class="mono">{ok:true, status, verification:{verdict, reason, model, ms}|null}</span></td><td>400 status tak valid / nama petugas tak dikenal / &ldquo;Pilih namamu dulu&rdquo; / foto bukti tak ditemukan (juga bila awalan bukan <span class="mono">proof/</span>) / bukti belum ada; 404; <strong>409</strong> &ldquo;Laporan ini sudah selesai.&rdquo; (membuka kembali keluhan selesai); <strong>422</strong> <span class="mono">{error, verdict:'dirty' | 'wrong_place', reason}</span>; <strong>502</strong> pemeriksaan foto gagal</td></tr>
+  <tr><td class="mono">PATCH /api/reports/:id<br><span class="kecil">Nama atau SPV</span></td><td><span class="mono">{status: new | in_progress | resolved, staff_id?, proof_photo_key?}</span>. Dengan <span class="mono">staff_id</span> (petugas aktif) pelakunya petugas itu; tanpanya hanya sesi SPV yang diterima, atas nama SPV</td><td><span class="mono">{ok:true, status}</span></td><td>400 status tak valid / nama petugas tak dikenal / &ldquo;Pilih namamu dulu&rdquo; / foto bukti tak ditemukan (juga bila awalan bukan <span class="mono">proof/</span>) / bukti belum ada; 404; <strong>409</strong> &ldquo;Laporan ini sudah selesai.&rdquo; (permintaan status lain atas keluhan selesai)</td></tr>
   <tr><td class="mono">POST /api/reports/:id/reanalyze<br><span class="kecil">SPV</span></td><td>&mdash;</td><td class="mono">{ok:true}</td><td>404</td></tr>
+  <tr><td class="mono">POST /api/reports/:id/reopen<br><span class="kecil">SPV</span></td><td>&mdash;</td><td class="mono">{ok:true}</td><td>401/403; 404; <strong>409</strong> &ldquo;Laporan ini belum selesai.&rdquo;</td></tr>
   <tr><td class="mono">DELETE /api/reports/:id<br><span class="kecil">SPV</span></td><td>&mdash;</td><td class="mono">{ok:true}</td><td>404</td></tr>
 </table>
 <h4>Semantik <span class="mono">PATCH /api/reports/:id</span> (klaim, ambil alih, selesai)</h4>
 <p>Satu endpoint, tiga makna, diputuskan oleh <span class="mono">changeStatus()</span> di <span class="mono">report-service.ts</span> menurut urutan ini:</p>
 <ol>
   <li>Keluhan tak ada &rarr; 404.</li>
-  <li>Keluhan sudah <span class="mono">resolved</span> dan permintaannya status lain &rarr; <strong>409</strong>. Keluhan selesai tidak dapat dibuka lagi, sebab membukanya akan menghapus foto bukti yang menutupnya.</li>
-  <li><strong>Klaim</strong> (<span class="mono">in_progress</span>): bila keluhan sudah <span class="mono">in_progress</span> atas nama orang yang sama, tidak ada yang ditulis maupun dicatat (200, <span class="mono">verification:null</span>). Bila dipegang orang lain, klaim ini adalah <strong>ambil alih</strong>: <span class="mono">staff_name</span> diganti dan log <span class="mono">status_changed</span> mencatat &ldquo;X mengambil alih laporan di &hellip; dari Y&rdquo; dengan <span class="mono">details.handed_over_from</span>. Klaim bukan kunci.</li>
-  <li><strong>Selesai</strong> (<span class="mono">resolved</span>): bila ada <span class="mono">proof_photo_key</span> baru, foto diperiksa model vision lebih dulu (bab 9); yang tidak lolos dihapus dan menghasilkan 422. Tanpa foto lolos yang tersimpan, hasilnya 400 &ldquo;Foto bukti penyelesaian wajib diunggah lebih dulu.&rdquo; (<span class="mono">canResolve</span> di <span class="mono">domain/types.ts</span>). Bila lolos, status, nama, foto, putusan, alasan, model, dan waktu ditulis bersama (<span class="mono">updateStatus</span>); <span class="mono">resolved_at</span> diisi waktu server.</li>
+  <li>Keluhan sudah <span class="mono">resolved</span> dan permintaannya status lain &rarr; <strong>409</strong>. Lewat rute ini keluhan selesai tidak dapat dibuka lagi, oleh siapa pun; SPV memakai <span class="mono">POST /api/reports/:id/reopen</span>.</li>
+  <li><strong>Klaim</strong> (<span class="mono">in_progress</span>): bila keluhan sudah <span class="mono">in_progress</span> atas nama orang yang sama, tidak ada yang ditulis maupun dicatat (200). Bila dipegang orang lain, klaim ini adalah <strong>ambil alih</strong>: <span class="mono">staff_name</span> diganti dan log <span class="mono">status_changed</span> mencatat &ldquo;X mengambil alih laporan di &hellip; dari Y&rdquo; dengan <span class="mono">details.handed_over_from</span>. Klaim bukan kunci.</li>
+  <li><strong>Selesai</strong> (<span class="mono">resolved</span>): bila ada <span class="mono">proof_photo_key</span> baru, ia harus berawalan <span class="mono">proof/</span> dan ada di R2, selain itu 400 &ldquo;Foto bukti tidak ditemukan. Unggah ulang.&rdquo; (bab 9). Tanpa foto baru maupun foto tersimpan, hasilnya 400 &ldquo;Foto bukti penyelesaian wajib diunggah lebih dulu.&rdquo; (<span class="mono">canResolve</span> di <span class="mono">domain/types.ts</span>). Bila lolos, status, nama, dan foto ditulis bersama (<span class="mono">updateStatus</span>); <span class="mono">resolved_at</span> diisi waktu server. Model tidak dipanggil. Permintaan <span class="mono">resolved</span> atas keluhan yang sudah selesai tidak ditolak (bab 6, bab 23).</li>
 </ol>
 <p>Nilai <span class="mono">new</span> diterima server tetapi tidak dikirim oleh antarmuka mana pun. Setelah penulisan berhasil, cache statistik, grafik, dan papan peringkat di isolate itu dibuang (<span class="mono">reportsChanged()</span>).</p>
+<h4>Semantik <span class="mono">POST /api/reports/:id/reopen</span> (buka kembali)</h4>
+<p>Keluhan tak ada &rarr; 404. <span class="mono">reports.reopen()</span> menjalankan <span class="mono">UPDATE</span> atomik dengan syarat <span class="mono">WHERE status='resolved'</span>; bila tidak ada baris yang berubah &rarr; 409 &ldquo;Laporan ini belum selesai.&rdquo;. Bila berubah: <span class="mono">status</span> menjadi <span class="mono">new</span>; <span class="mono">staff_name, resolved_at, proof_photo_key, proof_verdict, proof_reason, proof_model, proof_ms</span> dikosongkan; <span class="mono">reportsChanged()</span> dipanggil; jejak <span class="mono">report_reopened</span> ditulis atas nama SPV dengan <span class="mono">closed_by, resolved_at, proof_photo</span>. Foto tidak dihapus dari R2. Hasil analisis AI tidak berubah.</p>
 
 <h3>Lokasi dan laporan kebersihan (<span class="mono">/api/cleaning</span>)</h3>
 <table>
@@ -1237,7 +1229,7 @@ Lencana merah di tab Laporan dan di sub-tab Kebersihan menghitung laporan kebers
   <tr><td>Ringkasan</td><td><span class="mono">OverviewPanel</span>: satu halaman yang menjawab untuk satu rentang tanggal (bawaan 30 hari terakhir, maksimum 366 hari), dengan tombol ekspor Excel; dua <em>headline</em> (Laporan Petugas, Keluhan); bagian Laporan Petugas; bagian Keluhan dengan kartu ringkasan AI. Rincian di bawah; pemetaan visual ke data ada di bab 12. Memuat ulang tiap 60 detik</td></tr>
   <tr><td>Laporan &rsaquo; Kebersihan</td><td><span class="mono">CleaningPanel</span>. <em>Rekap harian</em>: pilih tanggal (maju/mundur sehari), satu tabel area &times; enam tugas (jam pertama tugas dilaporkan, nama yang mengerjakan, tanda untuk laporan yang berlokasi di luar kampus atau tanpa GPS), daftar pekerjaan per petugas tanpa target, tiga angka ringkas, spanduk peringatan, dan tombol cetak. <em>Laporan &amp; foto</em>: filter petugas dan &ldquo;hanya yang ditandai&rdquo;, setiap laporan dengan foto per tugas, jam server, jarak dari kampus, dan tautan peta. Memuat ulang tiap 30 detik</td></tr>
   <tr><td>Laporan &rsaquo; Keluhan</td><td>Filter status dan prioritas (<span class="mono">Select</span>), <strong>filter waktu</strong>, hitungan &ldquo;<em>n</em> data ditampilkan&rdquo;, dan kartu keluhan (di bawah). Memuat paling banyak 200 baris; memuat ulang tiap 30 detik <em>hanya</em> saat sub-tab ini sedang tampil</td></tr>
-  <tr><td>Log aktivitas</td><td><span class="mono">ActivityPanel</span>: pilih jenis aksi (12 pilihan), filter waktu, hingga 300 baris dengan waktu persis WIB. Salinan keluhan yang dihapus dibentangkan langsung (bab 11)</td></tr>
+  <tr><td>Log aktivitas</td><td><span class="mono">ActivityPanel</span>: pilih jenis aksi (13 pilihan, termasuk &ldquo;Dibuka kembali&rdquo; dan dua aksi lama), filter waktu, hingga 300 baris dengan waktu persis WIB. Salinan keluhan yang dihapus dibentangkan langsung (bab 11)</td></tr>
   <tr><td>Petugas &amp; Supervisor</td><td><span class="mono">AccountsPanel</span>: tambah nama petugas (nama saja), tambah akun SPV (username, nama, sandi), ubah nama, ganti sandi SPV, aktifkan/nonaktifkan, dan <strong>hapus</strong> dengan konfirmasi. Hapus hanya berhasil untuk akun tanpa riwayat (409 bila punya catatan); akun sendiri tidak bisa dinonaktifkan atau dihapus, dan SPV aktif terakhir tidak bisa dihapus</td></tr>
   <tr><td>QR lokasi</td><td><span class="mono">QrCodesPanel</span>: satu stiker per lokasi, disaring per gedung. Kode dibuat di peramban dengan pustaka <span class="mono">qrcode</span> (SVG, koreksi galat M) dan menunjuk <span class="mono">&lt;situs ini&gt;/report/&lt;id area&gt;</span>. Stiker memuat judul dan petunjuk <strong>dwibahasa</strong> (Indonesia dan Inggris sekaligus, karena stiker cetak tidak dapat mengikuti sakelar bahasa). Cetak A4 (tiga stiker per baris) atau unduh PNG 1024 px per lokasi (<span class="mono">qr-&lt;id&gt;.png</span>)</td></tr>
 </table>
@@ -1252,8 +1244,8 @@ ditambah dua pemilih jam &ldquo;Dari jam&rdquo; dan &ldquo;Sampai jam&rdquo; ber
 (<span class="mono">todayWIB()</span>: UTC+7 dari jam peranti). &ldquo;Hapus filter waktu&rdquo; mengembalikan ke Semua. Nilai dikirim sebagai <span class="mono">from, to, hour_from, hour_to</span> (bab 11).</p>
 <h4>Kartu keluhan di dashboard</h4>
 <p>Lencana prioritas, status, dan kategori; waktu relatif; stempel waktu persis WIB &ldquo;Masuk: &hellip;&rdquo; dan, bila selesai, &ldquo;Selesai: &hellip;&rdquo; (<span class="mono">useFormatTime()</span>, zona <span class="mono">Asia/Jakarta</span>);
-nama lokasi; ringkasan (atau teks mentah bila belum dianalisis) dan teks asli; kotak &ldquo;Tindakan&rdquo; dari AI; foto keadaan; foto bukti berbingkai hijau dengan keterangan &ldquo;Diverifikasi AI&rdquo; dan alasan model;
-tombol &ldquo;Analisis ulang&rdquo; (hanya bila gagal) dan &ldquo;Hapus&rdquo; (dengan konfirmasi), serta &ldquo;Ditangani: <em>nama</em>&rdquo;. SPV hanya memoderasi; menyelesaikan keluhan adalah pekerjaan petugas di halaman petugas.</p>
+nama lokasi; ringkasan (atau teks mentah bila belum dianalisis) dan teks asli; kotak &ldquo;Tindakan&rdquo; dari AI; foto keadaan; foto bukti berbingkai hijau dengan keterangan &ldquo;Bukti penyelesaian&rdquo;;
+tombol &ldquo;Analisis ulang&rdquo; (hanya bila gagal), <strong>&ldquo;Buka kembali&rdquo;</strong> (hanya pada keluhan selesai, dengan konfirmasi; bila gagal, pesannya tampil di bawah tombol), dan &ldquo;Hapus&rdquo; (dengan konfirmasi), serta &ldquo;Ditangani: <em>nama</em>&rdquo;. Konfirmasi buka kembali menjelaskan bahwa keluhan kembali ke daftar petugas sebagai laporan baru dan foto buktinya tidak lagi tampil di papan publik. SPV hanya memoderasi; menyelesaikan keluhan adalah pekerjaan petugas di halaman petugas.</p>
 
 <h3>Halaman petugas (<span class="mono">StaffHome.tsx</span>)</h3>
 <p>Urutan blok: kepala halaman; sakelar peran (hanya bila dibuka lewat <span class="mono">/staff/:locationId</span>); peta kampus; dua tab <strong>Keluhan</strong> (dengan lencana jumlah) dan <strong>Tugas harian</strong>;
@@ -1263,7 +1255,7 @@ pemilih lokasi (Gedung, lalu Lantai/Halaman); lalu isi tab. Tab awal: <em>Keluha
   <li>Semua keluhan yang belum selesai di seluruh kampus langsung tampil tanpa memilih apa pun (<span class="mono">GET /api/reports/open</span>, sekali saat halaman dibuka dan sesudah tiap tindakan). Gedung dan Lantai/Halaman hanya <strong>penyaring</strong> (&ldquo;Semua gedung&rdquo; / &ldquo;Semua&rdquo;), bukan syarat.</li>
   <li><strong>Tidak ada &ldquo;Siapa kamu?&rdquo; di halaman ini.</strong> Nama ditanyakan <em>saat bertindak</em>, karena satu ponsel dipakai bergantian. Tombol <strong>&ldquo;Saya kerjakan sekarang&rdquo;</strong> membuka &ldquo;Siapa yang mengerjakan?&rdquo; dengan nama terakhir di HP (<span class="mono">selected-staff</span>) sebagai isian awal, lalu konfirmasi &ldquo;Ya, saya yang kerjakan&rdquo;.</li>
   <li><strong>Klaim bukan kunci.</strong> Selama belum selesai dengan foto bukti, petugas lain boleh <strong>Ambil alih</strong> (&ldquo;Sedang dikerjakan <em>nama</em>&rdquo; dan petunjuk &ldquo;Belum ada foto bukti. Siapa pun boleh mengambil alih sampai selesai.&rdquo;). Pengambilalihan tercatat di log aktivitas; klaim ulang oleh orang yang sama tidak dicatat dua kali. Kartu menandai keluhan milik pengguna HP itu dengan &ldquo;Kamu yang mengerjakan ini&rdquo;.</li>
-  <li><strong>Selesai:</strong> tombol &ldquo;Sudah beres &mdash; foto buktinya&rdquo; menanyakan &ldquo;Siapa yang menyelesaikan?&rdquo; (isian awal: pemegang klaim bila ada), lalu &ldquo;Lanjut foto bukti&rdquo; membuka kamera. Foto diunggah sebagai <span class="mono">proof</span>, lalu <span class="mono">PATCH</span> dengan <span class="mono">resolved</span>; selama itu tombol berubah menjadi &ldquo;Mengunggah&hellip;&rdquo; dan &ldquo;AI memeriksa foto&hellip;&rdquo;. Foto yang tak lolos (bersih dan lokasi benar) menampilkan kotak &ldquo;Foto ditolak&rdquo; dengan alasan model; kegagalan layanan menampilkan &ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo;. Keluhan yang sudah selesai tidak dapat dibuka kembali (409).</li>
+  <li><strong>Selesai:</strong> tombol &ldquo;Sudah beres &mdash; foto buktinya&rdquo; menanyakan &ldquo;Siapa yang menyelesaikan?&rdquo; (isian awal: pemegang klaim bila ada), lalu &ldquo;Lanjut foto bukti&rdquo; membuka kamera. Foto diunggah sebagai <span class="mono">proof</span>, lalu <span class="mono">PATCH</span> dengan <span class="mono">resolved</span>; selama itu tombol hanya menampilkan &ldquo;Mengunggah&hellip;&rdquo;. Permintaan yang gagal menampilkan kotak merah berisi pesan dari server, dan keluhan tidak berubah. Petugas tidak dapat membuka kembali keluhan yang sudah selesai (409); hanya SPV yang dapat.</li>
   <li>Nama yang dipilih saat bertindak diingat sebagai nama HP itu (<span class="mono">lib/staff.ts</span>); nama yang kemudian dinonaktifkan SPV dianggap &ldquo;belum dipilih&rdquo;.</li>
 </ul>
 <h4>Tab Tugas harian</h4>
@@ -1325,7 +1317,7 @@ Ramp berurutan peta panas sama di kedua tema, jadi warna teks di atasnya tidak m
 
 <h3>Bahasa, tema, tampilan, responsivitas</h3>
 <ul>
-  <li><strong>Dwibahasa ID/EN</strong> penuh pada antarmuka (<span class="mono">lib/i18n.tsx</span>, kamus <span class="mono">id</span> dan <span class="mono">en</span> dengan kunci berbahasa Inggris, mis. <span class="mono">staff.who_are_you</span>). Pilihan disimpan di <span class="mono">localStorage</span> kunci <span class="mono">language</span>; tanpa pilihan, peramban berbahasa Inggris mendapat EN, lainnya ID. <strong>Hasil AI tetap Indonesia</strong> (ringkasan, rekomendasi, alasan model) karena pembaca akhirnya petugas kebersihan; Kato Bot menjawab dalam bahasa penanya (bab 2); stiker QR selalu dwibahasa.</li>
+  <li><strong>Dwibahasa ID/EN</strong> penuh pada antarmuka (<span class="mono">lib/i18n.tsx</span>, kamus <span class="mono">id</span> dan <span class="mono">en</span> dengan kunci berbahasa Inggris, mis. <span class="mono">staff.who_are_you</span>). Pilihan disimpan di <span class="mono">localStorage</span> kunci <span class="mono">language</span>; tanpa pilihan, peramban berbahasa Inggris mendapat EN, lainnya ID. <strong>Hasil AI tetap Indonesia</strong> (ringkasan, rekomendasi) karena pembaca akhirnya petugas kebersihan; Kato Bot menjawab dalam bahasa penanya (bab 2); stiker QR selalu dwibahasa.</li>
   <li><strong>Tema gelap adalah bawaan</strong>; terang hanya bila dipilih lewat sakelar di kepala halaman (<span class="mono">localStorage</span> kunci <span class="mono">theme</span> = <span class="mono">light</span>). Skrip kecil di <span class="mono">index.html</span> memasang kelas <span class="mono">dark</span> pada <span class="mono">&lt;html&gt;</span> sebelum React dimuat agar tidak berkedip putih; <span class="mono">ThemeProvider</span> menjaga warna <span class="mono">theme-color</span> peramban ponsel.</li>
   <li><strong>Glassmorphism</strong> (rujukan <span class="mono">design.md</span>, gaya Liquid Glass tanpa warna): permukaan kaca buram (<span class="mono">.glass</span>, <span class="mono">backdrop-filter</span> dengan <span class="mono">blur</span> 36 px), tepi spekular, bayangan berlapis, di atas latar aurora. Seluruh warna adalah variabel CSS (RGB) yang dibalik oleh kelas <span class="mono">.dark</span>; font Inter dari Google Fonts.</li>
   <li><strong>Kepala halaman:</strong> lencana UPI, sakelar bahasa dan tema, tombol kembali; setelah digulir, versi ringkas berbentuk pil melayang.</li>
@@ -1430,12 +1422,9 @@ dan <em>binding</em> ke sumber daya Cloudflare. Tipenya ada di <span class="mono
   <tr><th>Nama</th><th>Jenis</th><th>Nilai / keterangan</th></tr>
   <tr><td class="mono">LLM_BASE_URL</td><td>var</td><td><span class="mono">https://api.deepseek.com</span>: model teks, mengikuti format <em>chat completions</em> OpenAI</td></tr>
   <tr><td class="mono">LLM_MODEL</td><td>var</td><td><span class="mono">deepseek-chat</span></td></tr>
-  <tr><td class="mono">VISION_BASE_URL</td><td>var</td><td><span class="mono">https://generativelanguage.googleapis.com/v1beta/openai</span>: model vision (DeepSeek tidak dapat melihat gambar). Titik akhir apa pun yang kompatibel dengan OpenAI dan menerima <span class="mono">image_url</span> dapat dipakai</td></tr>
-  <tr><td class="mono">VISION_MODEL</td><td>var</td><td><span class="mono">gemini-3.6-flash</span></td></tr>
   <tr><td class="mono">CAMPUS_LAT, CAMPUS_LNG</td><td>var (teks)</td><td><span class="mono">-7.3351</span>, <span class="mono">108.2217</span>: pusat kampus untuk pemeriksaan GPS laporan kebersihan. Komentar di <span class="mono">wrangler.jsonc</span> menyebut nilainya <strong>penanda sementara</strong> di Jl. Dadaha; ganti dengan koordinat sebenarnya dari Google Maps</td></tr>
   <tr><td class="mono">CAMPUS_RADIUS_M</td><td>var (teks)</td><td><span class="mono">500</span> meter. Bila bukan angka atau 0, kode memakai 500 (<span class="mono">campus()</span> di <span class="mono">cleaning-service.ts</span>)</td></tr>
-  <tr><td class="mono">LLM_API_KEY</td><td>secret</td><td>Kunci model teks. Boleh berisi <strong>beberapa kunci dipisah koma</strong> (<span class="mono">kunci1,kunci2</span>)</td></tr>
-  <tr><td class="mono">VISION_API_KEY</td><td>secret, opsional</td><td>Kunci model vision; bila kosong jatuh ke <span class="mono">LLM_API_KEY</span> (hanya berguna bila kedua model di penyedia yang sama). Juga boleh berisi beberapa kunci dipisah koma: bila satu kunci ditolak dengan 401, 403, atau 429, kunci berikutnya dicoba berurutan (<span class="mono">postChat</span> di <span class="mono">adapters/llm.ts</span>)</td></tr>
+  <tr><td class="mono">LLM_API_KEY</td><td>secret</td><td>Kunci model teks. Boleh berisi <strong>beberapa kunci dipisah koma</strong> (<span class="mono">kunci1,kunci2</span>): bila satu kunci ditolak dengan 401, 403, atau 429, kunci berikutnya dicoba berurutan (<span class="mono">postChat</span> di <span class="mono">adapters/llm.ts</span>)</td></tr>
   <tr><td class="mono">AUTH_SECRET</td><td>secret</td><td>String acak panjang untuk menandatangani JWT sesi. Menggantinya membatalkan semua sesi (bab 20). <strong>Tanpa nilai ini login gagal 500</strong></td></tr>
   <tr><td class="mono">DB</td><td>binding D1</td><td>Basis data <span class="mono">kato</span>; <span class="mono">migrations_dir: "migrations"</span></td></tr>
   <tr><td class="mono">BUCKET</td><td>binding R2</td><td>Bucket <span class="mono">kato</span> (bab 14)</td></tr>
@@ -1473,13 +1462,13 @@ dan <em>binding</em> ke sumber daya Cloudflare. Tipenya ada di <span class="mono
   <tr><td>TTL cache</td><td class="mono">services/*.ts</td><td>Bab 17</td></tr>
 </table>
 <h4>Berkas <span class="mono">.dev.vars</span></h4>
-<p>Untuk pengembangan lokal, salin <span class="mono">.dev.vars.example</span> menjadi <span class="mono">.dev.vars</span> (diabaikan git) dan isi tiga rahasia: <span class="mono">LLM_API_KEY</span>, <span class="mono">VISION_API_KEY</span>, <span class="mono">AUTH_SECRET</span>.
-Berkas ini membaca nilai persis seperti <em>secrets</em> produksi. Mengganti penyedia vision: ubah dua <em>vars</em> dan satu <em>secret</em>; format panggilan yang dikirim adalah OpenAI <em>chat completions</em> dengan bagian <span class="mono">image_url</span>
-(didukung antara lain OpenAI dan OpenRouter). Mengganti model teks sama caranya.</p>
+<p>Untuk pengembangan lokal, salin <span class="mono">.dev.vars.example</span> menjadi <span class="mono">.dev.vars</span> (diabaikan git) dan isi dua rahasia: <span class="mono">LLM_API_KEY</span> dan <span class="mono">AUTH_SECRET</span>.
+Berkas ini membaca nilai persis seperti <em>secrets</em> produksi. Mengganti penyedia model: ubah <span class="mono">LLM_BASE_URL</span> dan <span class="mono">LLM_MODEL</span> serta <em>secret</em> <span class="mono">LLM_API_KEY</span>; format panggilan yang dikirim adalah OpenAI <em>chat completions</em>.
+Kode tidak lagi membaca variabel <span class="mono">VISION_*</span>; bila <span class="mono">VISION_API_KEY</span> masih terpasang di produksi, nilainya diabaikan.</p>
 
 <h2 class="pecah">19. Pengembangan lokal</h2>
 <pre>npm install
-cp .dev.vars.example .dev.vars    # isi LLM_API_KEY, VISION_API_KEY, AUTH_SECRET
+cp .dev.vars.example .dev.vars    # isi LLM_API_KEY, AUTH_SECRET
 npm run db:local                  # menerapkan migrasi 0001-0013 ke D1 lokal
 npm run db:seed:cleaning          # lokasi, nama petugas (wajib agar ada lokasi)
 npm run db:seed                   # opsional: daftar toilet lama (hanya untuk data lama)
@@ -1524,16 +1513,24 @@ npm run dev                       # Vite (5173) + Worker (8787) berdampingan</pr
   <li><strong>Dua proses <span class="mono">wrangler dev</span>.</strong> Proses kedua tidak mendapatkan port 8787 sementara Vite terus meneruskan <span class="mono">/api</span> ke proses pertama, jadi perubahan kode backend &ldquo;tidak berpengaruh&rdquo;; keduanya juga berbagi satu berkas SQLite lokal di <span class="mono">.wrangler/</span>.
     <span class="mono">predev</span> hanya menghentikan sisa Worker dari proyek ini; proses dari tempat lain hanya dilaporkan. Hentikan yang lama, lalu jalankan ulang. Vite memakai <span class="mono">strictPort</span>: <span class="mono">npm run dev</span> kedua gagal alih-alih membuka 5174.</li>
   <li><strong>Daftar lokasi kosong</strong> atau QR menjawab &ldquo;QR tidak dikenal. Pilih lokasi di atas.&rdquo;: <span class="mono">db:seed:cleaning</span> belum dijalankan pada basis data itu.</li>
-  <li><strong>Tanpa kunci vision sungguhan</strong> penutupan keluhan selalu gagal 502 (&ldquo;no API key configured&rdquo; dicatat sebagai <span class="mono">verification_failed</span>), dan analisis teks berakhir <span class="mono">ai_status = failed</span>. Aplikasi lain tetap berjalan; gunakan server tiruan (di bawah).</li>
+  <li><strong>Tanpa kunci LLM sungguhan</strong> analisis teks berakhir <span class="mono">ai_status = failed</span>, serta ringkasan harian dan Kato Bot gagal. Aplikasi lain tetap berjalan, termasuk menutup keluhan, yang tidak memanggil model; gunakan server tiruan (di bawah).</li>
   <li>Cron lokal tidak berjalan sendiri: <span class="mono">wrangler dev --test-scheduled</span> lalu buka <span class="mono">/__scheduled</span> (pada port Worker).</li>
 </ul>
 <h3>Menguji tanpa kunci API sungguhan</h3>
-<p>Kedua model dipanggil lewat URL yang dapat dikonfigurasi, sehingga keduanya dapat diganti server tiruan lokal yang menjawab format <em>chat completions</em>
-(<span class="mono">choices[0].message.content</span> berisi JSON). Jalankan Worker dengan <span class="mono">wrangler dev --var VISION_BASE_URL:http://127.0.0.1:8799/v1</span> (dan <span class="mono">LLM_BASE_URL</span> bila perlu), dengan kunci apa pun yang tidak kosong di <span class="mono">.dev.vars</span>.
+<p>Uji otomatis ada di <span class="mono">e2e/</span> (Playwright, API dan UI) dan tidak memerlukan kunci apa pun; penjelasan lengkapnya di <span class="mono">docs/dokumentasi-testing.html</span>.</p>
+<pre>npx playwright install chromium   # sekali
+npm run test:e2e                  # semuanya
+npm run test:e2e:api              # API saja, tanpa browser
+npm run test:e2e:smoke            # satu perjalanan penuh: pelapor, petugas, supervisor
+npm run test:e2e:ui               # mode interaktif Playwright
+npm run test:e2e:report           # laporan HTML putaran terakhir</pre>
+<p><span class="mono">e2e/support/start-stack.mjs</span> menyiapkan semuanya dari keadaan bersih: menghapus <span class="mono">.wrangler/e2e-state</span> (bukan basis data <span class="mono">npm run dev</span>), menerapkan migrasi dan seed, menjalankan server tiruan <span class="mono">e2e/support/mock-llm.mjs</span> (port 8799, format <em>chat completions</em> OpenAI), lalu Worker di port 8788 dengan <span class="mono">--var</span> untuk <span class="mono">LLM_BASE_URL, LLM_MODEL, LLM_API_KEY, AUTH_SECRET</span>. Tidak ada yang menyentuh Cloudflare atau penyedia LLM sungguhan.
+Untuk mencoba tangan, jalankan <span class="mono">node e2e/support/start-stack.mjs</span> lalu buka <span class="mono">http://127.0.0.1:8788</span>. Jawaban server tiruan diatur dengan penanda di teks keluhan (<span class="mono">[llm:error]</span>, <span class="mono">[llm:fail-once]</span>, <span class="mono">[llm:not-json]</span>, <span class="mono">[llm:odd]</span>, <span class="mono">[llm:slow]</span>) atau di pertanyaan Kato Bot (<span class="mono">[ask:error]</span>).
 Skenario yang layak diperiksa:</p>
 <ul>
-  <li><strong>Keluhan:</strong> <span class="mono">resolved</span> tanpa foto (400); foto bersih (200, kolom <span class="mono">proof_*</span> terisi); foto kotor (422 <span class="mono">dirty</span>) dan bukan lokasi (422 <span class="mono">wrong_place</span>), dengan fotonya hilang dari R2 (404 saat dibuka); kunci foto berawalan <span class="mono">report/</span> (400); <span class="mono">staff_id</span> tak dikenal (400); layanan mati (502, tercatat <span class="mono">verification_failed</span>).</li>
-  <li><strong>Klaim:</strong> <span class="mono">in_progress</span> oleh petugas A (200), oleh B (ambil alih, tercatat dengan <span class="mono">handed_over_from</span>), oleh B lagi (200 tanpa baris log baru), membuka kembali keluhan selesai (409).</li>
+  <li><strong>Keluhan:</strong> <span class="mono">resolved</span> tanpa foto (400); dengan foto (200, <span class="mono">{ok, status}</span>, <span class="mono">proof_photo_key</span> terisi dan <span class="mono">proof_verdict</span> tetap NULL); kunci foto berawalan <span class="mono">report/</span> (400); kunci <span class="mono">proof/</span> yang tidak ada (400); <span class="mono">staff_id</span> tak dikenal (400).</li>
+  <li><strong>Klaim:</strong> <span class="mono">in_progress</span> oleh petugas A (200), oleh B (ambil alih, tercatat dengan <span class="mono">handed_over_from</span>), oleh B lagi (200 tanpa baris log baru), petugas membuka kembali keluhan selesai lewat <span class="mono">PATCH</span> (409).</li>
+  <li><strong>Buka kembali:</strong> SPV atas keluhan selesai (200: <span class="mono">status</span> <span class="mono">new</span>, <span class="mono">staff_name, resolved_at</span> dan foto bukti kosong, keluhan kembali di <span class="mono">/api/reports/open</span>, foto hilang dari papan publik tetapi URL lamanya tetap terbaca, satu baris <span class="mono">report_reopened</span>); lalu ditutup lagi oleh petugas lain (200); atas keluhan yang belum selesai (409); id tak dikenal (404); tanpa sesi SPV (401).</li>
   <li><strong>Tugas harian:</strong> foto dipakai dua tugas (400), foto yang sudah dipakai laporan lain (422), kirim ganda dengan foto sama (200, <span class="mono">duplicate:true</span>), tanpa GPS atau di luar radius (201 dengan <span class="mono">location_status</span> <span class="mono">unknown</span>/<span class="mono">far</span> dan baris <span class="mono">cleaning_out_of_range</span>).</li>
   <li><strong>Akun:</strong> hapus akun sendiri (400), SPV terakhir (400), akun dengan riwayat (409 dengan <span class="mono">records</span>), akun kosong riwayat (200).</li>
 </ul>
@@ -1541,7 +1538,6 @@ Skenario yang layak diperiksa:</p>
 <h2>20. Penyebaran dan operasi</h2>
 <h3>Urutan penyebaran</h3>
 <pre>npx wrangler secret put LLM_API_KEY      # sekali, atau saat kunci diganti
-npx wrangler secret put VISION_API_KEY
 npx wrangler secret put AUTH_SECRET
 
 npm run typecheck
@@ -1563,8 +1559,8 @@ npm run deploy                      # wrangler deploy: membangun frontend lalu m
 <ol>
   <li><span class="mono">curl https://ai-complaint.yvrtz.workers.dev/api/health</span> mengembalikan <span class="mono">{"ok":true,"time":&hellip;}</span>.</li>
   <li><span class="mono">curl -I https://ai-complaint.yvrtz.workers.dev/api/staff</span> menunjukkan <span class="mono">Cache-Control</span> dan <span class="mono">ETag</span> (bab 17); <span class="mono">/api/cleaning/areas</span> mengembalikan daftar lokasi.</li>
-  <li><span class="mono">npx wrangler deployments list</span> menunjukkan versi baru; <span class="mono">npx wrangler secret list</span> memuat ketiga rahasia; <span class="mono">npx wrangler d1 migrations list kato --remote</span> bersih.</li>
-  <li>Dari ponsel: buka QR sebuah lokasi, kirim satu keluhan berfoto, lihat hasil analisis AI muncul, klaim lalu selesaikan dengan foto bukti di halaman petugas, kirim satu tugas harian, lalu hapus keluhan uji dari dashboard (salinannya tetap ada di log aktivitas).</li>
+  <li><span class="mono">npx wrangler deployments list</span> menunjukkan versi baru; <span class="mono">npx wrangler secret list</span> memuat kedua rahasia; <span class="mono">npx wrangler d1 migrations list kato --remote</span> bersih.</li>
+  <li>Dari ponsel: buka QR sebuah lokasi, kirim satu keluhan berfoto, lihat hasil analisis AI muncul, klaim lalu selesaikan dengan foto bukti di halaman petugas, kirim satu tugas harian, lalu dari dashboard tekan &ldquo;Buka kembali&rdquo; pada keluhan uji (ia kembali ke daftar petugas dan log aktivitas mencatat &ldquo;Dibuka kembali&rdquo;) dan hapus keluhan itu (salinannya tetap ada di log aktivitas).</li>
   <li>Masuk ke <span class="mono">/supervisor</span>; semua tab terbuka tanpa galat. Log langsung: <span class="mono">npx wrangler tail</span>.</li>
 </ol>
 <h3>Risiko dan pembatalan</h3>
@@ -1584,24 +1580,18 @@ npm run deploy                      # wrangler deploy: membangun frontend lalu m
 <h2 class="pecah">21. Pemantauan dan pemecahan masalah</h2>
 <p>Satu-satunya pemantauan bawaan adalah jejak audit di basis data (bab 11), log Worker (<span class="mono">npx wrangler tail</span>, dashboard <em>observability</em> Cloudflare), dan <span class="mono">GET /api/health</span>. Semua <em>query</em> di bawah dijalankan dengan
 <span class="mono">npx wrangler d1 execute kato --remote --command "&hellip;"</span> (tambahkan <span class="mono">--local</span> untuk basis data lokal). <span class="mono">details</span> adalah JSON, jadi <span class="mono">json_extract</span> dapat dipakai; baris dari sebelum migrasi 0008 berkunci Indonesia dan akan menghasilkan NULL.</p>
-<h3>Menghitung pemakaian model vision dari aplikasi sendiri</h3>
-<pre>SELECT date(created_at, '+7 hours') AS hari, action, COUNT(*) AS jumlah
+<h3>Pemakaian model dan kuota</h3>
+<p>Angka batas dan pemakaian resmi ada di konsol penyedia. <span class="mono">LLM HTTP 429</span> di log berarti kuota habis.</p>
+<h3>Keluhan yang dibuka kembali, per penutupnya</h3>
+<pre>SELECT json_extract(details, '$.closed_by') AS penutup, COUNT(*) AS jumlah
   FROM activity_log
- WHERE action IN ('proof_rejected', 'verification_failed')
-    OR (action = 'status_changed'
-        AND json_extract(details, '$.verification.verdict') = 'clean')
- GROUP BY hari, action ORDER BY hari DESC;</pre>
-<p><span class="mono">status_changed</span> dengan putusan <span class="mono">clean</span> adalah foto yang diterima, <span class="mono">proof_rejected</span> yang ditolak, <span class="mono">verification_failed</span> panggilan yang gagal; jumlahnya per hari kira-kira sama dengan jumlah panggilan ke penyedia vision hari itu.
-(Foto tugas harian tidak diperiksa model, jadi tidak ikut.) Angka batas dan pemakaian resmi ada di konsol penyedia. <span class="mono">LLM HTTP 429</span> di log berarti kuota habis.</p>
-<h3>Membaca galat verifikasi terakhir</h3>
-<pre>SELECT created_at, actor, summary, details FROM activity_log
- WHERE action = 'verification_failed' ORDER BY id DESC LIMIT 3;</pre>
+ WHERE action = 'report_reopened'
+ GROUP BY penutup ORDER BY jumlah DESC;</pre>
 <h3>Menelusuri tindakan atas nama seorang petugas</h3>
 <pre>SELECT datetime(created_at, '+7 hours') AS wib, action, summary, details
   FROM activity_log
  WHERE actor = 'Nama Petugas'
-   AND action IN ('status_changed', 'cleaning_reported', 'cleaning_out_of_range',
-                  'proof_rejected', 'verification_failed')
+   AND action IN ('status_changed', 'cleaning_reported', 'cleaning_out_of_range')
  ORDER BY id DESC LIMIT 50;</pre>
 <h3>Pengambilalihan, laporan kebersihan, dan Kato Bot</h3>
 <pre>-- berapa kali klaim diambil alih, dan dari siapa ke siapa
@@ -1623,23 +1613,19 @@ SELECT COUNT(*) FROM activity_log
 <pre>-- analisis teks
 SELECT ai_status, COUNT(*) n, ROUND(AVG(ai_ms)) avg_ms, MIN(ai_ms) min_ms, MAX(ai_ms) max_ms
   FROM reports GROUP BY ai_status;
--- verifikasi foto bukti yang diterima
-SELECT COUNT(*) n, ROUND(AVG(proof_ms)) avg_ms FROM reports WHERE proof_verdict = 'clean';
--- tingkat penolakan foto
-SELECT action, COUNT(*) FROM activity_log
- WHERE action IN ('proof_rejected', 'verification_failed') GROUP BY action;
 -- sebaran prioritas dan kategori
 SELECT priority, COUNT(*) FROM reports GROUP BY priority;
 SELECT je.value AS category, COUNT(*) FROM reports, json_each(categories) je GROUP BY je.value;</pre>
 <h3>Gejala &rarr; penyebab &rarr; tindakan</h3>
 <table>
   <tr><th>Gejala</th><th>Penyebab yang lazim</th><th>Tindakan</th></tr>
-  <tr><td>&ldquo;Pemeriksaan foto gagal. Coba lagi sebentar.&rdquo; (502) terus-menerus</td><td>Lihat <span class="mono">verification_failed</span>: <span class="mono">LLM HTTP 404 &hellip; no longer available</span> = nama model kedaluwarsa; <span class="mono">401/403</span> = kunci salah atau kosong; <span class="mono">429</span> = kuota habis; &ldquo;Respons LLM bukan JSON&rdquo; = JSON terpotong atau model tidak patuh; <em>timeout</em> 30 detik; &ldquo;no API key configured&rdquo; = rahasia belum dipasang</td><td>Ganti <span class="mono">VISION_MODEL</span> ke nama yang disebut galat; pasang ulang <span class="mono">VISION_API_KEY</span> (boleh beberapa kunci dipisah koma agar yang kena batas digantikan); pindah ke model lebih ringan atau aktifkan penagihan</td></tr>
-  <tr><td>Foto bukti ditolak berulang (422 &ldquo;masih terlihat kotor&rdquo; atau &ldquo;tidak menunjukkan lokasi yang dilaporkan&rdquo;)</td><td>Foto gelap atau buram, sudut sempit, lantai masih basah merata, atau foto tempat lain. Alasan model tampil di kotak &ldquo;Foto ditolak&rdquo;</td><td>Foto ulang dari lokasi yang dilaporkan dengan cahaya cukup, setelah benar-benar bersih; ikuti alasan model</td></tr>
+  <tr><td>&ldquo;Foto bukti tidak ditemukan. Unggah ulang.&rdquo; (400)</td><td>Kunci foto bukan berawalan <span class="mono">proof/</span> atau objeknya tidak ada di R2</td><td>Ambil foto lagi dari tombol &ldquo;Sudah beres&rdquo;</td></tr>
+  <tr><td>Keluhan selesai, tetapi fotonya tidak menunjukkan pekerjaan yang dimaksud</td><td>Foto bukti tidak dinilai model; siapa pun yang memilih nama dapat menutup dengan foto apa pun (bab 9)</td><td>SPV: tab Laporan &rsaquo; Keluhan &rarr; &ldquo;Buka kembali&rdquo;; telusuri nama penutup di jejak audit</td></tr>
+  <tr><td>&ldquo;Laporan ini belum selesai.&rdquo; (409) saat menekan &ldquo;Buka kembali&rdquo;</td><td>SPV lain sudah membukanya lebih dulu; data di layar tertinggal</td><td>Muat ulang; tidak ada yang perlu dilakukan</td></tr>
   <tr><td>&ldquo;Kamera tidak bisa dibuka&rdquo;</td><td>Situs dibuka lewat HTTP, izin kamera ditolak, perangkat tanpa kamera, kamera dipakai aplikasi lain; sebagian <em>WebView</em> di dalam aplikasi chat tidak mengizinkan kamera</td><td>Buka lewat HTTPS di Chrome/Safari; izinkan kamera di pengaturan situs; tutup aplikasi lain; tekan &ldquo;Coba lagi&rdquo;</td></tr>
   <tr><td>&ldquo;Nama petugas tidak dikenal. Pilih ulang namamu.&rdquo; (400)</td><td>Nama sudah dinonaktifkan atau dihapus SPV, atau HP menyimpan id dari basis data lain</td><td>Pilih nama lagi; bila tidak ada, minta SPV menambah atau mengaktifkannya</td></tr>
   <tr><td>&ldquo;Belum ada nama petugas.&rdquo; di daftar nama</td><td>Belum ada akun berperan <span class="mono">staff</span> yang aktif (basis data baru tanpa seed)</td><td>SPV: tab Petugas &amp; Supervisor &rarr; Tambah petugas; atau <span class="mono">db:seed:cleaning</span></td></tr>
-  <tr><td>&ldquo;Laporan ini sudah selesai.&rdquo; (409) saat mengklaim atau menutup</td><td>Petugas lain menutupnya lebih dulu; keluhan selesai tidak dapat dibuka lagi</td><td>Muat ulang halaman; tidak ada yang perlu dilakukan</td></tr>
+  <tr><td>&ldquo;Laporan ini sudah selesai.&rdquo; (409) saat mengklaim</td><td>Petugas lain menutupnya lebih dulu; petugas tidak dapat membuka kembali keluhan selesai</td><td>Muat ulang halaman. Bila keluhan itu ternyata belum beres, minta SPV membukanya kembali</td></tr>
   <tr><td>Dua petugas mengerjakan keluhan yang sama, atau &ldquo;diambil alih&rdquo; di log</td><td>Klaim bukan kunci; siapa pun boleh mengambil alih sebelum ada foto bukti</td><td>Sesuai rancangan. Telusuri pemegang klaim lewat <span class="mono">handed_over_from</span> (query di atas)</td></tr>
   <tr><td>Foto tugas harian ditolak 422 (&ldquo;sudah terlalu lama&rdquo; atau &ldquo;sudah pernah dipakai&rdquo;)</td><td>Lebih dari 3 jam sejak foto diterima server; atau foto yang sama sudah membuktikan tugas lain</td><td>Ambil foto baru lalu kirim. Foto lama tidak dapat dihidupkan kembali</td></tr>
   <tr><td>Banyak laporan kebersihan bertanda &ldquo;di luar kampus&rdquo; atau &ldquo;tanpa GPS&rdquo;</td><td>Izin lokasi ditolak atau GPS lemah di dalam gedung; atau <span class="mono">CAMPUS_LAT/LNG/RADIUS_M</span> belum sesuai dengan kampus</td><td>Periksa koordinat di <span class="mono">wrangler.jsonc</span>, naikkan radius bila perlu, minta petugas mengizinkan lokasi. Laporan tetap diterima dan terhitung di rekap</td></tr>
@@ -1671,10 +1657,13 @@ Biayanya: hasil analisis belum ada saat laporan pertama kali terbaca; bila model
 <h3>Panggilan LLM yang gagal tidak pernah menghilangkan laporan</h3>
 <p>Baris ditandai <span class="mono">failed</span> beserta teks galatnya, tetap tampil, dan dapat dianalisis ulang. Sistem menurun menjadi alat pelaporan biasa, bukan gagal.</p>
 <h3>Keluaran LLM tidak pernah dipercaya apa adanya</h3>
-<p>Setiap respons divalidasi Zod lalu dipaksa ke enum yang dikenal basis data, untuk teks maupun vision. Kata dari pelapor tidak pernah menjadi perintah: Kato Bot memilih dari daftar tetap <em>query</em> agregat dan tidak menulis SQL.</p>
-<h3>Penyelesaian menuntut bukti yang diperiksa, ditolak di server</h3>
-<p>Selesai tanpa foto &rarr; 400; foto yang dinilai kotor atau bukan lokasi yang dilaporkan &rarr; 422 beserta alasan. Aturan ada di server (<span class="mono">canResolve</span>), bukan sekadar tombol yang disembunyikan.
-Biayanya: petugas menunggu beberapa detik dan sistem bergantung pada penyedia model kedua. Sebaliknya, <strong>pemadaman layanan vision tidak diloloskan</strong> (502): bukti yang tak dapat diperiksa tidak dianggap lolos.</p>
+<p>Setiap respons divalidasi Zod lalu dipaksa ke enum yang dikenal basis data. Kata dari pelapor tidak pernah menjadi perintah: Kato Bot memilih dari daftar tetap <em>query</em> agregat dan tidak menulis SQL.</p>
+<h3>Penyelesaian menuntut foto bukti, ditolak di server</h3>
+<p>Selesai tanpa foto &rarr; 400; kunci foto yang bukan <span class="mono">proof/</span> atau tidak ada di R2 &rarr; 400. Aturan ada di server (<span class="mono">canResolve</span>, <span class="mono">changeStatus</span>), bukan sekadar tombol yang disembunyikan.
+Biayanya: tanpa foto keluhan tidak dapat ditutup, walau pekerjaannya sudah selesai.</p>
+<h3>Foto bukti tidak dinilai model</h3>
+<p>Dulu model vision memeriksa foto sebelum keluhan boleh ditutup. Pemeriksaan itu menolak pekerjaan yang benar-benar sudah dilakukan dan membuat penutupan terlalu sulit, sehingga dihapus (bab 9). Penutupan kini hampir seketika dan tidak bergantung pada model atau penyedia kedua.
+Biayanya: isi foto tidak diperiksa siapa pun saat ditutup, jadi siapa pun yang memilih nama petugas dapat menutup keluhan dengan foto apa pun. Pengendalinya sesudah kejadian: foto publik, jejak audit, dan buka kembali oleh SPV.</p>
 <h3>Foto hanya dari kamera</h3>
 <p><span class="mono">&lt;input type="file" capture&gt;</span> hanya petunjuk: banyak peramban tetap menawarkan galeri, sehingga foto lama dapat diaku sebagai foto baru. Mengambil bingkai langsung dari <span class="mono">getUserMedia</span> meniadakan galeri.
 Biayanya: tanpa kamera, tanpa HTTPS, atau tanpa izin, tidak ada foto sama sekali, dan itu disengaja tanpa cadangan. Kamera juga memperkecil foto sebelum unggah sehingga batas 5 MB tidak menjadi masalah di jaringan seluler.</p>
@@ -1687,7 +1676,7 @@ Biayanya: pelapor anonim mudah disalahgunakan untuk spam (bab 23).</p>
 <h3>Foto tidak melewati domain pihak ketiga</h3>
 <p>Disajikan dari <em>origin</em> sendiri lewat Worker (bab 14), karena DNS <span class="mono">r2.dev</span> dibajak sebagian ISP Indonesia. Biayanya: setiap foto melewati Worker (dimitigasi header <span class="mono">immutable</span>).</p>
 <h3>Antarmuka dwibahasa, analisis tetap Indonesia</h3>
-<p>Label mengikuti pembaca; ringkasan, rekomendasi, dan alasan model selalu Indonesia karena yang bertindak adalah petugas kebersihan. Keluhan berbahasa Inggris tetap dipahami dan diringkas dalam bahasa Indonesia.</p>
+<p>Label mengikuti pembaca; ringkasan dan rekomendasi selalu Indonesia karena yang bertindak adalah petugas kebersihan. Keluhan berbahasa Inggris tetap dipahami dan diringkas dalam bahasa Indonesia.</p>
 <h3>Semua kode berbahasa Inggris, teks pengguna tetap Indonesia</h3>
 <p>Satu kosakata dari basis data sampai frontend (tabel, kolom, enum, path API, URL, kunci penyimpanan, cookie); yang dibaca manusia tetap Indonesia. Biayanya: satu migrasi besar (0008) yang membangun ulang setiap tabel dan satu kali keluar-sesi untuk semua orang.</p>
 <h3>URL lama dialihkan</h3>
@@ -1702,13 +1691,14 @@ Batas 50 pertanyaan per hari dan 20 per alamat menjaga agar fitur publik ini tid
 <h3>Lokasi umum menggantikan toilet</h3>
 <p>Keluhan awalnya hanya soal toilet. Yang dilaporkan sekarang adalah kondisi kebersihan <em>lokasi mana pun</em>: lantai gedung, halaman, gedung utuh, atau tempat di luar gedung seperti Lapang Voli. Daftar lokasi dipakai ulang dari area kebersihan (<span class="mono">cleaning_areas</span>), sehingga pelapor, petugas, dan SPV memilih dari satu daftar,
 dan satu stiker QR per lokasi melayani pelapor dan petugas sekaligus (sakelar peran). Migrasi 0011 menambah <span class="mono">reports.area_id</span> berdampingan dengan <span class="mono">toilet_id</span> (tepat salah satu terisi, dijaga <span class="mono">CHECK</span>) dan view <span class="mono">location_info</span> yang menyatukan keduanya, agar semua query membaca lokasi dengan cara sama.
-Putusan <span class="mono">not_toilet</span> menjadi <span class="mono">wrong_place</span>, dan prompt vision menanyakan &ldquo;apakah ini lokasi yang dikeluhkan&rdquo;, bukan &ldquo;apakah ini toilet&rdquo;.
-Biayanya: dua jalur data berdampingan (toilet lama dan area baru) dan tabel <span class="mono">reports</span> dibangun ulang; kesesuaian foto dengan lokasi yang beragam lebih sulit dinilai model daripada kloset.</p>
+Migrasi yang sama mengubah putusan lama <span class="mono">not_toilet</span> menjadi <span class="mono">wrong_place</span>.
+Biayanya: dua jalur data berdampingan (toilet lama dan area baru) dan tabel <span class="mono">reports</span> dibangun ulang.</p>
 <h3>Klaim bukan kunci, dan ada ambil alih</h3>
-<p>Mengunci keluhan bagi satu orang membuat keluhan yang ditinggalkan tertahan selamanya (petugas pulang, ganti shift, ponsel mati). Maka mengklaim hanya penanda &ldquo;sedang dikerjakan oleh X&rdquo;; siapa pun boleh mengambil alih sampai ada foto bukti yang lolos, dan itu tercatat di jejak audit (&ldquo;X mengambil alih &hellip; dari Y&rdquo;).
+<p>Mengunci keluhan bagi satu orang membuat keluhan yang ditinggalkan tertahan selamanya (petugas pulang, ganti shift, ponsel mati). Maka mengklaim hanya penanda &ldquo;sedang dikerjakan oleh X&rdquo;; siapa pun boleh mengambil alih sampai ada foto bukti, dan itu tercatat di jejak audit (&ldquo;X mengambil alih &hellip; dari Y&rdquo;).
 Biayanya: dua petugas bisa mengerjakan hal yang sama tanpa tahu, dan pemegang klaim tidak diberi tahu. Klaim ulang oleh orang yang sama tidak ditulis dua kali agar log tidak penuh.</p>
-<h3>Keluhan yang sudah selesai tidak dapat dibuka kembali</h3>
-<p>Membuka kembali akan menghapus foto bukti yang menutupnya, dan itu menghapus satu-satunya jejak bahwa keluhan itu pernah ditangani. Permintaan membuka dijawab 409. Biayanya: keluhan yang kambuh harus dilaporkan sebagai keluhan baru.</p>
+<h3>Petugas tidak dapat membuka kembali keluhan selesai; SPV dapat, dan foto buktinya disimpan</h3>
+<p>Karena menutup kini cukup dengan foto, keluhan yang keliru ditutup harus dapat dipulihkan, tetapi bukan oleh pihak yang sama-sama tanpa login: permintaan petugas lewat <span class="mono">PATCH</span> tetap dijawab 409, dan hanya SPV yang dapat memakai <span class="mono">POST /api/reports/:id/reopen</span>. Keluhan kembali ke <span class="mono">new</span> dan datanya dikosongkan, tetapi foto penutupnya tidak dihapus: foto itu tetap di R2 dan kuncinya, bersama nama penutup dan waktu selesai, tersimpan di jejak <span class="mono">report_reopened</span> sebagai bukti mengapa keluhan dibuka kembali.
+Biayanya: foto itu tidak lagi tampil di papan publik maupun dashboard, dan kuncinya hanya ada di <span class="mono">details</span> (tab Log aktivitas menampilkan kalimat ringkasnya saja); alasan SPV tidak dicatat; R2 menyimpan foto tanpa keluhan, yang tidak ikut terhapus bila keluhannya kemudian dihapus.</p>
 <h3>Nama ditanyakan saat bertindak</h3>
 <p>Satu ponsel dipakai bergantian dan petugas jarang memakai aplikasi, jadi menanyakan &ldquo;Siapa kamu?&rdquo; sekali di halaman membuat tindakan tercatat atas nama orang yang salah. Kini setiap klaim, ambil alih, dan penyelesaian menanyakan siapa pelakunya, dengan nama terakhir di ponsel sebagai isian awal (dua ketukan). Hanya tab Tugas harian, yang milik satu orang sepanjang putaran, meminta nama di muka.
 Biayanya: satu langkah tambahan per tindakan. Petugas tetap hanya sebuah nama tanpa login; yang menjaga kejujuran catatan adalah bukti foto dan jejak audit atas nama yang dipilih.</p>
@@ -1740,9 +1730,10 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
 <h2>23. Batasan yang diketahui dan pekerjaan lanjutan</h2>
 <table>
   <tr><th>Batasan</th><th>Dampak</th><th>Arah perbaikan</th></tr>
-  <tr><td>Petugas tanpa login: nama dapat dipakai orang lain</td><td>Siapa pun yang membuka halaman petugas dapat mengklaim, mengambil alih, menyelesaikan, atau mengirim laporan kebersihan atas nama petugas mana pun; yang menahannya hanya foto (untuk penutupan keluhan, yang harus lolos AI) dan jejak audit</td><td>PIN pendek per petugas, atau pembatasan per perangkat; tinjau jejak audit per nama (bab 21)</td></tr>
+  <tr><td>Petugas tanpa login: nama dapat dipakai orang lain</td><td>Siapa pun yang membuka halaman petugas dapat mengklaim, mengambil alih, menyelesaikan, atau mengirim laporan kebersihan atas nama petugas mana pun; yang menahannya hanya foto dan jejak audit</td><td>PIN pendek per petugas, atau pembatasan per perangkat; tinjau jejak audit per nama (bab 21)</td></tr>
+  <tr><td><strong>Siapa pun yang memilih nama petugas dapat menutup keluhan dengan foto apa pun</strong></td><td>Isi foto tidak dinilai (bab 9). Server hanya memeriksa awalan <span class="mono">proof/</span> dan keberadaan objek, bukan umur atau pemakaian ulang: satu foto dapat menutup dua keluhan (temuan T-02). Pengendalinya: foto tampil di papan publik, nama dan foto tercatat di jejak audit, dan SPV dapat membuka kembali</td><td>PIN per petugas (baris di atas); tolak foto bukti yang sudah dipakai; batas umur seperti pada tugas harian</td></tr>
   <tr><td>Pemegang klaim dikenali dari <em>nama</em></td><td><span class="mono">reports</span> hanya menyimpan <span class="mono">staff_name</span>, bukan <span class="mono">staff_id</span>. Penanda &ldquo;Kamu yang mengerjakan ini&rdquo; membandingkan nama; dua petugas bernama sama tampak sebagai satu orang, mengganti nama akun memutus kaitan dengan klaim lamanya, dan akun yang dihapus tidak terdeteksi punya klaim</td><td>Simpan <span class="mono">staff_id</span> pada keluhan di samping nama</td></tr>
-  <tr><td>Foto tugas harian tidak diperiksa isinya</td><td>Hanya usia (&le; 3 jam sejak diterima server), keunikan, dan GPS yang diperiksa; model vision tidak melihatnya. Foto yang baru tetapi bukan pekerjaan yang diklaim lolos</td><td>Periksa foto tugas dengan model vision, atau sampel acak untuk SPV</td></tr>
+  <tr><td>Foto tugas harian tidak diperiksa isinya</td><td>Hanya usia (&le; 3 jam sejak diterima server), keunikan, dan GPS yang diperiksa; tidak ada model yang melihatnya. Foto yang baru tetapi bukan pekerjaan yang diklaim lolos</td><td>Sampel acak untuk SPV</td></tr>
   <tr><td>Asal foto dari kamera tidak dapat dibuktikan server</td><td>Kamera-saja ditegakkan di antarmuka; orang yang paham teknis dapat memanggil API langsung dengan foto apa pun. Tidak ada pemeriksaan EXIF atau perangkat</td><td>Tantangan acak di bingkai, atau pembandingan dengan foto keadaan</td></tr>
   <tr><td>Cache per-isolate dapat tertinggal sampai TTL</td><td>Setelah penulisan di satu isolate, isolate lain menyajikan angka lama hingga 15&ndash;60 detik (area 5 menit); ditambah cache peramban. Angka dashboard antar-perangkat dapat berbeda sesaat</td><td>Pembatalan lintas-isolate (mis. Durable Object atau KV) bila perlu; saat ini dianggap cukup</td></tr>
   <tr><td>Sesi tidak dapat dicabut</td><td>JWT diperiksa tanpa basis data: SPV yang dinonaktifkan, dihapus, atau diganti sandinya tetap punya akses hingga 12 jam. Peran di token juga tidak disegarkan</td><td>Periksa akun aktif pada <span class="mono">requireSupervisor</span>, atau daftar sesi yang dicabut</td></tr>
@@ -1752,7 +1743,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Maks. 200 baris per tampilan keluhan (300 untuk jejak audit, 500 untuk laporan kebersihan)</td><td>Rentang panjang tidak tampil utuh; hitungan &ldquo;<em>n</em> data ditampilkan&rdquo; adalah baris yang dimuat, bukan seluruhnya</td><td>Paginasi atau hitungan agregat dari server</td></tr>
   <tr><td>Filter jam tanpa indeks; jendela malam per hari kalender</td><td>Bagian jam dihitung per baris pada rentang tanggal; &ldquo;22.00&ndash;06.00&rdquo; tidak menyambung satu malam melintasi dua tanggal</td><td>Kolom turunan berindeks bila volume menuntut</td></tr>
   <tr><td>Hapus akun tidak menghitung keluhan yang diklaim</td><td>Petugas yang hanya pernah mengklaim atau menutup keluhan dapat dihapus; namanya tetap tertulis di <span class="mono">reports.staff_name</span> dan jejak audit</td><td>Hitung <span class="mono">reports.staff_name</span> atau simpan <span class="mono">staff_id</span></td></tr>
-  <tr><td><span class="mono">resolved</span> dikirim ulang pada keluhan yang sudah selesai tidak ditolak</td><td>Menimpa <span class="mono">resolved_at</span> dan nama penyelesai (dan foto bukti bila disertakan; foto lama tidak dihapus dari R2). UI tidak melakukannya, tetapi API terbuka</td><td>Tolak 409 atau abaikan bila sudah selesai</td></tr>
+  <tr><td><span class="mono">resolved</span> dikirim ulang pada keluhan yang sudah selesai tidak ditolak</td><td>Menimpa <span class="mono">resolved_at</span> dan nama penyelesai tanpa perlu foto baru, karena foto tersimpan sudah memenuhi <span class="mono">canResolve</span> (temuan T-05). Bila disertai foto baru, foto bukti diganti dan yang lama tidak dihapus dari R2. Tercatat sebagai <span class="mono">status_changed</span>. UI tidak melakukannya, tetapi API terbuka</td><td>Tolak 409 atau abaikan bila sudah selesai</td></tr>
   <tr><td>Tab lama menjadi layar kosong setelah deploy</td><td>Nama <em>chunk</em> berganti dan aplikasi tidak menangkap kegagalan impor</td><td>Pasang <span class="mono">vite:preloadError</span> untuk memuat ulang otomatis, atau <em>error boundary</em> dengan tombol muat ulang</td></tr>
   <tr><td>Tab Kebersihan memuat ulang meski tab peramban tersembunyi</td><td><span class="mono">CleaningPanel</span> memakai <span class="mono">setInterval</span> sendiri, bukan <span class="mono">usePolling</span></td><td>Pindah ke <span class="mono">usePolling</span></td></tr>
   <tr><td>Filter jenis aksi tidak memuat <span class="mono">user_changed</span></td><td>Baris pengelolaan akun hanya terlihat tanpa filter (daftar pilihan di <span class="mono">ActivityPanel.tsx</span> melewatkannya), padahal API menerimanya</td><td>Tambahkan ke daftar <span class="mono">ACTIONS</span></td></tr>
@@ -1760,15 +1751,14 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Tidak ada pembatasan laju atau CAPTCHA</td><td><span class="mono">POST /api/reports</span> dan <span class="mono">POST /api/uploads</span> terbuka; spam dan foto yatim (diunggah tetapi tak dilampirkan) bisa menumpuk di R2; hanya deteksi kembar 2 menit yang menahan. SPV dapat menghapus (tercatat)</td><td>Pembatasan laju per IP lewat Cloudflare, Turnstile, dan pembersihan foto yatim terjadwal</td></tr>
   <tr><td>Tidak ada kebijakan retensi</td><td>Foto, koordinat GPS, nama, dan jejak audit disimpan tanpa batas waktu</td><td>Tetapkan masa simpan dan pembersihan terjadwal</td></tr>
   <tr><td>Tidak ada notifikasi ke petugas</td><td>Petugas melihat keluhan hanya saat membuka halaman petugas; pemegang klaim tidak diberi tahu bila klaimnya diambil alih</td><td>Web Push atau WhatsApp/Telegram untuk prioritas tinggi</td></tr>
-  <tr><td>Putusan model bersifat probabilistik</td><td>Mungkin salah tolak atau salah terima; belum ada ukuran akurasi terhadap penilaian manusia. Lokasi yang beragam lebih sulit dinilai daripada toilet</td><td>Uji dengan set foto berlabel; laporkan presisi dan <em>recall</em></td></tr>
-  <tr><td>Ketergantungan pada penyedia model</td><td>Kuota harian (tingkat gratis), nama model yang berumur pendek (404 mendadak saat ditutup), data pada tingkat gratis dapat dipakai penyedia</td><td>Beberapa kunci terpisah koma (sudah didukung), model ringan, penagihan; pantau <span class="mono">verification_failed</span></td></tr>
+  <tr><td>Ketergantungan pada penyedia model</td><td>Analisis, ringkasan harian, dan Kato Bot bergantung pada DeepSeek (kuota, ketersediaan). Bila gagal, keluhan tetap tersimpan dan dapat dianalisis ulang; menutup keluhan tidak terpengaruh</td><td>Beberapa kunci terpisah koma (sudah didukung); pantau <span class="mono">analysis_failed</span></td></tr>
   <tr><td>Tidak ada alur lupa sandi</td><td>SPV yang lupa harus minta SPV lain mengatur sandi baru; SPV terakhir yang lupa harus diperbaiki lewat SQL</td><td>Reset lewat e-mail atau OTP</td></tr>
-  <tr><td><strong>Tidak ada uji otomatis</strong></td><td>Repositori tidak punya berkas uji maupun skrip uji; hanya <span class="mono">npm run typecheck</span>. Verifikasi dilakukan manual (curl dan server model tiruan, bab 19)</td><td>Vitest dengan <span class="mono">unstable_dev</span> wrangler untuk rute dan <span class="mono">buildTimeFilter</span>, <span class="mono">changeStatus</span>, <span class="mono">locationStatus</span></td></tr>
+  <tr><td><strong>Uji otomatis hanya <em>end-to-end</em></strong> dan tidak ada alur CI di repositori</td><td>Suite Playwright di <span class="mono">e2e/</span> menguji API dan UI dengan LLM tiruan (<span class="mono">npm run test:e2e</span> dan variannya, bab 19), tetapi dijalankan dengan tangan; tidak ada uji unit. Kualitas jawaban model, peramban selain Chromium, HP asli, dan cron tetap diuji manual. Bug yang masih terbuka ditandai <span class="mono">knownIssue()</span>, jadi suite hijau bukan berarti bebas bug. Rincian: <span class="mono">docs/dokumentasi-testing.html</span>, bagian 7 dan 8</td><td>Perbaiki bug bertanda <span class="mono">knownIssue()</span>; jalankan suite otomatis pada setiap perubahan</td></tr>
   <tr><td>Data lokasi bergantung pada seed</td><td>Kampus berubah (lantai, gedung) lewat penyuntingan <span class="mono">seed/cleaning-areas.sql</span> dan penjalanan ulang. Pusat kampus pada <span class="mono">wrangler.jsonc</span> bertanda penanda sementara</td><td>Layar pengelolaan lokasi untuk SPV; koordinat yang dipastikan</td></tr>
   <tr><td>Path API lama dan materi lama</td><td>URL halaman lama dialihkan hanya oleh router peramban; path API lama menjawab 404; PDF atau catatan lama yang menyebut tabel atau nama toilet tidak berlaku</td><td>Perbarui materi lama; pertahankan pengalihan selama stiker lama masih tertempel</td></tr>
   <tr><td>Keluhan berbahasa selain Indonesia/Inggris</td><td>Belum diuji</td><td>&mdash;</td></tr>
-  <tr><td>Penyelesaian ulang dan pemundurkan status belum dijaga</td><td><span class="mono">changeStatus</span> (<span class="mono">src/services/report-service.ts</span>) menolak membuka kembali laporan yang sudah selesai, tetapi tidak menolak <span class="mono">resolved</span> &rarr; <span class="mono">resolved</span>: nama petugas dan <span class="mono">resolved_at</span> tertimpa, dan bila foto bukti baru lolos, foto yang lama tertinggal di R2. Status <span class="mono">new</span> juga diterima untuk laporan yang sedang dikerjakan oleh siapa pun yang mengirim <span class="mono">staff_id</span> sah</td><td>Tolak transisi <span class="mono">resolved</span> &rarr; <span class="mono">resolved</span> dan setiap transisi ke <span class="mono">new</span>; hapus foto lama saat bukti diganti</td></tr>
-  <tr><td>Detail laporan publik membawa seluruh kolom</td><td><span class="mono">GET /api/reports/:id</span> memilih <span class="mono">r.*</span> lalu <span class="mono">toDTO</span> hanya membuang <span class="mono">categories</span> dan kunci foto, sehingga respons tanpa login juga memuat <span class="mono">reporter_id</span>, <span class="mono">ai_error</span>, dan metadata analisis. Pelindungnya hanya UUID laporan yang sulit ditebak</td><td>Proyeksikan hanya kolom yang dipakai halaman status</td></tr>
+  <tr><td>Pemunduran status belum dijaga</td><td><span class="mono">changeStatus</span> (<span class="mono">src/services/report-service.ts</span>) menolak permintaan petugas membuka kembali keluhan yang sudah selesai, tetapi status <span class="mono">new</span> diterima untuk laporan yang sedang dikerjakan oleh siapa pun yang mengirim <span class="mono">staff_id</span> sah (temuan T-08). Penyelesaian ulang: lihat baris di atas</td><td>Tolak setiap transisi ke <span class="mono">new</span> lewat <span class="mono">PATCH</span>; hapus foto lama saat bukti diganti</td></tr>
+  <tr><td>Detail laporan publik membawa seluruh kolom</td><td><span class="mono">GET /api/reports/:id</span> memilih <span class="mono">r.*</span> lalu <span class="mono">toDTO</span> hanya membuang <span class="mono">categories</span> dan kunci foto, sehingga respons tanpa login juga memuat <span class="mono">reporter_id</span>, <span class="mono">ai_error</span>, metadata analisis, dan kolom <span class="mono">proof_*</span> lama. Pelindungnya hanya UUID laporan yang sulit ditebak</td><td>Proyeksikan hanya kolom yang dipakai halaman status</td></tr>
   <tr><td>Pertanyaan Kato Bot yang dikelompokkan menurut waktu terpotong 20 baris</td><td><span class="mono">countReports</span> dan <span class="mono">resolutionTime</span> (<span class="mono">src/repositories/analytics.ts</span>) memakai <span class="mono">LIMIT 20</span>; untuk pengelompokan <span class="mono">date</span>, <span class="mono">week</span>, <span class="mono">month</span>, dan <span class="mono">hour</span>, <span class="mono">countReports</span> urut menaik menurut label, jadi rentang lebih dari 20 hari hanya menampilkan 20 hari tertua dan pengelompokan jam kehilangan jam 20&ndash;23; <span class="mono">resolutionTime</span> urut menurut jumlah selesai, jadi yang tersisa 20 label terbanyak, tidak urut waktu</td><td>Urutkan menurun untuk deret waktu, atau naikkan batas dan ringkas hasilnya</td></tr>
   <tr><td>Unggah foto tanpa pembatas laju dan tanpa pembersihan</td><td><span class="mono">POST /api/uploads</span> memeriksa tipe dan ukuran berkas, tetapi tidak membatasi jumlah unggahan per alamat; foto yang tidak pernah dipakai sebuah laporan tetap tersimpan di R2 karena satu-satunya pekerjaan terjadwal hanya menyusun ringkasan harian</td><td>Batas laju per alamat dan pembersihan terjadwal untuk foto yatim</td></tr>
   <tr><td>Kegagalan ringkasan harian tidak meninggalkan jejak audit</td><td>Bila pekerjaan cron gagal, hanya <span class="mono">console.error</span> di log Worker yang tercatat (<span class="mono">src/index.ts</span>): tidak ada baris <span class="mono">activity_log</span> dan tidak ada percobaan ulang, sehingga ringkasan hari itu kosong sampai SPV menekan &ldquo;Buat ulang&rdquo;</td><td>Catat kegagalan ke jejak audit dan coba ulang beberapa kali</td></tr>
@@ -1795,7 +1785,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
  "categories":["odor","flooding","supplies"],
  "photo_url":"/api/uploads/report/2026-10-29/&hellip;.jpg","proof_photo_url":null}</pre>
 <p class="kecil"><span class="mono">created_at</span> 03.05 UTC tampil di dashboard sebagai &ldquo;Masuk: Kam, 29 Okt 2026 &middot; 10.05 WIB&rdquo;. Untuk keluhan lama, <span class="mono">area_id</span> null dan <span class="mono">toilet_id</span> terisi. <span class="mono">floor</span> 0 = halaman, null = gedung utuh atau tempat di luar gedung.
-<span class="mono">GET /api/reports/open</span> mengembalikan bentuk yang sama tanpa <span class="mono">reporter_id, ai_error, ai_model, ai_ms, proof_model, proof_ms</span>.</p>
+<span class="mono">GET /api/reports/open</span> mengembalikan bentuk yang sama tanpa <span class="mono">reporter_id, ai_error, ai_model, ai_ms, proof_model, proof_ms</span>. Kolom <span class="mono">proof_verdict, proof_reason, proof_model, proof_ms</span> adalah kolom lama: selalu null kecuali pada keluhan yang ditutup semasa pemeriksaan foto berjalan (bab 9).</p>
 <h4><span class="mono">GET /api/reports/public</span></h4>
 <pre>{"data":[{"id":"8f0c&hellip;","area_id":"C-2","status":"resolved","priority":"high","categories":["odor","flooding","supplies"],
   "summary":"Area berbau menyengat, &hellip;","ai_status":"ok","created_at":"2026-10-29 03:05:12","resolved_at":"2026-10-29 04:12:40",
@@ -1804,22 +1794,25 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
  "counts":{"total":42,"resolved":37}}</pre>
 <h4><span class="mono">PATCH /api/reports/:id</span></h4>
 <pre>// klaim: {"status":"in_progress","staff_id":"3b9e&hellip;"}
-{"ok":true,"status":"in_progress","verification":null}
+{"ok":true,"status":"in_progress"}
 
-// selesai, foto diterima: {"status":"resolved","staff_id":"3b9e&hellip;","proof_photo_key":"proof/2026-10-29/&hellip;.jpg"}
-{"ok":true,"status":"resolved",
- "verification":{"verdict":"clean","reason":"Lantai kering dan bersih, tidak ada genangan.","model":"gemini-3.6-flash","ms":4210}}
+// selesai: {"status":"resolved","staff_id":"3b9e&hellip;","proof_photo_key":"proof/2026-10-29/&hellip;.jpg"}
+{"ok":true,"status":"resolved"}
 
-// 422: foto ditolak
-{"error":"Lokasi pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang.",
- "verdict":"dirty","reason":"Lantai masih basah dan ada tisu bekas."}
+// 400: kunci foto bukan proof/ atau tidak ada di R2
+{"error":"Foto bukti tidak ditemukan. Unggah ulang."}
 
-// 422: bukan lokasi yang dilaporkan  (verdict: "wrong_place")
-{"error":"Foto tidak menunjukkan lokasi yang dilaporkan. Ambil foto lokasi itu setelah dibersihkan.",
- "verdict":"wrong_place","reason":"Foto memperlihatkan koridor, bukan lantai yang dikeluhkan."}
+// 400: tanpa foto baru maupun foto tersimpan
+{"error":"Foto bukti penyelesaian wajib diunggah lebih dulu."}
 
 // 409: keluhan sudah selesai
 {"error":"Laporan ini sudah selesai."}</pre>
+<h4><span class="mono">POST /api/reports/:id/reopen</span></h4>
+<pre>// 200
+{"ok":true}
+
+// 409: keluhan belum selesai
+{"error":"Laporan ini belum selesai."}</pre>
 <h4><span class="mono">POST /api/cleaning/reports</span></h4>
 <pre>// permintaan
 {"staff_id":"3b9e&hellip;","area_id":"C-2","tasks":[{"task":"toilet","photo_key":"cleaning/2026-10-29/&hellip;.jpg"}],
@@ -1870,11 +1863,14 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   "location_name":"Gedung Dewi Sartika (Perkuliahan) - Lantai 2","building_code":"C","building_name":"Dewi Sartika",
   "status":"resolved","priority":"high","categories":["odor","flooding","supplies"],
   "summary":"Area berbau menyengat, &hellip;","description":"Lantai 2 bau banget, &hellip;","recommendation":"Keringkan lantai lebih dulu &hellip;","staff_name":"Nama Petugas"}]}</pre>
-<h4><span class="mono">GET /api/activity</span> (dua entri)</h4>
+<h4><span class="mono">GET /api/activity</span> (tiga entri)</h4>
 <pre>{"data":[
+ {"id":418,"created_at":"2026-10-29 10:02:33","action":"report_reopened","report_id":"8f0c&hellip;","actor":"Administrator",
+  "summary":"Membuka kembali laporan di Gedung Dewi Sartika (Perkuliahan) - Lantai 2 yang diselesaikan Petugas B",
+  "details":{"closed_by":"Petugas B","resolved_at":"2026-10-29 09:40:15","proof_photo":"proof/2026-10-29/&hellip;.jpg"}},
  {"id":412,"created_at":"2026-10-29 09:21:09","action":"status_changed","report_id":"8f0c&hellip;","actor":"Petugas B",
   "summary":"Petugas B mengambil alih laporan di Gedung Dewi Sartika (Perkuliahan) - Lantai 2 dari Petugas A",
-  "details":{"from":"in_progress","to":"in_progress","handed_over_from":"Petugas A","proof_photo":null,"verification":null}},
+  "details":{"from":"in_progress","to":"in_progress","handed_over_from":"Petugas A","proof_photo":null}},
  {"id":405,"created_at":"2026-10-29 09:14:02","action":"report_deleted","report_id":"77aa&hellip;","actor":"Administrator",
   "summary":"Menghapus laporan di Lapang Voli",
   "details":{"location_name":"Lapang Voli","description":"tes tes","status":"new","priority":"low",
@@ -1883,9 +1879,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
 <pre>// analisis keluhan
 {"categories":["odor","flooding","supplies"],"priority":"high","summary":"&hellip;","recommendation":"&hellip;"}
 // ringkasan harian
-{"summary":"Hari ini masuk 9 laporan, terbanyak di &hellip;","highlights":["Tangani genangan di C-2","&hellip;"]}
-// pemeriksaan foto bukti (verdict diturunkan server: is_location=false -> wrong_place; clean=false -> dirty; selain itu clean)
-{"is_location":true,"clean":false,"confidence":0.9,"reason":"Lantai masih basah dan ada tisu bekas."}</pre>
+{"summary":"Hari ini masuk 9 laporan, terbanyak di &hellip;","highlights":["Tangani genangan di C-2","&hellip;"]}</pre>
 
 <h3>B. Daftar migrasi</h3>
 <p>Berkas di <span class="mono">migrations/</span>, diterapkan berurutan oleh <span class="mono">npm run db:local</span> / <span class="mono">db:remote</span>; masing-masing atomik.</p>
@@ -1895,7 +1889,7 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td class="mono">0002_gedung_upi.sql</td><td>Nama gedung UPI Tasikmalaya dalam tabel sendiri; satu QR per lantai</td></tr>
   <tr><td class="mono">0003_bukti_dan_aktivitas.sql</td><td>Foto bukti penyelesaian; tabel jejak audit (tanpa foreign key)</td></tr>
   <tr><td class="mono">0004_pengguna.sql</td><td>Akun berperan menggantikan sandi bersama; akun admin bawaan; <span class="mono">pelapor_id</span> pada keluhan</td></tr>
-  <tr><td class="mono">0005_verifikasi_bukti.sql</td><td>Putusan model vision atas foto bukti (hasil, alasan, model, ms)</td></tr>
+  <tr><td class="mono">0005_verifikasi_bukti.sql</td><td>Putusan model vision atas foto bukti (hasil, alasan, model, ms); pemeriksaannya sudah dihapus, kolomnya tetap (bab 9)</td></tr>
   <tr><td class="mono">0006_laporan_pekerjaan.sql</td><td>Laporan pekerjaan petugas ("sudah saya bersihkan"), terpisah dari keluhan</td></tr>
   <tr><td class="mono">0007_peran_spv.sql</td><td>Tiga pihak; petugas tanpa username/sandi; tabel pengguna dibangun ulang</td></tr>
   <tr><td class="mono">0008_english_schema.sql</td><td>Seluruh skema, enum, dan data diterjemahkan ke bahasa Inggris; tabel dibangun ulang</td></tr>
@@ -1928,11 +1922,11 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Prioritas</td><td class="mono">low, medium, high</td><td class="mono">reports.priority</td></tr>
   <tr><td>Kategori</td><td class="mono">cleanliness, supplies, damage, odor, flooding, other</td><td class="mono">reports.categories (JSON)</td></tr>
   <tr><td>Status analisis</td><td class="mono">pending, ok, failed</td><td class="mono">reports.ai_status</td></tr>
-  <tr><td>Putusan foto bukti</td><td class="mono">clean, dirty, wrong_place</td><td class="mono">reports.proof_verdict</td></tr>
+  <tr><td>Putusan foto bukti (data lama, bab 9)</td><td class="mono">clean, dirty, wrong_place</td><td class="mono">reports.proof_verdict</td></tr>
   <tr><td>Status lokasi laporan kebersihan</td><td class="mono">ok, far, unknown</td><td class="mono">cleaning_reports.location_status</td></tr>
   <tr><td>Tugas harian</td><td class="mono">sweep_mop, glass, toilet, trash, gallon, tidy</td><td class="mono">cleaning_report_tasks.task (data lama juga: sweep, mop)</td></tr>
   <tr><td>Jenis foto / awalan kunci</td><td class="mono">report, proof, cleaning, work (lama: laporan, bukti, kerja)</td><td class="mono">adapters/storage.ts</td></tr>
-  <tr><td>Jenis aksi jejak audit</td><td colspan="2">Tiga belas nilai, bab 11</td></tr>
+  <tr><td>Jenis aksi jejak audit</td><td colspan="2">Empat belas nilai, bab 11</td></tr>
 </table>
 
 <h3>E. Penyimpanan di peramban</h3>
@@ -1963,7 +1957,8 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
   <tr><td>Analisis gagal</td><td><span class="mono">ai_status = 'failed'</span>; <span class="mono">analysis_failed</span>; <span class="mono">/reanalyze</span></td></tr>
   <tr><td>Foto keadaan</td><td><span class="mono">photo_key</span> / <span class="mono">photo_url</span>; awalan <span class="mono">report/</span></td></tr>
   <tr><td>Foto bukti</td><td><span class="mono">proof_photo_key</span> / <span class="mono">proof_photo_url</span>; awalan <span class="mono">proof/</span></td></tr>
-  <tr><td>Putusan bersih / kotor / bukan lokasinya</td><td><span class="mono">proof_verdict</span>: <span class="mono">clean</span> / <span class="mono">dirty</span> / <span class="mono">wrong_place</span>; alasan = <span class="mono">proof_reason</span></td></tr>
+  <tr><td>Putusan bersih / kotor / bukan lokasinya (data lama, bab 9)</td><td><span class="mono">proof_verdict</span>: <span class="mono">clean</span> / <span class="mono">dirty</span> / <span class="mono">wrong_place</span>; alasan = <span class="mono">proof_reason</span></td></tr>
+  <tr><td>Buka kembali</td><td><span class="mono">POST /api/reports/:id/reopen</span>; <span class="mono">reopenReport()</span>, <span class="mono">reports.reopen()</span>; aksi <span class="mono">report_reopened</span></td></tr>
   <tr><td>Laporan kebersihan, tugas harian</td><td><span class="mono">cleaning_reports</span>, <span class="mono">cleaning_report_tasks</span>; <span class="mono">/api/cleaning/reports</span>; awalan <span class="mono">cleaning/</span>; aksi <span class="mono">cleaning_reported</span></td></tr>
   <tr><td>Di luar kampus / tanpa GPS</td><td><span class="mono">location_status</span> <span class="mono">far</span> / <span class="mono">unknown</span>; aksi <span class="mono">cleaning_out_of_range</span></td></tr>
   <tr><td>Rekap harian per area</td><td><span class="mono">GET /api/cleaning/recap</span>; <span class="mono">dailyRecap()</span></td></tr>
@@ -1981,10 +1976,8 @@ Biayanya: nama yang pernah bekerja tidak akan pernah hilang dari daftar akun (ha
 <table>
   <tr><th>Istilah</th><th>Arti dalam dokumen ini</th></tr>
   <tr><td>LLM</td><td><em>Large language model</em>; model bahasa terlatih yang dipakai apa adanya lewat API</td></tr>
-  <tr><td>Model vision</td><td>LLM yang menerima gambar sebagai masukan (<em>multimodal</em>)</td></tr>
   <tr><td>JSON mode / <span class="mono">response_format</span></td><td>Permintaan agar model menjawab dengan JSON valid saja</td></tr>
   <tr><td>Tool calling</td><td>Model memilih fungsi yang didefinisikan server dan argumennya; server menjalankannya dan mengembalikan hasilnya</td></tr>
-  <tr><td>Model &ldquo;berpikir&rdquo;</td><td>Model yang menghasilkan token penalaran internal sebelum jawaban; ikut menghabiskan <span class="mono">max_tokens</span></td></tr>
   <tr><td>Worker</td><td>Fungsi tanpa server di jaringan tepi Cloudflare yang menjalankan seluruh backend dan menyajikan frontend</td></tr>
   <tr><td>Isolate</td><td>Instans ringan tempat Worker berjalan; memori cache aplikasi hidup di dalamnya dan tidak dibagi antar-isolate</td></tr>
   <tr><td>D1 / R2</td><td>Basis data SQLite terkelola / penyimpanan objek Cloudflare</td></tr>

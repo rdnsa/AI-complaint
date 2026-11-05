@@ -15,6 +15,10 @@ export interface Env {
   // vars (wrangler.jsonc)
   LLM_BASE_URL: string;
   LLM_MODEL: string;
+  // Describes proof photos for the supervisor; never decides anything. Any
+  // OpenAI-compatible endpoint that accepts image_url works.
+  VISION_BASE_URL: string;
+  VISION_MODEL: string;
   // The campus boundary for cleaning reports (decimal degrees, metres).
   CAMPUS_LAT: string;
   CAMPUS_LNG: string;
@@ -23,6 +27,8 @@ export interface Env {
   // secrets (wrangler secret put)
   /** May list several keys, comma-separated, tried in order on rate limit. */
   LLM_API_KEY: string;
+  /** Same format. Without it photos simply get no description. */
+  VISION_API_KEY?: string;
   AUTH_SECRET: string;
 }
 

@@ -30,7 +30,7 @@
 <line x1="1606.0" y1="636.0" x2="1440.0" y2="960.0" stroke="#000" stroke-width="1.1"/>
 <line x1="1606.0" y1="636.0" x2="1440.0" y2="890.0" stroke="#000" stroke-width="1.1"/>
 <line x1="1606.0" y1="636.0" x2="1440.0" y2="1030.0" stroke="#000" stroke-width="1.1"/>
-<line x1="1606.0" y1="1126.0" x2="1020.0" y2="1130.0" stroke="#000" stroke-width="1.1"/>
+<line x1="1606.0" y1="636.0" x2="1440.0" y2="1100.0" stroke="#000" stroke-width="1.1"/>
 <line x1="526.3" y1="538.0" x2="821.7" y2="422.7" stroke="#000" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#open)"/>
 <text x="680.0" y="484.4" font-size="12">&lt;&lt;include&gt;&gt;</text>
 <line x1="1243.6" y1="586.2" x2="926.1" y2="423.6" stroke="#000" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#open)"/>
@@ -39,8 +39,6 @@
 <text x="680.0" y="643.6" font-size="12">&lt;&lt;include&gt;&gt;</text>
 <line x1="515.1" y1="906.9" x2="833.9" y2="743.6" stroke="#000" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#open)"/>
 <text x="680.5" y="829.3" font-size="12">&lt;&lt;include&gt;&gt;</text>
-<line x1="588.0" y1="1130.0" x2="740.0" y2="1130.0" stroke="#000" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#open)"/>
-<text x="664.0" y="1123.0" font-size="12" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
 <line x1="588.0" y1="1215.0" x2="740.0" y2="1215.0" stroke="#000" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#open)"/>
 <text x="664.0" y="1208.0" font-size="12" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
 <line x1="470.0" y1="1029.0" x2="470.0" y2="1017.0" stroke="#000" stroke-width="1.1" stroke-dasharray="5 4" marker-end="url(#open)"/>
@@ -77,8 +75,6 @@
 <text x="880" y="725" font-size="13" text-anchor="middle">Pindai QR / Pilih Lokasi</text>
 <ellipse cx="880" cy="1215" rx="140" ry="25" fill="#fff" stroke="#000" stroke-width="1.1"/>
 <text x="880" y="1220" font-size="13" text-anchor="middle">Periksa Posisi GPS</text>
-<ellipse cx="880" cy="1130" rx="140" ry="25" fill="#fff" stroke="#000" stroke-width="1.1"/>
-<text x="880" y="1135" font-size="13" text-anchor="middle">Verifikasi Foto Bukti (AI)</text>
 <ellipse cx="1290" cy="610" rx="150" ry="25" fill="#fff" stroke="#000" stroke-width="1.1"/>
 <text x="1290" y="615" font-size="13" text-anchor="middle">Analisis Ulang Keluhan</text>
 <ellipse cx="1290" cy="680" rx="150" ry="25" fill="#fff" stroke="#000" stroke-width="1.1"/>
@@ -93,6 +89,8 @@
 <text x="1290" y="965" font-size="13" text-anchor="middle">Kelola Akun &amp; Petugas</text>
 <ellipse cx="1290" cy="1030" rx="150" ry="25" fill="#fff" stroke="#000" stroke-width="1.1"/>
 <text x="1290" y="1035" font-size="13" text-anchor="middle">Cetak Stiker QR</text>
+<ellipse cx="1290" cy="1100" rx="150" ry="25" fill="#fff" stroke="#000" stroke-width="1.1"/>
+<text x="1290" y="1105" font-size="13" text-anchor="middle">Buka Kembali Keluhan</text>
 <g stroke="#000" stroke-width="1.3" fill="none"><circle cx="130" cy="600" r="10" fill="#fff"/><line x1="130" y1="610" x2="130" y2="646"/><line x1="112" y1="622" x2="148" y2="622"/><line x1="130" y1="646" x2="116" y2="668"/><line x1="130" y1="646" x2="144" y2="668"/></g>
 <text x="130" y="686" font-size="14" text-anchor="middle">Pelapor</text>
 <text x="130" y="702" font-size="14" text-anchor="middle">(siapa saja)</text>
@@ -106,7 +104,4 @@
 <text x="1630" y="262" font-size="14" text-anchor="middle">(DeepSeek)</text>
 <g stroke="#000" stroke-width="1.3" fill="none"><circle cx="1630" cy="600" r="10" fill="#fff"/><line x1="1630" y1="610" x2="1630" y2="646"/><line x1="1612" y1="622" x2="1648" y2="622"/><line x1="1630" y1="646" x2="1616" y2="668"/><line x1="1630" y1="646" x2="1644" y2="668"/></g>
 <text x="1630" y="686" font-size="14" text-anchor="middle">Supervisor</text>
-<g stroke="#000" stroke-width="1.3" fill="none"><rect x="1618" y="1080" width="24" height="20" fill="#fff"/><line x1="1630" y1="1100" x2="1630" y2="1136"/><line x1="1612" y1="1112" x2="1648" y2="1112"/><line x1="1630" y1="1136" x2="1616" y2="1158"/><line x1="1630" y1="1136" x2="1644" y2="1158"/></g>
-<text x="1630" y="1176" font-size="14" text-anchor="middle">LLM Vision</text>
-<text x="1630" y="1192" font-size="14" text-anchor="middle">(Gemini)</text>
 </svg>

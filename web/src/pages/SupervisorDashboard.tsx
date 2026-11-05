@@ -343,6 +343,11 @@ function ReportRow({
               <CheckGlyph className="h-3.5 w-3.5" />
               {t('dashboard.proof')}
             </figcaption>
+            {r.proof_reason && (
+              <p className="mt-0.5 max-w-xs text-xs italic text-ink-600">
+                {t('dashboard.proof_description')}: {r.proof_reason}
+              </p>
+            )}
           </figure>
         )}
       </div>

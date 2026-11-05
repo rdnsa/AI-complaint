@@ -1,15 +1,15 @@
 ---
-title: UML Sequence Diagram — Petugas Mengklaim, Mengambil Alih, dan Menyelesaikan Keluhan
+title: UML Sequence Diagram — Petugas Menyelesaikan Keluhan & Supervisor Membuka Kembali
 ---
 sequenceDiagram
   autonumber
   actor P as Petugas Kebersihan
+  actor S as Supervisor
   participant UI as Aplikasi Web (React)
   participant API as API Worker (Hono)
   participant RS as ReportService
   participant R2 as Penyimpanan Foto (R2)
   participant DB as Database (D1)
-  participant VIS as LLM Vision (Gemini)
 
   P->>UI: Buka /staff, tab Keluhan (filter gedung/lantai bila perlu)
   UI->>API: GET /api/reports/open
@@ -38,33 +38,49 @@ sequenceDiagram
 
   P->>UI: Bersihkan lokasi, "Sudah beres - foto buktinya", pilih nama
   UI->>API: POST /api/uploads?kind=proof (foto bukti)
-  API->>R2: simpan foto
+  API->>R2: simpan foto di folder proof/
   R2-->>API: proof_photo_key
   API-->>UI: proof_photo_key
   UI->>API: PATCH /api/reports/:id {status: resolved, staff_id, proof_photo_key}
   API->>DB: cek petugas aktif
   API->>RS: changeStatus()
-  RS->>R2: baca foto bukti
-  RS->>VIS: checkProofPhoto(foto, lokasi, keluhan)
-  alt pemeriksaan gagal (error / timeout)
-    RS->>R2: hapus foto
-    RS->>DB: INSERT activity_log (verification_failed)
-    RS-->>API: verification-failed
-    API-->>UI: 502 coba lagi
-  else verdict = dirty / wrong_place
-    VIS-->>RS: verdict + alasan
-    RS->>R2: hapus foto
-    RS->>DB: INSERT activity_log (proof_rejected)
-    RS-->>API: proof-rejected
-    API-->>UI: 422 foto ditolak + alasan
-    UI-->>P: Minta bersihkan & foto ulang
-  else verdict = clean
-    VIS-->>RS: clean + alasan
-    RS->>DB: UPDATE reports (status=resolved, staff_name, proof_*)
+  RS->>R2: kunci berawalan proof/ dan berkasnya ada?
+  alt kunci bukan proof/ atau berkas tidak ada
+    RS-->>API: photo-not-found
+    API-->>UI: 400 foto bukti tidak ditemukan, unggah ulang
+  else tanpa foto bukti (canResolve = false)
+    RS-->>API: proof-missing
+    API-->>UI: 400 foto bukti wajib diunggah
+  else foto sah (canResolve = true)
+    RS->>DB: UPDATE reports (status=resolved, staff_name, resolved_at, proof_photo_key)
     RS->>DB: INSERT activity_log (status_changed)
     RS-->>API: ok
-    API-->>UI: 200 {status: resolved, verification}
+    API-->>UI: 200 {status: resolved}
     UI-->>P: Keluhan selesai
   end
 
-  Note over P,VIS: Keluhan yang sudah selesai tidak dapat dibuka kembali (409)
+  rect rgb(241, 234, 251)
+  Note over S,DB: Supervisor membuka kembali keluhan yang keliru ditutup
+  S->>UI: Dashboard, keluhan selesai: "Buka kembali", konfirmasi
+  UI->>API: POST /api/reports/:id/reopen
+  API->>API: requireSupervisor (tanpa sesi 401, bukan supervisor 403)
+  API->>RS: reopenReport()
+  RS->>DB: SELECT keluhan
+  alt keluhan tidak dikenal
+    RS-->>API: not-found
+    API-->>UI: 404 laporan tidak ditemukan
+  else keluhan ada
+    RS->>DB: UPDATE reports (status=new, staff_name, resolved_at, proof_* = NULL) WHERE status=resolved
+    alt tidak ada baris berubah (belum selesai)
+      RS-->>API: not-resolved
+      API-->>UI: 409 laporan belum selesai
+    else berhasil (satu perintah, tidak bisa terjadi dua kali)
+      RS->>DB: INSERT activity_log (report_reopened: closed_by, resolved_at, proof_photo)
+      RS-->>API: ok
+      API-->>UI: 200 {ok: true}
+      UI-->>S: Keluhan kembali ke daftar petugas
+    end
+  end
+  end
+
+  Note over S,DB: Berkas foto bukti tetap di R2. Petugas yang memindahkan keluhan selesai tetap ditolak 409 (langkah 10-11).

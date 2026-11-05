@@ -218,7 +218,7 @@ test.describe('Status oleh petugas', () => {
     expect((await api.resolve(id, (await newStaff()).id)).status()).toBe(200);
   });
 
-  test('foto bukti diterima tanpa penilaian model', async ({ api, request, newStaff }) => {
+  test('TC-KLH-047 foto bukti diterima tanpa penilaian model yang menentukan', async ({ api, request, newStaff }) => {
     const { id } = await api.report();
     const proof = await api.upload('proof');
     const res = await request.patch(`/api/reports/${id}`, {
@@ -301,13 +301,22 @@ test.describe('Status oleh petugas', () => {
     expect((await res.json()).error).toBe('Laporan ini sudah selesai.');
   });
 
-  test('TC-KLH-031 laporan selesai tidak bisa diselesaikan ulang', async ({ api, request, newStaff }) => {
+  test('TC-KLH-031 laporan selesai tidak bisa ditimpa, dengan atau tanpa foto', async ({ api, request, newStaff }) => {
     const { id } = await api.report();
     const [first, second] = [await newStaff('Pertama'), await newStaff('Kedua')];
     await api.resolve(id, first.id);
-    const res = await request.patch(`/api/reports/${id}`, { data: { status: 'resolved', staff_id: second.id } });
-    knownIssue('T-05', 'penangan dan waktu selesai bisa ditimpa tanpa foto');
-    expect(res.status()).toBe(409);
+    const before = await api.getReport(id);
+
+    const bare = await request.patch(`/api/reports/${id}`, { data: { status: 'resolved', staff_id: second.id } });
+    expect(bare.status()).toBe(409);
+    expect((await bare.json()).error).toBe('Laporan ini sudah selesai.');
+    expect((await api.resolve(id, second.id)).status()).toBe(409);
+
+    expect(await api.getReport(id)).toMatchObject({
+      staff_name: first.name,
+      resolved_at: before.resolved_at,
+      proof_photo_url: before.proof_photo_url,
+    });
   });
 
   test('TC-KLH-044 status tidak bisa mundur ke baru', async ({ api, request, newStaff }) => {
@@ -333,6 +342,43 @@ test.describe('Status oleh petugas', () => {
 
 });
 
+test.describe('Deskripsi foto bukti', () => {
+  test('foto dideskripsikan setelah laporan selesai', async ({ api, newStaff }) => {
+    const { id } = await api.report();
+    expect((await api.resolve(id, (await newStaff()).id)).status()).toBe(200);
+    await expect
+      .poll(async () => (await api.getReport(id)).proof_reason)
+      .toBe('Deskripsi foto tiruan dari model.');
+    expect(await api.getReport(id)).toMatchObject({ status: 'resolved', proof_verdict: null, proof_model: 'mock-vision' });
+  });
+
+  test('petugas tidak menunggu model yang lambat', async ({ api, newStaff }) => {
+    const { id } = await api.report({ description: unique('[vision:slow] keluhan') });
+    const staff = await newStaff();
+    const started = Date.now();
+    expect((await api.resolve(id, staff.id)).status()).toBe(200);
+    expect(Date.now() - started).toBeLessThan(2500);
+    expect((await api.getReport(id)).status).toBe('resolved');
+  });
+
+  test('model gagal: laporan tetap selesai dan kegagalannya tercatat', async ({ api, admin, newStaff }) => {
+    const { id } = await api.report({ description: unique('[vision:error] keluhan') });
+    expect((await api.resolve(id, (await newStaff()).id)).status()).toBe(200);
+    await expect
+      .poll(async () => (await (await admin.get(`/api/activity?action=proof_description_failed&report_id=${id}`)).json()).data.length)
+      .toBe(1);
+    expect(await api.getReport(id)).toMatchObject({ status: 'resolved', proof_reason: null });
+  });
+
+  test('deskripsi yang datang setelah dibuka kembali tidak dipakai', async ({ api, admin, newStaff }) => {
+    const { id } = await api.report({ description: unique('[vision:slow] keluhan') });
+    await api.resolve(id, (await newStaff()).id);
+    expect((await admin.post(`/api/reports/${id}/reopen`)).status()).toBe(200);
+    await new Promise((resolve) => setTimeout(resolve, 3500));
+    expect(await api.getReport(id)).toMatchObject({ status: 'new', proof_reason: null });
+  });
+});
+
 test.describe('Papan publik dan data pribadi', () => {
   test('TC-PUB-022 hanya kolom publik yang keluar', async ({ api, request, newStaff }) => {
     const { id, description } = await api.report();
@@ -347,7 +393,7 @@ test.describe('Papan publik dan data pribadi', () => {
     expect(row.summary).toBe('Ringkasan tiruan dari LLM.');
     expect(JSON.stringify(row)).not.toContain(description);
     expect(JSON.stringify(row)).not.toContain(staff.name);
-    for (const field of ['description', 'photo_url', 'photo_key', 'reporter_id', 'staff_name']) {
+    for (const field of ['description', 'photo_url', 'photo_key', 'reporter_id', 'staff_name', 'proof_reason']) {
       expect(row).not.toHaveProperty(field);
     }
   });
@@ -378,7 +424,7 @@ test.describe('Papan publik dan data pribadi', () => {
 });
 
 test.describe('Moderasi supervisor', () => {
-  test('laporan selesai dibuka kembali lalu bisa dikerjakan lagi', async ({ api, admin, request, newStaff }) => {
+  test('TC-SPL-028 dan TC-SPL-031 laporan selesai dibuka kembali lalu bisa dikerjakan lagi', async ({ api, admin, request, newStaff }) => {
     const { id } = await api.report();
     const [first, second] = [await newStaff('Pertama'), await newStaff('Kedua')];
     await api.resolve(id, first.id);
@@ -403,7 +449,7 @@ test.describe('Moderasi supervisor', () => {
     expect((await api.getReport(id)).staff_name).toBe(second.name);
   });
 
-  test('laporan yang belum selesai tidak bisa dibuka kembali', async ({ api, admin, newStaff }) => {
+  test('TC-SPL-032 laporan yang belum selesai tidak bisa dibuka kembali', async ({ api, admin, newStaff }) => {
     const { id } = await api.report();
     expect((await admin.post(`/api/reports/${id}/reopen`)).status()).toBe(409);
     await api.claim(id, (await newStaff()).id);
