@@ -105,6 +105,10 @@ export default function ActivityPanel() {
             </div>
 
             <p className="mt-1.5 text-sm text-ink-800">{a.summary}</p>
+            {/* The provider's own words: what to fix (a bad key, an expired model name). */}
+            {a.action === 'proof_description_failed' && !!a.details?.error && (
+              <p className="mt-1 break-words text-xs text-ink-600">{String(a.details.error)}</p>
+            )}
 
             {/* Deletion is the only action that removes data, so its copy is laid
                 out right away, without needing a click. */}

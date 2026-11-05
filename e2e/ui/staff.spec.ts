@@ -27,7 +27,7 @@ test.describe('Keluhan', () => {
     await expect(card.getByText('Kamu yang mengerjakan ini')).toBeVisible();
     expect((await api.getReport(report.id)).staff_name).toBe(staff.name);
 
-    await card.getByRole('button', { name: /Sudah beres/ }).click();
+    await card.getByRole('button', { name: /Sudah selesai/ }).click();
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
 
@@ -35,6 +35,24 @@ test.describe('Keluhan', () => {
     expect((await api.getReport(report.id)).status).toBe('resolved');
     // The card leaves the list by itself shortly after.
     await expect(cardOf(page, report.description)).toHaveCount(0);
+  });
+
+  test('setelah tombol selesai ditekan hanya ada nama, lanjut, dan batal @mobile', async ({ api, newStaff, page }) => {
+    const report = await api.report();
+    const staff = await newStaff('Pemegang');
+    await api.claim(report.id, staff.id);
+    await page.goto('/staff');
+    const card = cardOf(page, report.description);
+
+    await card.getByRole('button', { name: /Sudah selesai/ }).click();
+    await expect(card.getByRole('button', { name: 'Lanjut foto bukti' })).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Batal' })).toBeVisible();
+    await expect(card.getByRole('combobox')).toHaveText(staff.name);
+    await expect(card.getByRole('button', { name: /Sudah selesai|Ambil alih|Saya kerjakan/ })).toHaveCount(0);
+    await expect(card.getByText(/Sedang dikerjakan|Kamu yang mengerjakan/)).toBeHidden();
+
+    await card.getByRole('button', { name: 'Batal' }).click();
+    await expect(card.getByRole('button', { name: /Sudah selesai/ })).toBeVisible();
   });
 
   test('TC-KLH-009 tanpa nama tombol lanjut nonaktif', async ({ api, page }) => {
@@ -82,7 +100,7 @@ test.describe('Keluhan', () => {
     const card = cardOf(page, report.description);
     await page.route('**/api/uploads**', (route) => route.abort());
 
-    await card.getByRole('button', { name: /Sudah beres/ }).click();
+    await card.getByRole('button', { name: /Sudah selesai/ }).click();
     await answerWho(page, card, staff.name);
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
@@ -91,7 +109,7 @@ test.describe('Keluhan', () => {
     expect((await api.getReport(report.id)).status).toBe('new');
 
     await page.unroute('**/api/uploads**');
-    await card.getByRole('button', { name: /Sudah beres/ }).click();
+    await card.getByRole('button', { name: /Sudah selesai/ }).click();
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
     await expect(page.getByText('Laporan selesai. Terima kasih!')).toBeVisible();

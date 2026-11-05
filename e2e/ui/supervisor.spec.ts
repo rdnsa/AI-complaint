@@ -39,7 +39,7 @@ test.describe('Dashboard supervisor', () => {
     await expect(row.getByText('Rekomendasi tiruan dari LLM.')).toBeVisible();
     await expect(row.getByText('Prioritas sedang')).toBeVisible();
     // TC-SPL-021: the supervisor watches and moderates, closing is the cleaners' job.
-    await expect(row.getByRole('button', { name: /Sudah beres|Saya kerjakan/ })).toHaveCount(0);
+    await expect(row.getByRole('button', { name: /Sudah selesai|Saya kerjakan/ })).toHaveCount(0);
   });
 
   test('TC-SPL-004 filter status', async ({ api, newStaff, page }) => {

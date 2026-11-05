@@ -82,7 +82,7 @@ both through the `location_info` view.
   - **Keluhan** (complaints): every open complaint is listed with no location
     picked (Gedung/Lantai are only filters). Staff are asked for their name
     when they act, not before: "Saya kerjakan sekarang" claims a complaint,
-    "Sudah beres" asks who finished and opens the camera. A claim is not a
+    "Sudah selesai" asks who finished and opens the camera. A claim is not a
     lock: until a proof photo closes the report another staff member may take
     it over, and the handover is logged ("X took over … from Y"). A resolved
     report cannot be changed by staff (`409`), only reopened by a supervisor
@@ -326,7 +326,7 @@ Reports filed before migration 0011 point at a legacy toilet
 | `GET` | `/api/reports/mine` | the signed-in reporter's own reports |
 | `GET` | `/api/reports/open?building=&floor=` | reports still waiting for staff (filters optional) |
 | `GET` | `/api/reports/:id` | one report |
-| `PATCH` | `/api/reports/:id` | staff: `{status, staff_id, proof_photo_key?}`; claiming (`in_progress`) is not a lock and may be taken over; closing needs a proof photo (`422` when the place still looks dirty or is the wrong place, `502` when the check fails); a resolved report answers `409` |
+| `PATCH` | `/api/reports/:id` | staff: `{status, staff_id, proof_photo_key?}`; claiming (`in_progress`) is not a lock and may be taken over; closing needs a proof photo (`400` when it is missing or not an uploaded proof photo), and a resolved report answers `409`; a vision model describes the photo afterwards, without any say over the close |
 | `GET` | `/api/staff` | the names on the staff dropdown |
 | `POST` | `/api/uploads?kind=report\|proof\|cleaning` | upload a photo |
 | `GET` | `/api/uploads/:key` | serve a photo from R2 |

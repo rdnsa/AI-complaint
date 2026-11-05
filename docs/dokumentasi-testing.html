@@ -66,12 +66,12 @@
 
 <h2 id="ringkas">1. Ringkasan</h2>
 <div class="grid">
-  <div class="kartu"><div class="angka">269</div><div class="angka-ket">eksekusi test lulus</div></div>
+  <div class="kartu"><div class="angka">271</div><div class="angka-ket">eksekusi test lulus</div></div>
   <div class="kartu"><div class="angka">14</div><div class="angka-ket">gagal sesuai harapan: mencatat 12 bug terbuka</div></div>
   <div class="kartu"><div class="angka">0</div><div class="angka-ket">gagal tak terduga atau flaky</div></div>
   <div class="kartu"><div class="angka">&plusmn;1 mnt</div><div class="angka-ket">satu putaran penuh, 4 worker</div></div>
 </div>
-<p>Hasil di atas berasal dari basis commit <code>c58b49c</code>, 5 November 2026. Suite terdiri dari 282 test ditambah 1 langkah login: 170 test API, 91 test UI desktop, dan 21 test UI HP.</p>
+<p>Hasil di atas berasal dari basis commit <code>c58b49c</code>, 5 November 2026. Suite terdiri dari 284 test ditambah 1 langkah login: 170 test API, 92 test UI desktop, dan 22 test UI HP.</p>
 <p>Kepekaan suite juga sudah diuji dengan sengaja merusak empat aturan di kode aplikasi, lalu memulihkannya: laporan selesai bisa dibuka kembali, API akun tanpa pemeriksaan hak akses, klaim tanpa nama, dan kirim laporan tanpa foto. Keempatnya ditangkap suite.</p>
 <div class="tolak"><b>Hijau bukan berarti bebas bug.</b> Ada 12 bug nyata yang masih terbuka, tiga di antaranya berat: lihat <a href="#temuan">bagian 7</a>. Suite tetap hijau karena bug itu ditandai sebagai <em>known issue</em>.</div>
 <div class="catatan"><b>Foto bukti tidak pernah ditolak AI.</b> Petugas cukup mengambil foto, dan laporan langsung selesai. Setelah itu model visi menuliskan apa yang terlihat di foto untuk dibaca supervisor. Test case yang menjelaskan perilaku lama (TC-KLH-018 s.d. 026, TC-KLH-046, TC-NFR-004) berstatus "Tidak berlaku" di sheet manual. Supervisor bisa membuka kembali laporan yang keliru ditutup, dan alur itu juga diuji.</div>
@@ -149,7 +149,7 @@ e2e/
     uploads.spec.ts         format, ukuran, folder, path traversal
     users.spec.ts           kelola akun petugas dan supervisor
     insight.spec.ts         isolasi, ringkasan, grafik, Kato Bot
-  ui/                       112 eksekusi di browser
+  ui/                       114 eksekusi di browser
     auth.setup.ts           menyimpan sesi supervisor
     home.spec.ts            beranda, tautan lama, bahasa, tema, lebar layar, login
     report.spec.ts          form laporan, kamera, halaman status

@@ -37,7 +37,7 @@ sequenceDiagram
   end
   end
 
-  P->>UI: Bersihkan lokasi, "Sudah beres - foto buktinya", pilih nama
+  P->>UI: Bersihkan lokasi, "Sudah selesai - foto buktinya", pilih nama
   UI->>API: POST /api/uploads?kind=proof (foto bukti)
   API->>R2: simpan foto di folder proof/
   R2-->>API: proof_photo_key
@@ -71,7 +71,7 @@ sequenceDiagram
       RS->>V: foto bukti + lokasi + keluhan
       alt model berhasil
         V-->>RS: deskripsi foto (teks)
-        RS->>DB: UPDATE reports (proof_reason, proof_model, proof_ms) WHERE proof_photo_key sama
+        RS->>DB: UPDATE reports (proof_reason, proof_model, proof_ms)<br/>WHERE proof_photo_key = kunci foto
       else model gagal / jawaban tidak sah
         RS->>DB: INSERT activity_log (proof_description_failed)
       end
@@ -90,7 +90,7 @@ sequenceDiagram
     RS-->>API: not-found
     API-->>UI: 404 laporan tidak ditemukan
   else keluhan ada
-    RS->>DB: UPDATE reports (status=new, staff_name, resolved_at, proof_* = NULL) WHERE status=resolved
+    RS->>DB: UPDATE reports (status=new, staff_name, resolved_at, proof_* = NULL)<br/>WHERE status=resolved
     alt tidak ada baris berubah (belum selesai)
       RS-->>API: not-resolved
       API-->>UI: 409 laporan belum selesai

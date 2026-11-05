@@ -35,7 +35,7 @@ test.describe('Perjalanan penuh @smoke', () => {
     await card.getByRole('button', { name: 'Ya, saya yang kerjakan' }).click();
     await expect(card.getByText('Kamu yang mengerjakan ini')).toBeVisible();
 
-    await card.getByRole('button', { name: /Sudah beres/ }).click();
+    await card.getByRole('button', { name: /Sudah selesai/ }).click();
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(cleaner);
     await expect(cleaner.getByText('Laporan selesai. Terima kasih!')).toBeVisible();

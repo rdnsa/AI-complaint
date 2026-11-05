@@ -120,7 +120,7 @@ petugas dan pemantauan oleh supervisor.</p>
 <ul>
   <li>Pelaporan lewat QR per lokasi (29 lokasi aktif di gedung A sampai I dan Lapang Voli), dengan foto kamera langsung</li>
   <li>Klasifikasi, prioritas, ringkasan, dan rekomendasi otomatis oleh AI teks</li>
-  <li>Penanganan keluhan oleh petugas: klaim, ambil alih, penyelesaian dengan foto bukti wajib, dan pembukaan kembali oleh supervisor</li>
+  <li>Penanganan keluhan oleh petugas: klaim, ambil alih, penyelesaian dengan foto bukti wajib, deskripsi AI atas foto bukti untuk supervisor, dan pembukaan kembali oleh supervisor</li>
   <li>Tugas harian petugas (enam tugas tetap per lokasi), dengan foto kamera yang dicap nama, lokasi, waktu server, dan GPS, serta pemeriksaan posisi terhadap radius kampus</li>
   <li>Ringkasan harian otomatis pukul 17.00 WIB</li>
   <li>Dashboard supervisor lima tab: Ringkasan, Laporan, Log, Petugas &amp; Supervisor, QR lokasi; filter waktu sampai ketelitian menit</li>
@@ -132,7 +132,7 @@ petugas dan pemantauan oleh supervisor.</p>
 <ul>
   <li>Notifikasi ke petugas (push, WhatsApp, Telegram)</li>
   <li>Login atau PIN untuk petugas</li>
-  <li>Pemeriksaan isi foto oleh AI, baik foto bukti keluhan maupun foto tugas harian (foto dicek keberadaan dan folder asalnya; foto tugas harian juga usia dan keunikannya)</li>
+  <li>Penilaian atau penolakan foto oleh AI, baik foto bukti keluhan maupun foto tugas harian (foto dicek keberadaan dan folder asalnya; foto tugas harian juga usia dan keunikannya, dan tidak dikirim ke AI). Foto bukti hanya dideskripsikan sesudah keluhan selesai (FR-40)</li>
   <li>Pelatihan model AI atau dataset berlabel; model dipakai apa adanya lewat prompt</li>
   <li>Kampus selain UPI Tasikmalaya</li>
   <li>Aplikasi seluler dari toko aplikasi; sistem berjalan di peramban ponsel</li>
@@ -190,8 +190,8 @@ petugas dan pemantauan oleh supervisor.</p>
 analisis gagal, keluhan tetap tampil tanpa label dan supervisor bisa menganalisis ulang. Nama petugas tidak
 dipilih di awal halaman; nama ditanyakan saat bertindak, dengan nama terakhir di ponsel sebagai isian awal.
 Klaim bukan kunci: selama belum selesai dengan foto bukti, petugas lain boleh mengambil alih, dan
-pengambilalihan tercatat di log aktivitas. Foto bukti tidak dinilai oleh AI; foto itu tampil di papan publik dan
-tercatat di log. Bila penutupan ternyata keliru, supervisor membuka kembali keluhan dari dashboard, dan keluhan
+pengambilalihan tercatat di log aktivitas. Keluhan selesai begitu foto bukti terunggah. AI tidak menilai foto itu; sesudahnya AI hanya menuliskan apa yang
+terlihat untuk dibaca supervisor (FR-40). Foto itu tampil di papan publik dan tercatat di log. Bila penutupan ternyata keliru, supervisor membuka kembali keluhan dari dashboard, dan keluhan
 kembali ke daftar petugas sebagai keluhan baru.</p>
 
 <h3>5.2 Tugas harian</h3>
@@ -238,11 +238,12 @@ Status mengikuti kode yang berjalan: <span class="inti">Selesai</span> berarti b
   <tr><td class="id">FR-08</td><td>Daftar semua keluhan terbuka untuk petugas tanpa login, diurutkan dari prioritas tertinggi lalu yang terlama; Gedung dan Lantai hanya menyaring</td><td>Petugas</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-09</td><td>&ldquo;Saya kerjakan sekarang&rdquo;: petugas memilih namanya saat bertindak (nama terakhir di ponsel jadi isian awal) dan keluhan berstatus diproses</td><td>Petugas</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-10</td><td>Ambil alih: petugas lain boleh mengklaim keluhan yang belum selesai; pengambilalihan tercatat di log aktivitas, klaim ulang oleh orang yang sama tidak dicatat dua kali</td><td>Petugas</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
-  <tr><td class="id">FR-11</td><td>Selesaikan dengan foto bukti dari kamera; <code>proof_photo_key</code> harus berawalan <code>proof/</code> dan ada di R2 (bila tidak, ditolak dengan kode 400), dan petugas ditanya siapa yang menyelesaikan. Foto tidak dinilai oleh AI</td><td>Petugas</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
-  <tr><td class="id">FR-12</td><td>Petugas tidak dapat mengubah keluhan yang sudah selesai ke status lain (kode 409); hanya supervisor yang dapat membukanya kembali (FR-39)</td><td>Sistem</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
+  <tr><td class="id">FR-11</td><td>Selesaikan dengan foto bukti dari kamera; <code>proof_photo_key</code> harus berawalan <code>proof/</code> dan ada di R2 (bila tidak, ditolak dengan kode 400), dan petugas ditanya siapa yang menyelesaikan. Keluhan selesai begitu foto terunggah; AI tidak menilai atau menolak foto (FR-40)</td><td>Petugas</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
+  <tr><td class="id">FR-12</td><td>Keluhan yang sudah selesai tidak dapat diubah lewat pembaruan status, dengan atau tanpa foto (kode 409 &ldquo;Laporan ini sudah selesai.&rdquo;), sehingga nama, waktu, dan fotonya tidak dapat ditimpa; hanya supervisor yang dapat membukanya kembali (FR-39)</td><td>Sistem</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-13</td><td>Hapus keluhan (salinan lengkap masuk log lebih dulu) dan analisis ulang keluhan yang gagal dianalisis</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-14</td><td>Notifikasi ke petugas untuk keluhan prioritas tinggi</td><td>Petugas</td><td>Sedang</td><td><span class="pendukung">Rencana</span></td></tr>
   <tr><td class="id">FR-39</td><td>Buka kembali keluhan selesai: tombol &ldquo;Buka kembali&rdquo; dengan konfirmasi di Dashboard &gt; Laporan &gt; Keluhan (<code>POST /api/reports/:id/reopen</code>; 401/403 bila bukan supervisor, 404 bila tidak dikenal, 409 bila belum selesai). Status menjadi baru; <code>staff_name</code>, <code>resolved_at</code>, dan kolom <code>proof_*</code> dikosongkan; berkas foto tetap di R2; log <code>report_reopened</code> mencatat <code>closed_by</code>, <code>resolved_at</code>, dan <code>proof_photo</code></td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
+  <tr><td class="id">FR-40</td><td>Deskripsi AI atas foto bukti: setelah keluhan selesai, di latar belakang (<code>waitUntil</code>), Gemini menulis 1&ndash;2 kalimat tentang apa yang terlihat dan menyimpannya di <code>proof_reason</code>, <code>proof_model</code>, <code>proof_ms</code>; <code>proof_verdict</code> tetap kosong. Tidak pernah menolak foto dan petugas tidak menunggu. Bila gagal atau tanpa <code>VISION_API_KEY</code>, status tetap selesai, foto tanpa deskripsi, dan log <code>proof_description_failed</code> ditulis (pelaku <code>system</code>). Tampil hanya di dashboard supervisor, di bawah foto bukti, sebagai &ldquo;Deskripsi AI: &hellip;&rdquo;; papan publik tidak memuatnya, tetapi JSON <code>GET /api/reports/:id</code> memuat <code>proof_reason</code> seperti kolom lainnya. Jawaban yang datang setelah keluhan dibuka kembali dibuang</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
 </table>
 
 <h3>6.3 Tugas harian</h3>
@@ -253,7 +254,7 @@ Status mengikuti kode yang berjalan: <span class="inti">Selesai</span> berarti b
   <tr><td class="id">FR-17</td><td>Tolak foto yang tidak ditemukan, lebih tua dari 3 jam sejak diterima server, atau sudah dipakai untuk tugas lain; tolak tugas yang bukan bagian dari lokasi</td><td>Sistem</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-18</td><td>Bandingkan posisi GPS dengan titik kampus dan radius 500 m; di luar kampus atau tanpa GPS tetap diterima tetapi ditandai ke supervisor dan dicatat di log</td><td>Sistem</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-19</td><td>Cakupan kebersihan per lokasi (tugas dilaporkan dibanding seluruh tugas, dan lokasi yang belum ada laporannya); petugas tidak punya lokasi tetap, jadi tidak ada target per orang</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
-  <tr><td class="id">FR-20</td><td>Dihapus: pemeriksaan isi foto tugas harian oleh AI tidak jadi dibuat, karena foto tidak dinilai oleh model (lihat bagian 8)</td><td>Tidak ada</td><td>Tidak ada</td><td><span class="pendukung">Dihapus</span></td></tr>
+  <tr><td class="id">FR-20</td><td>Dihapus: pemeriksaan isi foto tugas harian oleh AI tidak jadi dibuat; foto tugas harian tidak dikirim ke model mana pun (lihat bagian 8)</td><td>Tidak ada</td><td>Tidak ada</td><td><span class="pendukung">Dihapus</span></td></tr>
 </table>
 
 <h3>6.4 Dashboard supervisor</h3>
@@ -262,10 +263,10 @@ Status mengikuti kode yang berjalan: <span class="inti">Selesai</span> berarti b
   <tr><td class="id">FR-21</td><td>Login supervisor (sesi 12 jam) dan dashboard lima tab: Ringkasan, Laporan, Log, Petugas &amp; Supervisor, QR lokasi</td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-22</td><td>Ringkasan AI hari ini di puncak tab Ringkasan: dibuat otomatis tiap hari 17.00 WIB, tombol &ldquo;Buat ulang&rdquo;, serta lima lokasi dengan keluhan terbanyak hari ini</td><td>Sistem, Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-23</td><td>Visualisasi tab Ringkasan dengan rentang tanggal (bawaan 30 hari terakhir, maksimum 366 hari): pengukur tingkat penyelesaian, kartu angka dengan grafik mini, grafik masuk vs selesai, status, jam sibuk, kategori masalah, prioritas, peta pohon gedung, umur keluhan terbuka, gedung &times; kategori, waktu penyelesaian per prioritas, pola hari &times; jam, komposisi prioritas per hari. Satu halaman yang sama memuat bagian Kebersihan pada tanggal yang sama: jumlah laporan, area terlapor, petugas melapor, laporan ditandai, kalender harian, status lokasi, peta area, jenis pekerjaan, pekerjaan per petugas, jam, dan gedung &times; pekerjaan. Sebagian grafik (kategori, prioritas, gedung, jam, waktu penyelesaian) menghitung seluruh data dan belum mengikuti rentang yang dipilih</td><td>Supervisor</td><td>Tinggi</td><td><span class="pendukung">Sebagian</span></td></tr>
-  <tr><td class="id">FR-24</td><td>Tab Laporan &gt; Keluhan: daftar maks. 200 keluhan dengan filter status, prioritas, dan waktu; foto kondisi dan foto bukti dapat diperbesar; hapus, analisis ulang, dan buka kembali; menyegarkan diri tiap 30 detik saat tampil</td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
+  <tr><td class="id">FR-24</td><td>Tab Laporan &gt; Keluhan: daftar maks. 200 keluhan dengan filter status, prioritas, dan waktu; foto kondisi dan foto bukti dapat diperbesar, dengan Deskripsi AI di bawah foto bukti (FR-40); hapus, analisis ulang, dan buka kembali; menyegarkan diri tiap 30 detik saat tampil</td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-25</td><td>Tab Laporan &gt; Kebersihan: rekap harian per area beserta siapa yang mengerjakan (pilih tanggal, cetak), daftar laporan dengan foto per tugas, saring per petugas dan hanya peringatan, tautan peta; angka merah di tab untuk peringatan hari ini</td><td>Supervisor</td><td>Tinggi</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-26</td><td>Filter waktu bersama (keluhan, laporan kebersihan, log): semua, hari ini, kemarin, 7 hari, 30 hari, rentang tanggal, ditambah jam dari/sampai dengan pemilih jam berbentuk dial (jam lalu menit, ketelitian 1 menit, WIB); jendela melewati tengah malam didukung</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
-  <tr><td class="id">FR-27</td><td>Tab Log aktivitas (14 jenis aksi, termasuk dua jenis lama yang tidak lagi dibuat; filter aksi dan waktu, waktu persis)</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
+  <tr><td class="id">FR-27</td><td>Tab Log aktivitas (15 jenis aksi, termasuk dua jenis lama yang tidak lagi dibuat; filter aksi dan waktu, waktu persis)</td><td>Supervisor</td><td>Sedang</td><td><span class="inti">Selesai</span></td></tr>
   <tr><td class="id">FR-28</td><td>Pembaca khusus pimpinan (login baca-saja ke dashboard)</td><td>Pimpinan</td><td>Rendah</td><td><span class="pendukung">Rencana</span></td></tr>
 </table>
 
@@ -297,13 +298,13 @@ Status mengikuti kode yang berjalan: <span class="inti">Selesai</span> berarti b
 <h2>7. Aturan bisnis</h2>
 <p>Aturan terpenting: keluhan hanya boleh berstatus selesai bila ada foto bukti. Aturan ini ada di lapisan domain
 (<code>canResolve</code>), jadi berlaku dari jalur mana pun perubahan status datang. Isi foto tidak dinilai oleh AI:
-pemeriksaan otomatis dihapus karena menolak pekerjaan yang sungguhan dan membuat keluhan terlalu sulit ditutup.
+pemeriksaan otomatis dihapus karena menolak pekerjaan yang sungguhan dan membuat keluhan terlalu sulit ditutup. AI hanya mendeskripsikan foto sesudah keluhan selesai.
 Nilai ambang di bawah diambil dari kode.</p>
 <ol>
   <li><strong>Selesai harus terbukti.</strong> Foto bukti wajib diunggah sebagai foto bukti (folder <code>proof/</code>) dan harus ada di penyimpanan; bila tidak, penutupan ditolak (kode 400). Foto kondisi dari pelapor tidak bisa dipakai ulang sebagai bukti.</li>
-  <li><strong>Foto bukti diawasi manusia.</strong> Foto bukti tampil di papan publik, dan foto beserta nama petugas tercatat di log aktivitas. Supervisor memeriksa sampelnya dan membuka kembali penutupan yang keliru.</li>
-  <li><strong>Data penilaian lama tetap terbaca.</strong> Kolom <code>proof_verdict</code>, <code>proof_reason</code>, <code>proof_model</code>, dan <code>proof_ms</code> tetap ada di basis data untuk keluhan lama; penutupan baru tidak mengisinya dan antarmuka tidak menampilkannya. Baris log lama <code>proof_rejected</code> dan <code>verification_failed</code> tetap terbaca, dan tidak ada yang baru.</li>
-  <li><strong>Keluhan selesai tidak dibuka kembali oleh petugas.</strong> Percobaan petugas mengubah keluhan selesai ke status lain ditolak (kode 409). Hanya supervisor yang dapat membukanya kembali; keluhan kembali berstatus baru, data penutupannya dikosongkan, berkas fotonya tetap di penyimpanan, dan tindakan itu tercatat di log (<code>report_reopened</code>).</li>
+  <li><strong>Foto bukti diawasi manusia.</strong> Foto bukti tampil di papan publik, dan foto beserta nama petugas tercatat di log aktivitas. Supervisor memeriksa sampelnya, dibantu Deskripsi AI, dan membuka kembali penutupan yang keliru. Deskripsi AI bisa keliru dan bukan keputusan.</li>
+  <li><strong>Data penilaian lama tetap terbaca.</strong> Kolom <code>proof_verdict</code> hanya berisi data keluhan lama; penutupan baru tidak mengisinya dan antarmuka tidak menampilkannya. Kolom <code>proof_reason</code>, <code>proof_model</code>, dan <code>proof_ms</code> kini menyimpan deskripsi foto; pada keluhan lama ketiganya masih berisi hasil pemeriksaan lama. Baris log lama <code>proof_rejected</code> dan <code>verification_failed</code> tetap terbaca, dan tidak ada yang baru.</li>
+  <li><strong>Keluhan selesai tidak dapat diubah kecuali dibuka kembali oleh supervisor.</strong> Setiap pembaruan status atas keluhan selesai ditolak (kode 409), dengan atau tanpa foto, sehingga nama, waktu, dan foto tidak dapat ditimpa. Hanya supervisor yang dapat membukanya kembali; keluhan kembali berstatus baru, data penutupannya termasuk deskripsi foto dikosongkan, berkas fotonya tetap di penyimpanan, dan tindakan itu tercatat di log (<code>report_reopened</code>).</li>
   <li><strong>Klaim bukan kunci.</strong> Selama belum selesai dengan foto bukti, petugas lain boleh mengambil alih. Pengambilalihan dicatat (&ldquo;X mengambil alih ... dari Y&rdquo;); mengklaim keluhan yang sudah dipegang sendiri tidak ditulis dua kali.</li>
   <li><strong>Petugas harus nama yang aktif.</strong> Server memeriksa identitas petugas yang dikirim pada setiap tindakan; nama yang sudah dinonaktifkan atau dihapus ditolak. Supervisor yang sedang masuk boleh bertindak atas namanya sendiri.</li>
   <li><strong>Foto hanya dari kamera.</strong> Antarmuka tidak menyediakan galeri. Jenis foto dipisah per folder (<code>report/</code>, <code>proof/</code>, <code>cleaning/</code>) dan setiap fungsi hanya menerima folder yang sesuai.</li>
@@ -312,6 +313,7 @@ Nilai ambang di bawah diambil dari kode.</p>
   <li><strong>GPS luar kampus ditandai, bukan ditolak.</strong> Jarak ke titik kampus dihitung server. Posisi dianggap jauh hanya bila jaraknya melebihi 500 m bahkan setelah dikurangi akurasi GPS (dibatasi maksimal 200 m). Laporan jauh atau tanpa GPS diterima, tercatat sebagai <code>cleaning_out_of_range</code>, dan menambah angka merah di dashboard.</li>
   <li><strong>Lokasi tugas bukan batasan.</strong> Petugas boleh mengirim di lokasi mana pun dan tidak punya lokasi tetap; rekap dihitung per lokasi dan mencatat siapa yang mengerjakan.</li>
   <li><strong>Keluhan tidak hilang karena AI teks gagal.</strong> Keluhan disimpan lebih dulu; kegagalan analisis dicatat sebagai <code>ai_status = failed</code> dan bisa dianalisis ulang.</li>
+  <li><strong>Penutupan tidak bergantung pada AI foto.</strong> Keluhan sudah selesai sebelum Gemini dipanggil. Bila gagal, keluhan tetap selesai tanpa deskripsi dan kegagalannya tercatat sebagai <code>proof_description_failed</code>. Deskripsi hanya disimpan selama foto itu masih foto bukti keluhannya, jadi jawaban yang terlambat setelah dibuka kembali tidak dipakai.</li>
   <li><strong>Hapus keluhan meninggalkan jejak.</strong> Salinan lengkap keluhan masuk ke log sebelum keluhan dan fotonya dihapus.</li>
   <li><strong>Jejak audit tidak dihapus.</strong> Log aktivitas hanya ditambah; tidak ada baris yang diubah atau dihapus lewat aplikasi, dan kegagalan mencatat tidak menggagalkan tindakannya.</li>
   <li><strong>Aturan akun.</strong> Petugas tanpa sandi dan tidak dapat masuk; supervisor wajib bersandi minimal 8 karakter. Akun yang sedang dipakai tidak bisa dinonaktifkan atau dihapus. Supervisor aktif terakhir tidak bisa dihapus. Akun hanya bisa dihapus bila tidak punya catatan (laporan kebersihan atau keluhan); selain itu cukup dinonaktifkan agar riwayat utuh.</li>
@@ -322,24 +324,26 @@ Nilai ambang di bawah diambil dari kode.</p>
 </ol>
 
 <h2>8. Kebutuhan AI</h2>
-<p>Sistem memakai satu model siap pakai untuk teks, DeepSeek. Foto tidak pernah dinilai oleh model; pemeriksaan
-foto bukti dengan AI pernah dipakai dan telah dihapus (lihat bagian 7).
+<p>Sistem memakai dua model siap pakai, dipisah menurut masukannya: DeepSeek untuk teks dan Gemini untuk foto bukti.
+Keduanya tidak menentukan apakah keluhan boleh ditutup. Foto bukti hanya dideskripsikan, tidak dinilai; pemeriksaan
+foto bukti yang menolak foto pernah dipakai dan telah dihapus (lihat bagian 7). Foto tugas harian tidak dikirim ke model mana pun.
 Tidak ada pelatihan model maupun dataset berlabel; mutu dijaga lewat prompt, contoh, dan validasi keluaran.</p>
 <table>
-  <tr><th style="width:17%"></th><th>LLM teks</th></tr>
-  <tr><td><strong>Model</strong></td><td>DeepSeek <code>deepseek-chat</code> (mode JSON; suhu rendah agar kata yang sama menghasilkan klasifikasi yang sama)</td></tr>
-  <tr><td><strong>Tugas</strong></td><td>Klasifikasi, prioritas, ringkasan, rekomendasi untuk satu keluhan; ringkasan harian; menjawab Kato Bot lewat pemanggilan alat</td></tr>
-  <tr><td><strong>Kapan dipanggil</strong></td><td>Setiap keluhan baru (asinkron, setelah respons terkirim); sekali sehari oleh cron; setiap pertanyaan Kato Bot; setiap analisis ulang</td></tr>
-  <tr><td><strong>Bila gagal</strong></td><td>Keluhan tetap tersimpan tanpa label, bisa dianalisis ulang; Kato Bot menjawab bahwa model belum bisa menjawab</td></tr>
-  <tr><td><strong>Hasil disimpan di</strong></td><td>Kolom AI di <code>reports</code>, tabel <code>daily_summaries</code>, log pertanyaan</td></tr>
-  <tr><td><strong>Biaya</strong></td><td>Berbayar per pemakaian; jumlah token tiap pertanyaan dicatat di log. Harga tidak diverifikasi di dokumen ini</td></tr>
+  <tr><th style="width:17%"></th><th>LLM teks</th><th>LLM vision</th></tr>
+  <tr><td><strong>Model</strong></td><td>DeepSeek <code>deepseek-chat</code> (mode JSON; suhu rendah agar kata yang sama menghasilkan klasifikasi yang sama)</td><td>Gemini <code>gemini-3.6-flash</code>, lewat titik akhir yang mengikuti format OpenAI (mode JSON)</td></tr>
+  <tr><td><strong>Tugas</strong></td><td>Klasifikasi, prioritas, ringkasan, rekomendasi untuk satu keluhan; ringkasan harian; menjawab Kato Bot lewat pemanggilan alat</td><td>Menulis 1&ndash;2 kalimat tentang apa yang terlihat pada foto bukti, dengan lokasi dan teks keluhan sebagai konteks, untuk dibaca supervisor</td></tr>
+  <tr><td><strong>Kapan dipanggil</strong></td><td>Setiap keluhan baru (asinkron, setelah respons terkirim); sekali sehari oleh cron; setiap pertanyaan Kato Bot; setiap analisis ulang</td><td>Sekali setiap keluhan ditutup (asinkron, setelah keluhan selesai)</td></tr>
+  <tr><td><strong>Bila gagal</strong></td><td>Keluhan tetap tersimpan tanpa label, bisa dianalisis ulang; Kato Bot menjawab bahwa model belum bisa menjawab</td><td>Keluhan tetap selesai, foto tanpa deskripsi, log <code>proof_description_failed</code>; tidak ada percobaan ulang</td></tr>
+  <tr><td><strong>Hasil disimpan di</strong></td><td>Kolom AI di <code>reports</code>, tabel <code>daily_summaries</code>, log pertanyaan</td><td><code>reports.proof_reason</code>, <code>proof_model</code>, <code>proof_ms</code></td></tr>
+  <tr><td><strong>Biaya</strong></td><td>Berbayar per pemakaian; jumlah token tiap pertanyaan dicatat di log. Harga tidak diverifikasi di dokumen ini</td><td>Satu panggilan per keluhan yang ditutup. Mengikuti paket akun Google; harga tidak diverifikasi di dokumen ini</td></tr>
 </table>
 <p><strong>Apa yang dipercaya dan tidak.</strong> Keluaran model tidak pernah dipercaya mentah. Klasifikasi dibersihkan
 sebelum disimpan: kategori di luar enam yang dikenal dibuang (bila kosong menjadi &ldquo;lainnya&rdquo;),
 prioritas yang tidak dikenal menjadi sedang, ringkasan dipotong 300 karakter dan rekomendasi 500 karakter.
 Analisis AI bersifat saran: teks asli keluhan selalu ditampilkan di samping
 ringkasannya untuk supervisor. Prioritas ditentukan oleh aturan risiko keselamatan, bukan jumlah kata kunci:
-tinggi berarti ada risiko keselamatan atau lokasi praktis tidak bisa dipakai.</p>
+tinggi berarti ada risiko keselamatan atau lokasi praktis tidak bisa dipakai. Deskripsi foto divalidasi lalu dipotong 300 karakter;
+isinya alat bantu supervisor, bisa keliru, dan tidak mengubah status apa pun.</p>
 <p><strong>Kato Bot.</strong> Model tidak pernah melihat baris mentah. Ia hanya boleh memanggil empat alat rekap
 (hitung keluhan, waktu penyelesaian, daftar maks. 15 tanpa teks asli, ringkasan harian) dan menjawab hanya
 dari hasilnya; hasil alat diperlakukan sebagai data, bukan instruksi. Putaran alat dibatasi empat kali, hanya
@@ -359,23 +363,23 @@ privasi pelapor di setiap halaman publik.</p>
   <tr><td>Keamanan: sesi dan peran</td><td>Sesi berupa cookie bertanda tangan (HS256, rahasia <code>AUTH_SECRET</code>), berlaku 12 jam, <code>HttpOnly</code>, <code>SameSite=Lax</code>, dan <code>Secure</code> di HTTPS. Setiap rute supervisor menyebut peran yang diizinkan; peran lain ditolak (401/403)</td></tr>
   <tr><td>Keamanan: sandi dan rahasia</td><td>Sandi PBKDF2-SHA256, 100.000 iterasi, garam per pengguna, dibandingkan dalam waktu konstan. Kunci API dan <code>AUTH_SECRET</code> disimpan sebagai rahasia Worker, tidak di repositori. Akun supervisor bawaan dari migrasi 0004 memakai kata sandi bawaan yang tercantum di repositori dan <strong>harus diganti</strong>; apakah sudah diganti di produksi tidak dapat diverifikasi dari kode</td></tr>
   <tr><td>Keamanan: login</td><td>Nama pengguna tak dikenal dan sandi salah memberi pesan yang sama; akun nonaktif dan akun petugas tidak dapat masuk. Belum ada pembatasan percobaan masuk</td></tr>
-  <tr><td>Privasi</td><td>Papan publik menyembunyikan teks asli, foto pelapor, nama petugas, dan koordinat GPS; Kato Bot tidak membuka nama petugas ke umum. Koordinat GPS petugas hanya terlihat oleh supervisor. Foto disajikan lewat domain aplikasi sendiri, sehingga wadah foto tidak perlu dibuka untuk umum</td></tr>
+  <tr><td>Privasi</td><td>Papan publik menyembunyikan teks asli, foto pelapor, nama petugas, dan koordinat GPS; Kato Bot tidak membuka nama petugas ke umum. Koordinat GPS petugas hanya terlihat oleh supervisor. Foto disajikan lewat domain aplikasi sendiri, sehingga wadah foto tidak perlu dibuka untuk umum. Foto bukti, lokasi, dan teks keluhan dikirim ke Google untuk deskripsi AI (lihat bagian 11)</td></tr>
   <tr><td>Jejak audit</td><td>Semua tindakan penting tercatat di log aktivitas yang tidak bisa diubah lewat aplikasi, termasuk pengambilalihan, pembukaan kembali keluhan, laporan di luar kampus, perubahan akun, dan pertanyaan Kato Bot</td></tr>
-  <tr><td>Ketersediaan</td><td>Kegagalan AI teks tidak menggagalkan keluhan; kegagalan mencatat log tidak menggagalkan tindakan. Penutupan keluhan tidak bergantung pada layanan AI. Ketersediaan produksi belum diukur</td></tr>
+  <tr><td>Ketersediaan</td><td>Kegagalan AI teks tidak menggagalkan keluhan; kegagalan deskripsi foto tidak membatalkan penutupan; kegagalan mencatat log tidak menggagalkan tindakan. Penutupan keluhan tidak bergantung pada layanan AI. Ketersediaan produksi belum diukur</td></tr>
   <tr><td>Aksesibilitas</td><td>Dropdown, pemilih jam, dan jendela Kato Bot dapat dioperasikan dengan papan ketik (panah, Enter, Spasi, Esc) dan membawa atribut ARIA; antarmuka dwibahasa penuh; tema gelap dan terang. Belum ada audit aksesibilitas formal (WCAG)</td></tr>
   <tr><td>Kompatibilitas perangkat</td><td>Dirancang untuk peramban ponsel dan layar sentuh, juga bisa dipakai di komputer; kamera dan GPS memerlukan HTTPS dan izin dari pengguna, dan halaman menjelaskan bila izin ditolak atau tidak tersedia. Pengujian lintas peramban dan perangkat belum didokumentasikan</td></tr>
   <tr><td>Pemeliharaan</td><td>Arsitektur berlapis (routes, services, repositories, adapters, domain); semua SQL di satu folder; 13 migrasi basis data; uji end-to-end Playwright di <code>e2e/</code> (<code>npm run test:e2e</code>, panduan di <code>docs/dokumentasi-testing.html</code>)</td></tr>
-  <tr><td>Biaya</td><td>Hosting, basis data, dan penyimpanan foto di Cloudflare; biaya AI sebanding dengan pemakaian dan dibatasi anggaran harian Kato Bot</td></tr>
+  <tr><td>Biaya</td><td>Hosting, basis data, dan penyimpanan foto di Cloudflare; biaya AI sebanding dengan pemakaian dan dibatasi anggaran harian Kato Bot; deskripsi foto satu panggilan per keluhan yang ditutup</td></tr>
 </table>
 
 <h2>10. Data dan integrasi</h2>
 <p>Data disimpan di sembilan tabel Cloudflare D1 (SQLite) dan satu bucket foto Cloudflare R2. Sistem bergantung
-pada satu layanan AI dari luar.</p>
+pada dua layanan AI dari luar.</p>
 <table>
   <tr><th style="width:30%">Penyimpanan</th><th>Isi</th></tr>
   <tr><td><code>users</code></td><td>Akun supervisor dan pelapor, serta nama petugas; sandi dalam bentuk hash</td></tr>
   <tr><td><code>cleaning_areas</code></td><td>Lokasi (area kebersihan): lantai, halaman, gedung utuh, atau tempat di luar gedung; enam tugas per lokasi; status aktif. Satu lokasi satu kode QR</td></tr>
-  <tr><td><code>reports</code></td><td>Keluhan: lokasi (<code>area_id</code>, atau <code>toilet_id</code> untuk data lama), foto kondisi, status, hasil AI teks, foto bukti. Kolom <code>proof_verdict</code>, <code>proof_reason</code>, <code>proof_model</code>, dan <code>proof_ms</code> hanya berisi data keluhan lama</td></tr>
+  <tr><td><code>reports</code></td><td>Keluhan: lokasi (<code>area_id</code>, atau <code>toilet_id</code> untuk data lama), foto kondisi, status, hasil AI teks, foto bukti, deskripsi foto bukti (<code>proof_reason</code>, <code>proof_model</code>, <code>proof_ms</code>). Kolom <code>proof_verdict</code> hanya berisi data keluhan lama</td></tr>
   <tr><td><code>cleaning_reports</code>, <code>cleaning_report_tasks</code></td><td>Laporan tugas harian: petugas, catatan, posisi GPS, jarak, status lokasi (ok/far/unknown); satu baris per tugas dengan foto yang unik dan waktu terima server</td></tr>
   <tr><td><code>daily_summaries</code></td><td>Satu ringkasan dan poin sorotan per tanggal</td></tr>
   <tr><td><code>activity_log</code></td><td>Buku catatan kejadian, termasuk salinan keluhan yang dihapus, pembukaan kembali keluhan, dan pertanyaan Kato Bot</td></tr>
@@ -385,6 +389,7 @@ pada satu layanan AI dari luar.</p>
 <table>
   <tr><th style="width:26%">Integrasi</th><th style="width:40%">Dipakai untuk</th><th>Konfigurasi</th></tr>
   <tr><td>DeepSeek API</td><td>Analisis keluhan, ringkasan harian, Kato Bot</td><td><code>LLM_BASE_URL</code>, <code>LLM_MODEL</code>, rahasia <code>LLM_API_KEY</code></td></tr>
+  <tr><td>Google Gemini API</td><td>Deskripsi foto bukti untuk supervisor</td><td><code>VISION_BASE_URL</code>, <code>VISION_MODEL</code>, rahasia opsional <code>VISION_API_KEY</code> (tanpa fallback ke <code>LLM_API_KEY</code>; tanpa kunci, foto tidak mendapat deskripsi dan kegagalannya dicatat)</td></tr>
   <tr><td>Cloudflare Cron</td><td>Pemicu ringkasan harian, <code>0 10 * * *</code> (17.00 WIB)</td><td><code>wrangler.jsonc</code></td></tr>
   <tr><td>GPS peramban</td><td>Posisi petugas untuk tugas harian, dibandingkan dengan titik kampus</td><td><code>CAMPUS_LAT</code>, <code>CAMPUS_LNG</code>, <code>CAMPUS_RADIUS_M</code> (500)</td></tr>
 </table>
@@ -400,15 +405,17 @@ keluhan), serta keunikan dan usia foto dan GPS (untuk tugas harian).</p>
 <table>
   <tr><th style="width:24%">Batasan</th><th style="width:38%">Dampak</th><th>Arah perbaikan</th></tr>
   <tr><td>Petugas tanpa login</td><td>Tindakan bisa dilakukan atas nama petugas lain</td><td>PIN pendek per petugas atau pembatasan per perangkat; supervisor rutin meninjau log</td></tr>
-  <tr><td>Keluhan bisa ditutup dengan foto apa pun</td><td>Siapa pun yang memilih nama petugas dapat menutup keluhan dengan foto yang tidak menunjukkan hasil kerja; isi foto tidak diperiksa sistem</td><td>Foto tampil di papan publik; nama dan foto tercatat di log; supervisor membuka kembali penutupan yang keliru dan rutin memeriksa sampel</td></tr>
+  <tr><td>Keluhan bisa ditutup dengan foto apa pun</td><td>Siapa pun yang memilih nama petugas dapat menutup keluhan dengan foto yang tidak menunjukkan hasil kerja; isi foto tidak diperiksa sistem, dan Deskripsi AI hanya alat bantu yang bisa keliru</td><td>Foto tampil di papan publik; nama dan foto tercatat di log; supervisor membuka kembali penutupan yang keliru dan rutin memeriksa sampel</td></tr>
+  <tr><td>Foto bukti dikirim ke Google</td><td>Foto bukti, nama lokasi, dan teks keluhan keluar ke penyedia. Menurut README, pada paket gratis foto dapat dipakai Google untuk meningkatkan produknya, dan mengaktifkan penagihan mematikannya; hal ini tidak dapat dibuktikan dari kode</td><td>Pastikan paket akun dan ketentuan Google; arahkan petugas agar tidak memotret orang</td></tr>
+  <tr><td>Deskripsi foto bisa tidak ada</td><td>Bila kunci tidak dipasang, kuota habis, layanan gangguan, atau nama model Gemini kedaluwarsa, foto tidak mendapat deskripsi dan tidak dicoba ulang; penutupan tidak terpengaruh</td><td>Pantau <code>proof_description_failed</code> di log; perbarui kunci atau <code>VISION_MODEL</code></td></tr>
   <tr><td>Foto tugas harian tidak diperiksa isinya</td><td>Foto yang baru tetapi tidak menunjukkan pekerjaan yang dimaksud tetap diterima; kepatuhan tercatat selama ada foto baru yang unik</td><td>Pengambilan sampel oleh supervisor</td></tr>
   <tr><td>Asal foto tidak bisa dibuktikan server</td><td>Kamera-saja dan cap pada foto ditegakkan di antarmuka; server hanya memeriksa waktu terima dan keunikan. Pemanggilan API langsung bisa memalsukan cap dan koordinat</td><td>Tantangan acak di bingkai, pembandingan dengan foto kondisi, atau dua sudut foto</td></tr>
   <tr><td>Titik pusat kampus masih perkiraan</td><td>Titik yang tercantum di konfigurasi adalah penanda sementara di Jln. Dadaha; radius 500 m bisa menandai laporan sah atau meloloskan yang tidak sah</td><td>Ganti dengan koordinat kampus dari peta dan sesuaikan radius</td></tr>
-  <tr><td>Keluhan terbuka dan status keluhan bisa dibaca tanpa login</td><td>Teks asli dan foto kondisi terlihat lewat halaman petugas; halaman status satu keluhan memuat seluruh barisnya, termasuk id pelapor, bagi yang memegang tautan</td><td>Batasi ke lokasi yang dipindai atau token per stiker; saring bidang yang dikirim</td></tr>
+  <tr><td>Keluhan terbuka dan status keluhan bisa dibaca tanpa login</td><td>Teks asli dan foto kondisi terlihat lewat halaman petugas; halaman status satu keluhan memuat seluruh barisnya, termasuk id pelapor dan deskripsi AI, bagi yang memegang tautan</td><td>Batasi ke lokasi yang dipindai atau token per stiker; saring bidang yang dikirim</td></tr>
   <tr><td>Tanpa pembatasan laju atau CAPTCHA</td><td>Spam bisa masuk (pelaporan dan unggah foto terbuka); hanya ditahan deteksi kembar 2 menit; percobaan login tidak dibatasi</td><td>Rate limiting per IP atau Cloudflare Turnstile</td></tr>
   <tr><td>Foto yang terunggah tapi tidak terpakai</td><td>Foto yang tidak pernah dilampirkan ke laporan tetap tersimpan di bucket</td><td>Pembersihan berkala foto yatim</td></tr>
   <tr><td>Tanpa notifikasi ke petugas</td><td>Keluhan hanya terlihat saat halaman petugas dibuka</td><td>Web Push atau WhatsApp/Telegram untuk prioritas tinggi</td></tr>
-  <tr><td>Kuota, biaya, dan privasi layanan AI</td><td>Kuota atau saldo DeepSeek bisa habis, sehingga analisis keluhan, ringkasan, dan Kato Bot gagal (keluhan tetap tersimpan dan bisa ditutup); teks keluhan dikirim ke penyedia, foto tidak</td><td>Siapkan kunci cadangan dan pantau pemakaian</td></tr>
+  <tr><td>Kuota, biaya, dan privasi layanan AI</td><td>Kuota atau saldo DeepSeek bisa habis, sehingga analisis keluhan, ringkasan, dan Kato Bot gagal (keluhan tetap tersimpan dan bisa ditutup); teks keluhan dikirim ke DeepSeek dan Google, foto bukti ke Google, foto lain tidak ke mana pun</td><td>Siapkan kunci cadangan dan pantau pemakaian</td></tr>
   <tr><td>Grafik tertentu tidak mengikuti rentang</td><td>Kategori, prioritas, gedung, jam, dan waktu penyelesaian di tab Ringkasan menghitung seluruh data, sehingga bisa berbeda dari kartu yang mengikuti rentang</td><td>Terapkan rentang pada semua kueri grafik</td></tr>
   <tr><td>Ringkasan harian dan Kato Bot hanya mencakup keluhan</td><td>Laporan tugas harian tidak ikut diringkas atau ditanyakan</td><td>Tambahkan alat dan bahan ringkasan dari laporan kebersihan</td></tr>
   <tr><td>Tampilan berfilter maks. 200 baris</td><td>Rentang panjang tidak tampil utuh</td><td>Paginasi atau hitungan dari server</td></tr>
@@ -419,6 +426,7 @@ keluhan), serta keunikan dan usia foto dan GPS (untuk tugas harian).</p>
 <ul class="cek">
   <li>Ganti sandi supervisor bawaan dan tetapkan pemegang akun supervisor (sebaiknya dua orang) serta pengelola teknis untuk keadaan darurat</li>
   <li>Tetapkan koordinat pusat kampus dan radius yang tepat</li>
+  <li>Pastikan paket akun Google yang dipakai untuk Gemini dan ketentuannya atas foto yang dikirim, lalu putuskan apakah dapat diterima</li>
   <li>Sepakati bahwa supervisor rutin memeriksa tab Laporan &gt; Kebersihan dan Log, terutama peringatan luar kampus, dan memeriksa sampel foto bukti keluhan</li>
   <li>Putuskan apakah pimpinan perlu peran baca-saja</li>
   <li>Tentukan bentuk apresiasi untuk pelapor teraktif</li>
@@ -426,15 +434,16 @@ keluhan), serta keunikan dan usia foto dan GPS (untuk tugas harian).</p>
 </ul>
 
 <h2>12. Status implementasi dan rencana lanjutan</h2>
-<p>Dari 38 kebutuhan fungsional aktif, 34 selesai, 1 sebagian, dan 3 masih rencana; FR-20 dihapus. Sistem berjalan di
+<p>Dari 39 kebutuhan fungsional aktif, 35 selesai, 1 sebagian, dan 3 masih rencana; FR-20 dihapus. Sistem berjalan di
 <a href="https://ai-complaint.yvrtz.workers.dev">ai-complaint.yvrtz.workers.dev</a> dengan 29 lokasi aktif
 (gedung A sampai I beserta halamannya, dan Lapang Voli) dan 11 nama petugas awal.</p>
 <table>
   <tr><th style="width:34%">Fitur</th><th style="width:16%">Status</th><th>Catatan berdasarkan kode</th></tr>
   <tr><td>Pelaporan keluhan (FR-01 s.d. FR-06)</td><td><span class="inti">Selesai</span></td><td>Lokasi lewat QR atau pilihan; foto kamera wajib; deteksi kembar; akun opsional</td></tr>
   <tr><td>Klasifikasi AI (FR-07)</td><td><span class="inti">Selesai</span></td><td>Divalidasi ulang sebelum disimpan; bisa dianalisis ulang</td></tr>
-  <tr><td>Penanganan keluhan (FR-08 s.d. FR-13)</td><td><span class="inti">Selesai</span></td><td>Klaim, ambil alih, foto bukti wajib, petugas tidak bisa membuka lagi</td></tr>
+  <tr><td>Penanganan keluhan (FR-08 s.d. FR-13)</td><td><span class="inti">Selesai</span></td><td>Klaim, ambil alih, foto bukti wajib, keluhan selesai tidak bisa diubah lewat pembaruan status</td></tr>
   <tr><td>Buka kembali oleh supervisor (FR-39)</td><td><span class="inti">Selesai</span></td><td>Tombol di tab Laporan &gt; Keluhan; tercatat sebagai <code>report_reopened</code></td></tr>
+  <tr><td>Deskripsi AI foto bukti (FR-40)</td><td><span class="inti">Selesai</span></td><td>Gemini, sesudah keluhan selesai; tampil di dashboard supervisor; kegagalan tercatat sebagai <code>proof_description_failed</code></td></tr>
   <tr><td>Notifikasi petugas (FR-14)</td><td><span class="pendukung">Rencana</span></td><td>Belum ada</td></tr>
   <tr><td>Tugas harian (FR-15 s.d. FR-19)</td><td><span class="inti">Selesai</span></td><td>Enam tugas, foto bercap, GPS, usia dan keunikan foto</td></tr>
   <tr><td>Pemeriksaan foto tugas oleh AI (FR-20)</td><td><span class="pendukung">Dihapus</span></td><td>Tidak dilanjutkan; nomornya tidak dipakai ulang</td></tr>
@@ -451,7 +460,7 @@ keluhan), serta keunikan dan usia foto dan GPS (untuk tugas harian).</p>
   <tr><td>Backend</td><td>TypeScript, Hono di Cloudflare Workers</td></tr>
   <tr><td>Frontend</td><td>React 18, Vite, Tailwind CSS, disajikan oleh Worker yang sama</td></tr>
   <tr><td>Data</td><td>Cloudflare D1 (13 migrasi; skema berbahasa Inggris), Cloudflare R2</td></tr>
-  <tr><td>AI</td><td>DeepSeek <code>deepseek-chat</code>, khusus teks</td></tr>
+  <tr><td>AI</td><td>DeepSeek <code>deepseek-chat</code> untuk teks; Gemini <code>gemini-3.6-flash</code> untuk mendeskripsikan foto bukti</td></tr>
   <tr><td>Pengujian</td><td>Playwright end-to-end (<code>e2e/</code>, <code>npm run test:e2e</code>)</td></tr>
   <tr><td>Dokumentasi</td><td>README, dokumentasi teknis, dokumentasi testing, panduan umum, PRD, diagram dan penjelasan diagram</td></tr>
 </table>

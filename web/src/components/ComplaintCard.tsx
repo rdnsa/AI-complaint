@@ -146,12 +146,12 @@ export default function ComplaintCard({
 
       {step && (
         <div className="mt-3 rounded-nav bg-mist-100 p-4">
-          <label htmlFor={`who-${r.id}`} className="text-body-sm font-semibold text-ink-900">
+          <label htmlFor={`who-${r.id}`} className="sr-only">
             {step === 'resolve' ? t('staff.resolve_who') : t('staff.claim_who')}
           </label>
           <Select
             id={`who-${r.id}`}
-            className="input mt-2 !py-2.5 font-semibold"
+            className="input !py-2.5 font-semibold"
             value={who}
             onChange={setWho}
           >
@@ -188,6 +188,8 @@ export default function ComplaintCard({
       )}
 
       <Camera open={camera} onClose={() => setCamera(false)} onCapture={resolve} />
+      {/* While asking who, the card shows only the name and the two answers. */}
+      {!step && (
       <div className="mt-3 flex flex-col gap-2">
         <button
           type="button"
@@ -204,7 +206,7 @@ export default function ComplaintCard({
             </>
           )}
         </button>
-        {r.status === 'new' && !step && (
+        {r.status === 'new' && (
           <button type="button" onClick={() => openChooser('claim')} disabled={busy} className="btn-neutral w-full py-2.5">
             {t('staff.start_work')}
           </button>
@@ -217,15 +219,14 @@ export default function ComplaintCard({
               <br />
               {t('staff.held_hint')}
             </p>
-            {!step && (
-              <button type="button" onClick={() => openChooser('claim')} disabled={busy} className="btn-neutral w-full py-2.5">
+                          <button type="button" onClick={() => openChooser('claim')} disabled={busy} className="btn-neutral w-full py-2.5">
                 {t('staff.take_over')}
               </button>
-            )}
           </>
         )}
 
       </div>
+      )}
     </article>
   );
 }
