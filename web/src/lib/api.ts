@@ -28,7 +28,6 @@ export type Priority = 'low' | 'medium' | 'high';
 export type ReportStatus = 'new' | 'in_progress' | 'resolved';
 
 /** 'wrong_place': the photo does not show the reported location. */
-export type ProofVerdict = 'clean' | 'dirty' | 'wrong_place';
 export type Category = 'cleanliness' | 'supplies' | 'damage' | 'odor' | 'flooding' | 'other';
 
 export interface Report {
@@ -44,9 +43,6 @@ export interface Report {
   description: string;
   photo_url: string | null;
   proof_photo_url: string | null;
-  /** The vision model's verdict on the proof photo; only 'clean' ever gets stored. */
-  proof_verdict: ProofVerdict | null;
-  proof_reason: string | null;
   status: ReportStatus;
   staff_name: string | null;
   resolved_at: string | null;
@@ -269,12 +265,6 @@ export interface CleaningCharts {
   staff: CleaningStaffWork[];
 }
 
-/** The vision check's verdict on a proof or work photo. */
-export interface Verification {
-  verdict: ProofVerdict;
-  reason: string;
-}
-
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -392,13 +382,12 @@ export const api = {
     if (filter.floor !== undefined) q.set('floor', String(filter.floor));
     return req<{ data: Report[] }>(`/api/reports/open?${q}`);
   },
-  /** Closing with a photo takes a few seconds: the server runs the vision check first. */
   updateStatus: (
     id: string,
     status: ReportStatus,
     extra: { staff_id?: string; proof_photo_key?: string } = {},
   ) =>
-    req<{ ok: boolean; status: ReportStatus; verification: Verification | null }>(`/api/reports/${id}`, {
+    req<{ ok: boolean; status: ReportStatus }>(`/api/reports/${id}`, {
       method: 'PATCH',
       body: JSON.stringify({ status, ...extra }),
     }),

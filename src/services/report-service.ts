@@ -1,12 +1,8 @@
-import { checkProofPhoto } from '../adapters/llm';
-import { readPhoto, FOLDER, deletePhoto } from '../adapters/storage';
+import { photoUploadedAt, FOLDER, deletePhoto } from '../adapters/storage';
 import {
   canResolve,
   toDTO,
   photoUrl,
-  type Category,
-  type ProofVerdict,
-  type ProofVerification,
   type ReportDTO,
   type ReportRow,
   type ReportStatus,
@@ -111,105 +107,11 @@ export async function publicBoard(env: Env, filter: reports.ReportFilter) {
 }
 
 export type StatusChangeResult =
-  | { kind: 'ok'; status: ReportStatus; verification: ProofVerification | null }
+  | { kind: 'ok'; status: ReportStatus }
   | { kind: 'not-found' }
   | { kind: 'already-resolved' }
   | { kind: 'photo-not-found' }
-  | { kind: 'proof-missing' }
-  | { kind: 'proof-rejected'; verdict: Exclude<ProofVerdict, 'clean'>; reason: string }
-  | { kind: 'verification-failed'; message: string };
-
-type StoredProof = { key: string; verification: ProofVerification } | null;
-
-/** The proof already on the report, if it was ever verified. */
-function existingProof(row: ReportRow): StoredProof {
-  if (!row.proof_photo_key || !row.proof_verdict) return null;
-  return {
-    key: row.proof_photo_key,
-    verification: {
-      verdict: row.proof_verdict,
-      reason: row.proof_reason ?? '',
-      model: row.proof_model ?? '',
-      ms: row.proof_ms ?? 0,
-    },
-  };
-}
-
-type ProofCheckResult =
-  | { kind: 'accepted'; proof: NonNullable<StoredProof> }
-  | Extract<
-      StatusChangeResult,
-      { kind: 'photo-not-found' | 'proof-rejected' | 'verification-failed' }
-    >;
-
-/**
- * Runs the vision check on a freshly uploaded proof photo.
- *
- * A photo that does not pass is deleted again: the bucket only ever holds
- * proof that passed, and the verdict survives in the activity log. A failure
- * of the checker itself is reported separately so staff know to retry rather
- * than to re-clean; the retry uploads a fresh copy, so that photo goes too.
- */
-async function checkNewProof(
-  env: Env,
-  row: ReportRow,
-  key: string,
-  staffName: string,
-): Promise<ProofCheckResult> {
-  // Only a photo uploaded as proof counts: closing is open to anyone who picks
-  // a staff name, so a reporter's condition photo must not be reusable here.
-  const photo = key.startsWith(`${FOLDER.proof}/`) ? await readPhoto(env, key) : null;
-  if (!photo) return { kind: 'photo-not-found' };
-
-  const start = Date.now();
-  let check;
-  try {
-    check = await checkProofPhoto(env, photo, {
-      location: row.location_name ?? row.area_id ?? row.toilet_id ?? '',
-      complaint: row.description,
-      categories: row.categories ? (JSON.parse(row.categories) as Category[]) : [],
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`Proof verification failed for report ${row.id}: ${message}`);
-    await deletePhoto(env, key);
-    await log(env, {
-      action: 'verification_failed',
-      report_id: row.id,
-      actor: staffName,
-      summary: `Pemeriksaan foto bukti gagal di ${row.location_name}`,
-      details: { error: message.slice(0, 300), model: env.VISION_MODEL },
-    });
-    return { kind: 'verification-failed', message };
-  }
-  const ms = Date.now() - start;
-
-  if (check.verdict !== 'clean') {
-    await deletePhoto(env, key);
-    await log(env, {
-      action: 'proof_rejected',
-      report_id: row.id,
-      actor: staffName,
-      summary: `Foto bukti ditolak (${check.verdict}) di ${row.location_name}: ${check.reason}`,
-      details: {
-        verdict: check.verdict,
-        reason: check.reason,
-        confidence: check.confidence,
-        model: env.VISION_MODEL,
-        ms,
-      },
-    });
-    return { kind: 'proof-rejected', verdict: check.verdict, reason: check.reason };
-  }
-
-  return {
-    kind: 'accepted',
-    proof: {
-      key,
-      verification: { verdict: 'clean', reason: check.reason, model: env.VISION_MODEL, ms },
-    },
-  };
-}
+  | { kind: 'proof-missing' };
 
 export async function changeStatus(
   env: Env,
@@ -226,26 +128,25 @@ export async function changeStatus(
 
   // Claiming what you already hold changes nothing, so it is neither written nor logged twice.
   if (status === 'in_progress' && before.status === 'in_progress' && before.staff_name === staffName) {
-    return { kind: 'ok', status, verification: null };
+    return { kind: 'ok', status };
   }
 
   // Another staff member taking over a claim that never reached a proof photo.
   const handedOverFrom =
     status === 'in_progress' && before.status === 'in_progress' && before.staff_name ? before.staff_name : null;
 
-  // A new photo must pass the vision check before anything else changes.
-  let proof = existingProof(before);
-  if (newProofPhoto) {
-    const check = await checkNewProof(env, before, newProofPhoto, staffName);
-    if (check.kind !== 'accepted') return check;
-    proof = check.proof;
+  // Only a photo uploaded as proof counts: closing is open to anyone who picks a
+  // staff name, so a reporter's condition photo must not be reusable here.
+  if (newProofPhoto && !(newProofPhoto.startsWith(`${FOLDER.proof}/`) && (await photoUploadedAt(env, newProofPhoto)))) {
+    return { kind: 'photo-not-found' };
   }
+  const proofPhoto = newProofPhoto ?? before.proof_photo_key;
 
-  if (!canResolve(status, proof?.key ?? null, proof?.verification.verdict ?? null)) {
+  if (!canResolve(status, proofPhoto)) {
     return { kind: 'proof-missing' };
   }
 
-  await reports.updateStatus(env, id, status, staffName, proof);
+  await reports.updateStatus(env, id, status, staffName, proofPhoto);
   reportsChanged();
 
   await log(env, {
@@ -259,12 +160,11 @@ export async function changeStatus(
       from: before.status,
       to: status,
       handed_over_from: handedOverFrom,
-      proof_photo: proof?.key ?? null,
-      verification: proof?.verification ?? null,
+      proof_photo: proofPhoto,
     },
   });
 
-  return { kind: 'ok', status, verification: proof?.verification ?? null };
+  return { kind: 'ok', status };
 }
 
 export async function requestReanalysis(env: Env, id: string): Promise<boolean> {

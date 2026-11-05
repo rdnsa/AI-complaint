@@ -46,7 +46,7 @@
 </style></head><body>
 
 <div class="sampul">
-  <span class="lencana">Dokumentasi testing &middot; Edisi 4 November 2026</span>
+  <span class="lencana">Dokumentasi testing &middot; Edisi 5 November 2026</span>
   <h1>Testing Otomatis Kato Report</h1>
   <p class="sub">Panduan menjalankan, membaca, dan menambah test end-to-end Playwright. Untuk developer dan QA.</p>
 </div>
@@ -66,14 +66,15 @@
 
 <h2 id="ringkas">1. Ringkasan</h2>
 <div class="grid">
-  <div class="kartu"><div class="angka">264</div><div class="angka-ket">eksekusi test lulus</div></div>
-  <div class="kartu"><div class="angka">16</div><div class="angka-ket">gagal sesuai harapan: mencatat 13 bug terbuka</div></div>
+  <div class="kartu"><div class="angka">259</div><div class="angka-ket">eksekusi test lulus</div></div>
+  <div class="kartu"><div class="angka">15</div><div class="angka-ket">gagal sesuai harapan: mencatat 13 bug terbuka</div></div>
   <div class="kartu"><div class="angka">0</div><div class="angka-ket">gagal tak terduga atau flaky</div></div>
   <div class="kartu"><div class="angka">&plusmn;1 mnt</div><div class="angka-ket">satu putaran penuh, 4 worker</div></div>
 </div>
-<p>Hasil di atas berasal dari basis commit <code>fccd959</code>, 4 November 2026. Suite dijalankan penuh empat kali berturut-turut tanpa satu pun kegagalan tak terduga. Suite terdiri dari 279 test ditambah 1 langkah login: 167 test API, 91 test UI desktop, dan 21 test UI HP.</p>
+<p>Hasil di atas berasal dari basis commit <code>2df5b88</code> ditambah penghapusan pemeriksaan foto oleh AI, 5 November 2026. Suite terdiri dari 273 test ditambah 1 langkah login: 163 test API, 89 test UI desktop, dan 21 test UI HP.</p>
 <p>Kepekaan suite juga sudah diuji dengan sengaja merusak empat aturan di kode aplikasi, lalu memulihkannya: laporan selesai bisa dibuka kembali, API akun tanpa pemeriksaan hak akses, klaim tanpa nama, dan kirim laporan tanpa foto. Keempatnya ditangkap suite.</p>
 <div class="tolak"><b>Hijau bukan berarti bebas bug.</b> Ada 13 bug nyata yang masih terbuka, tiga di antaranya berat: lihat <a href="#temuan">bagian 7</a>. Suite tetap hijau karena bug itu ditandai sebagai <em>known issue</em>.</div>
+<div class="catatan"><b>Foto bukti tidak lagi dinilai AI.</b> Petugas cukup mengambil foto, dan laporan langsung selesai. Test case TC-KLH-018 sampai TC-KLH-026 dan TC-KLH-046 di sheet manual menjelaskan perilaku lama, jadi tidak perlu dijalankan lagi.</div>
 
 <h2 id="jalan">2. Cara menjalankan</h2>
 <p>Hanya perlu dipasang sekali:</p>
@@ -111,7 +112,7 @@ npx playwright install chromium</code></pre>
   <tr><th>Bagian</th><th>Di test</th><th>Mengapa</th></tr>
   <tr><td>Worker + frontend</td><td><code>wrangler dev</code> sungguhan di port 8788. Frontend di-build setiap start.</td><td>Sama dengan cara aplikasi berjalan di produksi: satu Worker, satu origin.</td></tr>
   <tr><td>D1 dan R2</td><td>Lokal di <code>.wrangler/e2e-state</code>, memakai migrasi dan seed asli.</td><td>Terpisah dari <code>.wrangler/state</code> milik <code>npm run dev</code>.</td></tr>
-  <tr><td>LLM teks dan visi</td><td>Mock di <code>e2e/support/mock-llm.mjs</code>. <code>--var</code> menimpa URL dan kunci dari <code>.dev.vars</code>.</td><td>Gratis, pasti sama hasilnya, dan kegagalan model bisa dipicu. Satu test memastikan Worker hanya memakai kunci palsu.</td></tr>
+  <tr><td>LLM teks</td><td>Mock di <code>e2e/support/mock-llm.mjs</code>. <code>--var</code> menimpa URL dan kunci dari <code>.dev.vars</code>.</td><td>Gratis, pasti sama hasilnya, dan kegagalan model bisa dipicu. Satu test memastikan Worker hanya memakai kunci palsu.</td></tr>
   <tr><td>Kamera</td><td>Kamera sintetis Chromium (<code>--use-fake-device-for-media-stream</code>).</td><td>Foto hanya bisa diambil dari kamera live di halaman, jadi kameranya yang dipalsukan, bukan unggahannya.</td></tr>
   <tr><td>GPS</td><td>Geolocation Playwright: pusat kampus, Jakarta, atau izin ditolak.</td><td>Mencakup ketiga status lokasi tanpa pergi ke lapangan.</td></tr>
   <tr><td>Supervisor</td><td><code>admin</code> / <code>Admin123!</code> dari migrasi (temuan T-04).</td><td>Hanya berlaku di database uji yang baru dibuat.</td></tr>
@@ -128,7 +129,6 @@ npx playwright install chromium</code></pre>
   <tr><td><code>[llm:not-json]</code></td><td>Balasan bukan JSON</td></tr>
   <tr><td><code>[llm:odd]</code></td><td>Kategori dan prioritas karangan, yang harus dinormalkan Worker</td></tr>
   <tr><td><code>[llm:slow]</code></td><td>Analisis butuh 3 detik</td></tr>
-  <tr><td><code>[vision:dirty]</code>, <code>[vision:wrong_place]</code>, <code>[vision:error]</code></td><td>Foto bukti ditolak (masih kotor, bukan lokasinya) atau pemeriksa gagal</td></tr>
   <tr><td><code>[ask:error]</code></td><td>Kato Bot gagal menjawab</td></tr>
   <tr><td><code>per petugas</code> (pada pertanyaan)</td><td>Model meminta data per petugas, untuk menguji batas akses publik</td></tr>
 </table>
@@ -140,7 +140,7 @@ e2e/
   support/
     start-stack.mjs         menyiapkan database, mock, dan Worker
     mock-llm.mjs            tiruan penyedia LLM
-  api/                      167 test tanpa browser
+  api/                      163 test tanpa browser
     auth.spec.ts            registrasi, login, sesi, cookie
     access.spec.ts          matriks hak akses tiap endpoint
     reports.spec.ts         laporan, analisis AI, status, foto bukti, papan publik, peringkat
@@ -148,7 +148,7 @@ e2e/
     uploads.spec.ts         format, ukuran, folder, path traversal
     users.spec.ts           kelola akun petugas dan supervisor
     insight.spec.ts         isolasi, ringkasan, grafik, Kato Bot
-  ui/                       112 eksekusi di browser
+  ui/                       110 eksekusi di browser
     auth.setup.ts           menyimpan sesi supervisor
     home.spec.ts            beranda, tautan lama, bahasa, tema, lebar layar, login
     report.spec.ts          form laporan, kamera, halaman status
@@ -159,33 +159,33 @@ e2e/
 <p>Test bertanda <code>@mobile</code> juga dijalankan pada emulasi Pixel 7, karena pelapor dan petugas terutama memakai HP.</p>
 
 <h2 id="cakupan">6. Cakupan</h2>
-<p>Judul setiap test memuat ID dari <code>docs/qa/test-case-manual-kato-report.xlsx</code>, sehingga bisa ditelusuri dua arah. Suite ini menyentuh <b>220 dari 542 test case manual</b>, termasuk <b>155 dari 232 yang berprioritas P1</b>.</p>
+<p>Judul setiap test memuat ID dari <code>docs/qa/test-case-manual-kato-report.xlsx</code>, sehingga bisa ditelusuri dua arah. Suite ini menyentuh <b>221 dari 542 test case manual</b>, termasuk <b>153 dari 232 yang berprioritas P1</b>.</p>
 <div class="catatan">"Tersentuh" berarti ada test otomatis untuk skenario itu, tidak selalu seluruh langkah manualnya. Suite ini <b>tidak menggantikan</b> sheet manual: kolom statusnya tetap perlu diisi penguji untuk bagian yang tercantum di <a href="#batas">bagian 8</a>.</div>
 <table>
   <tr><th>Modul</th><th class="n">Tersentuh</th><th class="n">Total</th><th>Catatan</th></tr>
   <tr><td>A. Beranda &amp; Navigasi</td><td class="n">4</td><td class="n">14</td><td></td></tr>
   <tr><td>B. Registrasi, Login &amp; Sesi</td><td class="n">29</td><td class="n">49</td><td></td></tr>
-  <tr><td>C. Lokasi, QR &amp; Tautan Lama</td><td class="n">11</td><td class="n">29</td><td></td></tr>
+  <tr><td>C. Lokasi, QR &amp; Tautan Lama</td><td class="n">12</td><td class="n">29</td><td></td></tr>
   <tr><td>D. Pelaporan oleh Pelapor</td><td class="n">23</td><td class="n">37</td><td></td></tr>
   <tr><td>E. Kamera</td><td class="n">3</td><td class="n">13</td><td>Sisanya butuh perangkat asli</td></tr>
   <tr><td>F. Halaman Status Laporan</td><td class="n">3</td><td class="n">15</td><td></td></tr>
   <tr><td>G. Analisis AI Keluhan</td><td class="n">4</td><td class="n">22</td><td>Kualitas jawaban model butuh LLM asli</td></tr>
   <tr><td>H. Papan Laporan Publik</td><td class="n">11</td><td class="n">26</td><td></td></tr>
   <tr><td>I. Papan Peringkat</td><td class="n">5</td><td class="n">11</td><td></td></tr>
-  <tr><td>J. Petugas: Keluhan</td><td class="n">28</td><td class="n">46</td><td></td></tr>
-  <tr><td>K. Petugas: Tugas Harian</td><td class="n">22</td><td class="n">57</td><td></td></tr>
-  <tr><td>L. Supervisor: Daftar Keluhan</td><td class="n">9</td><td class="n">27</td><td></td></tr>
-  <tr><td>M. Supervisor: Rekap Kebersihan</td><td class="n">3</td><td class="n">22</td><td>Prioritas berikutnya untuk ditambah</td></tr>
+  <tr><td>J. Petugas: Keluhan</td><td class="n">24</td><td class="n">46</td><td>TC-KLH-018 s.d. 026 sudah tidak berlaku</td></tr>
+  <tr><td>K. Petugas: Tugas Harian</td><td class="n">23</td><td class="n">57</td><td></td></tr>
+  <tr><td>L. Supervisor: Daftar Keluhan</td><td class="n">10</td><td class="n">27</td><td></td></tr>
+  <tr><td>M. Supervisor: Rekap Kebersihan</td><td class="n">4</td><td class="n">22</td><td>Prioritas berikutnya untuk ditambah</td></tr>
   <tr><td>N. Supervisor: Ringkasan &amp; Grafik</td><td class="n">7</td><td class="n">22</td><td></td></tr>
   <tr><td>O. Supervisor: Log</td><td class="n">4</td><td class="n">15</td><td></td></tr>
   <tr><td>P. Supervisor: Kelola Akun</td><td class="n">21</td><td class="n">32</td><td></td></tr>
   <tr><td>Q. Supervisor: QR Lokasi</td><td class="n">4</td><td class="n">10</td><td>Pemindaian dan cetak fisik manual</td></tr>
-  <tr><td>R. Kato Bot</td><td class="n">8</td><td class="n">36</td><td>Injeksi prompt butuh LLM asli</td></tr>
+  <tr><td>R. Kato Bot</td><td class="n">9</td><td class="n">36</td><td>Injeksi prompt butuh LLM asli</td></tr>
   <tr><td>S. Unggah &amp; Sajikan Foto</td><td class="n">11</td><td class="n">14</td><td></td></tr>
   <tr><td>T. Hak Akses &amp; Keamanan</td><td class="n">4</td><td class="n">11</td><td></td></tr>
   <tr><td>U. Antarmuka Umum</td><td class="n">6</td><td class="n">21</td><td></td></tr>
   <tr><td>V. Non-Fungsional</td><td class="n">0</td><td class="n">13</td><td>Butuh lingkungan produksi atau staging</td></tr>
-  <tr><td><b>Total</b></td><td class="n"><b>220</b></td><td class="n"><b>542</b></td><td></td></tr>
+  <tr><td><b>Total</b></td><td class="n"><b>221</b></td><td class="n"><b>542</b></td><td></td></tr>
 </table>
 
 <h2 id="temuan">7. Bug yang masih terbuka</h2>
@@ -193,7 +193,7 @@ e2e/
 <table>
   <tr><th>Temuan</th><th>Keparahan</th><th>Test case</th><th>Harapan</th><th>Hasil saat ini</th></tr>
   <tr><td><b>T-01</b> Foto bisa dihapus tanpa login</td><td>Tinggi</td><td>TC-THR-046</td><td>Foto tetap ada (200)</td><td>Foto terhapus (404)</td></tr>
-  <tr><td><b>T-02</b> Foto bukti laporan lain bisa dipakai ulang atau terhapus</td><td>Tinggi</td><td>TC-KLH-045, TC-KLH-046</td><td>Ditolak (400); foto tetap ada</td><td>Diterima (200); foto terhapus (404)</td></tr>
+  <tr><td><b>T-02</b> Foto bukti laporan lain bisa dipakai ulang</td><td>Tinggi</td><td>TC-KLH-045</td><td>Ditolak (400)</td><td>Diterima (200)</td></tr>
   <tr><td><b>T-03</b> Sesi supervisor tidak bisa dicabut</td><td>Tinggi</td><td>TC-AUT-043</td><td>Sesi lama ditolak (401)</td><td>Tetap berlaku (200)</td></tr>
   <tr><td><b>T-05</b> Laporan selesai bisa diselesaikan ulang</td><td>Sedang</td><td>TC-KLH-031</td><td>409</td><td>200, penangan tertimpa</td></tr>
   <tr><td><b>T-06</b> Teks asli keluhan terbuka untuk publik</td><td>Sedang</td><td>TC-PUB-025</td><td>Teks asli tidak ikut terkirim</td><td>Ikut terkirim</td></tr>
@@ -212,7 +212,7 @@ e2e/
 <h2 id="batas">8. Yang tidak diotomasi</h2>
 <table>
   <tr><th>Area</th><th>Mengapa</th><th>Cara mengujinya</th></tr>
-  <tr><td>Kualitas jawaban AI: ketepatan kategori dan prioritas, penilaian foto, injeksi prompt</td><td>Mock selalu menjawab sesuai aturan. Suite membuktikan <em>alur</em> di sekitar model, bukan <em>kecerdasan</em> modelnya.</td><td>Manual dengan LLM asli: TC-AIA, TC-KLH-020 s.d. 023, TC-BOT-023 s.d. 025</td></tr>
+  <tr><td>Kualitas jawaban AI: ketepatan kategori dan prioritas, injeksi prompt</td><td>Mock selalu menjawab sesuai aturan. Suite membuktikan <em>alur</em> di sekitar model, bukan <em>kecerdasan</em> modelnya.</td><td>Manual dengan LLM asli: TC-AIA, TC-BOT-023 s.d. 025</td></tr>
   <tr><td>Browser selain Chromium, dan HP asli</td><td>Kamera sintetis hanya tersedia di Chromium. Proyek <code>mobile</code> adalah emulasi, bukan Safari iOS atau Android asli.</td><td>Manual di perangkat, lewat HTTPS</td></tr>
   <tr><td>Cron 17.00 WIB</td><td>Dipicu oleh Cloudflare. Yang diuji adalah pembuatan ringkasannya lewat <code>POST /api/summary/generate</code>.</td><td>TC-SPR-005</td></tr>
   <tr><td>Foto lebih tua dari 3 jam</td><td>Butuh waktu unggah yang dimajukan di R2.</td><td>TC-THR-030</td></tr>
@@ -224,10 +224,9 @@ e2e/
 <h2 id="tulis">9. Menulis test baru</h2>
 <pre><code>import { expect, test, unique } from '../fixtures';
 
-test('TC-KLH-018 foto kotor ditolak', async ({ api, newStaff }) => {
-  const { id } = await api.report({ description: unique('[vision:dirty] keluhan') });
-  const res = await api.resolve(id, (await newStaff()).id);
-  expect(res.status()).toBe(422);
+test('TC-AIA-019 layanan LLM gagal: laporan tetap ada', async ({ api }) => {
+  const { id } = await api.report({ description: unique('[llm:error] keluhan') });
+  expect((await api.settled(id)).ai_status).toBe('failed');
 });</code></pre>
 <ol>
   <li><b>Impor dari <code>e2e/fixtures.ts</code></b>, bukan langsung dari <code>@playwright/test</code>.</li>

@@ -43,17 +43,6 @@ export function getPhoto(env: Env, key: string, conditions: Headers) {
   return env.BUCKET.get(key, { onlyIf: conditions });
 }
 
-/** Reads a whole photo into memory, for handing it to the vision model. */
-export async function readPhoto(
-  env: Env,
-  key: string,
-): Promise<{ bytes: ArrayBuffer; type: string } | null> {
-  if (!isAllowedKey(key)) return null;
-  const obj = await env.BUCKET.get(key);
-  if (!obj) return null;
-  return { bytes: await obj.arrayBuffer(), type: obj.httpMetadata?.contentType ?? 'image/jpeg' };
-}
-
 /** When the server received a photo, or null when it does not exist. */
 export async function photoUploadedAt(env: Env, key: string): Promise<Date | null> {
   if (!isAllowedKey(key)) return null;

@@ -16,7 +16,7 @@ QR or picked location  →  describe the problem  →  LLM analysis
                                                                       ↓
                                      staff board  +  17:00 WIB cron → daily summary
                                            ↓
-                       staff claim it, then upload proof photo  →  vision LLM: clean?  →  resolved
+                       staff claim it, then upload a proof photo  →  resolved
 ```
 
 Live: <https://ai-complaint.yvrtz.workers.dev>
@@ -57,9 +57,7 @@ both through the `location_info` view.
    locations and the most urgent actions.
 4. **Reporter leaderboard** — gamification ranked by report volume, shown
    alongside how many of those reports were actually resolved.
-5. **Proof-photo verification** — a vision model judges the staff photo before a
-   report can be closed: does it show the reported location, and is it clean?
-6. **Ask the data (Kato Bot)** — a floating icon on every page opens a chat
+5. **Ask the data (Kato Bot)** — a floating icon on every page opens a chat
    where anyone types a question in plain language ("which building had the most
    blockages this month?") and the text model answers it by calling a small set
    of aggregate queries; it never sees raw rows, and staff names are only
@@ -94,8 +92,7 @@ both through the `location_info` view.
     the room — each photographed and sent on its own. Photos are stamped with
     name, area, server time and GPS; a photo older than three hours or already
     used is refused; a report filed outside `CAMPUS_RADIUS_M` of the campus (or
-    without GPS) is accepted but flagged to the supervisor. These photos are
-    not judged by the vision model. Staff may send from any area; the
+    without GPS) is accepted but flagged to the supervisor. Staff may send from any area; the
     supervisor's **Laporan → Kebersihan** view shows a printable daily recap
     per area (done ✓ with who and when / not reported ✗), plus what each person
     did. Staff do not own areas: whoever is free does the work. Areas live in
@@ -115,22 +112,18 @@ both through the `location_info` view.
 
 ## Which model does what
 
-Two models, never for the same job — the split follows the input type. Daily-task photos use neither: they are checked by rules (age, reuse, GPS), not by a model.
+One model, `deepseek-chat` from DeepSeek, for text only. Photos are never judged by a model: a proof photo closes a report as soon as it is uploaded, and daily-task photos are checked by rules (age, reuse, GPS).
 
-| | DeepSeek `deepseek-chat` | Gemini `gemini-3.6-flash` |
-|---|---|---|
-| Input | complaint text; the day's list of summaries; admin questions | staff proof photo of a complaint, plus the original complaint as context |
-| Job | features 1–3: classify, prioritise, summarise, daily summary; feature 6: answer questions via tool calls | feature 5: is this the reported location, and is it clean? |
-| Called | on every new report (async, after the response), once a day by cron, and per question | every time staff close a complaint (sync — staff wait for the verdict) |
-| On failure | report is kept unlabelled, can be re-analysed | the close is refused (`502`); staff retry |
-| Code | `analyzeComplaint()`, `summarizeDay()`, `chatWithTools()` in `src/adapters/llm.ts` | `checkProofPhoto()` in the same file |
-| Config | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | `VISION_BASE_URL`, `VISION_MODEL`, `VISION_API_KEY` |
-| Stored in | `reports.categories/priority/summary/recommendation/ai_*`, `daily_summaries` | `reports.proof_*`; `activity_log` rows `proof_rejected`, `verification_failed` |
-| Cost | paid, very cheap | Google AI Studio free tier |
-
-Both go through the same `chatJSON()` helper because both providers speak the
-OpenAI chat-completions format; only the target (URL, model, key) and the
-message content differ.
+| | |
+|---|---|
+| Input | complaint text; the day's list of summaries; admin questions |
+| Job | features 1–3: classify, prioritise, summarise, daily summary; feature 5: answer questions via tool calls |
+| Called | on every new report (async, after the response), once a day by cron, and per question |
+| On failure | report is kept unlabelled, can be re-analysed |
+| Code | `analyzeComplaint()`, `summarizeDay()`, `chatWithTools()` in `src/adapters/llm.ts` |
+| Config | `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` |
+| Stored in | `reports.categories/priority/summary/recommendation/ai_*`, `daily_summaries` |
+| Cost | paid, very cheap |
 
 ## Roles
 
@@ -139,7 +132,7 @@ Three parties, and only the supervisor ever signs in.
 | Role | How it is created | Signs in? | Can do |
 |---|---|---|---|
 | **Reporter** | nobody — or self-registers at `/register` to appear on the leaderboard | no (optional) | report a dirty spot or broken facility at any location, with a live-camera photo |
-| **Cleaning staff** | the supervisor adds a **name** in the dashboard | **no** — picks their name from a dropdown at the moment they act | claim and resolve complaints (proof photo checked by the vision model), take over a colleague's claim, and send the daily tasks |
+| **Cleaning staff** | the supervisor adds a **name** in the dashboard | **no** — picks their name from a dropdown at the moment they act | claim and resolve complaints with a proof photo, take over a colleague's claim, and send the daily tasks |
 | **Supervisor** (SPV) | ships with the database (`admin` / `Admin123!`); can add more | yes | monitor reports, cleaning recap, charts and the activity log; manage staff names and supervisor accounts (add, rename, change password, deactivate, delete) |
 
 Kato Bot is open to everyone; QR stickers are made in the supervisor dashboard.
@@ -175,7 +168,6 @@ salt via WebCrypto. The plaintext is never stored anywhere.
 | Frontend | React 18 + Vite + Tailwind CSS, glassmorphism design (see `design.md`) |
 | i18n | hand-rolled dictionary in `web/src/lib/i18n.tsx`, no library |
 | LLM (text) | DeepSeek `deepseek-chat` in JSON mode — no training, no dataset |
-| LLM (vision) | any OpenAI-compatible vision model, default Gemini `gemini-3.6-flash` — judges proof photos |
 
 The frontend and the API live in the same Worker on the same origin, so there is
 no CORS configuration and only one thing to deploy. The Worker also has a daily
@@ -187,7 +179,7 @@ cron (`0 10 * * *` UTC = 17:00 WIB) that writes the daily summary.
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY, VISION_API_KEY and AUTH_SECRET (without it sign-in fails with 500)
+cp .dev.vars.example .dev.vars   # fill in LLM_API_KEY and AUTH_SECRET (without it sign-in fails with 500)
 
 npm run db:local                 # apply migrations to the local D1
 npm run db:seed                  # legacy toilets (older reports point at them)
@@ -251,7 +243,6 @@ that line is removed. The list of open bugs and everything else is in
 
 ```bash
 npx wrangler secret put LLM_API_KEY
-npx wrangler secret put VISION_API_KEY # key for the vision model; see wrangler.jsonc vars
 npx wrangler secret put AUTH_SECRET   # a long random string
 
 npm run db:remote                     # migrations against production D1
@@ -266,56 +257,6 @@ API fails until they exist. Back up production first:
 
 The R2 bucket does **not** need public access — photos are served back by the
 Worker at `GET /api/uploads/<key>`.
-
-### The vision model
-
-`deepseek-chat` cannot see images, so proof photos go to a second model. The
-call uses the OpenAI chat-completions format with an `image_url` part, so any
-provider that speaks it works; only configuration changes.
-
-| Setting | Where | Value |
-|---|---|---|
-| `VISION_BASE_URL` | `wrangler.jsonc` → `vars` | `https://generativelanguage.googleapis.com/v1beta/openai` |
-| `VISION_MODEL` | `wrangler.jsonc` → `vars` | `gemini-3.6-flash` — switch to `gemini-3.5-flash-lite` for a larger free quota |
-| `VISION_API_KEY` | `wrangler secret put` / `.dev.vars` | key from <https://aistudio.google.com/apikey>; comma-separate several keys to fail over when one is rate-limited; falls back to `LLM_API_KEY` when unset |
-
-Alternatives, each a two-line change: OpenAI (`https://api.openai.com/v1`,
-`gpt-4o-mini`), OpenRouter (`https://openrouter.ai/api/v1`, any vision model),
-Anthropic (`https://api.anthropic.com/v1`, `claude-haiku-4-5-20251001`).
-
-Gemini's free tier costs nothing and needs no card, but is capped per minute
-and per day; the live numbers are at <https://aistudio.google.com/rate-limits>.
-One closed report is one request, so a campus stays far below the cap. Note
-that on the free tier Google may use submitted photos to improve its products;
-enabling billing on that project turns this off at a cost that is effectively
-zero at this volume.
-
-**Gemini model names expire.** The first deploy used `gemini-2.5-flash`, which
-Google had already closed to new users; the 404 named the replacement. Errors
-from the vision call are stored verbatim in the activity log, so look there first:
-
-```bash
-npx wrangler d1 execute kato --remote --command \
-  "SELECT created_at, details FROM activity_log WHERE action='verification_failed' ORDER BY id DESC LIMIT 3"
-```
-
-### Checking how much the vision model is used
-
-Every check is logged, so usage can be counted without opening Google's console:
-
-```bash
-npx wrangler d1 execute kato --remote --command "
-SELECT date(created_at) AS day, action, COUNT(*) AS count
-  FROM activity_log
- WHERE action IN ('proof_rejected','verification_failed')
-    OR (action='status_changed' AND (details LIKE '%\"verdict\":\"clean\"%'
-                                      OR details LIKE '%\"hasil\":\"bersih\"%'))
- GROUP BY day, action ORDER BY day DESC"
-```
-
-`status_changed` rows with `verdict: clean` are accepted
-photos, `proof_rejected` rejected ones, `verification_failed` failed calls;
-together they are the day's request count. An `LLM HTTP 429` in the log means the daily quota ran out.
 
 ### Automatic deploys (Cloudflare Workers Builds)
 
@@ -384,7 +325,7 @@ Reports filed before migration 0011 point at a legacy toilet
 | `GET` | `/api/reports/mine` | the signed-in reporter's own reports |
 | `GET` | `/api/reports/open?building=&floor=` | reports still waiting for staff (filters optional) |
 | `GET` | `/api/reports/:id` | one report |
-| `PATCH` | `/api/reports/:id` | staff: `{status, staff_id, proof_photo_key?}`; claiming (`in_progress`) is not a lock and may be taken over; closing needs a proof photo, checked by the vision model (`422` when the place still looks dirty or is the wrong place, `502` when the check fails); a resolved report answers `409` |
+| `PATCH` | `/api/reports/:id` | staff: `{status, staff_id, proof_photo_key?}`; claiming (`in_progress`) is not a lock and may be taken over; closing needs a proof photo (`422` when the place still looks dirty or is the wrong place, `502` when the check fails); a resolved report answers `409` |
 | `GET` | `/api/staff` | the names on the staff dropdown |
 | `POST` | `/api/uploads?kind=report\|proof\|cleaning` | upload a photo |
 | `GET` | `/api/uploads/:key` | serve a photo from R2 |
@@ -446,7 +387,7 @@ src/
   env.ts                 infrastructure bindings and configuration
   domain/types.ts        entities, enums, DTO mapping, closing rule
   adapters/
-    llm.ts               prompts, few-shot examples, output validation, proof-photo check
+    llm.ts               prompts, few-shot examples, output validation
     storage.ts           R2 photo storage, prefixes and limits
     session.ts           JWT cookie sessions and role guards
     password.ts          PBKDF2 hashing
@@ -556,20 +497,7 @@ cannot be reopened. Both photos are enforced on the server, not merely hidden in
 The proof photo is shown on the public board so that "already handled" can be checked
 by anyone.
 
-**The proof photo is judged before it is accepted.** A photo alone only proves
-that *something* was photographed. So `PATCH /api/reports/:id` hands the
-uploaded photo, together with the original complaint, to a vision model and
-asks two questions: does it show the reported location, and does it look clean?
-Only a `clean` verdict lets the status become `resolved`; `dirty` and `wrong_place`
-come back as `422` with the model's one-sentence reason, the photo is deleted
-from R2, and the attempt is written to the activity log as `proof_rejected`. The
-accepted verdict is stored on the report (`proof_*`) and shown under the
-photo. The text model (DeepSeek) cannot see images, which is why the vision
-model has its own `VISION_*` configuration; anything OpenAI-compatible works.
-When the vision endpoint itself is down the close is refused with `502` rather
-than waved through — the rule is "clean, verified", and an outage does not
-lower that bar. This is the opposite of the text analysis, which deliberately
-degrades: an unanalysed complaint is still useful, unverified proof is not.
+**The proof photo is not judged by a model.** An automatic check used to refuse photos that looked dirty or showed the wrong place, but it refused genuine work too often and made closing a report too hard, so it was removed. Reports closed while it ran keep their old `proof_*` values in the database, and the old `proof_rejected` and `verification_failed` rows stay in the activity log. What keeps a close honest now is people: the photo is public, and the name and photo are logged.
 
 **Questions are answered through tools, not by reading the table.** The
 model receives four function definitions (`count_reports`, `resolution_time`,
@@ -597,14 +525,8 @@ components keep one set of classes (`text-ink-900`, `bg-surface`, `bg-glass`).
 `index.html` applies it before React loads, so a visitor never sees a flash of
 the wrong theme.
 
-**The vision call gets a large token budget.** Gemini 3.x "thinks" before it
-answers and the thinking counts against `max_tokens`; a budget of 300 cut the
-JSON off mid-object and surfaced as "response is not JSON". The call now allows
-2,000 tokens; the answer itself stays short because the reason is capped at 25
-words in the prompt.
-
 **The activity log cannot be erased from the app.** Every report, analysis result,
-status change and handover, cleaning report, rejected proof photo, deletion, question, supervisor sign-in, account change, and generated summary is
+status change and handover, cleaning report, deletion, question, supervisor sign-in, account change, and generated summary is
 written to the `activity_log` table. That table deliberately has no foreign key to
 `reports`: a deleted report is exactly the one that most needs to stay traceable,
 so its full contents are copied into the log before the row disappears.

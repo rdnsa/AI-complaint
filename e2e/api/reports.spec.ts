@@ -206,7 +206,7 @@ test.describe('Status oleh petugas', () => {
     await api.claim(id, staff.id);
     const res = await api.resolve(id, staff.id);
     expect(res.status()).toBe(200);
-    expect((await res.json()).verification.verdict).toBe('clean');
+    expect(await res.json()).toEqual({ ok: true, status: 'resolved' });
     const stored = await api.getReport(id);
     expect(stored.status).toBe('resolved');
     expect(stored.resolved_at).toBeTruthy();
@@ -218,34 +218,17 @@ test.describe('Status oleh petugas', () => {
     expect((await api.resolve(id, (await newStaff()).id)).status()).toBe(200);
   });
 
-  for (const [tc, marker, verdict] of [
-    ['TC-KLH-018', '[vision:dirty]', 'dirty'],
-    ['TC-KLH-019', '[vision:wrong_place]', 'wrong_place'],
-  ] as const) {
-    test(`${tc} foto ditolak model: ${verdict}`, async ({ api, newStaff }) => {
-      const { id } = await api.report({ description: unique(`${marker} keluhan`) });
-      const res = await api.resolve(id, (await newStaff()).id);
-      expect(res.status()).toBe(422);
-      expect((await res.json()).verdict).toBe(verdict);
-      expect((await api.getReport(id)).status).toBe('new');
-    });
-  }
-
-  test('TC-KLH-025 foto yang ditolak dihapus dari penyimpanan', async ({ api, newStaff, request }) => {
-    const { id } = await api.report({ description: unique('[vision:dirty] keluhan') });
+  test('foto bukti diterima tanpa penilaian model', async ({ api, request, newStaff }) => {
+    const { id } = await api.report();
     const proof = await api.upload('proof');
     const res = await request.patch(`/api/reports/${id}`, {
       data: { status: 'resolved', staff_id: (await newStaff()).id, proof_photo_key: proof },
     });
-    expect(res.status()).toBe(422);
-    expect((await request.get(`/api/uploads/${proof}`)).status()).toBe(404);
-  });
-
-  test('TC-KLH-026 pemeriksa foto gagal: laporan tidak berubah', async ({ api, newStaff }) => {
-    const { id } = await api.report({ description: unique('[vision:error] keluhan') });
-    const res = await api.resolve(id, (await newStaff()).id);
-    expect(res.status()).toBe(502);
-    expect((await api.getReport(id)).status).toBe('new');
+    expect(res.status()).toBe(200);
+    const stored = await api.getReport(id);
+    expect(stored.status).toBe('resolved');
+    expect(stored.proof_verdict).toBeNull();
+    expect((await request.get(`/api/uploads/${proof}`)).status()).toBe(200);
   });
 
   test('TC-KLH-034 tanpa nama petugas ditolak', async ({ api, request }) => {
@@ -348,19 +331,6 @@ test.describe('Status oleh petugas', () => {
     expect(res.status()).toBe(400);
   });
 
-  test('TC-KLH-046 penolakan foto tidak menghapus bukti laporan lain', async ({ api, request, newStaff }) => {
-    const staff = await newStaff();
-    const first = await api.report();
-    const second = await api.report({ description: unique('[vision:dirty] keluhan') });
-    await api.resolve(first.id, staff.id);
-    const proof = (await api.getReport(first.id)).proof_photo_url.replace('/api/uploads/', '');
-    await request.patch(`/api/reports/${second.id}`, {
-      data: { status: 'resolved', staff_id: staff.id, proof_photo_key: proof },
-    });
-    const photo = await request.get(`/api/uploads/${proof}`);
-    knownIssue('T-02', 'foto bukti milik laporan lain ikut terhapus');
-    expect(photo.status()).toBe(200);
-  });
 });
 
 test.describe('Papan publik dan data pribadi', () => {

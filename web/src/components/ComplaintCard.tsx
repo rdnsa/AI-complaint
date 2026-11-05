@@ -1,26 +1,11 @@
 import { useState } from 'react';
 import Camera from './Camera';
 import { CategoryBadge, PriorityBadge, StatusBadge } from './Badges';
-import { api, ApiError, type ProofVerdict, type Report, type StaffOption } from '../lib/api';
+import { api, type Report, type StaffOption } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { CameraGlyph, CheckGlyph } from './Marks';
 import ZoomableImage from './ZoomableImage';
 import Select from './Select';
-
-type Rejection = { verdict: ProofVerdict | null; reason: string | null };
-
-/** The vision verdict carried by a 422, or a plain failure otherwise. */
-function rejectionFrom(err: unknown): Rejection {
-  if (err instanceof ApiError && err.status === 422) {
-    return {
-      verdict: (err.data.verdict as ProofVerdict | undefined) ?? 'dirty',
-      reason: (err.data.reason as string | undefined) ?? null,
-    };
-  }
-  return { verdict: null, reason: err instanceof Error ? err.message : null };
-}
-
-type Stage = 'idle' | 'uploading' | 'checking';
 
 type Step = 'claim' | 'resolve';
 
@@ -50,8 +35,8 @@ export default function ComplaintCard({
   const { t } = useLanguage();
   const relativeTime = useRelativeTime();
   const [camera, setCamera] = useState(false);
-  const [stage, setStage] = useState<Stage>('idle');
-  const [rejection, setRejection] = useState<Rejection | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   // The "who is doing this?" step in front of an action.
   const [step, setStep] = useState<Step | null>(null);
@@ -93,19 +78,18 @@ export default function ComplaintCard({
   }
 
   async function resolve(photo: File) {
-    setRejection(null);
-    setStage('uploading');
+    setFailure(null);
+    setBusy(true);
     try {
       const { key } = await api.uploadPhoto(photo, 'proof');
-      setStage('checking');
       await api.updateStatus(r.id, 'resolved', { staff_id: who, proof_photo_key: key });
       setDone(true);
       // Leave the success visible for a moment before the card drops off the list.
       setTimeout(onChanged, 2500);
     } catch (err) {
-      setRejection(rejectionFrom(err));
+      setFailure(err instanceof Error ? err.message : t('staff.resolve_failed'));
     } finally {
-      setStage('idle');
+      setBusy(false);
     }
   }
 
@@ -120,8 +104,6 @@ export default function ComplaintCard({
       </article>
     );
   }
-
-  const busy = stage !== 'idle';
 
   return (
     <article className="card p-4 sm:p-6">
@@ -156,7 +138,11 @@ export default function ComplaintCard({
         />
       )}
 
-      {rejection && <RejectionBox rejection={rejection} />}
+      {failure && (
+        <p role="alert" className="mt-3 rounded-nav bg-red-50 px-4 py-3 text-body-sm font-medium text-red-800">
+          {failure}
+        </p>
+      )}
 
       {step && (
         <div className="mt-3 rounded-nav bg-mist-100 p-4">
@@ -209,16 +195,14 @@ export default function ComplaintCard({
           disabled={busy}
           className="btn-primary w-full py-3 text-base"
         >
-          {stage === 'uploading'
-            ? t('dashboard.uploading')
-            : stage === 'checking'
-              ? t('dashboard.checking')
-              : (
-                <>
-                  <CameraGlyph className="h-5 w-5" />
-                  {t('staff.resolve')}
-                </>
-              )}
+          {busy ? (
+            t('dashboard.uploading')
+          ) : (
+            <>
+              <CameraGlyph className="h-5 w-5" />
+              {t('staff.resolve')}
+            </>
+          )}
         </button>
         {r.status === 'new' && !step && (
           <button type="button" onClick={() => openChooser('claim')} disabled={busy} className="btn-neutral w-full py-2.5">
@@ -243,27 +227,5 @@ export default function ComplaintCard({
 
       </div>
     </article>
-  );
-}
-
-function RejectionBox({ rejection }: { rejection: Rejection }) {
-  const { t } = useLanguage();
-  return (
-    <div role="alert" className="mt-3 rounded-nav bg-red-50 px-4 py-3 text-body-sm text-red-900">
-      <p className="font-bold">{rejection.verdict ? t('dashboard.proof_rejected') : t('dashboard.verification_failed')}</p>
-      {rejection.verdict && (
-        <p className="mt-0.5">
-          {rejection.verdict === 'wrong_place'
-            ? t('dashboard.proof_rejected_wrong_place')
-            : t('dashboard.proof_rejected_dirty')}
-        </p>
-      )}
-      {rejection.reason && (
-        <p className="mt-1 text-xs italic text-red-800">
-          {rejection.verdict ? `${t('dashboard.ai_reason')}: ` : ''}
-          {rejection.reason}
-        </p>
-      )}
-    </div>
   );
 }

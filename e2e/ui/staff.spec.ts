@@ -75,53 +75,26 @@ test.describe('Keluhan', () => {
     expect((await api.getReport(report.id)).staff_name).toBe(next.name);
   });
 
-  test('TC-KLH-018 foto kotor ditolak dan bisa difoto ulang', async ({ api, newStaff, page }) => {
-    const report = await api.report({ description: unique('[vision:dirty] lantai kotor') });
+  test('TC-KLH-028 koneksi putus saat unggah: pesan tampil dan bisa diulang', async ({ api, newStaff, page }) => {
+    const report = await api.report();
     const staff = await newStaff();
     await page.goto('/staff');
     const card = cardOf(page, report.description);
+    await page.route('**/api/uploads**', (route) => route.abort());
 
     await card.getByRole('button', { name: /Sudah beres/ }).click();
     await answerWho(page, card, staff.name);
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
 
-    const rejected = card.getByRole('alert');
-    await expect(rejected).toContainText('Foto ditolak');
-    await expect(rejected).toContainText('Masih terlihat kotor');
-    await expect(rejected).toContainText('Sampah masih terlihat di lantai.');
+    await expect(card.getByRole('alert')).toBeVisible();
     expect((await api.getReport(report.id)).status).toBe('new');
 
-    // The way out of a rejection stays open.
-    await expect(card.getByRole('button', { name: /Sudah beres/ })).toBeEnabled();
-  });
-
-  test('TC-KLH-019 foto bukan lokasi ditolak', async ({ api, newStaff, page }) => {
-    const report = await api.report({ description: unique('[vision:wrong_place] lantai kotor') });
-    const staff = await newStaff();
-    await page.goto('/staff');
-    const card = cardOf(page, report.description);
-
+    await page.unroute('**/api/uploads**');
     await card.getByRole('button', { name: /Sudah beres/ }).click();
-    await answerWho(page, card, staff.name);
     await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
-
-    await expect(card.getByRole('alert')).toContainText('Foto bukan lokasi yang dilaporkan.');
-  });
-
-  test('TC-KLH-026 pemeriksa foto gagal meminta coba lagi', async ({ api, newStaff, page }) => {
-    const report = await api.report({ description: unique('[vision:error] lantai kotor') });
-    const staff = await newStaff();
-    await page.goto('/staff');
-    const card = cardOf(page, report.description);
-
-    await card.getByRole('button', { name: /Sudah beres/ }).click();
-    await answerWho(page, card, staff.name);
-    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
-    await takePhoto(page);
-
-    await expect(card.getByRole('alert')).toContainText('Pemeriksaan foto gagal. Coba lagi sebentar.');
+    await expect(page.getByText('Laporan selesai. Terima kasih!')).toBeVisible();
   });
 
   test('TC-KLH-029 kartu basi yang sudah selesai dibalas 409 dan pesannya tampil', async ({ api, newStaff, page }) => {

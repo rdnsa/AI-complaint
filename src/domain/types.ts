@@ -25,17 +25,9 @@ export type Priority = (typeof PRIORITIES)[number];
 export const STATUSES = ['new', 'in_progress', 'resolved'] as const;
 export type ReportStatus = (typeof STATUSES)[number];
 
-/** What the vision model concluded about a staff proof photo: 'wrong_place' when it does not show the reported location. */
+/** Verdicts of the AI photo check, since removed. Reports closed while it ran still hold one. */
 export const PROOF_VERDICTS = ['clean', 'dirty', 'wrong_place'] as const;
 export type ProofVerdict = (typeof PROOF_VERDICTS)[number];
-
-/** The verdict as stored on the report, together with the cost of obtaining it. */
-export interface ProofVerification {
-  verdict: ProofVerdict;
-  reason: string;
-  model: string;
-  ms: number;
-}
 
 /** A raw `reports` row as stored, joined with its location. */
 export interface ReportRow {
@@ -96,20 +88,13 @@ export function toDTO(row: ReportRow): ReportDTO {
 }
 
 /**
- * A report may only be closed once evidence exists — and the evidence must
- * show the reported location clean, as judged by the vision model.
+ * A report may only be closed once evidence exists.
  *
  * This is the one business rule strict enough to deserve its own function: the
  * HTTP layer, the service layer, and any future caller all decide the same way.
- * A proof photo that was never verified (uploaded before this rule existed) does
- * not count; staff must take a new one.
  */
-export function canResolve(
-  status: ReportStatus,
-  proofPhoto: string | null,
-  proofVerdict: ProofVerdict | null,
-): boolean {
-  return status !== 'resolved' || (Boolean(proofPhoto) && proofVerdict === 'clean');
+export function canResolve(status: ReportStatus, proofPhoto: string | null): boolean {
+  return status !== 'resolved' || Boolean(proofPhoto);
 }
 
 /**

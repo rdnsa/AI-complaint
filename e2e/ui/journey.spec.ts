@@ -54,7 +54,8 @@ test.describe('Perjalanan penuh @smoke', () => {
     await supervisor.getByRole('button', { name: 'Keluhan', exact: true }).click();
     const row = supervisor.locator('article').filter({ hasText: description });
     await expect(row.getByText(`Ditangani: ${staff.name}`)).toBeVisible();
-    await expect(row.getByText(/Diverifikasi AI: bersih/)).toBeVisible();
+    await expect(row.getByText('Bukti penyelesaian')).toBeVisible();
+    await expect(row.getByText(/Diverifikasi AI/)).toHaveCount(0);
 
     await supervisor.getByRole('button', { name: 'Log aktivitas' }).click();
     await expect(supervisor.getByText(/Status in_progress → resolved/).first()).toBeVisible();

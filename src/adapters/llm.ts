@@ -4,7 +4,6 @@ import {
   PRIORITIES,
   type Category,
   type Priority,
-  type ProofVerdict,
 } from '../domain/types';
 import type { Env } from '../env';
 
@@ -131,14 +130,9 @@ function coerceAnalysis(raw: z.infer<typeof AnalysisSchema>): Analysis {
   };
 }
 
-/** OpenAI-style content parts, so a message can carry an image next to text. */
-type MessagePart =
-  | { type: 'text'; text: string }
-  | { type: 'image_url'; image_url: { url: string; detail?: 'low' | 'high' | 'auto' } };
-
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string | MessagePart[];
+  content: string;
 }
 
 /** One tool the model may call, in the OpenAI/DeepSeek function-calling shape. */
@@ -160,7 +154,6 @@ type ToolMessage =
   | { role: 'assistant'; content: string | null; tool_calls?: ToolCall[] }
   | { role: 'tool'; tool_call_id: string; content: string };
 
-/** Which model answers: the text model for complaints, the vision model for photos. */
 interface Target {
   baseUrl: string;
   /** Tried in order; the next one takes over when a key is rate-limited or rejected. */
@@ -177,15 +170,6 @@ const textModel = (env: Env): Target => ({
   apiKeys: splitKeys(env.LLM_API_KEY),
   model: env.LLM_MODEL,
 });
-
-const visionModel = (env: Env): Target => {
-  const own = splitKeys(env.VISION_API_KEY);
-  return {
-    baseUrl: env.VISION_BASE_URL,
-    apiKeys: own.length ? own : splitKeys(env.LLM_API_KEY),
-    model: env.VISION_MODEL,
-  };
-};
 
 /** 429: rate limit or quota used up. 401/403: key invalid or blocked. Another key may still work. */
 const KEY_FAILOVER_STATUS = new Set([401, 403, 429]);
@@ -268,7 +252,7 @@ interface ToolResponse {
 }
 
 /**
- * Feature #6: answer a free-form question by letting the model call tools.
+ * Feature #5: answer a free-form question by letting the model call tools.
  *
  * The model never sees the database. It sees only the tool definitions, and
  * each tool returns a small aggregate that `run` computes on our side —
@@ -420,112 +404,4 @@ Jawab HANYA dengan JSON valid dengan kunci bahasa Inggris persis seperti ini:
 
   const parsed = DailyDigestSchema.parse(raw);
   return { summary: parsed.summary.trim(), highlights: parsed.highlights.slice(0, 4) };
-}
-
-/**
- * The model sometimes answers "true"/"ya" as a string; both must read as true,
- * while `z.coerce.boolean()` would also turn the string "false" into true.
- */
-const looseBool = z.preprocess((v) => {
-  if (typeof v === 'string') return ['true', 'ya', 'yes', '1'].includes(v.trim().toLowerCase());
-  return v;
-}, z.boolean());
-
-const ProofCheckSchema = z.object({
-  is_location: looseBool,
-  clean: looseBool,
-  confidence: z.coerce.number().min(0).max(1).optional(),
-  reason: z.string().min(1),
-});
-
-export interface ProofCheck {
-  verdict: ProofVerdict;
-  reason: string;
-  confidence: number | null;
-}
-
-const PROOF_PROMPT = `Kamu adalah pengawas kebersihan kampus. Petugas kebersihan mengunggah foto
-sebagai bukti bahwa sebuah keluhan sudah ditangani. Lokasinya bisa di mana saja: ruang kelas, koridor,
-toilet, masjid, halaman gedung, taman, selokan, atau lapangan. Tugasmu menilai foto itu dengan jujur dan ketat.
-
-Jawab dua pertanyaan:
-1. "is_location": apakah foto ini benar-benar memperlihatkan tempat yang dikeluhkan? Cocokkan dengan
-   lokasi dan isi keluhan: keluhan toilet harus memperlihatkan bagian dalam toilet (kloset, urinoir,
-   wastafel, bilik); keluhan ruangan atau koridor memperlihatkan lantai, meja, atau jendela ruangan itu;
-   keluhan halaman, taman, selokan, atau lapangan memperlihatkan area luar tersebut. Foto orang, layar,
-   langit-langit saja, foto gelap/blur yang tidak bisa dinilai, atau tempat yang jelas berbeda → false.
-2. "clean": apakah kondisi yang terlihat sudah bersih dan layak pakai?
-   TIDAK bersih bila terlihat: sampah berserakan, kotoran atau noda di lantai/dinding/kloset,
-   genangan air atau lantai basah merata, tempat sampah meluap, selokan masih tersumbat, coretan,
-   lumut/kerak tebal, atau bekas keluhan yang jelas belum ditangani.
-   Noda permanen kecil, lantai tua, sedikit daun yang baru jatuh, atau lantai yang lembap tipis
-   setelah dipel masih boleh dianggap bersih.
-
-Gunakan keluhan asli sebagai konteks: bila keluhannya terlihat pada foto (mis. sampah, genangan),
-periksa apakah hal itu sudah tidak ada. Keluhan yang tidak bisa dilihat dari foto (bau, sabun habis)
-jangan dijadikan alasan menolak. Kategori keluhan ditulis dengan kode bahasa Inggris
-(cleanliness = kebersihan, supplies = perlengkapan, damage = kerusakan, odor = bau,
-flooding = genangan, other = lainnya).
-
-Jika ragu antara bersih dan kotor, pilih "clean": false. Jangan pernah mengarang detail yang tidak ada di foto.
-
-Jawab HANYA dengan objek JSON valid dengan kunci bahasa Inggris persis seperti ini
-("confidence" = tingkat keyakinan 0..1, "reason" = alasan):
-{"is_location":true,"clean":false,"confidence":0.8,"reason":"satu kalimat bahasa Indonesia, maksimal 25 kata, sebutkan apa yang terlihat"}`;
-
-/**
- * Base64 without Node's Buffer. `btoa` wants a binary string, and building
- * that in one `String.fromCharCode(...bytes)` call overflows the stack on a
- * multi-megabyte photo, hence the chunking.
- */
-function toBase64(bytes: ArrayBuffer): string {
-  const u8 = new Uint8Array(bytes);
-  let binary = '';
-  for (let i = 0; i < u8.length; i += 0x8000) {
-    binary += String.fromCharCode(...u8.subarray(i, i + 0x8000));
-  }
-  return btoa(binary);
-}
-
-/**
- * Feature #5: judge whether a proof photo actually shows the reported location, clean.
- *
- * The photo travels inline as a data URL. The bucket is private and the Worker
- * is the only thing that can read it, so a public URL was never an option.
- */
-export async function checkProofPhoto(
-  env: Env,
-  photo: { bytes: ArrayBuffer; type: string },
-  context: { location: string; complaint: string; categories: string[] },
-): Promise<ProofCheck> {
-  const dataUrl = `data:${photo.type};base64,${toBase64(photo.bytes)}`;
-  const categories = context.categories.length ? context.categories.join(', ') : 'belum dianalisis';
-
-  const raw = await chatJSON(
-    visionModel(env),
-    [
-      { role: 'system', content: PROOF_PROMPT },
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Lokasi: ${context.location}\nKategori keluhan: ${categories}\nKeluhan asli: ${context.complaint}\n\nFoto bukti dari petugas:`,
-          },
-          { type: 'image_url', image_url: { url: dataUrl, detail: 'low' } },
-        ],
-      },
-    ],
-    // Generous: "thinking" models (Gemini 3.x) spend part of this budget on
-    // reasoning before the answer, and a budget of a few hundred cut the JSON off.
-    2000,
-  );
-
-  const parsed = ProofCheckSchema.parse(raw);
-  const verdict: ProofVerdict = !parsed.is_location ? 'wrong_place' : parsed.clean ? 'clean' : 'dirty';
-  return {
-    verdict,
-    reason: parsed.reason.trim().slice(0, 300),
-    confidence: parsed.confidence ?? null,
-  };
 }

@@ -9,7 +9,7 @@ import * as summaries from '../repositories/summaries';
 import { log } from './activity-service';
 
 /**
- * Feature #6: anyone asks a question in plain language, the model decides
+ * Feature #5: anyone asks a question in plain language, the model decides
  * which aggregate to fetch, and answers from that aggregate alone.
  *
  * Two audiences share the feature. The supervisor (SPV) may ask about

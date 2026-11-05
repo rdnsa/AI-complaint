@@ -140,9 +140,8 @@ const StatusChangeSchema = z.object({
  *
  * Staff do not sign in; they send the `staff_id` picked on the dropdown,
  * which must belong to an active staff member. A signed-in supervisor may act
- * under their own name instead. Closing needs a proof photo, and the photo is
- * judged by the vision model before the status changes — a photo of a place
- * still dirty, or of another place, is refused.
+ * under their own name instead. Closing needs a proof photo; the photo is shown
+ * on the public board and written to the activity log, so anyone can check it.
  */
 app.patch('/:id', async (c) => {
   const parsed = StatusChangeSchema.safeParse(await c.req.json().catch(() => ({})));
@@ -177,23 +176,8 @@ app.patch('/:id', async (c) => {
       return c.json({ error: 'Foto bukti tidak ditemukan. Unggah ulang.' }, 400);
     case 'proof-missing':
       return c.json({ error: 'Foto bukti penyelesaian wajib diunggah lebih dulu.' }, 400);
-    // 422: the request was well-formed, the photo simply did not pass.
-    case 'proof-rejected':
-      return c.json(
-        {
-          error:
-            result.verdict === 'wrong_place'
-              ? 'Foto tidak menunjukkan lokasi yang dilaporkan. Ambil foto lokasi itu setelah dibersihkan.'
-              : 'Lokasi pada foto masih terlihat kotor. Bersihkan lagi, lalu foto ulang.',
-          verdict: result.verdict,
-          reason: result.reason,
-        },
-        422,
-      );
-    case 'verification-failed':
-      return c.json({ error: 'Pemeriksaan foto gagal. Coba lagi sebentar.' }, 502);
     default:
-      return c.json({ ok: true, status: result.status, verification: result.verification });
+      return c.json({ ok: true, status: result.status });
   }
 });
 

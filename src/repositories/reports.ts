@@ -3,7 +3,6 @@ import type { Env } from '../env';
 import {
   PRIORITIES,
   STATUSES,
-  type ProofVerification,
   type ReportRow,
   type ReportStatus,
 } from '../domain/types';
@@ -194,19 +193,17 @@ export async function insert(
     .run();
 }
 
-/** The proof photo and its verdict are written together: one never exists without the other. */
 export async function updateStatus(
   env: Env,
   id: string,
   status: ReportStatus,
   staffName: string,
-  proof: { key: string; verification: ProofVerification } | null,
+  proofPhotoKey: string | null,
 ): Promise<void> {
   await env.DB.prepare(
     `UPDATE reports
         SET status = ?, staff_name = ?,
-            proof_photo_key = ?, proof_verdict = ?, proof_reason = ?,
-            proof_model = ?, proof_ms = ?,
+            proof_photo_key = ?,
             resolved_at = CASE WHEN ? = 'resolved' THEN datetime('now') ELSE NULL END,
             updated_at = datetime('now')
       WHERE id = ?`,
@@ -214,11 +211,7 @@ export async function updateStatus(
     .bind(
       status,
       staffName,
-      proof?.key ?? null,
-      proof?.verification.verdict ?? null,
-      proof?.verification.reason ?? null,
-      proof?.verification.model ?? null,
-      proof?.verification.ms ?? null,
+      proofPhotoKey,
       status,
       id,
     )

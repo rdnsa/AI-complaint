@@ -68,6 +68,6 @@ test('TC-SEC-009 rahasia tidak ikut ke frontend', async ({ request }) => {
   expect(scripts.length).toBeGreaterThan(0);
   for (const src of scripts) {
     const code = await (await request.get(src)).text();
-    expect(code).not.toMatch(/LLM_API_KEY|VISION_API_KEY|AUTH_SECRET|e2e-text-key|e2e-auth-secret/);
+    expect(code).not.toMatch(/LLM_API_KEY|AUTH_SECRET|e2e-text-key|e2e-auth-secret/);
   }
 });

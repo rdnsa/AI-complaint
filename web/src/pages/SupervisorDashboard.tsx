@@ -330,11 +330,7 @@ function ReportRow({
             <figcaption className="mt-1 flex items-center gap-1 text-xs font-bold text-emerald-700">
               <CheckGlyph className="h-3.5 w-3.5" />
               {t('dashboard.proof')}
-              {r.proof_verdict === 'clean' && <> · {t('dashboard.proof_verified')}</>}
             </figcaption>
-            {r.proof_reason && (
-              <p className="mt-0.5 max-w-xs text-xs italic text-ink-600">{r.proof_reason}</p>
-            )}
           </figure>
         )}
       </div>
