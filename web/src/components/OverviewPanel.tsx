@@ -4,6 +4,7 @@ import AreaChart from './charts/AreaChart';
 import BarChart from './charts/BarChart';
 import CalendarHeat from './charts/CalendarHeat';
 import CoverageGrid from './charts/CoverageGrid';
+import ExportMenu from './ExportMenu';
 import Donut from './charts/Donut';
 import Heatmap, { type HeatmapCell } from './charts/Heatmap';
 import HourBars from './charts/HourBars';
@@ -20,6 +21,7 @@ import { AGING_COLORS, CATEGORY_COLORS, PRIORITY_COLORS, SERIES, SINGLE, STATUS_
 import { api, CLEANING_TASKS, type ChartData, type CleaningArea, type CleaningCharts, type DailySummary } from '../lib/api';
 import { useLanguage, type Translate } from '../lib/i18n';
 import { buildPlaces, type Place } from '../lib/places';
+import type { ExportFormat } from '../lib/export-dashboard';
 import { Reveal } from '../lib/motion';
 import { usePolling } from '../lib/polling';
 
@@ -279,7 +281,7 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
     if (rangeProblem(next, t) === null) setPicked(next);
   };
 
-  const exportData = async () => {
+  const exportData = async (format: ExportFormat) => {
     setExporting(true);
     setExportFailed(false);
     try {
@@ -290,7 +292,7 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
         api.exportReports(range.from, range.to),
         api.cleaningCharts(range.from, range.to).catch(() => null),
       ]);
-      await exportDashboard({ ...range, charts, reports: reports.data, cleaning: cleaningCharts, t });
+      await exportDashboard({ format, ...range, charts, reports: reports.data, cleaning: cleaningCharts, t });
     } catch {
       setExportFailed(true);
     } finally {
@@ -306,7 +308,7 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
   return (
     <div className="mt-6 space-y-4">
       {/* Above everything, because everything below answers for these dates. */}
-      <div className="card flex flex-wrap items-end gap-3 p-3">
+      <div className="card relative z-30 flex flex-wrap items-end gap-3 p-3">
         <label className="min-w-0 flex-1 text-xs text-ink-700 sm:flex-none">
           <span className="mb-1 block font-semibold">{t('time.from_date')}</span>
           <input
@@ -340,14 +342,12 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
             {t('time.reset')}
           </button>
         )}
-        <button
-          type="button"
-          className="btn-neutral !px-3 !py-1.5 text-xs max-sm:w-full sm:ml-auto"
-          disabled={exporting || problem !== null}
-          onClick={exportData}
-        >
-          {exporting ? t('ov.exporting') : t('ov.export')}
-        </button>
+        <ExportMenu
+          className="max-sm:w-full sm:ml-auto"
+          busy={exporting}
+          disabled={problem !== null}
+          onPick={exportData}
+        />
         {failed && (
           <p role="alert" className="w-full text-xs font-semibold text-red-700">
             {t('ov.load_failed')}
