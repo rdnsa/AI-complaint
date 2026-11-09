@@ -48,9 +48,9 @@ export default function CalendarHeat({
   const grid = { gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` };
 
   return (
-    <figure className="m-0">
+    <figure className="m-0 flex flex-1 flex-col justify-center">
       <div className="overflow-x-auto">
-        <div className="grid grid-cols-[28px_1fr] gap-x-1" style={{ minWidth: 32 + weeks * 12, maxWidth: 32 + weeks * 42 }}>
+        <div className="mx-auto grid grid-cols-[28px_1fr] gap-x-1" style={{ minWidth: 32 + weeks * 12, maxWidth: 32 + weeks * 52 }}>
           <span />
           <div className="mb-1 grid h-4 text-[10px] font-semibold" style={{ ...grid, color: INK.muted }}>
             {monthsShown.map((m) => (

@@ -22,10 +22,10 @@ export default function BarChart({ data }: { data: BarItem[] }) {
   const max = Math.max(...data.map((d) => d.value), 1);
 
   return (
-    <ul className="space-y-2">
+    <ul className="flex flex-1 flex-col justify-center gap-4">
       {data.map((d, i) => (
         <li key={d.label} className="group">
-          <div className="flex items-baseline justify-between gap-3 text-sm">
+          <div className="flex items-baseline justify-between gap-3 text-sm sm:text-base">
             <span className="truncate font-medium capitalize" style={{ color: INK.secondary }}>
               {d.label}
             </span>
@@ -33,7 +33,7 @@ export default function BarChart({ data }: { data: BarItem[] }) {
               {d.display ?? d.value}
             </span>
           </div>
-          <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-mist-100">
+          <div className="mt-1.5 h-3 w-full overflow-hidden rounded-full bg-mist-100">
             <div
               className="h-full rounded-full"
               style={{

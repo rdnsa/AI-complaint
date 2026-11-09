@@ -34,8 +34,8 @@ export default function Donut({
 
   let cum = 0;
   return (
-    <figure className="m-0 flex flex-col items-center gap-4">
-      <div className="relative aspect-square w-full max-w-[200px]">
+    <figure className="m-0 flex flex-1 flex-col items-center justify-center gap-4">
+      <div className="relative aspect-square w-full max-w-[240px]">
         <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" role="img">
           <circle cx="60" cy="60" r={R} fill="none" stroke={INK.gridline} strokeWidth={SW} opacity={0.6} />
           {total > 0 &&

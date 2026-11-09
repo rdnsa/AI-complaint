@@ -8,13 +8,13 @@ export default function AgingBars({ values, labels }: { values: number[]; labels
   const max = Math.max(1, ...values);
 
   return (
-    <div className="flex h-44 items-end gap-2.5">
+    <div className="flex min-h-44 flex-1 items-stretch gap-2.5">
       {values.map((v, i) => (
-        <div key={labels[i]} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+        <div key={labels[i]} className="flex flex-1 flex-col items-center justify-end gap-1.5">
           <CountUp value={v} className="text-body-sm font-bold" style={{ color: v ? AGING_COLORS[i] : INK.muted }} />
-          <div className="flex w-full flex-1 items-end rounded-xl bg-mist-100/70">
+          <div className="relative w-full flex-1 rounded-xl bg-mist-100/70">
             <div
-              className="w-full rounded-xl"
+              className="absolute inset-x-0 bottom-0 rounded-xl"
               style={{
                 height: mounted ? `${Math.max((v / max) * 100, v ? 8 : 4)}%` : '0%',
                 background: v ? `linear-gradient(180deg, ${AGING_COLORS[i]}, ${AGING_COLORS[i]}99)` : INK.gridline,

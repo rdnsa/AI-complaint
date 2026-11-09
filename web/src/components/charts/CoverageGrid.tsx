@@ -43,7 +43,7 @@ export default function CoverageGrid({
 
   return (
     <figure className="m-0">
-      <ul className="m-0 list-none space-y-3 p-0 sm:space-y-1.5">
+      <ul className="m-0 list-none space-y-3 p-0 sm:space-y-2">
         {[...rows].map(([key, list]) => (
           <li key={key} className="grid gap-1 sm:grid-cols-[minmax(0,13rem)_1fr] sm:items-center sm:gap-2">
             <span className="truncate text-xs font-semibold" style={{ color: INK.secondary }}>
@@ -62,7 +62,7 @@ export default function CoverageGrid({
                     onMouseLeave={() => setHot(null)}
                     onFocus={() => setHot(a.id)}
                     onBlur={() => setHot(null)}
-                    className={`grid h-9 w-9 place-content-center rounded-md sm:h-8 sm:w-8 text-xs font-bold tabular-nums outline-none ${
+                    className={`grid h-9 w-9 place-content-center rounded-md sm:h-10 sm:w-10 text-xs sm:text-sm font-bold tabular-nums outline-none ${
                       a.reports ? '' : 'border border-dashed border-ink-600/60'
                     } ${hot === a.id ? 'ring-2 ring-ink-900' : ''}`}
                     style={{

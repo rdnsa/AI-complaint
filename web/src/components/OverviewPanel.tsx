@@ -120,12 +120,13 @@ function Tile({
   return (
     // Raised while its tip is open: the glass tiles each have their own layer, and the next one would cover it.
     <Reveal className={`relative hover:z-20 focus-within:z-20 ${className}`}>
-      <section className="card h-full p-4 sm:p-5">
+      <section className="card flex h-full flex-col p-4 sm:p-5">
         <h3 className="section-title mb-4 flex items-center gap-2">
           {title}
           {hint}
         </h3>
-        <InView>{children}</InView>
+        {/* A column, so a chart can grow into the height its row gives it instead of leaving a gap below. */}
+        <InView className="flex flex-1 flex-col">{children}</InView>
       </section>
     </Reveal>
   );

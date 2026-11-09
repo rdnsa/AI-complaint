@@ -14,16 +14,16 @@ export default function HourBars({ hours, unit }: { hours: number[]; unit: strin
   const shown = hot ?? peak;
 
   return (
-    <figure className="m-0">
+    <figure className="m-0 flex flex-1 flex-col">
       <p className="mb-2 text-right text-xs font-bold" style={{ color: INK.primary }} aria-live="polite">
         {String(shown).padStart(2, '0')}.00 · {hours[shown]} {unit}
       </p>
-      <div className="flex h-56 items-stretch gap-[2px]" onMouseLeave={() => setHot(null)}>
+      <div className="flex min-h-56 flex-1 items-stretch gap-[2px]" onMouseLeave={() => setHot(null)}>
         {hours.map((n, h) => (
-          <div key={h} className="flex flex-1 flex-col justify-end" onMouseEnter={() => setHot(h)}>
+          <div key={h} className="relative flex flex-1 flex-col justify-end" onMouseEnter={() => setHot(h)}>
             {n > 0 ? (
               <div
-                className="w-full origin-bottom rounded-t"
+                className="absolute inset-x-0 bottom-0 origin-bottom rounded-t"
                 style={{
                   height: `${(n / max) * 100}%`,
                   minHeight: 4,
