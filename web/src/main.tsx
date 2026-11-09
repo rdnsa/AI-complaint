@@ -39,6 +39,19 @@ function LegacyRedirect({ to }: { to: string }) {
   return <Navigate to={`${path}${qs ? `?${qs}` : ''}${hash}`} replace />;
 }
 
+/**
+ * A tab opened straight on an inner page (a QR sticker, a bookmark, a typed
+ * URL) has nothing of ours behind it, so the browser's Back would leave the
+ * app. Slip the landing page in behind it first: Back then lands on Home.
+ * Only on a fresh entry: a reload keeps the router's state, which this checks.
+ */
+if (window.history.state === null && window.location.pathname !== '/') {
+  const here = window.location.pathname + window.location.search + window.location.hash;
+  // The same shape React Router keeps in history.state, so it counts both entries as its own.
+  window.history.replaceState({ usr: null, key: 'home', idx: 0 }, '', '/');
+  window.history.pushState({ usr: null, key: 'entry', idx: 1 }, '', here);
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>

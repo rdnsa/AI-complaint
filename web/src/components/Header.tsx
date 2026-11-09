@@ -89,9 +89,10 @@ function BackButton({ round = false }: { round?: boolean }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  // Go back when there is history to go back to; a visitor who landed straight
-  // from a QR code has none, so the landing page is the safe destination.
-  const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate('/'));
+  // Go back when the page before is one of ours (React Router counts its entries
+  // in history.state.idx); history.length also counts other sites in the tab, so
+  // it would send a visitor out of the app. Otherwise the landing page.
+  const goBack = () => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'));
 
   if (round) {
     return (
