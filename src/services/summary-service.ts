@@ -1,10 +1,11 @@
-import { summarizeDay } from '../adapters/llm';
+import { summarizeDay, type DayWork } from '../adapters/llm';
 import { forget, memo } from '../adapters/memo';
 import { addDays, daysInRange, wibDayRange } from '../adapters/clock';
 import type { Env } from '../env';
 import * as reports from '../repositories/reports';
 import * as summaries from '../repositories/summaries';
 import { log, SYSTEM } from './activity-service';
+import * as cleaning from './cleaning-service';
 
 export interface SummaryResult {
   date: string;
@@ -13,17 +14,37 @@ export interface SummaryResult {
   highlights: string[];
 }
 
+/** The staff's cleaning work of one day, counted the same way as the dashboard's cleaning charts. */
+async function workOn(env: Env, date: string): Promise<DayWork> {
+  const c = await cleaning.chartData(env, date, date);
+  return {
+    reports: c.trend.reports,
+    staff: c.staff.length,
+    covered: c.areas.covered,
+    total: c.areas.total,
+    missing: c.areas.missing.map((a) => a.name),
+    alerts: c.trend.alerts,
+    tasks: c.tasks.map((t) => ({ task: t.task, count: Number(t.count) })),
+    busiest: [...c.staff]
+      .sort((a, b) => Number(b.reports) - Number(a.reports))
+      .slice(0, 3)
+      .map((s) => ({ name: s.staff_name, reports: Number(s.reports) })),
+  };
+}
+
 /**
- * Writes (or rewrites) the summary for one day. Used both by the afternoon cron
- * and by the "rebuild" button on the dashboard.
+ * Writes (or rewrites) the summary for one day: the complaints and the staff's
+ * cleaning work together. Used both by the afternoon cron and by the "rebuild"
+ * button on the dashboard.
  */
 export async function generateDailySummary(env: Env, date: string): Promise<SummaryResult> {
-  const list = await reports.reportsOnDate(env, date);
+  const [list, work] = await Promise.all([reports.reportsOnDate(env, date), workOn(env, date)]);
 
-  // A day with no reports does not need an LLM call.
-  const result = list.length
-    ? await summarizeDay(env, date, list)
-    : { summary: 'Tidak ada keluhan yang masuk pada hari ini.', highlights: [] };
+  // A day with nothing reported at all does not need an LLM call.
+  const result =
+    list.length || work.reports
+      ? await summarizeDay(env, date, list, work)
+      : { summary: 'Tidak ada keluhan maupun laporan kerja petugas pada hari ini.', highlights: [] };
 
   await summaries.save(env, {
     date,
@@ -36,7 +57,7 @@ export async function generateDailySummary(env: Env, date: string): Promise<Summ
   await log(env, {
     action: 'daily_summary',
     actor: SYSTEM,
-    summary: `Ringkasan harian ${date} disusun dari ${list.length} laporan`,
+    summary: `Ringkasan harian ${date} disusun dari ${list.length} keluhan dan ${work.reports} laporan kerja`,
   });
 
   return { date, report_count: list.length, ...result };

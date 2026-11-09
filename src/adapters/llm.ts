@@ -372,6 +372,46 @@ export interface DailyDigest {
 }
 
 /** Feature #3: summarise a whole day of reports for the head of facilities. */
+/** The staff's cleaning work of one day, already counted: the model only reads it. */
+export interface DayWork {
+  reports: number;
+  staff: number;
+  covered: number;
+  total: number;
+  /** Areas nobody reported from that day, by name. */
+  missing: string[];
+  /** Reports filed away from campus or without a position. */
+  alerts: number;
+  tasks: Array<{ task: string; count: number }>;
+  /** Who reported most, busiest first. */
+  busiest: Array<{ name: string; reports: number }>;
+}
+
+const TASK_NAMES: Record<string, string> = {
+  sweep_mop: 'sapu & pel',
+  sweep: 'sapu',
+  mop: 'pel',
+  glass: 'lap kaca',
+  toilet: 'bersihkan toilet',
+  trash: 'buang sampah',
+  gallon: 'ganti galon',
+  tidy: 'rapikan ruangan',
+};
+
+/** The day's work as a few plain lines, so the prompt stays short however many reports came in. */
+function describeWork(w: DayWork): string {
+  if (!w.reports) return 'Tidak ada laporan kerja petugas kebersihan hari ini.';
+  const missing = w.missing.length > 12 ? [...w.missing.slice(0, 12), `dan ${w.missing.length - 12} lainnya`] : w.missing;
+  return [
+    `Jumlah laporan kerja: ${w.reports} dari ${w.staff} petugas`,
+    `Area yang dilaporkan: ${w.covered} dari ${w.total}`,
+    `Area belum dilaporkan: ${missing.length ? missing.join(', ') : 'tidak ada'}`,
+    `Laporan di luar kampus atau tanpa GPS: ${w.alerts}`,
+    `Tugas dikerjakan: ${w.tasks.map((t) => `${TASK_NAMES[t.task] ?? t.task} ${t.count}`).join(', ') || '-'}`,
+    `Petugas paling aktif: ${w.busiest.map((s) => `${s.name} (${s.reports})`).join(', ') || '-'}`,
+  ].join('\n');
+}
+
 export async function summarizeDay(
   env: Env,
   date: string,
@@ -381,13 +421,16 @@ export async function summarizeDay(
     summary: string | null;
     description: string;
   }>,
+  work: DayWork,
 ): Promise<DailyDigest> {
-  const list = reports
-    .map(
-      (r, i) =>
-        `${i + 1}. [${r.priority ?? 'belum dianalisis'}] ${r.location} - ${r.summary ?? r.description}`,
-    )
-    .join('\n');
+  const list = reports.length
+    ? reports
+        .map(
+          (r, i) =>
+            `${i + 1}. [${r.priority ?? 'belum dianalisis'}] ${r.location} - ${r.summary ?? r.description}`,
+        )
+        .join('\n')
+    : 'Tidak ada keluhan yang masuk hari ini.';
 
   const raw = await chatJSON(
     textModel(env),
@@ -395,20 +438,24 @@ export async function summarizeDay(
       {
         role: 'system',
         content: `Kamu menyusun laporan harian kondisi kebersihan dan fasilitas kampus untuk kepala bagian sarana prasarana.
-Dari daftar keluhan hari itu, tentukan lokasi yang paling bermasalah dan pola masalah yang berulang.
+Ada dua sumber: keluhan dari pelapor, dan laporan kerja petugas kebersihan.
+Dari keluhan, tentukan lokasi yang paling bermasalah dan pola masalah yang berulang.
+Dari laporan kerja, nilai seberapa banyak area yang sudah dikerjakan, area mana yang belum, dan laporan dengan lokasi mencurigakan.
+Kaitkan keduanya bila relevan, misalnya keluhan di area yang hari itu tidak dilaporkan dikerjakan.
 Prioritas pada daftar ditulis dengan kode bahasa Inggris: high = tinggi, medium = sedang, low = rendah.
 
 Jawab HANYA dengan JSON valid dengan kunci bahasa Inggris persis seperti ini:
 {"summary":"paragraf 2-4 kalimat","highlights":["poin singkat","poin singkat"]}
 
-- "summary": ringkasan dalam bahasa Indonesia baku, sebutkan angka konkret (jumlah laporan, lokasi terbanyak).
+- "summary": ringkasan dalam bahasa Indonesia baku yang mencakup keluhan dan kerja petugas,
+  sebutkan angka konkret (jumlah keluhan, lokasi terbanyak, jumlah laporan kerja, cakupan area).
 - "highlights": sorotan, maksimal 4 poin tindakan yang paling mendesak dalam bahasa Indonesia,
   masing-masing maksimal 12 kata.
 - Jangan mengarang data di luar daftar yang diberikan.`,
       },
       {
         role: 'user',
-        content: `Tanggal: ${date}\nTotal laporan: ${reports.length}\n\nDaftar keluhan:\n${list}`,
+        content: `Tanggal: ${date}\n\nKeluhan (${reports.length}):\n${list}\n\nKerja petugas kebersihan:\n${describeWork(work)}`,
       },
     ],
     700,

@@ -366,6 +366,16 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
       </div>
 
       {/* The staff's work comes first: it is what this system is for. Complaints support it. */}
+      {/* One summary for the day, complaints and the staff's work together, above both sections. */}
+      <SummaryCard
+        summary={summary}
+        onSummary={setSummary}
+        date={range.to}
+        title={range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
+        topLocations={data?.top_locations ?? []}
+        missingAreas={cleaning?.areas.missing ?? []}
+      />
+
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <CleaningHeadline data={work} />
         {/* The line between them: across when they stack, upright when they stand side by side. */}
@@ -377,13 +387,6 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
       <CleaningDetails data={work} places={places} onOpenStaff={(id) => onOpenStaff(id, range)} />
 
       <SectionTitle>{t('sub.complaints')}</SectionTitle>
-      <SummaryCard
-        summary={summary}
-        onSummary={setSummary}
-        date={range.to}
-        title={range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
-        topLocations={data?.top_locations ?? []}
-      />
       <ComplaintDetails data={complaints} places={places} />
     </div>
   );
@@ -406,12 +409,15 @@ function SummaryCard({
   date,
   title,
   topLocations,
+  missingAreas,
 }: {
   summary: DailySummary | null;
   onSummary: (s: DailySummary) => void;
   date: string;
   title: string;
   topLocations: ChartData['top_locations'];
+  /** Areas no staff report has come from in the picked dates. */
+  missingAreas: CleaningCharts['areas']['missing'];
 }) {
   const { t } = useLanguage();
   const [generating, setGenerating] = useState(false);
@@ -463,10 +469,35 @@ function SummaryCard({
               )}
             </div>
 
-            {!!topLocations.length && (
-              <div>
-                <p className="mb-2 text-nav font-semibold text-ink-600">{t('ov.top_locations')}</p>
-                <BarChart data={topLocations.map((l) => ({ label: l.location, value: Number(l.count) }))} />
+            {/* Both sides at a glance: where complaints pile up, and where no staff report has come from. */}
+            {(!!topLocations.length || !!missingAreas.length) && (
+              <div className="space-y-5">
+                {!!topLocations.length && (
+                  <div>
+                    <p className="mb-2 text-nav font-semibold text-ink-600">{t('ov.top_locations')}</p>
+                    <BarChart data={topLocations.map((l) => ({ label: l.location, value: Number(l.count) }))} />
+                  </div>
+                )}
+                {!!missingAreas.length && (
+                  <div>
+                    <p className="mb-2 text-nav font-semibold text-ink-600">
+                      {t('ov.clean_missing')} · {missingAreas.length}
+                    </p>
+                    <ul className="flex flex-wrap gap-1.5">
+                      {missingAreas.slice(0, 8).map((a) => (
+                        <li
+                          key={a.id}
+                          className="rounded-full border border-dashed border-ink-600/50 px-2.5 py-0.5 text-xs font-semibold text-ink-700"
+                        >
+                          {a.name}
+                        </li>
+                      ))}
+                      {missingAreas.length > 8 && (
+                        <li className="px-1 py-0.5 text-xs font-semibold text-ink-600">+{missingAreas.length - 8}</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
