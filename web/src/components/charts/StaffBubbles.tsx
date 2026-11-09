@@ -24,8 +24,30 @@ export default function StaffBubbles({
   const mounted = useMounted();
   const max = Math.max(1, ...staff.map((s) => s.value));
 
+  // Nobody reported yet: a few dashed bubbles hold the place the people will take.
+  if (!staff.length)
+    return (
+      <ul aria-hidden className="m-0 flex flex-1 list-none flex-wrap content-center items-end justify-center gap-x-4 gap-y-5 p-0">
+        {[0.7, 1, 0.55].map((scale, i) => (
+          <li
+            key={i}
+            className="flex flex-col items-center gap-1.5"
+            style={{ opacity: mounted ? 1 : 0, transition: `opacity .4s ease ${i * 80}ms` }}
+          >
+            <span
+              className="grid place-content-center rounded-full border border-dashed border-ink-600/50 text-lg font-bold"
+              style={{ width: MIN + scale * (MAX - MIN) * 0.6, height: MIN + scale * (MAX - MIN) * 0.6, color: INK.muted }}
+            >
+              0
+            </span>
+            <span className="h-2 w-14 rounded-full bg-mist-200" />
+          </li>
+        ))}
+      </ul>
+    );
+
   return (
-    <ul className="m-0 flex list-none flex-wrap items-end justify-center gap-x-4 gap-y-5 p-0">
+    <ul className="m-0 flex flex-1 list-none flex-wrap content-center items-end justify-center gap-x-4 gap-y-5 p-0">
       {staff.map((s, i) => {
         const size = MIN + Math.sqrt(s.value / max) * (MAX - MIN);
         return (

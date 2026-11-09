@@ -65,11 +65,48 @@ function squarify(values: number[]): Box[] {
   return out;
 }
 
+/** Nothing counted yet: the same frame, every place an equal dashed tile at zero. */
+function EmptyTreemap({ items }: { items: TreeItem[] }) {
+  const mounted = useMounted();
+  // Without even the names, a few blank tiles keep the shape.
+  const shown = items.length ? items : Array.from({ length: 4 }, (_, i) => ({ key: String(i), label: '', value: 0 }));
+  const boxes = squarify(shown.map(() => 1));
+  return (
+    <div className="relative w-full" style={{ aspectRatio: `${W} / ${H}` }}>
+      {shown.map((it, i) => {
+        const b = boxes[i];
+        return (
+          <div
+            key={it.key}
+            className="absolute p-[2px]"
+            style={{
+              left: `${b.x}%`,
+              top: `${(b.y / H) * 100}%`,
+              width: `${b.w}%`,
+              height: `${(b.h / H) * 100}%`,
+              opacity: mounted ? 1 : 0,
+              transition: `opacity .5s ${i * 40}ms`,
+            }}
+          >
+            <div
+              className="flex h-full w-full flex-col justify-between overflow-hidden rounded-xl border border-dashed border-ink-600/50 p-2.5"
+              style={{ color: INK.muted }}
+            >
+              <span className="truncate text-nav font-bold uppercase tracking-wide">{it.label}</span>
+              {it.label && <span className="text-nav font-bold tabular-nums">0</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Treemap({ items }: { items: TreeItem[] }) {
   const mounted = useMounted();
   const [hot, setHot] = useState<string | null>(null);
   const sorted = items.filter((i) => i.value > 0).sort((a, b) => b.value - a.value);
-  if (!sorted.length) return null;
+  if (!sorted.length) return <EmptyTreemap items={items} />;
 
   const boxes = squarify(sorted.map((i) => i.value));
   const max = sorted[0].value;

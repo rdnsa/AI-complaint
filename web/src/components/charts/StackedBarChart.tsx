@@ -33,7 +33,7 @@ export default function StackedBarChart({
   const max = Math.max(1, ...data.map(total));
 
   return (
-    <figure className="m-0">
+    <figure className="m-0 flex flex-1 flex-col">
       <div className="mb-3 flex flex-wrap gap-4 text-xs font-semibold text-ink-700">
         {ORDER.map((p) => (
           <span key={p} className="inline-flex items-center gap-1.5">
@@ -43,11 +43,13 @@ export default function StackedBarChart({
         ))}
       </div>
 
-      <div className={`relative flex h-40 items-end ${data.length > 60 ? '' : 'gap-1'}`} onMouseLeave={() => setHovered(null)}>
+      <div className="relative min-h-40 flex-1" onMouseLeave={() => setHovered(null)}>
+        {/* Pinned to the box, so the bars grow with whatever height the tile gives them. */}
+        <div className={`absolute inset-0 flex items-stretch ${data.length > 60 ? '' : 'gap-1'}`}>
         {data.map((d, i) => (
           <div
             key={d.date}
-            className="flex h-full flex-1 cursor-default flex-col justify-end gap-0.5"
+            className="flex flex-1 cursor-default flex-col justify-end gap-0.5"
             onMouseEnter={() => setHovered(i)}
             style={{
               opacity: hovered === null || hovered === i ? 1 : 0.45,
@@ -76,6 +78,7 @@ export default function StackedBarChart({
             {!total(d) && <div className="h-[3px] w-full rounded-full bg-mist-200" />}
           </div>
         ))}
+        </div>
 
         {hovered !== null && (
           <div

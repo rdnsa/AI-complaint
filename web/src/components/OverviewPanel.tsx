@@ -17,7 +17,7 @@ import StaffBubbles from './charts/StaffBubbles';
 import TaskDials from './charts/TaskDials';
 import Treemap from './charts/Treemap';
 import { AGING_COLORS, CATEGORY_COLORS, PRIORITY_COLORS, SERIES, SINGLE, STATUS_COLORS } from './charts/colors';
-import { api, CLEANING_TASKS, type ChartData, type CleaningCharts, type DailySummary } from '../lib/api';
+import { api, CLEANING_TASKS, type ChartData, type CleaningArea, type CleaningCharts, type DailySummary } from '../lib/api';
 import { useLanguage, type Translate } from '../lib/i18n';
 import { buildPlaces, type Place } from '../lib/places';
 import { Reveal } from '../lib/motion';
@@ -156,6 +156,59 @@ const buildingTiles = (buildings: Array<{ building_code: string; building_name: 
     value: Number(b.count),
   }));
 
+/** Every date of a range, 'YYYY-MM-DD', the way the server fills its daily series. */
+function datesOf({ from, to }: DateRange): string[] {
+  const days = Math.max(1, Math.round((Date.parse(to) - Date.parse(from)) / DAY_MS) + 1);
+  return Array.from({ length: days }, (_, i) => new Date(Date.parse(from) + i * DAY_MS).toISOString().slice(0, 10));
+}
+
+/**
+ * Zeros for every complaint chart. With nothing to count, or nothing arrived,
+ * the charts still stand as empty frames, so the page keeps its shape.
+ */
+function emptyCharts(range: DateRange): ChartData {
+  const dates = datesOf(range);
+  return {
+    daily: dates.map((date) => ({ date, total: 0, resolved: 0 })),
+    dailyByPriority: dates.map((date) => ({ date, high: 0, medium: 0, low: 0 })),
+    categories: [],
+    priorities: [],
+    buildings: [],
+    resolution: { count: 0, minutes: null },
+    top_locations: [],
+    hourByDay: [],
+    statuses: [],
+    aging: [0, 0, 0, 0, 0],
+    matrix: [],
+    resolutionByPriority: [],
+    trend: { days: dates.length, reports: 0, previous_reports: 0, change: null, resolved: 0, high: 0 },
+  };
+}
+
+/** The same for the staff's reports, with every area of the campus still on the map. */
+function emptyCleaning(range: DateRange, areas: CleaningArea[]): CleaningCharts {
+  const dates = datesOf(range);
+  return {
+    trend: { days: dates.length, reports: 0, previous_reports: 0, change: null, alerts: 0 },
+    areas: {
+      total: areas.length,
+      covered: 0,
+      missing: areas.map((a) => ({ id: a.id, name: a.name })),
+      list: areas.map((a) => ({ ...a, reports: 0 })),
+    },
+    location: { ok: 0, far: 0, unknown: 0 },
+    matrix: [],
+    daily: dates.map((date) => ({ date, reports: 0, on_campus: 0 })),
+    hours: new Array<number>(24).fill(0),
+    tasks: [],
+    buildings: [],
+    staff: [],
+  };
+}
+
+/** The building letters of the campus, for the rows of a chart that has none of its own yet. */
+const buildingCodes = (places: Place[]) => places.flatMap((p) => (p.code ? [p.code] : []));
+
 /**
  * The supervisor's landing view: the whole picture in shapes, with as few words
  * as will do, for the staff's work reports and then complaints, on one page. Everything here
@@ -173,6 +226,7 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
   const [cleaning, setCleaning] = useState<CleaningCharts | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [places, setPlaces] = useState<Place[]>([]);
+  const [areas, setAreas] = useState<CleaningArea[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportFailed, setExportFailed] = useState(false);
@@ -200,7 +254,10 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
   useEffect(() => {
     api
       .cleaningAreas()
-      .then((r) => setPlaces(buildPlaces(r.data)))
+      .then((r) => {
+        setAreas(r.data);
+        setPlaces(buildPlaces(r.data));
+      })
       .catch(() => setPlaces([]));
   }, []);
 
@@ -241,7 +298,10 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
     }
   };
 
-  const noData = <p className="card p-10 text-center text-ink-600">{t('charts.no_data')}</p>;
+  // A failed load still draws the frames, with a line saying the zeros are not a count.
+  const complaints = data ?? emptyCharts(range);
+  const work = cleaning ?? emptyCleaning(range, areas);
+  const failed = !data || !cleaning;
 
   return (
     <div className="mt-6 space-y-4">
@@ -288,6 +348,11 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
         >
           {exporting ? t('ov.exporting') : t('ov.export')}
         </button>
+        {failed && (
+          <p role="alert" className="w-full text-xs font-semibold text-red-700">
+            {t('ov.load_failed')}
+          </p>
+        )}
         {problem && (
           <p role="alert" className="w-full text-xs font-semibold text-red-700">
             {problem}
@@ -302,14 +367,14 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
 
       {/* The staff's work comes first: it is what this system is for. Complaints support it. */}
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        {cleaning ? <CleaningHeadline data={cleaning} /> : noData}
+        <CleaningHeadline data={work} />
         {/* The line between them: across when they stack, upright when they stand side by side. */}
         <div aria-hidden className="h-px bg-mist-200 xl:h-auto xl:w-px" />
-        {data ? <ComplaintHeadline data={data} /> : noData}
+        <ComplaintHeadline data={complaints} />
       </div>
 
       <SectionTitle>{t('ov.section_staff')}</SectionTitle>
-      {cleaning ? <CleaningDetails data={cleaning} places={places} onOpenStaff={(id) => onOpenStaff(id, range)} /> : noData}
+      <CleaningDetails data={work} places={places} onOpenStaff={(id) => onOpenStaff(id, range)} />
 
       <SectionTitle>{t('sub.complaints')}</SectionTitle>
       <SummaryCard
@@ -319,7 +384,7 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
         title={range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
         topLocations={data?.top_locations ?? []}
       />
-      {data ? <ComplaintDetails data={data} places={places} /> : noData}
+      <ComplaintDetails data={complaints} places={places} />
     </div>
   );
 }
@@ -554,9 +619,17 @@ function ComplaintDetails({ data, places }: { data: ChartData; places: Place[] }
   }))
     .filter((c) => c.value > 0)
     .sort((a, b) => b.value - a.value);
+  // Nothing counted yet: every category stands at zero instead of the chart vanishing.
+  const categoryRings = categorySegments.length
+    ? categorySegments
+    : CATEGORY_ORDER.map((k) => ({ key: k, label: t(`category.${k}` as 'category.other'), value: 0, color: CATEGORY_COLORS[k] }));
 
-  const buildingsPresent = [...new Set(data.matrix.map((m) => m.building_code))].sort();
-  const categoriesPresent = CATEGORY_ORDER.filter((c) => data.matrix.some((m) => m.category === c));
+  const codes = buildingCodes(places);
+  const charted = [...new Set(data.matrix.map((m) => m.building_code))].sort();
+  const buildingsPresent = charted.length ? charted : codes;
+  const chartedCategories = CATEGORY_ORDER.filter((c) => data.matrix.some((m) => m.category === c));
+  const categoriesPresent = chartedCategories.length ? chartedCategories : CATEGORY_ORDER;
+  const tiles = data.buildings.length ? buildingTiles(data.buildings) : codes.map((c) => ({ key: c, label: c, value: 0 }));
 
   const hint = buildingHint(places, data.buildings, t);
 
@@ -586,7 +659,7 @@ function ComplaintDetails({ data, places }: { data: ChartData; places: Place[] }
           <HourClock hours={hours} unit={t('ov.reports')} />
         </Tile>
         <Tile title={t('ov.problems')}>
-          <RadialBars items={categorySegments} />
+          <RadialBars items={categoryRings} />
         </Tile>
         <Tile title={t('ov.priority')} className="md:col-span-2 lg:col-span-1">
           <Donut segments={prioritySegments} totalLabel={t('ov.total')} />
@@ -595,7 +668,7 @@ function ComplaintDetails({ data, places }: { data: ChartData; places: Place[] }
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Tile title={t('ov.buildings')} hint={hint}>
-          <Treemap items={buildingTiles(data.buildings)} />
+          <Treemap items={tiles} />
         </Tile>
         <Tile title={t('ov.aging')}>
           <AgingBars values={data.aging} labels={AGING_COLORS.map((_, i) => t(`ov.age_${i}` as 'ov.age_0'))} />
@@ -604,19 +677,15 @@ function ComplaintDetails({ data, places }: { data: ChartData; places: Place[] }
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Tile title={`${t('ov.buildings')} × ${t('ov.problems')}`} hint={hint}>
-          {buildingsPresent.length ? (
-            <Heatmap
-              data={data.matrix.map((m) => ({ row: m.building_code, column: m.category, value: Number(m.count) }))}
-              rows={buildingsPresent}
-              columns={categoriesPresent}
-              columnLabel={(c) => t(`category.${c}` as 'category.other')}
-              verticalLabels
-              fewerLabel={t('charts.fewer')}
-              moreLabel={t('charts.more')}
-            />
-          ) : (
-            <p className="text-sm text-ink-600">{t('charts.no_data')}</p>
-          )}
+          <Heatmap
+            data={data.matrix.map((m) => ({ row: m.building_code, column: m.category, value: Number(m.count) }))}
+            rows={buildingsPresent}
+            columns={categoriesPresent}
+            columnLabel={(c) => t(`category.${c}` as 'category.other')}
+            verticalLabels
+            fewerLabel={t('charts.fewer')}
+            moreLabel={t('charts.more')}
+          />
         </Tile>
         <Tile title={t('ov.speed')}>
           <BarChart
@@ -671,11 +740,10 @@ function CleaningDetails({
   const { trend, areas } = data;
   const hint = buildingHint(places, data.buildings, t);
 
-  if (trend.reports === 0) return <p className="card p-10 text-center text-ink-600">{t('clean.empty')}</p>;
-
   const format = (options: Intl.DateTimeFormatOptions, date: string) =>
     new Intl.DateTimeFormat(locale, { timeZone: 'UTC', ...options }).format(new Date(date));
-  const buildings = [...new Set(data.matrix.map((m) => m.building_code))].sort();
+  const charted = [...new Set(data.matrix.map((m) => m.building_code))].sort();
+  const buildings = charted.length ? charted : buildingCodes(places);
 
   return (
     <>
