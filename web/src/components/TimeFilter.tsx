@@ -49,7 +49,8 @@ export default function TimeFilter({
   onChange: (next: TimeRange) => void;
 }) {
   const { t } = useLanguage();
-  const [preset, setPreset] = useState<Preset>('all');
+  // Dates set from outside (a number opened from the overview) show as a custom range.
+  const [preset, setPreset] = useState<Preset>(() => (value.from || value.to ? 'custom' : 'all'));
 
   const choosePreset = (p: Preset) => {
     setPreset(p);

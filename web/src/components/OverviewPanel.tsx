@@ -218,7 +218,18 @@ const buildingCodes = (places: Place[]) => places.flatMap((p) => (p.code ? [p.co
  * already count. The picked dates drive both sections. The AI summary exists per
  * day, so it shows the last picked date.
  */
-export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: string, range: DateRange) => void }) {
+/** Where a number on the overview leads: the Reports tab, already filtered to it. */
+export type OverviewTarget =
+  | { kind: 'complaints'; date: string; status?: 'new' | 'in_progress' | 'resolved'; priority?: 'high' | 'medium' | 'low' }
+  | { kind: 'cleaning'; date: string; view: 'recap' | 'reports'; alertsOnly?: boolean };
+
+export default function OverviewPanel({
+  onOpenStaff,
+  onOpen,
+}: {
+  onOpenStaff: (staffId: string, range: DateRange) => void;
+  onOpen: (target: OverviewTarget) => void;
+}) {
   const { t, language } = useLanguage();
   // null until a date is picked: the rolling default.
   const [picked, setPicked] = useState<DateRange | null>(null);
@@ -227,6 +238,8 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
   const [data, setData] = useState<ChartData | null>(null);
   const [cleaning, setCleaning] = useState<CleaningCharts | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
+  // The summary's own day (the last picked date), for the numbers under it.
+  const [day, setDay] = useState<{ complaints: ChartData | null; work: CleaningCharts | null }>({ complaints: null, work: null });
   const [places, setPlaces] = useState<Place[]>([]);
   const [areas, setAreas] = useState<CleaningArea[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,16 +250,21 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
   const load = useCallback(async () => {
     const { from, to } = picked ?? rollingRange();
     const run = ++latestLoad.current;
-    const [d, c, sum] = await Promise.all([
+    const oneDay = from === to;
+    const [d, c, sum, dayC, dayW] = await Promise.all([
       api.charts(from, to).catch(() => null),
       api.cleaningCharts(from, to).catch(() => null),
       api.summary(to).catch(() => null),
+      // A one-day range already is the summary's day: no second request.
+      oneDay ? null : api.charts(to, to).catch(() => null),
+      oneDay ? null : api.cleaningCharts(to, to).catch(() => null),
     ]);
     // Dates picked in quick succession: only the newest answer may reach the screen.
     if (run !== latestLoad.current) return;
     setData(d);
     setCleaning(c);
     setSummary(sum);
+    setDay({ complaints: oneDay ? d : dayC, work: oneDay ? c : dayW });
     setLoading(false);
   }, [picked]);
 
@@ -372,8 +390,9 @@ export default function OverviewPanel({ onOpenStaff }: { onOpenStaff: (staffId: 
         onSummary={setSummary}
         date={range.to}
         title={range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
-        topLocations={data?.top_locations ?? []}
-        missingAreas={cleaning?.areas.missing ?? []}
+        complaints={day.complaints}
+        work={day.work}
+        onOpen={onOpen}
       />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
@@ -403,106 +422,187 @@ function SectionTitle({ children }: { children: ReactNode }) {
 }
 
 /** The day in words, next to the day in shapes: the AI's summary and where reports came from. */
+/** One number under the summary that opens the list behind it. */
+function SummaryChip({
+  value,
+  label,
+  tone = 'plain',
+  onClick,
+}: {
+  value: ReactNode;
+  label: string;
+  tone?: 'plain' | 'alert';
+  onClick: () => void;
+}) {
+  const alert = tone === 'alert';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group inline-flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-xs ring-1 transition hover:bg-mist-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 ${
+        alert ? 'text-red-700 ring-red-300' : 'text-ink-700 ring-mist-300'
+      }`}
+    >
+      <b className={`tabular-nums text-sm ${alert ? '' : 'text-ink-900'}`}>{value}</b>
+      {label}
+      <span aria-hidden className="text-ink-600 transition group-hover:translate-x-0.5">›</span>
+    </button>
+  );
+}
+
+/**
+ * The day in a few lines: the AI's paragraph (two lines until opened), and the
+ * day's numbers for both sides, each a way into the list behind it.
+ */
 function SummaryCard({
   summary,
   onSummary,
   date,
   title,
-  topLocations,
-  missingAreas,
+  complaints,
+  work,
+  onOpen,
 }: {
   summary: DailySummary | null;
   onSummary: (s: DailySummary) => void;
   date: string;
   title: string;
-  topLocations: ChartData['top_locations'];
-  /** Areas no staff report has come from in the picked dates. */
-  missingAreas: CleaningCharts['areas']['missing'];
+  /** The summary's day only, not the picked range. */
+  complaints: ChartData | null;
+  work: CleaningCharts | null;
+  onOpen: (target: OverviewTarget) => void;
 }) {
   const { t } = useLanguage();
   const [generating, setGenerating] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const countOf = (status: string) => Number(complaints?.statuses.find((s) => s.status === status)?.count ?? 0);
+  const topLocations = complaints?.top_locations.slice(0, 3) ?? [];
+  const more = !!summary?.highlights?.length || !!topLocations.length;
 
   return (
-      <Reveal>
-        <section className="card overflow-hidden">
-          <div className="flex items-center justify-between gap-3 px-5 pt-5">
-            <h3 className="section-title flex items-center gap-2">
-              {title}
-              <InfoTip label={t('dashboard.summary_schedule')}>{t('dashboard.summary_schedule')}</InfoTip>
-            </h3>
-            <button
-              className="btn-neutral !px-3 !py-1.5 text-xs"
-              disabled={generating}
-              onClick={async () => {
-                setGenerating(true);
-                try {
-                  onSummary(await api.generateSummary(date));
-                } catch {
-                  /* leave the previous summary on screen */
-                } finally {
-                  setGenerating(false);
-                }
-              }}
-            >
-              {generating ? t('dashboard.generating') : t('dashboard.regenerate')}
-            </button>
-          </div>
+    <Reveal>
+      <section className="card px-4 py-3.5 sm:px-5">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="flex items-center gap-2 text-base font-semibold text-ink-900">
+            {title}
+            <InfoTip label={t('dashboard.summary_schedule')}>{t('dashboard.summary_schedule')}</InfoTip>
+          </h3>
+          <button
+            className="btn-neutral !min-h-0 !px-3 !py-1 text-xs"
+            disabled={generating}
+            onClick={async () => {
+              setGenerating(true);
+              setFailure(null);
+              try {
+                onSummary(await api.generateSummary(date));
+              } catch (err) {
+                // The previous summary stays on screen, but the supervisor is told why the new one did not come.
+                setFailure(err instanceof Error ? err.message : '');
+              } finally {
+                setGenerating(false);
+              }
+            }}
+          >
+            {generating ? t('dashboard.generating') : t('dashboard.regenerate')}
+          </button>
+        </div>
 
-          <div className="grid gap-6 p-5 lg:grid-cols-[1.6fr_1fr]">
-            <div>
-              {summary?.exists ? (
-                <>
-                  <p className="leading-relaxed text-ink-900">{summary.summary}</p>
-                  {!!summary.highlights?.length && (
-                    <ul className="mt-3 space-y-1.5">
-                      {summary.highlights.map((h) => (
-                        <li key={h} className="flex gap-2 text-sm text-ink-700">
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500" />
-                          {h}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm text-ink-600">{t('dashboard.summary_empty')}</p>
-              )}
-            </div>
+        {failure !== null && (
+          <p role="alert" className="mt-2 text-xs font-semibold text-red-700">
+            {t('dashboard.summary_failed')}
+            {failure && <span className="block break-words font-normal opacity-80">{failure.slice(0, 180)}</span>}
+          </p>
+        )}
 
-            {/* Both sides at a glance: where complaints pile up, and where no staff report has come from. */}
-            {(!!topLocations.length || !!missingAreas.length) && (
-              <div className="space-y-5">
-                {!!topLocations.length && (
-                  <div>
-                    <p className="mb-2 text-nav font-semibold text-ink-600">{t('ov.top_locations')}</p>
-                    <BarChart data={topLocations.map((l) => ({ label: l.location, value: Number(l.count) }))} />
-                  </div>
+        {summary?.exists ? (
+          <div className="mt-2">
+            <p className={`text-sm leading-relaxed text-ink-800 ${open ? '' : 'line-clamp-2'}`}>{summary.summary}</p>
+            {open && (
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                {!!summary.highlights?.length && (
+                  <ul className="space-y-1">
+                    {summary.highlights.map((h) => (
+                      <li key={h} className="flex gap-2 text-xs text-ink-700">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500" />
+                        {h}
+                      </li>
+                    ))}
+                  </ul>
                 )}
-                {!!missingAreas.length && (
-                  <div>
-                    <p className="mb-2 text-nav font-semibold text-ink-600">
-                      {t('ov.clean_missing')} · {missingAreas.length}
-                    </p>
-                    <ul className="flex flex-wrap gap-1.5">
-                      {missingAreas.slice(0, 8).map((a) => (
-                        <li
-                          key={a.id}
-                          className="rounded-full border border-dashed border-ink-600/50 px-2.5 py-0.5 text-xs font-semibold text-ink-700"
-                        >
-                          {a.name}
+                {!!topLocations.length && (
+                  <div className="text-xs text-ink-700">
+                    <p className="mb-1 font-semibold text-ink-600">{t('ov.top_locations')}</p>
+                    <ol className="space-y-0.5">
+                      {topLocations.map((l) => (
+                        <li key={l.location} className="flex justify-between gap-3">
+                          <span className="truncate">{l.location}</span>
+                          <b className="tabular-nums text-ink-900">{l.count}</b>
                         </li>
                       ))}
-                      {missingAreas.length > 8 && (
-                        <li className="px-1 py-0.5 text-xs font-semibold text-ink-600">+{missingAreas.length - 8}</li>
-                      )}
-                    </ul>
+                    </ol>
                   </div>
                 )}
               </div>
             )}
+            {(more || (summary.summary?.length ?? 0) > 160) && (
+              <button
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                aria-expanded={open}
+                className="mt-1 text-xs font-semibold text-accent-600 underline underline-offset-2"
+              >
+                {open ? t('sum.less') : t('sum.more')}
+              </button>
+            )}
           </div>
-        </section>
-      </Reveal>
+        ) : (
+          <p className="mt-2 text-sm text-ink-600">{t('dashboard.summary_empty')}</p>
+        )}
+
+        {/* The day's numbers, both sides; each opens the list it counts. */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-mist-200 pt-3">
+          {complaints && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-0.5 text-nav font-semibold text-ink-600">{t('sub.complaints')}</span>
+              <SummaryChip value={complaints.trend.reports} label={t('sum.in')} onClick={() => onOpen({ kind: 'complaints', date })} />
+              <SummaryChip
+                value={countOf('new')}
+                label={t('sum.new')}
+                onClick={() => onOpen({ kind: 'complaints', date, status: 'new' })}
+              />
+              <SummaryChip
+                value={complaints.trend.high}
+                label={t('sum.high')}
+                tone={complaints.trend.high ? 'alert' : 'plain'}
+                onClick={() => onOpen({ kind: 'complaints', date, priority: 'high' })}
+              />
+            </div>
+          )}
+          {work && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-0.5 text-nav font-semibold text-ink-600">{t('ov.section_staff')}</span>
+              <SummaryChip
+                value={work.trend.reports}
+                label={t('sum.reports')}
+                onClick={() => onOpen({ kind: 'cleaning', date, view: 'reports' })}
+              />
+              <SummaryChip
+                value={`${work.areas.covered}/${work.areas.total}`}
+                label={t('sum.areas')}
+                onClick={() => onOpen({ kind: 'cleaning', date, view: 'recap' })}
+              />
+              <SummaryChip
+                value={work.trend.alerts}
+                label={t('sum.flagged')}
+                tone={work.trend.alerts ? 'alert' : 'plain'}
+                onClick={() => onOpen({ kind: 'cleaning', date, view: 'reports', alertsOnly: true })}
+              />
+            </div>
+          )}
+        </div>
+      </section>
+    </Reveal>
   );
 }
 
@@ -524,8 +624,15 @@ function Headline({ title, dial, children }: { title: string; dial: ReactNode; c
   );
 }
 
+/** The dates of a daily series as "9 Nov", for the readout under a pointer on a sparkline. */
+function shortDates(dates: string[], language: string): string[] {
+  const f = new Intl.DateTimeFormat(language === 'id' ? 'id-ID' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  return dates.map((d) => f.format(new Date(`${d}T00:00:00Z`)));
+}
+
 function ComplaintHeadline({ data }: { data: ChartData }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const days = shortDates(data.daily.map((d) => d.date), language);
   const { trend } = data;
   const rate = trend.reports ? Math.round((trend.resolved / trend.reports) * 100) : 0;
   const open = data.statuses.filter((s) => s.status !== 'resolved').reduce((n, s) => n + Number(s.count), 0);
@@ -536,6 +643,7 @@ function ComplaintHeadline({ data }: { data: ChartData }) {
         label={t('ov.total_reports')}
         value={trend.reports}
         series={data.daily.map((d) => d.total)}
+        seriesLabels={days}
         color={SERIES.received}
         change={trend.change}
         note={t('ov.days', { n: trend.days })}
@@ -544,6 +652,7 @@ function ComplaintHeadline({ data }: { data: ChartData }) {
         label={t('charts.kpi_high')}
         value={trend.high}
         series={data.dailyByPriority.map((d) => d.high)}
+        seriesLabels={days}
         color={PRIORITY_COLORS.high}
         note={t('ov.days', { n: trend.days })}
       />
@@ -551,6 +660,7 @@ function ComplaintHeadline({ data }: { data: ChartData }) {
         label={t('ov.open')}
         value={open}
         series={data.daily.map((d) => d.total - d.resolved)}
+        seriesLabels={days}
         color={PRIORITY_COLORS.medium}
       />
       <KpiCard
@@ -564,7 +674,8 @@ function ComplaintHeadline({ data }: { data: ChartData }) {
 }
 
 function CleaningHeadline({ data }: { data: CleaningCharts }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const days = shortDates(data.daily.map((d) => d.date), language);
   const { trend, areas } = data;
   const coverage = areas.total ? Math.round((areas.covered / areas.total) * 100) : 0;
 
@@ -577,6 +688,7 @@ function CleaningHeadline({ data }: { data: CleaningCharts }) {
         label={t('ov.clean_reports')}
         value={trend.reports}
         series={data.daily.map((d) => d.reports)}
+        seriesLabels={days}
         color={SERIES.resolved}
         change={trend.change}
         goodDirection="up"
@@ -593,6 +705,7 @@ function CleaningHeadline({ data }: { data: CleaningCharts }) {
         label={t('clean.stat_alerts')}
         value={trend.alerts}
         series={data.daily.map((d) => d.reports - d.on_campus)}
+        seriesLabels={days}
         color={PRIORITY_COLORS.high}
         note={t('ov.days', { n: trend.days })}
       />

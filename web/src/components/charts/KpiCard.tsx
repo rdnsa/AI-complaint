@@ -15,6 +15,7 @@ export default function KpiCard({
   value,
   unit,
   series,
+  seriesLabels,
   color,
   change,
   note,
@@ -24,6 +25,8 @@ export default function KpiCard({
   value: string | number;
   unit?: string;
   series?: number[];
+  /** One per point of the series (the dates), read out under the pointer. */
+  seriesLabels?: string[];
   color: string;
   change?: number | null;
   note?: string;
@@ -57,7 +60,7 @@ export default function KpiCard({
 
       {series && series.length > 1 && (
         <div className="mt-auto pt-3">
-          <Sparkline data={series} color={color} />
+          <Sparkline data={series} labels={seriesLabels} color={color} />
         </div>
       )}
     </div>

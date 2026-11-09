@@ -191,9 +191,26 @@ function Board({ session }: { session: Session }) {
                 setTab('reports');
                 window.scrollTo(0, 0);
               }}
+              onOpen={(target) => {
+                // A number on the overview opens the list behind it, already filtered to that day.
+                if (target.kind === 'complaints') {
+                  setFilter({ status: target.status ?? '', priority: target.priority ?? '' });
+                  setTime({ ...EMPTY_TIME_RANGE, from: target.date, to: target.date });
+                  setLoading(true);
+                  setReportsView('complaints');
+                } else {
+                  setCleaningFocus({ staffId: '', from: target.date, to: target.date, view: target.view, alertsOnly: target.alertsOnly });
+                  setReportsView('cleaning');
+                }
+                setTab('reports');
+                window.scrollTo(0, 0);
+              }}
             />
           )}
-          {tab === 'reports' && reportsView === 'cleaning' && <CleaningPanel focus={cleaningFocus} />}
+          {/* Keyed by the focus, so opening another number starts the panel afresh on it. */}
+          {tab === 'reports' && reportsView === 'cleaning' && (
+            <CleaningPanel key={JSON.stringify(cleaningFocus)} focus={cleaningFocus} />
+          )}
           {tab === 'logs' && <ActivityPanel />}
           {tab === 'accounts' && <AccountsPanel />}
           {tab === 'qr' && <QrCodesPanel />}

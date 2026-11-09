@@ -45,24 +45,29 @@ function formatDistance(m: number | null): string {
   return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`;
 }
 
-/** One person's reports over a range, as opened from the overview. */
+/** What the overview opened: one person's reports over a range, or a day's reports or recap. */
 export interface CleaningFocus {
+  /** Empty for everyone. */
   staffId: string;
   from: string;
   to: string;
+  /** The recap is always one day: `from`. Defaults to the reports list. */
+  view?: 'recap' | 'reports';
+  /** Only the reports filed away from campus or without a position. */
+  alertsOnly?: boolean;
 }
 
 export default function CleaningPanel({ focus = null }: { focus?: CleaningFocus | null }) {
   const { t, language } = useLanguage();
-  const [view, setView] = useState<'recap' | 'reports'>(focus ? 'reports' : 'recap');
-  const [date, setDate] = useState(todayWIB);
+  const [view, setView] = useState<'recap' | 'reports'>(focus?.view ?? (focus ? 'reports' : 'recap'));
+  const [date, setDate] = useState(() => (focus?.view === 'recap' ? focus.from : todayWIB()));
   const [recap, setRecap] = useState<CleaningRecap | null>(null);
   const [reports, setReports] = useState<CleaningReport[]>([]);
   const [staffList, setStaffList] = useState<StaffOption[]>([]);
   const [staffId, setStaffId] = useState(focus?.staffId ?? '');
   // Replaces the single day on the reports list until it is cleared. The recap is always one day.
-  const [range, setRange] = useState(focus ? { from: focus.from, to: focus.to } : null);
-  const [alertsOnly, setAlertsOnly] = useState(false);
+  const [range, setRange] = useState(focus && focus.view !== 'recap' ? { from: focus.from, to: focus.to } : null);
+  const [alertsOnly, setAlertsOnly] = useState(focus?.alertsOnly ?? false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {

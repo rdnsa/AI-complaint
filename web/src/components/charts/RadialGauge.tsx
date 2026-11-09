@@ -73,9 +73,10 @@ export default function RadialGauge({
       </svg>
 
       <figcaption className="absolute inset-0 grid place-content-center text-center">
-        <span className="font-display text-[56px] font-light leading-none tracking-tight" style={{ color: INK.primary }}>
+        {/* Sized to the ring, not to the tile: the arc stays the louder of the two. */}
+        <span className="font-display text-[38px] font-light leading-none tracking-tight" style={{ color: INK.primary }}>
           <CountUp value={pct} />
-          <span className="text-2xl" style={{ color: INK.muted }}>%</span>
+          <span className="text-lg" style={{ color: INK.muted }}>%</span>
         </span>
         {label && (
           <span className="mt-1.5 text-nav font-semibold uppercase tracking-wider" style={{ color: INK.muted }}>
