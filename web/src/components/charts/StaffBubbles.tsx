@@ -1,5 +1,6 @@
 import { useMounted } from './motion';
 import { INK, SINGLE } from './colors';
+import { NARROW, useWidth } from './useWidth';
 
 const MIN = 58;
 const MAX = 118;
@@ -22,7 +23,10 @@ export default function StaffBubbles({
   onOpen: (id: string) => void;
 }) {
   const mounted = useMounted();
+  const [box, width] = useWidth<HTMLUListElement>();
   const max = Math.max(1, ...staff.map((s) => s.value));
+  // On a phone the desktop sizes fit two to a row and the list runs past a screen: smaller, three or four to a row.
+  const scale = width && width < NARROW ? 0.6 : 1;
 
   // Nobody reported yet: a few dashed bubbles hold the place the people will take.
   if (!staff.length)
@@ -47,9 +51,14 @@ export default function StaffBubbles({
     );
 
   return (
-    <ul className="m-0 flex flex-1 list-none flex-wrap content-center items-end justify-center gap-x-4 gap-y-5 p-0">
+    <ul
+      ref={box}
+      className={`m-0 flex flex-1 list-none flex-wrap content-center items-end justify-center p-0 ${
+        scale < 1 ? 'gap-x-2.5 gap-y-3' : 'gap-x-4 gap-y-5'
+      }`}
+    >
       {staff.map((s, i) => {
-        const size = MIN + Math.sqrt(s.value / max) * (MAX - MIN);
+        const size = (MIN + Math.sqrt(s.value / max) * (MAX - MIN)) * scale;
         return (
           <li
             key={s.id}
@@ -68,7 +77,9 @@ export default function StaffBubbles({
             >
               <span className="chart-float relative block" style={{ animationDelay: `${(i % 5) * -0.9}s` }}>
                 <span
-                  className="grid place-content-center rounded-full text-lg font-bold tabular-nums text-white transition-transform duration-200 group-hover:scale-105 group-active:scale-95"
+                  className={`grid place-content-center rounded-full font-bold tabular-nums text-white transition-transform duration-200 group-hover:scale-105 group-active:scale-95 ${
+                    scale < 1 ? 'text-sm' : 'text-lg'
+                  }`}
                   style={{ width: size, height: size, background: SINGLE, boxShadow: `0 6px 18px ${SINGLE}44` }}
                 >
                   {s.value}
@@ -79,7 +90,10 @@ export default function StaffBubbles({
                   </span>
                 )}
               </span>
-              <span className="max-w-[118px] truncate text-nav font-semibold group-hover:underline" style={{ color: INK.secondary }}>
+              <span
+                className={`truncate font-semibold group-hover:underline ${scale < 1 ? 'max-w-[84px] text-[11px]' : 'max-w-[118px] text-nav'}`}
+                style={{ color: INK.secondary }}
+              >
                 {s.name}
               </span>
             </button>

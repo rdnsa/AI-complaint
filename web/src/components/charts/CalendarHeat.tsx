@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { EASE, useMounted } from './motion';
 import { INK, SEQUENTIAL, sequentialStep } from './colors';
+import { NARROW, useWidth } from './useWidth';
 
 /**
  * Every day of the range as one square, weeks left to right: a rhythm a line
@@ -27,7 +28,10 @@ export default function CalendarHeat({
 }) {
   const mounted = useMounted();
   const [hot, setHot] = useState<number | null>(null);
+  const [frame, width] = useWidth<HTMLElement>();
   if (!data.length) return null;
+  // A phone gives each week far more width than a square needs; the cap keeps the month under half a screen tall.
+  const cell = width > 0 && width < NARROW ? 36 : 52;
 
   const max = Math.max(1, ...data.map((d) => d.value));
   const peak = data.reduce((best, d, i) => (d.value > data[best].value ? i : best), 0);
@@ -48,9 +52,9 @@ export default function CalendarHeat({
   const grid = { gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` };
 
   return (
-    <figure className="m-0 flex flex-1 flex-col justify-center">
+    <figure ref={frame} className="m-0 flex flex-1 flex-col justify-center">
       <div className="overflow-x-auto">
-        <div className="mx-auto grid grid-cols-[28px_1fr] gap-x-1" style={{ minWidth: 32 + weeks * 12, maxWidth: 32 + weeks * 52 }}>
+        <div className="mx-auto grid grid-cols-[28px_1fr] gap-x-1" style={{ minWidth: 32 + weeks * 12, maxWidth: 32 + weeks * cell }}>
           <span />
           <div className="mb-1 grid h-4 text-[10px] font-semibold" style={{ ...grid, color: INK.muted }}>
             {monthsShown.map((m) => (

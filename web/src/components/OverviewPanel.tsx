@@ -155,6 +155,8 @@ const buildingTiles = (buildings: Array<{ building_code: string; building_name: 
   buildings.map((b) => ({
     key: b.building_code,
     label: b.building_code === b.building_name ? b.building_name : b.building_code,
+    // The building's name, for the readout under the map; a place outside the buildings already is its name.
+    sub: b.building_name,
     value: Number(b.count),
   }));
 
@@ -615,7 +617,7 @@ function SummaryCard({
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-mist-200 pt-3">
           {complaints && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="mr-0.5 text-nav font-semibold text-ink-600">{t('sub.complaints')}</span>
+              <span className="mr-0.5 w-full text-nav font-semibold text-ink-600 sm:w-auto">{t('sub.complaints')}</span>
               <SummaryChip value={complaints.trend.reports} label={t('sum.in')} onClick={() => onOpen({ kind: 'complaints', date })} />
               <SummaryChip
                 value={countOf('new')}
@@ -632,7 +634,7 @@ function SummaryCard({
           )}
           {work && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="mr-0.5 text-nav font-semibold text-ink-600">{t('ov.section_staff')}</span>
+              <span className="mr-0.5 w-full text-nav font-semibold text-ink-600 sm:w-auto">{t('ov.section_staff')}</span>
               <SummaryChip
                 value={work.trend.reports}
                 label={t('sum.reports')}
@@ -675,9 +677,9 @@ function Headline({
       <InView className="flex h-full flex-col">
         <h3 className="section-title mb-3">{title}</h3>
         <div className="grid flex-1 gap-3 sm:grid-cols-[minmax(0,200px)_1fr]">
-          <section className="card flex items-center justify-center p-4">
+          <section className="card flex items-center justify-center p-3 sm:p-4">
             {/* A phone has the full width to give, and the dial would fill the whole first screen. */}
-            <div className="w-40 sm:w-full">{dial}</div>
+            <div className="w-32 sm:w-full">{dial}</div>
           </section>
           <div className={`grid grid-cols-2 gap-3 ${wide ? 'lg:grid-cols-4' : ''}`}>{children}</div>
         </div>
