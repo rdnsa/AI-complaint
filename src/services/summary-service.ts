@@ -4,6 +4,7 @@ import { addDays, daysInRange, wibDayRange } from '../adapters/clock';
 import type { Env } from '../env';
 import * as reports from '../repositories/reports';
 import * as summaries from '../repositories/summaries';
+import { scopeKey, type ChartScope } from '../repositories/scope';
 import { log, SYSTEM } from './activity-service';
 import * as cleaning from './cleaning-service';
 
@@ -94,11 +95,11 @@ function dateSeries(from: string, days: number): string[] {
  * which is the truth.
  */
 /** The dashboard charts: the heaviest queries in the app, and a minute old is fine. */
-export function chartData(env: Env, from: string, to: string) {
-  return memo(`charts:${from}:${to}`, 60_000, () => loadChartData(env, from, to));
+export function chartData(env: Env, from: string, to: string, scope: ChartScope = {}) {
+  return memo(`charts:${from}:${to}:${scopeKey(scope)}`, 60_000, () => loadChartData(env, from, to, scope));
 }
 
-async function loadChartData(env: Env, from: string, to: string) {
+async function loadChartData(env: Env, from: string, to: string, scope: ChartScope) {
   const days = daysInRange(from, to);
   const window = {
     start: wibDayRange(from).start,
@@ -106,8 +107,8 @@ async function loadChartData(env: Env, from: string, to: string) {
     previousStart: wibDayRange(addDays(from, -days)).start,
   };
   const [counts, advanced] = await Promise.all([
-    summaries.chartCounts(env, window),
-    summaries.advancedCounts(env, window),
+    summaries.chartCounts(env, window, scope),
+    summaries.advancedCounts(env, window, scope),
   ]);
 
   const series = dateSeries(from, days);
@@ -166,8 +167,8 @@ async function loadChartData(env: Env, from: string, to: string) {
 }
 
 /** Every report of a range, for the dashboard's Excel export. */
-export async function exportRows(env: Env, from: string, to: string) {
-  const rows = await reports.findForExport(env, from, to);
+export async function exportRows(env: Env, from: string, to: string, scope: ChartScope = {}) {
+  const rows = await reports.findForExport(env, from, to, scope);
   return rows.map((r) => ({ ...r, categories: r.categories ? (JSON.parse(r.categories) as string[]) : [] }));
 }
 

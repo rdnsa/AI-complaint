@@ -73,6 +73,38 @@ app.patch('/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+/** A staff member's placement letter: title, area and the numbered duties (their daily target). */
+app.get('/:id/duties', async (c) => {
+  const duties = await accounts.dutiesOf(c.env, c.req.param('id'));
+  if (!duties) return c.json({ error: 'Petugas tidak ditemukan' }, 404);
+  return c.json(duties);
+});
+
+const Line = z.string().trim().max(200, 'Satu uraian tugas paling panjang 200 karakter');
+const DutiesSchema = z.object({
+  job_title: Line.nullable().transform((v) => v || null),
+  assignment: Line.nullable().transform((v) => v || null),
+  duties: z
+    .array(Line)
+    .max(60, 'Paling banyak 60 uraian tugas')
+    .transform((list) => list.filter(Boolean)),
+  areas: z
+    .array(z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, 'Area tidak valid'))
+    .max(100)
+    .default([])
+    .transform((list) => [...new Set(list)]),
+});
+
+app.put('/:id/duties', async (c) => {
+  const parsed = DutiesSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues[0]?.message ?? 'Data tidak valid' }, 400);
+  }
+  const result = await accounts.saveDuties(c.env, c.req.param('id'), parsed.data, c.get('session').name);
+  if (result === 'not-found') return c.json({ error: 'Petugas tidak ditemukan' }, 404);
+  return c.json({ ok: true, count: parsed.data.duties.length });
+});
+
 app.delete('/:id', async (c) => {
   const result = await accounts.deleteAccount(c.env, c.req.param('id'), c.get('session'));
   switch (result.kind) {

@@ -5,6 +5,7 @@ import BarChart from './charts/BarChart';
 import CalendarHeat from './charts/CalendarHeat';
 import CoverageGrid from './charts/CoverageGrid';
 import ExportMenu from './ExportMenu';
+import Select from './Select';
 import Donut from './charts/Donut';
 import Heatmap, { type HeatmapCell } from './charts/Heatmap';
 import HourBars from './charts/HourBars';
@@ -18,7 +19,16 @@ import StaffBubbles from './charts/StaffBubbles';
 import TaskDials from './charts/TaskDials';
 import Treemap from './charts/Treemap';
 import { AGING_COLORS, CATEGORY_COLORS, PRIORITY_COLORS, SERIES, SINGLE, STATUS_COLORS } from './charts/colors';
-import { api, CLEANING_TASKS, type ChartData, type CleaningArea, type CleaningCharts, type DailySummary } from '../lib/api';
+import {
+  api,
+  CLEANING_TASKS,
+  type ChartData,
+  type ChartScope,
+  type CleaningArea,
+  type CleaningCharts,
+  type DailySummary,
+  type StaffOption,
+} from '../lib/api';
 import { useLanguage, type Translate } from '../lib/i18n';
 import { buildPlaces, type Place } from '../lib/places';
 import type { ExportFormat } from '../lib/export-dashboard';
@@ -30,6 +40,7 @@ export interface DateRange {
   to: string;
 }
 
+/** The view opens on the last month (30 days, today included); another range is picked on the date fields. */
 const DEFAULT_DAYS = 30;
 const MAX_RANGE_DAYS = 366;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -206,6 +217,7 @@ function emptyCleaning(range: DateRange, areas: CleaningArea[]): CleaningCharts 
     hours: new Array<number>(24).fill(0),
     tasks: [],
     buildings: [],
+    workdays: dates.filter((d) => new Date(`${d}T00:00:00Z`).getUTCDay() !== 0).length,
     staff: [],
   };
 }
@@ -241,8 +253,12 @@ export default function OverviewPanel({
   const [cleaning, setCleaning] = useState<CleaningCharts | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [view, setView] = useState<OverviewView>(savedView);
+  // Where the switch sits in the page, so a change made far down starts the new view at its top.
+  const switchSpot = useRef<HTMLDivElement>(null);
   const pickView = (v: OverviewView) => {
     setView(v);
+    const spot = switchSpot.current?.getBoundingClientRect().top;
+    if (spot !== undefined && spot < 0) window.scrollTo({ top: window.scrollY + spot - 60 });
     try {
       sessionStorage.setItem(VIEW_KEY, v);
     } catch {
@@ -253,6 +269,9 @@ export default function OverviewPanel({
   const [day, setDay] = useState<{ complaints: ChartData | null; work: CleaningCharts | null }>({ complaints: null, work: null });
   const [places, setPlaces] = useState<Place[]>([]);
   const [areas, setAreas] = useState<CleaningArea[]>([]);
+  // Narrow every chart to one staff member and/or one building; empty is "all".
+  const [scope, setScope] = useState<ChartScope>({});
+  const [staffOptions, setStaffOptions] = useState<StaffOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [exportFailed, setExportFailed] = useState(false);
@@ -263,8 +282,8 @@ export default function OverviewPanel({
     const run = ++latestLoad.current;
     const oneDay = from === to;
     const [d, c, sum, dayC, dayW] = await Promise.all([
-      api.charts(from, to).catch(() => null),
-      api.cleaningCharts(from, to).catch(() => null),
+      api.charts(from, to, scope).catch(() => null),
+      api.cleaningCharts(from, to, scope).catch(() => null),
       api.summary(to).catch(() => null),
       // A one-day range already is the summary's day: no second request.
       oneDay ? null : api.charts(to, to).catch(() => null),
@@ -275,9 +294,16 @@ export default function OverviewPanel({
     setData(d);
     setCleaning(c);
     setSummary(sum);
-    setDay({ complaints: oneDay ? d : dayC, work: oneDay ? c : dayW });
+    // The summary's numbers are the whole campus's day, like the AI's text above them: never the filtered ones.
+    const narrowed = !!(scope.staff || scope.building);
+    const [wholeDayC, wholeDayW] =
+      oneDay && narrowed
+        ? await Promise.all([api.charts(to, to).catch(() => null), api.cleaningCharts(to, to).catch(() => null)])
+        : [oneDay ? d : dayC, oneDay ? c : dayW];
+    if (run !== latestLoad.current) return;
+    setDay({ complaints: wholeDayC, work: wholeDayW });
     setLoading(false);
-  }, [picked]);
+  }, [picked, scope]);
 
   usePolling(load, 60_000);
 
@@ -290,6 +316,10 @@ export default function OverviewPanel({
         setPlaces(buildPlaces(r.data));
       })
       .catch(() => setPlaces([]));
+    api
+      .staffList()
+      .then((r) => setStaffOptions(r.data))
+      .catch(() => setStaffOptions([]));
   }, []);
 
   if (loading) return <p className="mt-6 text-ink-600">{t('common.loading')}</p>;
@@ -317,9 +347,10 @@ export default function OverviewPanel({
       // Fetched for exactly these dates, so the file cannot disagree with its own period.
       const [{ exportDashboard }, charts, reports, cleaningCharts] = await Promise.all([
         import('../lib/export-dashboard'),
-        api.charts(range.from, range.to),
-        api.exportReports(range.from, range.to),
-        api.cleaningCharts(range.from, range.to).catch(() => null),
+        // The file holds what the screen shows: the same dates and the same staff and building filters.
+        api.charts(range.from, range.to, scope),
+        api.exportReports(range.from, range.to, scope),
+        api.cleaningCharts(range.from, range.to, scope).catch(() => null),
       ]);
       await exportDashboard({ format, ...range, charts, reports: reports.data, cleaning: cleaningCharts, t });
     } catch {
@@ -334,11 +365,20 @@ export default function OverviewPanel({
   const work = cleaning ?? emptyCleaning(range, areas);
   const failed = !data || !cleaning;
 
+  const narrowed = !!(scope.staff || scope.building);
+
   return (
     <div className="mt-6 space-y-4">
-      {/* Above everything, because everything below answers for these dates. */}
+      {/* Three views over the same dates: the day at a glance, then each side in full.
+          Pinned under the header while scrolling, as a pane of frosted glass: no strip of its own. */}
+      <div ref={switchSpot} aria-hidden className="!mt-0" />
+      <div className="sticky top-[85px] z-40 py-2 md:top-[48px]">
+        <ViewSwitch value={view} onChange={pickView} />
+      </div>
+
+      {/* Above the charts, because everything below answers for these dates and filters. */}
       <div className="card relative z-30 flex flex-wrap items-end gap-3 p-3">
-        <label className="min-w-0 flex-1 text-xs text-ink-700 sm:flex-none">
+        <label className="w-[calc(50%-0.375rem)] min-w-0 text-xs text-ink-700 sm:w-auto">
           <span className="mb-1 block font-semibold">{t('time.from_date')}</span>
           <input
             type="date"
@@ -348,7 +388,7 @@ export default function OverviewPanel({
             onChange={(e) => pick({ ...shown, from: e.target.value })}
           />
         </label>
-        <label className="min-w-0 flex-1 text-xs text-ink-700 sm:flex-none">
+        <label className="w-[calc(50%-0.375rem)] min-w-0 text-xs text-ink-700 sm:w-auto">
           <span className="mb-1 block font-semibold">{t('time.to_date')}</span>
           <input
             type="date"
@@ -359,16 +399,50 @@ export default function OverviewPanel({
             onChange={(e) => pick({ ...shown, to: e.target.value })}
           />
         </label>
-        {picked && (
+        <label className="w-[calc(50%-0.375rem)] min-w-0 text-xs text-ink-700 sm:w-48">
+          <span className="mb-1 block font-semibold">{t('export.staff')}</span>
+          <Select
+            className="input !w-full !py-1.5 max-sm:!px-3 max-sm:!text-sm"
+            value={scope.staff ?? ''}
+            onChange={(v) => setScope((s) => ({ ...s, staff: v || undefined }))}
+            aria-label={t('export.staff')}
+          >
+            <option value="">{t('clean.all_staff')}</option>
+            {staffOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </Select>
+        </label>
+        <label className="w-[calc(50%-0.375rem)] min-w-0 text-xs text-ink-700 sm:w-56">
+          <span className="mb-1 block font-semibold">{t('ov.buildings')}</span>
+          <Select
+            className="input !w-full !py-1.5 max-sm:!px-3 max-sm:!text-sm"
+            value={scope.building ?? ''}
+            onChange={(v) => setScope((s) => ({ ...s, building: v || undefined }))}
+            aria-label={t('ov.buildings')}
+          >
+            <option value="">{t('location.all_buildings')}</option>
+            {/* A building by its letter; a place outside the buildings by its name, as the charts group them. */}
+            {places.map((p) => (
+              <option key={p.key} value={p.code ?? p.name}>
+                {p.code ? `${p.code} · ${p.name}` : p.name}
+              </option>
+            ))}
+          </Select>
+        </label>
+        {(picked || narrowed) && (
           <button
             type="button"
             onClick={() => {
               setPicked(null);
               setDraft(null);
+              setScope({});
             }}
             className="pb-2 text-xs font-semibold text-accent-600 underline underline-offset-2"
           >
-            {t('time.reset')}
+            {t('ov.reset_filters')}
           </button>
         )}
         <ExportMenu
@@ -393,9 +467,6 @@ export default function OverviewPanel({
           </p>
         )}
       </div>
-
-      {/* Three views over the same dates: the day at a glance, then each side in full. */}
-      <ViewSwitch value={view} onChange={pickView} />
 
       {view === 'summary' && (
         <>
@@ -455,7 +526,11 @@ function ViewSwitch({ value, onChange }: { value: OverviewView; onChange: (v: Ov
   const { t } = useLanguage();
   const label = { summary: t('ov.view_summary'), staff: t('ov.section_staff'), complaints: t('sub.complaints') };
   return (
-    <div role="tablist" aria-label={t('ov.view_label')} className="grid grid-cols-3 gap-1 rounded-full bg-mist-200 p-1 sm:inline-grid">
+    <div
+      role="tablist"
+      aria-label={t('ov.view_label')}
+      className="glass grid grid-cols-3 gap-1 rounded-full p-1 sm:inline-grid"
+    >
       {VIEWS.map((v) => (
         <button
           key={v}
@@ -463,7 +538,7 @@ function ViewSwitch({ value, onChange }: { value: OverviewView; onChange: (v: Ov
           role="tab"
           aria-selected={value === v}
           onClick={() => onChange(v)}
-          className={`rounded-full px-3 py-2 text-nav font-semibold transition sm:px-5 sm:py-1.5 sm:text-body-sm ${
+          className={`whitespace-nowrap rounded-full px-2 py-2 text-nav font-semibold transition sm:px-5 sm:py-1.5 sm:text-body-sm ${
             value === v ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
           }`}
         >
@@ -972,8 +1047,17 @@ function CleaningDetails({
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <Tile title={t('ov.clean_by_staff')}>
           <StaffBubbles
-            staff={data.staff.map((s) => ({ id: s.staff_id, name: s.staff_name, value: Number(s.tasks), alerts: Number(s.alerts) }))}
-            describe={(name, n) => t('ov.clean_bubble', { name, n })}
+            staff={data.staff.map((s) => ({
+              id: s.staff_id,
+              name: s.staff_name,
+              value: Number(s.tasks),
+              target: Number(s.target),
+              alerts: Number(s.alerts),
+            }))}
+            describe={(name, n, target) =>
+              target ? t('ov.clean_bubble', { name, n, target }) : t('ov.clean_bubble_none', { name, n })
+            }
+            totalLabel={t('ov.clean_bubble_total', { days: data.workdays })}
             onOpen={onOpenStaff}
           />
         </Tile>

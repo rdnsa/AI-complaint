@@ -16,6 +16,8 @@
     "db:seed:remote": "wrangler d1 execute kato --remote --file=./seed/toilets.sql",
     "db:seed:cleaning": "wrangler d1 execute kato --local --file=./seed/cleaning-areas.sql",
     "db:seed:mock": "node scripts/seed-mock.mjs",
+    "db:seed:duties": "wrangler d1 execute kato --local --file=./seed/staff-duties.sql",
+    "db:seed:duties:remote": "wrangler d1 execute kato --remote --file=./seed/staff-duties.sql",
     "db:seed:cleaning:remote": "wrangler d1 execute kato --remote --file=./seed/cleaning-areas.sql",
     "qr": "node scripts/generate-qr.mjs",
     "typecheck": "tsc --noEmit",

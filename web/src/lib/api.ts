@@ -15,6 +15,24 @@ export interface ManagedAccount {
   role: Role;
   active: number;
   created_at: string;
+  /** From the placement letter; null for supervisors and staff without one yet. */
+  job_title: string | null;
+  assignment: string | null;
+  /** How many duties the letter lists (a reference for the supervisor, not the target). */
+  duty_count: number;
+  /** The QR areas that are theirs. */
+  area_count: number;
+  /** The system tasks across those areas: what they owe per working day. */
+  daily_target: number;
+}
+
+/** A staff member's placement letter: title, area and the numbered duties. */
+export interface StaffDuties {
+  job_title: string | null;
+  assignment: string | null;
+  duties: string[];
+  /** Ids of the QR areas that are theirs: a hint on the daily round, never a limit. */
+  areas: string[];
 }
 
 export interface LeaderboardRow {
@@ -242,6 +260,10 @@ export interface CleaningStaffWork {
   areas: number;
   reports: number;
   alerts: number;
+  /** The system tasks across their responsible areas: owed per working day (0 without areas). */
+  per_day: number;
+  /** per_day × working days in the range: the tasks owed. */
+  target: number;
 }
 
 /** The overview's cleaning view, for a date range. */
@@ -268,7 +290,23 @@ export interface CleaningCharts {
   hours: number[];
   tasks: Array<{ task: CleaningTask; count: number }>;
   buildings: Array<{ building_code: string; building_name: string; count: number }>;
+  /** Monday to Saturday in the range: what each person's duty list is multiplied by. */
+  workdays: number;
   staff: CleaningStaffWork[];
+}
+
+/** The dashboard's narrowing filters: one staff member (by id), one building (code, or a place's name). Empty is "all". */
+export interface ChartScope {
+  staff?: string;
+  building?: string;
+}
+
+/** A date range and the filters as a query string, leaving out the filters not set. */
+function chartQuery(from: string, to: string, scope: ChartScope): string {
+  const q = new URLSearchParams({ from, to });
+  if (scope.staff) q.set('staff', scope.staff);
+  if (scope.building) q.set('building', scope.building);
+  return q.toString();
 }
 
 export class ApiError extends Error {
@@ -361,6 +399,14 @@ export const api = {
 
   // --- supervisor only ---
   users: () => req<{ data: ManagedAccount[] }>('/api/users'),
+  staffDuties: (id: string) => req<StaffDuties>(`/api/users/${encodeURIComponent(id)}/duties`),
+  /** The same letter, readable without a session: shown to the staff member on their round. */
+  myDuties: (id: string) => req<StaffDuties>(`/api/staff/${encodeURIComponent(id)}/duties`),
+  saveStaffDuties: (id: string, body: StaffDuties) =>
+    req<{ ok: true; count: number }>(`/api/users/${encodeURIComponent(id)}/duties`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
   /** A staff member is a name only; another supervisor needs credentials. */
   createUser: (
     body:
@@ -434,11 +480,12 @@ export const api = {
   reopenReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}/reopen`, { method: 'POST' }),
   deleteReport: (id: string) => req<{ ok: boolean }>(`/api/reports/${id}`, { method: 'DELETE' }),
 
-  charts: (from: string, to: string) => req<ChartData>(`/api/summary/charts?from=${from}&to=${to}`),
-  cleaningCharts: (from: string, to: string) =>
-    req<CleaningCharts>(`/api/summary/cleaning-charts?from=${from}&to=${to}`),
-  exportReports: (from: string, to: string) =>
-    req<{ data: ExportReport[] }>(`/api/summary/export?from=${from}&to=${to}`),
+  charts: (from: string, to: string, scope: ChartScope = {}) =>
+    req<ChartData>(`/api/summary/charts?${chartQuery(from, to, scope)}`),
+  cleaningCharts: (from: string, to: string, scope: ChartScope = {}) =>
+    req<CleaningCharts>(`/api/summary/cleaning-charts?${chartQuery(from, to, scope)}`),
+  exportReports: (from: string, to: string, scope: ChartScope = {}) =>
+    req<{ data: ExportReport[] }>(`/api/summary/export?${chartQuery(from, to, scope)}`),
   activity: (filter: Record<string, string> = {}) => {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: ActivityEntry[] }>(`/api/activity?${q}`);

@@ -7,9 +7,10 @@ import DailyTasks from '../components/DailyTasks';
 import LocationSelect from '../components/LocationSelect';
 import RoleSwitch from '../components/RoleSwitch';
 import StaffPicker from '../components/StaffPicker';
+import MyDuties from '../components/MyDuties';
 import { api, type Campus, type CleaningArea, type Report } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
-import { areaAt, buildPlaces, locate, reportIsAt } from '../lib/places';
+import { areaAt, buildPlaces, locate, partOf, placeKeyOf, reportIsAt } from '../lib/places';
 import { useSelectedStaff } from '../lib/staff';
 import { ReportsMark, StaffMark } from '../components/Marks';
 import { Reveal } from '../lib/motion';
@@ -129,6 +130,28 @@ export default function StaffHome() {
           </button>
         </nav>
 
+        {/* Complaints ask who is acting at the moment of acting (see ComplaintCard); only the
+            daily round, which belongs to one person, needs the name up front: first, before
+            the place, so the app can point out which areas are theirs. */}
+        {tab === 'daily' && (
+          <div className="mt-4">
+            <StaffPicker staffList={staffList} selected={selected} onSelect={select} />
+            {/* Their areas as a hint, one tap from the round; the picker below still takes any area. */}
+            {selected && (
+              <MyDuties
+                staff={selected}
+                areas={areas}
+                currentAreaId={area?.id ?? null}
+                onPick={(a) => {
+                  setPlaceKey(placeKeyOf(a));
+                  setPart(partOf(a));
+                  setUnknownQr(false);
+                }}
+              />
+            )}
+          </div>
+        )}
+
         <div className="mt-4">
           <LocationSelect
             places={places}
@@ -143,14 +166,6 @@ export default function StaffHome() {
             }}
           />
         </div>
-
-        {/* Complaints ask who is acting at the moment of acting (see ComplaintCard); only the
-            daily round, which belongs to one person, needs the name up front. */}
-        {tab === 'daily' && (
-          <div className="mt-4">
-            <StaffPicker staffList={staffList} selected={selected} onSelect={select} />
-          </div>
-        )}
 
         {tab === 'complaints' && (
           <section className="mt-4 space-y-3">

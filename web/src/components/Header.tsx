@@ -135,6 +135,8 @@ export default function Header({
   hero = false,
   kicker,
   children,
+  nav,
+  wide = false,
 }: {
   title: string;
   description?: string;
@@ -148,6 +150,13 @@ export default function Header({
   kicker?: string;
   /** Actions under the description (pills, links). */
   children?: React.ReactNode;
+  /**
+   * A page's own sections, pinned with the bar so they stay in reach while
+   * scrolling: in the bar's one row on a wide screen, on a row of their own on a phone.
+   */
+  nav?: React.ReactNode;
+  /** The wider content column (dashboard pages), so the bar lines up with what is under it. */
+  wide?: boolean;
 }) {
   const { t } = useLanguage();
   const { pathname } = useLocation();
@@ -164,10 +173,12 @@ export default function Header({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const column = wide ? 'max-w-6xl' : 'max-w-5xl';
+
   return (
     <>
       <nav ref={bar} className="sticky top-0 z-50 border-b border-black/5 bg-surface/90 backdrop-blur-2xl backdrop-saturate-[1.8] dark:border-white/10 print:hidden">
-        <div className="mx-auto flex h-12 max-w-5xl items-center justify-between gap-3 px-4">
+        <div className={`mx-auto flex h-12 items-center justify-between gap-3 px-4 ${column}`}>
           <div className="flex min-w-0 items-center gap-2">
             {!onHome && scrolled && <BackButton round />}
             <Link to="/" aria-label={t('nav.home')} className="flex min-w-0 items-center gap-2">
@@ -175,6 +186,7 @@ export default function Header({
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white p-0.5 ring-1 ring-black/5">
                 <img src="/logo-upi.svg" alt="" className="h-full w-full" />
               </span>
+              {/* The campus line at the top of the page; scrolled, the app's short name takes its place. */}
               {scrolled ? (
                 <span key="brand" className="anim-fade-up truncate font-display text-nav-title font-semibold text-ink-900">
                   {t('app.brand')}
@@ -187,6 +199,8 @@ export default function Header({
                 </span>
               )}
             </Link>
+            {/* Scrolled on a wide screen, the sections move up beside the name: one slim pinned row. */}
+            {nav && scrolled && <div className="anim-fade-in ml-4 hidden md:block">{nav}</div>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {right}
@@ -194,6 +208,16 @@ export default function Header({
             <ThemeButton small />
           </div>
         </div>
+        {nav && (
+          // Under the campus line at the top of the page; a phone keeps this row while scrolling, having no room beside the name.
+          <div
+            className={`mx-auto overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${column} ${
+              scrolled ? 'md:hidden' : ''
+            }`}
+          >
+            {nav}
+          </div>
+        )}
         {/* Reading progress along the bar's bottom edge. */}
         <span
           aria-hidden
@@ -234,7 +258,7 @@ export default function Header({
             )}
           </div>
         ) : (
-          <div className={`mx-auto max-w-5xl px-4 ${compact ? 'pb-2 pt-3 sm:pb-8 sm:pt-5' : 'pb-6 pt-4 sm:pb-16 sm:pt-8'}`}>
+          <div className={`mx-auto px-4 ${column} ${compact ? 'pb-2 pt-3 sm:pb-8 sm:pt-5' : 'pb-6 pt-4 sm:pb-16 sm:pt-8'}`}>
             {!onHome && (
               <div className="mb-2 sm:mb-4">
                 <BackButton />

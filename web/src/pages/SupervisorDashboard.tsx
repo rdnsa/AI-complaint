@@ -46,10 +46,15 @@ export default function SupervisorDashboard() {
   return <Board session={allowed} />;
 }
 
-const TABS = ['overview', 'reports', 'logs', 'accounts', 'qr'] as const;
+const TABS = ['overview', 'reports', 'manage'] as const;
 type Tab = (typeof TABS)[number];
+/** What the Management tab holds: the running of the app rather than its numbers. */
+type ManageView = 'logs' | 'accounts' | 'qr';
 
-/** A small switch between the two lists a tab holds. */
+/**
+ * A small switch between the lists a tab holds, as a pane of frosted glass that
+ * stays pinned under the header while scrolling (the same as the dashboard's views).
+ */
 function SubTabs<K extends string>({
   value,
   onChange,
@@ -60,14 +65,16 @@ function SubTabs<K extends string>({
   items: Array<{ key: K; label: string; badge?: number }>;
 }) {
   return (
-    <div className="mt-4 inline-flex gap-1 rounded-full bg-mist-200 p-1" role="group">
+    // The header is 85px on a phone and 49px on a wide screen once scrolled.
+    <div className="sticky top-[85px] z-40 mt-2 py-2 md:top-[48px]">
+    <div className="glass inline-flex max-w-full gap-1 overflow-x-auto rounded-full p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group">
       {items.map((it) => (
         <button
           key={it.key}
           type="button"
           onClick={() => onChange(it.key)}
           aria-pressed={value === it.key}
-          className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-body-sm sm:py-1.5 font-semibold transition ${
+          className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-nav font-semibold transition sm:px-4 sm:py-1.5 sm:text-body-sm ${
             value === it.key ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
           }`}
         >
@@ -75,6 +82,7 @@ function SubTabs<K extends string>({
           {!!it.badge && <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] leading-none text-white">{it.badge}</span>}
         </button>
       ))}
+    </div>
     </div>
   );
 }
@@ -90,6 +98,8 @@ function Board({ session }: { session: Session }) {
   const [tab, setTab] = useState<Tab>('overview');
   // The Reports tab holds two related lists, told apart by a small switch at its top.
   const [reportsView, setReportsView] = useState<'complaints' | 'cleaning'>('cleaning');
+  // The Management tab: activity log, accounts and QR stickers, told apart the same way.
+  const [manageView, setManageView] = useState<ManageView>('logs');
   // Set when a staff bubble on the overview opened this person's reports for its dates.
   const [cleaningFocus, setCleaningFocus] = useState<CleaningFocus | null>(null);
   // Today's cleaning reports filed off campus or without GPS: a red count on the tab.
@@ -122,6 +132,35 @@ function Board({ session }: { session: Session }) {
     load();
   }
 
+  // The app's five sections, in the pinned header: always in reach, whatever the page has scrolled to.
+  const sections = (
+    <div className="flex w-max min-w-full gap-1" role="tablist" aria-label={t('dashboard.title')}>
+      {TABS.map((k) => (
+        <button
+          key={k}
+          role="tab"
+          aria-selected={tab === k}
+          onClick={() => {
+            setTab(k);
+            setCleaningFocus(null);
+            window.scrollTo(0, 0);
+          }}
+          className={`relative shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-nav font-semibold transition sm:text-body-sm ${
+            tab === k ? 'bg-ink-900 text-surface' : 'text-ink-700 hover:bg-mist-100 hover:text-ink-900'
+          }`}
+        >
+          {t(`tab.${k}`)}
+          {/* Off-campus cleaning reports today: the count rides on the tab that holds them. */}
+          {k === 'reports' && cleaningAlerts > 0 && (
+            <span className="ml-1.5 inline-grid min-w-5 place-content-center rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] leading-none text-white">
+              {cleaningAlerts}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen pb-16">
       <Header
@@ -129,6 +168,8 @@ function Board({ session }: { session: Session }) {
         description={t('dashboard.signed_in_as', { name: `${session.name} · ${t('account.role_supervisor')}` })}
         compact
         mark={<SupervisorMark />}
+        nav={sections}
+        wide
         right={
           <button
             onClick={async () => {
@@ -143,30 +184,6 @@ function Board({ session }: { session: Session }) {
       />
 
       <main className="mx-auto max-w-6xl px-4">
-        {/* Five tabs share one row, on a phone too: the long labels get the wider columns and wrap to two lines. */}
-        <nav className="mt-5 grid grid-cols-[1.1fr_1fr_1.1fr_1.45fr_1fr] gap-1 rounded-nav bg-mist-200 p-1 md:rounded-full">
-          {TABS.map((k) => (
-            <button
-              key={k}
-              onClick={() => {
-                setTab(k);
-                setCleaningFocus(null);
-              }}
-              aria-pressed={tab === k}
-              className={`relative rounded-full px-1 py-2 text-nav font-semibold leading-tight transition sm:text-body-sm md:px-3 ${
-                tab === k ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
-              }`}
-            >
-              {t(`tab.${k}`)}
-              {/* Off-campus cleaning reports today: the count rides on the tab that holds them. */}
-              {k === 'reports' && cleaningAlerts > 0 && (
-                <span className="absolute -right-0.5 -top-1.5 grid min-w-5 place-content-center rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] leading-none text-white">
-                  {cleaningAlerts}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
 
         {tab === 'reports' && (
           <SubTabs
@@ -178,6 +195,18 @@ function Board({ session }: { session: Session }) {
             items={[
               { key: 'cleaning', label: t('tab.cleaning'), badge: cleaningAlerts },
               { key: 'complaints', label: t('sub.complaints') },
+            ]}
+          />
+        )}
+
+        {tab === 'manage' && (
+          <SubTabs
+            value={manageView}
+            onChange={setManageView}
+            items={[
+              { key: 'logs', label: t('tab.logs') },
+              { key: 'accounts', label: t('tab.accounts') },
+              { key: 'qr', label: t('tab.qr') },
             ]}
           />
         )}
@@ -211,9 +240,9 @@ function Board({ session }: { session: Session }) {
           {tab === 'reports' && reportsView === 'cleaning' && (
             <CleaningPanel key={JSON.stringify(cleaningFocus)} focus={cleaningFocus} />
           )}
-          {tab === 'logs' && <ActivityPanel />}
-          {tab === 'accounts' && <AccountsPanel />}
-          {tab === 'qr' && <QrCodesPanel />}
+          {tab === 'manage' && manageView === 'logs' && <ActivityPanel />}
+          {tab === 'manage' && manageView === 'accounts' && <AccountsPanel />}
+          {tab === 'manage' && manageView === 'qr' && <QrCodesPanel />}
         </Suspense>
 
         {tab === 'reports' && reportsView === 'complaints' && (

@@ -214,3 +214,36 @@ export async function deleteAccount(env: Env, id: string, supervisor: Identity):
   });
   return { kind: 'ok' };
 }
+
+/** A staff member's placement and duties, for the editor on the accounts tab. */
+export function dutiesOf(env: Env, id: string) {
+  return users.dutiesOf(env, id);
+}
+
+/**
+ * Saves a staff member's placement and duties. The list's length is their daily
+ * target on the dashboard, so the cleaning charts are dropped with it.
+ */
+export async function saveDuties(
+  env: Env,
+  id: string,
+  data: users.StaffDuties,
+  supervisor: string,
+): Promise<'ok' | 'not-found'> {
+  const current = await users.dutiesOf(env, id);
+  if (!current) return 'not-found';
+  await users.replaceDuties(env, id, data);
+  forget('cleaning-charts');
+  await log(env, {
+    action: 'user_changed',
+    actor: supervisor,
+    summary: `Mengubah uraian tugas petugas (${data.duties.length} tugas, ${data.areas.length} area)`,
+  });
+  return 'ok';
+}
+
+/** An active staff member's placement letter, for their own daily round; null when not an active staff member. */
+export async function activeStaffDuties(env: Env, id: string) {
+  if (!(await users.findActiveStaff(env, id))) return null;
+  return users.dutiesOf(env, id);
+}

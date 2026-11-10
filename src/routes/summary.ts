@@ -3,6 +3,8 @@ import { HTTP_CACHE } from '../adapters/memo';
 import { daysInRange, isValidDate, wibDate } from '../adapters/clock';
 import { requireSupervisor } from '../adapters/session';
 import type { AppEnv } from '../env';
+import { parseScope, type ChartScope } from '../repositories/scope';
+import * as users from '../repositories/users';
 import * as cleaning from '../services/cleaning-service';
 import * as summaries from '../services/summary-service';
 
@@ -15,6 +17,21 @@ function dateFrom(c: { req: { query: (k: string) => string | undefined } }): str
   const date = c.req.query('date') ?? wibDate();
   return DATE_PATTERN.test(date) ? date : null;
 }
+
+/**
+ * The dashboard's staff and building filters, with the staff name looked up so
+ * the queries match on what the reports store. null when a value is malformed.
+ */
+async function scopeFrom(c: {
+  env: AppEnv['Bindings'];
+  req: { query: (k: string) => string | undefined };
+}): Promise<ChartScope | null> {
+  const scope = parseScope(c.req.query('staff'), c.req.query('building'));
+  if (!scope) return null;
+  if (scope.staffId) scope.staffName = (await users.findActiveStaff(c.env, scope.staffId))?.name;
+  return scope;
+}
+const BAD_SCOPE = 'Filter petugas atau gedung tidak valid';
 
 const MAX_RANGE_DAYS = 366;
 const BAD_RANGE = 'Rentang tanggal harus YYYY-MM-DD, urut, dan paling panjang 366 hari';
@@ -39,24 +56,30 @@ app.get('/stats', requireSupervisor, async (c) => {
 app.get('/charts', requireSupervisor, async (c) => {
   const range = rangeFrom(c);
   if (!range) return c.json({ error: BAD_RANGE }, 400);
+  const scope = await scopeFrom(c);
+  if (!scope) return c.json({ error: BAD_SCOPE }, 400);
   c.header('Cache-Control', HTTP_CACHE.charts);
-  return c.json(await summaries.chartData(c.env, range.from, range.to));
+  return c.json(await summaries.chartData(c.env, range.from, range.to, scope));
 });
 
 /** The numbers behind the overview's cleaning view, for the same dates as the complaint charts. */
 app.get('/cleaning-charts', requireSupervisor, async (c) => {
   const range = rangeFrom(c);
   if (!range) return c.json({ error: BAD_RANGE }, 400);
+  const scope = await scopeFrom(c);
+  if (!scope) return c.json({ error: BAD_SCOPE }, 400);
   c.header('Cache-Control', HTTP_CACHE.charts);
-  return c.json(await cleaning.chartData(c.env, range.from, range.to));
+  return c.json(await cleaning.chartData(c.env, range.from, range.to, scope));
 });
 
 /** Every report of a range, one row each, for the dashboard's Excel export. */
 app.get('/export', requireSupervisor, async (c) => {
   const range = rangeFrom(c);
   if (!range) return c.json({ error: BAD_RANGE }, 400);
+  const scope = await scopeFrom(c);
+  if (!scope) return c.json({ error: BAD_SCOPE }, 400);
   c.header('Cache-Control', 'no-store');
-  return c.json({ data: await summaries.exportRows(c.env, range.from, range.to) });
+  return c.json({ data: await summaries.exportRows(c.env, range.from, range.to, scope) });
 });
 
 /** The stored summary for one date (default: today). */

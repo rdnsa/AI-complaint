@@ -16,4 +16,18 @@ app.get('/', async (c) => {
   return c.json({ data: await accounts.activeStaff(c.env) });
 });
 
+/**
+ * Public: one staff member's placement letter (title, area, duties), shown to
+ * them on the daily round as a guide. Job duties only, as on the signed letter;
+ * an inactive or unknown id gets a 404.
+ */
+app.get('/:id/duties', async (c) => {
+  const id = c.req.param('id');
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return c.json({ error: 'Petugas tidak ditemukan' }, 404);
+  const duties = await accounts.activeStaffDuties(c.env, id);
+  if (!duties) return c.json({ error: 'Petugas tidak ditemukan' }, 404);
+  c.header('Cache-Control', HTTP_CACHE.staff);
+  return c.json(duties);
+});
+
 export default app;

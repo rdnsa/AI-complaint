@@ -11,6 +11,8 @@ import {
 } from '../domain/types';
 import type { Env } from '../env';
 import * as cleaning from '../repositories/cleaning';
+import * as users from '../repositories/users';
+import { scopeKey, type ChartScope } from '../repositories/scope';
 import { cleaningChanged, memo } from '../adapters/memo';
 import { log } from './activity-service';
 
@@ -374,20 +376,30 @@ function mergedLegacyTasks<T extends { task: CleaningTask; count: number }>(rows
 }
 
 /** The overview's cleaning charts for a date range; a minute old is fine, like the complaint charts. */
-export function chartData(env: Env, from: string, to: string) {
-  return memo(`cleaning-charts:${from}:${to}`, 60_000, () => loadChartData(env, from, to));
+export function chartData(env: Env, from: string, to: string, scope: ChartScope = {}) {
+  return memo(`cleaning-charts:${from}:${to}:${scopeKey(scope)}`, 60_000, () => loadChartData(env, from, to, scope));
 }
 
-async function loadChartData(env: Env, from: string, to: string) {
+async function loadChartData(env: Env, from: string, to: string, scope: ChartScope) {
   const days = daysInRange(from, to);
-  const [counts, activeAreas] = await Promise.all([
-    cleaning.chartCounts(env, {
-      start: wibDayRange(from).start,
-      end: wibDayRange(to).end,
-      previousStart: wibDayRange(addDays(from, -days)).start,
-    }),
+  const workdays = workdaysIn(from, days);
+  const [counts, allAreas, targets] = await Promise.all([
+    cleaning.chartCounts(
+      env,
+      {
+        start: wibDayRange(from).start,
+        end: wibDayRange(to).end,
+        previousStart: wibDayRange(addDays(from, -days)).start,
+      },
+      scope,
+    ),
     cleaning.activeAreas(env),
+    users.dailyTargets(env),
   ]);
+  // With a building picked, coverage is counted over that building's areas only.
+  const activeAreas = scope.building
+    ? allAreas.filter((a) => (a.building_code ?? a.name) === scope.building)
+    : allAreas;
 
   // Empty days are zeros, not gaps: a zero reads as "nothing was reported", which is the truth.
   const dailyMap = new Map(counts.daily.map((d) => [d.date, d]));
@@ -443,6 +455,51 @@ async function loadChartData(env: Env, from: string, to: string) {
     tasks: mergedLegacyTasks(counts.tasks),
     matrix: mergedLegacyTasks(counts.matrix, (m) => m.building_code),
     buildings: counts.buildings,
-    staff: counts.staff,
+    workdays,
+    staff: withTargets(counts.staff, targets, workdays, scope),
   };
+}
+
+/** Monday to Saturday in a range of WIB dates: the days a duty list is owed. Sunday is off. */
+function workdaysIn(from: string, days: number): number {
+  let n = 0;
+  for (let i = 0; i < days; i++) if (new Date(`${addDays(from, i)}T00:00:00Z`).getUTCDay() !== 0) n++;
+  return n;
+}
+
+/**
+ * Each person's work against their responsible areas: tasks reported over the
+ * range against (the system's tasks in their areas) × working days. Work in other
+ * areas still counts, so a busy person goes past 100%. Someone with areas who
+ * reported nothing still appears, at 0, unless a building is picked (their areas
+ * may lie elsewhere).
+ */
+function withTargets(
+  staff: Awaited<ReturnType<typeof cleaning.chartCounts>>['staff'],
+  targets: Array<{ id: string; name: string; areas: number; per_day: number }>,
+  workdays: number,
+  scope: ChartScope,
+) {
+  const owed = new Map(targets.map((d) => [d.id, Number(d.per_day)]));
+  const rows = staff.map((s) => {
+    const perDay = owed.get(s.staff_id) ?? 0;
+    return { ...s, per_day: perDay, target: perDay * workdays };
+  });
+  if (!scope.building) {
+    const present = new Set(rows.map((r) => r.staff_id));
+    for (const d of targets) {
+      if (present.has(d.id) || (scope.staffId && scope.staffId !== d.id)) continue;
+      rows.push({
+        staff_id: d.id,
+        staff_name: d.name,
+        reports: 0,
+        tasks: 0,
+        areas: 0,
+        alerts: 0,
+        per_day: Number(d.per_day),
+        target: Number(d.per_day) * workdays,
+      });
+    }
+  }
+  return rows;
 }

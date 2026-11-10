@@ -7,24 +7,29 @@ const MAX = 118;
 const SPRING = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
 
 /**
- * Who did how much, with no target to fall short of: anyone may do any task, so
- * this is a picture of the work and not a score. A bubble's area follows the
- * count, which is printed on it, and a red badge counts reports from off campus
- * or without GPS.
+ * Who did how much against what their placement letter asks: a bubble's area
+ * follows the tasks done, printed on it over the tasks owed (duties × working
+ * days), with the share below. Tasks beyond the letter still count, so a busy
+ * person goes past 100%. A red badge counts reports from off campus or without GPS.
  */
 export default function StaffBubbles({
   staff,
   describe,
+  totalLabel,
   onOpen,
 }: {
-  staff: Array<{ id: string; name: string; value: number; alerts: number }>;
-  describe: (name: string, value: number) => string;
+  /** `target` is the tasks owed over the range; 0 when the person has no duty list. */
+  staff: Array<{ id: string; name: string; value: number; target: number; alerts: number }>;
+  describe: (name: string, value: number, target: number) => string;
+  /** The line over the bubbles that says what the target is. */
+  totalLabel?: string;
   /** Opens this person's own reports. */
   onOpen: (id: string) => void;
 }) {
   const mounted = useMounted();
   const [box, width] = useWidth<HTMLUListElement>();
   const max = Math.max(1, ...staff.map((s) => s.value));
+
   // On a phone the desktop sizes fit two to a row and the list runs past a screen: smaller, three or four to a row.
   const scale = width && width < NARROW ? 0.6 : 1;
 
@@ -51,6 +56,12 @@ export default function StaffBubbles({
     );
 
   return (
+    <div className="flex flex-1 flex-col">
+      {totalLabel && (
+        <p className="mb-3 text-xs font-semibold" style={{ color: INK.muted }}>
+          {totalLabel}
+        </p>
+      )}
     <ul
       ref={box}
       className={`m-0 flex flex-1 list-none flex-wrap content-center items-end justify-center p-0 ${
@@ -71,8 +82,8 @@ export default function StaffBubbles({
             <button
               type="button"
               onClick={() => onOpen(s.id)}
-              title={describe(s.name, s.value)}
-              aria-label={describe(s.name, s.value)}
+              title={describe(s.name, s.value, s.target)}
+              aria-label={describe(s.name, s.value, s.target)}
               className="group flex flex-col items-center gap-1.5 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
             >
               <span className="chart-float relative block" style={{ animationDelay: `${(i % 5) * -0.9}s` }}>
@@ -82,7 +93,11 @@ export default function StaffBubbles({
                   }`}
                   style={{ width: size, height: size, background: SINGLE, boxShadow: `0 6px 18px ${SINGLE}44` }}
                 >
-                  {s.value}
+                  <span className="leading-none">{s.value}</span>
+                  {/* Out of everyone's tasks: small, so the person's own number stays the loud one. */}
+                  <span className={`mt-0.5 font-semibold leading-none text-white/75 ${scale < 1 ? 'text-[9px]' : 'text-[11px]'}`}>
+                    /{s.target || '—'}
+                  </span>
                 </span>
                 {s.alerts > 0 && (
                   <span className="absolute -right-0.5 top-0 grid h-5 min-w-5 place-content-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white ring-2 ring-surface">
@@ -96,10 +111,20 @@ export default function StaffBubbles({
               >
                 {s.name}
               </span>
+              {/* Of the tasks owed; past 100% means more than the letter asked, and reads green. */}
+              <span
+                className={`-mt-1 text-[11px] font-bold tabular-nums ${
+                  s.target && s.value >= s.target ? 'text-emerald-600' : ''
+                }`}
+                style={s.target && s.value >= s.target ? undefined : { color: INK.muted }}
+              >
+                {s.target ? `${Math.round((s.value / s.target) * 100)}%` : '—'}
+              </span>
             </button>
           </li>
         );
       })}
     </ul>
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   type ReportStatus,
 } from '../domain/types';
 import { buildTimeFilter, type TimeFilter } from './time-filter';
+import { scopedReports, type ChartScope } from './scope';
 
 /**
  * Every SQL statement about reports lives here.
@@ -341,7 +342,7 @@ export interface ExportRow {
 }
 
 /** Every report that came in during a range, oldest first: the export is unpaged on purpose. */
-export async function findForExport(env: Env, from: string, to: string): Promise<ExportRow[]> {
+export async function findForExport(env: Env, from: string, to: string, scope: ChartScope = {}): Promise<ExportRow[]> {
   const rows = await env.DB.prepare(
     `SELECT r.id,
             datetime(r.created_at, '+7 hours') AS created_wib,
@@ -349,7 +350,7 @@ export async function findForExport(env: Env, from: string, to: string): Promise
             ROUND((julianday(r.resolved_at) - julianday(r.created_at)) * 1440) AS minutes_to_resolve,
             t.name AS location_name, t.building_code, t.building_name,
             r.status, r.priority, r.categories, r.summary, r.description, r.recommendation, r.staff_name
-       ${FROM}
+       ${FROM.replace('FROM reports r', `FROM ${scopedReports(scope)} r`)}
       WHERE r.created_at >= ? AND r.created_at < ?
       ORDER BY r.created_at`,
   )

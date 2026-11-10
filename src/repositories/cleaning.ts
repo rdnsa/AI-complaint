@@ -1,3 +1,4 @@
+import { scopedCleaning, type ChartScope } from './scope';
 import type { CleaningReportRow, CleaningTask, CleaningTaskRow, LocationStatus } from '../domain/types';
 import type { Env } from '../env';
 import { buildTimeFilter, type TimeFilter } from './time-filter';
@@ -153,24 +154,26 @@ export async function tasksOf(env: Env, reportIds: string[]): Promise<CleaningTa
 }
 
 /** The cleaning numbers for a WIB date window; `end` is exclusive. */
-export async function chartCounts(env: Env, w: { start: string; end: string; previousStart: string }) {
+export async function chartCounts(env: Env, w: { start: string; end: string; previousStart: string }, scope: ChartScope = {}) {
   const inWindow = `r.created_at >= ? AND r.created_at < ?`;
+  // The reports in the dashboard's filters (one staff member, one building), or all of them.
+  const C = scopedCleaning(scope);
   const [totals, previous, daily, tasks, buildings, hours, staff, areas, matrix, locations] = await env.DB.batch<Record<string, unknown>>([
     env.DB.prepare(
       `SELECT COUNT(*) AS reports, COALESCE(SUM(r.location_status <> 'ok'), 0) AS alerts
-         FROM cleaning_reports r WHERE ${inWindow}`,
+         FROM ${C} r WHERE ${inWindow}`,
     ).bind(w.start, w.end),
-    env.DB.prepare(`SELECT COUNT(*) AS reports FROM cleaning_reports r WHERE ${inWindow}`).bind(w.previousStart, w.start),
+    env.DB.prepare(`SELECT COUNT(*) AS reports FROM ${C} r WHERE ${inWindow}`).bind(w.previousStart, w.start),
     env.DB.prepare(
       // '+7 hours' groups by WIB day rather than UTC.
       `SELECT date(r.created_at, '+7 hours') AS date, COUNT(*) AS reports, SUM(r.location_status = 'ok') AS on_campus,
               COUNT(DISTINCT r.area_id) AS areas, COUNT(DISTINCT r.staff_id) AS staff
-         FROM cleaning_reports r WHERE ${inWindow}
+         FROM ${C} r WHERE ${inWindow}
         GROUP BY date ORDER BY date`,
     ).bind(w.start, w.end),
     env.DB.prepare(
       `SELECT t.task, COUNT(*) AS count
-         FROM cleaning_report_tasks t JOIN cleaning_reports r ON r.id = t.report_id
+         FROM cleaning_report_tasks t JOIN ${C} r ON r.id = t.report_id
         WHERE ${inWindow}
         GROUP BY t.task ORDER BY count DESC`,
     ).bind(w.start, w.end),
@@ -178,7 +181,7 @@ export async function chartCounts(env: Env, w: { start: string; end: string; pre
       // A place outside the buildings (Lapang Voli) stands for itself, as on the complaint charts.
       `SELECT COALESCE(a.building_code, a.name) AS building_code, COALESCE(b.name, a.name) AS building_name,
               COUNT(*) AS count
-         FROM cleaning_reports r
+         FROM ${C} r
          JOIN cleaning_areas a ON a.id = r.area_id
          LEFT JOIN buildings b ON b.code = a.building_code
         WHERE ${inWindow}
@@ -186,7 +189,7 @@ export async function chartCounts(env: Env, w: { start: string; end: string; pre
     ).bind(w.start, w.end),
     env.DB.prepare(
       `SELECT CAST(strftime('%H', r.created_at, '+7 hours') AS INTEGER) AS hour, COUNT(*) AS count
-         FROM cleaning_reports r WHERE ${inWindow}
+         FROM ${C} r WHERE ${inWindow}
         GROUP BY hour`,
     ).bind(w.start, w.end),
     env.DB.prepare(
@@ -195,24 +198,24 @@ export async function chartCounts(env: Env, w: { start: string; end: string; pre
               COUNT(t.task) AS tasks,
               COUNT(DISTINCT r.area_id) AS areas,
               COUNT(DISTINCT CASE WHEN r.location_status <> 'ok' THEN r.id END) AS alerts
-         FROM cleaning_reports r LEFT JOIN cleaning_report_tasks t ON t.report_id = r.id
+         FROM ${C} r LEFT JOIN cleaning_report_tasks t ON t.report_id = r.id
         WHERE ${inWindow}
         GROUP BY r.staff_id ORDER BY tasks DESC, staff_name`,
     ).bind(w.start, w.end),
-    env.DB.prepare(`SELECT r.area_id, COUNT(*) AS count FROM cleaning_reports r WHERE ${inWindow} GROUP BY r.area_id`).bind(
+    env.DB.prepare(`SELECT r.area_id, COUNT(*) AS count FROM ${C} r WHERE ${inWindow} GROUP BY r.area_id`).bind(
       w.start,
       w.end,
     ),
     env.DB.prepare(
       `SELECT COALESCE(a.building_code, a.name) AS building_code, t.task, COUNT(*) AS count
          FROM cleaning_report_tasks t
-         JOIN cleaning_reports r ON r.id = t.report_id
+         JOIN ${C} r ON r.id = t.report_id
          JOIN cleaning_areas a ON a.id = r.area_id
         WHERE ${inWindow}
         GROUP BY 1, t.task`,
     ).bind(w.start, w.end),
     env.DB.prepare(
-      `SELECT r.location_status, COUNT(*) AS count FROM cleaning_reports r WHERE ${inWindow} GROUP BY r.location_status`,
+      `SELECT r.location_status, COUNT(*) AS count FROM ${C} r WHERE ${inWindow} GROUP BY r.location_status`,
     ).bind(w.start, w.end),
   ]);
   return {
