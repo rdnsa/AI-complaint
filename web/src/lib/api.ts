@@ -82,7 +82,8 @@ export interface PublicReport {
 
 /** The numbers behind the dashboard charts. */
 export interface ChartData {
-  daily: Array<{ date: string; total: number; resolved: number }>;
+  /** Per day of creation; `minutes` is the average time to resolve, null when none of that day's reports is resolved. */
+  daily: Array<{ date: string; total: number; resolved: number; minutes: number | null }>;
   dailyByPriority: Array<{ date: string; high: number; medium: number; low: number }>;
   categories: Array<{ category: string; count: number }>;
   priorities: Array<{ priority: string; count: number }>;

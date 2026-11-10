@@ -171,7 +171,7 @@ function datesOf({ from, to }: DateRange): string[] {
 function emptyCharts(range: DateRange): ChartData {
   const dates = datesOf(range);
   return {
-    daily: dates.map((date) => ({ date, total: 0, resolved: 0 })),
+    daily: dates.map((date) => ({ date, total: 0, resolved: 0, minutes: null })),
     dailyByPriority: dates.map((date) => ({ date, high: 0, medium: 0, low: 0 })),
     categories: [],
     priorities: [],
@@ -729,6 +729,9 @@ function ComplaintHeadline({ data, wide = false }: { data: ChartData; wide?: boo
       <KpiCard
         label={t('ov.speed')}
         value={duration(data.resolution.minutes, t)}
+        series={data.daily.map((d) => d.minutes)}
+        seriesLabels={days}
+        describePoint={(m, day) => `${day} · ${duration(m, t)}`}
         color={SINGLE}
         note={`${data.resolution.count} ${t('ov.reports')}`}
       />

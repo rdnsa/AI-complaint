@@ -115,7 +115,13 @@ async function loadChartData(env: Env, from: string, to: string) {
   const dailyMap = new Map(counts.daily.map((r) => [r.date, r]));
   const daily = series.map((date) => {
     const found = dailyMap.get(date);
-    return { date, total: Number(found?.total ?? 0), resolved: Number(found?.resolved ?? 0) };
+    return {
+      date,
+      total: Number(found?.total ?? 0),
+      resolved: Number(found?.resolved ?? 0),
+      // null, not 0, on a day nothing got resolved: "no answer" must not read as "instant".
+      minutes: found?.minutes == null ? null : Math.round(Number(found.minutes)),
+    };
   });
 
   const priorityMap = new Map<string, Record<string, number>>();

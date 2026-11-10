@@ -17,27 +17,40 @@ export default function Sparkline({
   data,
   color,
   labels,
-  describe = (value, label) => (label ? `${label} · ${value}` : String(value)),
+  describe = (value, label) => {
+    const v = value === null ? '—' : String(value);
+    return label ? `${label} · ${v}` : v;
+  },
 }: {
-  data: number[];
+  /** null is a day with no value (not zero): the line breaks there instead of dropping to the floor. */
+  data: Array<number | null>;
   color: string;
   /** One per point, e.g. the dates; shown with the value under the pointer. */
   labels?: string[];
-  describe?: (value: number, label: string | undefined) => string;
+  describe?: (value: number | null, label: string | undefined) => string;
 }) {
   const mounted = useMounted();
   const box = useRef<HTMLDivElement>(null);
   const [hot, setHot] = useState<number | null>(null);
   if (data.length < 2) return null;
 
-  const max = Math.max(...data, 1);
+  const max = Math.max(...data.map((n) => n ?? 0), 1);
   const W = 100;
   const H = 26;
   const x = (i: number) => (i * W) / (data.length - 1);
   const y = (n: number) => H - 2 - (n / max) * (H - 4);
 
-  const line = data.map((n, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(n).toFixed(1)}`).join(' ');
-  const area = `${line} L${W},${H} L0,${H} Z`;
+  // The days with a value, joined straight across any day without one: the line
+  // never drops to the floor for a missing value (that would read as zero), and
+  // never breaks either. The pointer readout still says "—" on such a day.
+  const shown = data.flatMap((n, i) => (n === null ? [] : [i]));
+  const pt = (i: number) => `${x(i).toFixed(1)},${y(data[i] as number).toFixed(1)}`;
+  // A single day still shows, as a dot: a round cap on a zero-length line.
+  const line = shown.length ? `M${pt(shown[0])} ${(shown.length > 1 ? shown.slice(1) : shown).map((i) => `L${pt(i)}`).join(' ')}` : '';
+  const area =
+    shown.length > 1
+      ? `${line} L${x(shown[shown.length - 1]).toFixed(1)},${H} L${x(shown[0]).toFixed(1)},${H} Z`
+      : '';
 
   const track = (e: PointerEvent<HTMLDivElement>) => {
     const r = box.current?.getBoundingClientRect();
@@ -47,7 +60,9 @@ export default function Sparkline({
   };
 
   const left = hot === null ? 0 : (x(hot) / W) * 100;
-  const top = hot === null ? 0 : (y(data[hot]) / H) * 100;
+  const empty = hot !== null && data[hot] === null;
+  // A day without a value has no dot: the guide alone marks it, down to the floor.
+  const top = hot === null || empty ? 100 : (y(data[hot] as number) / H) * 100;
   // Near an edge the label hangs inward, so it never pokes out of the tile.
   const align = left < 18 ? 'left-0' : left > 82 ? 'right-0' : '-translate-x-1/2';
   const glide = 'left .18s ease-out, top .18s ease-out, opacity .15s ease';
@@ -75,7 +90,6 @@ export default function Sparkline({
           strokeWidth={hot === null ? 2 : 2.4}
           strokeLinejoin="round"
           strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
           pathLength={1}
           strokeDasharray={1}
           style={{ strokeDashoffset: mounted ? 0 : 1, transition: 'stroke-dashoffset 1.2s ease-out, stroke-width .2s' }}
@@ -86,7 +100,7 @@ export default function Sparkline({
       <div aria-hidden className="pointer-events-none absolute inset-x-0 inset-y-2" style={{ opacity: hot === null ? 0 : 1, transition: 'opacity .15s ease' }}>
         <span
           className="absolute bottom-0 w-px"
-          style={{ left: `${left}%`, top: `${top}%`, background: color, opacity: 0.45, transition: glide }}
+          style={{ left: `${left}%`, top: empty ? 0 : `${top}%`, background: color, opacity: empty ? 0.25 : 0.45, transition: glide }}
         />
         <span
           className="absolute h-2.5 w-2.5 rounded-full ring-2 ring-surface"
@@ -95,7 +109,8 @@ export default function Sparkline({
             top: `${top}%`,
             background: color,
             boxShadow: `0 0 0 4px ${color}33, 0 0 10px ${color}`,
-            transform: `translate(-50%, -50%) scale(${hot === null ? 0.4 : 1})`,
+            opacity: empty ? 0 : 1,
+            transform: `translate(-50%, -50%) scale(${hot === null || empty ? 0.4 : 1})`,
             transition: `${glide}, transform .2s cubic-bezier(0.34, 1.56, 0.64, 1)`,
           }}
         />

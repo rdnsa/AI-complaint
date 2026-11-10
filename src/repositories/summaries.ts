@@ -80,7 +80,10 @@ export async function chartCounts(env: Env, w: ChartWindow) {
       // '+7 hours' groups by WIB day rather than UTC.
       `SELECT date(created_at, '+7 hours') AS date,
               COUNT(*) AS total,
-              SUM(status = 'resolved') AS resolved
+              SUM(status = 'resolved') AS resolved,
+              -- The same average as the range's "time to resolve", one day at a time.
+              AVG(CASE WHEN resolved_at IS NOT NULL
+                       THEN (julianday(resolved_at) - julianday(created_at)) * 1440 END) AS minutes
          FROM reports
         WHERE created_at >= ? AND created_at < ?
         GROUP BY date ORDER BY date`,
@@ -119,7 +122,7 @@ export async function chartCounts(env: Env, w: ChartWindow) {
   ]);
 
   return {
-    daily: daily.results as Array<{ date: string; total: number; resolved: number }>,
+    daily: daily.results as Array<{ date: string; total: number; resolved: number; minutes: number | null }>,
     categories: categories.results,
     priorities: priorities.results,
     buildings: buildings.results,
