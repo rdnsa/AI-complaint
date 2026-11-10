@@ -163,7 +163,8 @@ export async function chartCounts(env: Env, w: { start: string; end: string; pre
     env.DB.prepare(`SELECT COUNT(*) AS reports FROM cleaning_reports r WHERE ${inWindow}`).bind(w.previousStart, w.start),
     env.DB.prepare(
       // '+7 hours' groups by WIB day rather than UTC.
-      `SELECT date(r.created_at, '+7 hours') AS date, COUNT(*) AS reports, SUM(r.location_status = 'ok') AS on_campus
+      `SELECT date(r.created_at, '+7 hours') AS date, COUNT(*) AS reports, SUM(r.location_status = 'ok') AS on_campus,
+              COUNT(DISTINCT r.area_id) AS areas, COUNT(DISTINCT r.staff_id) AS staff
          FROM cleaning_reports r WHERE ${inWindow}
         GROUP BY date ORDER BY date`,
     ).bind(w.start, w.end),
@@ -217,7 +218,7 @@ export async function chartCounts(env: Env, w: { start: string; end: string; pre
   return {
     current: totals.results[0] as { reports: number; alerts: number },
     previous: Number((previous.results[0] as { reports: number }).reports),
-    daily: daily.results as Array<{ date: string; reports: number; on_campus: number }>,
+    daily: daily.results as Array<{ date: string; reports: number; on_campus: number; areas: number; staff: number }>,
     tasks: tasks.results as Array<{ task: CleaningTask; count: number }>,
     buildings: buildings.results as Array<{ building_code: string; building_name: string; count: number }>,
     hours: hours.results as Array<{ hour: number; count: number }>,

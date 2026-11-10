@@ -200,7 +200,7 @@ function emptyCleaning(range: DateRange, areas: CleaningArea[]): CleaningCharts 
     },
     location: { ok: 0, far: 0, unknown: 0 },
     matrix: [],
-    daily: dates.map((date) => ({ date, reports: 0, on_campus: 0 })),
+    daily: dates.map((date) => ({ date, reports: 0, on_campus: 0, areas: 0, staff: 0 })),
     hours: new Array<number>(24).fill(0),
     tasks: [],
     buildings: [],
@@ -761,10 +761,19 @@ function CleaningHeadline({ data, wide = false }: { data: CleaningCharts; wide?:
       <KpiCard
         label={t('ov.clean_coverage')}
         value={`${areas.covered}/${areas.total}`}
-        color={SINGLE}
+        series={data.daily.map((d) => d.areas)}
+        seriesLabels={days}
+        color="#30B0C7"
         note={t('ov.days', { n: trend.days })}
       />
-      <KpiCard label={t('ov.clean_staff')} value={data.staff.length} color={SINGLE} note={t('ov.days', { n: trend.days })} />
+      <KpiCard
+        label={t('ov.clean_staff')}
+        value={data.staff.length}
+        series={data.daily.map((d) => d.staff)}
+        seriesLabels={days}
+        color="#5E5CE6"
+        note={t('ov.days', { n: trend.days })}
+      />
       <KpiCard
         label={t('clean.stat_alerts')}
         value={trend.alerts}

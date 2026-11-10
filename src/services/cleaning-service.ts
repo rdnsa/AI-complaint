@@ -394,7 +394,14 @@ async function loadChartData(env: Env, from: string, to: string) {
   const daily = Array.from({ length: days }, (_, i) => {
     const date = addDays(from, i);
     const found = dailyMap.get(date);
-    return { date, reports: Number(found?.reports ?? 0), on_campus: Number(found?.on_campus ?? 0) };
+    return {
+      date,
+      reports: Number(found?.reports ?? 0),
+      on_campus: Number(found?.on_campus ?? 0),
+      // How many different areas and people that day, for the sparklines under those two numbers.
+      areas: Number(found?.areas ?? 0),
+      staff: Number(found?.staff ?? 0),
+    };
   });
 
   const hours = new Array<number>(24).fill(0);

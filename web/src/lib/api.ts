@@ -261,7 +261,8 @@ export interface CleaningCharts {
   };
   location: Record<LocationStatus, number>;
   matrix: Array<{ building_code: string; task: CleaningTask; count: number }>;
-  daily: Array<{ date: string; reports: number; on_campus: number }>;
+  /** Per day: reports, those on campus, and how many different areas and staff. */
+  daily: Array<{ date: string; reports: number; on_campus: number; areas: number; staff: number }>;
   /** Reports per hour of the WIB day, 24 entries. */
   hours: number[];
   tasks: Array<{ task: CleaningTask; count: number }>;
