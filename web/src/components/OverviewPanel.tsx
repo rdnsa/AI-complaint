@@ -238,6 +238,15 @@ export default function OverviewPanel({
   const [data, setData] = useState<ChartData | null>(null);
   const [cleaning, setCleaning] = useState<CleaningCharts | null>(null);
   const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [view, setView] = useState<OverviewView>(savedView);
+  const pickView = (v: OverviewView) => {
+    setView(v);
+    try {
+      sessionStorage.setItem(VIEW_KEY, v);
+    } catch {
+      /* private mode: the choice simply is not remembered */
+    }
+  };
   // The summary's own day (the last picked date), for the numbers under it.
   const [day, setDay] = useState<{ complaints: ChartData | null; work: CleaningCharts | null }>({ complaints: null, work: null });
   const [places, setPlaces] = useState<Place[]>([]);
@@ -383,41 +392,83 @@ export default function OverviewPanel({
         )}
       </div>
 
-      {/* The staff's work comes first: it is what this system is for. Complaints support it. */}
-      {/* One summary for the day, complaints and the staff's work together, above both sections. */}
-      <SummaryCard
-        summary={summary}
-        onSummary={setSummary}
-        date={range.to}
-        title={range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
-        complaints={day.complaints}
-        work={day.work}
-        onOpen={onOpen}
-      />
+      {/* Three views over the same dates: the day at a glance, then each side in full. */}
+      <ViewSwitch value={view} onChange={pickView} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        <CleaningHeadline data={work} />
-        {/* The line between them: across when they stack, upright when they stand side by side. */}
-        <div aria-hidden className="h-px bg-mist-200 xl:h-auto xl:w-px" />
-        <ComplaintHeadline data={complaints} />
-      </div>
+      {view === 'summary' && (
+        <>
+          {/* One summary for the day, complaints and the staff's work together. */}
+          <SummaryCard
+            summary={summary}
+            onSummary={setSummary}
+            date={range.to}
+            title={range.to === today ? t('dashboard.summary') : t('dashboard.summary_on', { date: lastDay })}
+            complaints={day.complaints}
+            work={day.work}
+            onOpen={onOpen}
+          />
+          {/* The staff's work comes first: it is what this system is for. Complaints support it. */}
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+            <CleaningHeadline data={work} />
+            {/* The line between them: across when they stack, upright when they stand side by side. */}
+            <div aria-hidden className="h-px bg-mist-200 xl:h-auto xl:w-px" />
+            <ComplaintHeadline data={complaints} />
+          </div>
+        </>
+      )}
 
-      <SectionTitle>{t('ov.section_staff')}</SectionTitle>
-      <CleaningDetails data={work} places={places} onOpenStaff={(id) => onOpenStaff(id, range)} />
+      {view === 'staff' && (
+        <>
+          <CleaningHeadline data={work} wide />
+          <CleaningDetails data={work} places={places} onOpenStaff={(id) => onOpenStaff(id, range)} />
+        </>
+      )}
 
-      <SectionTitle>{t('sub.complaints')}</SectionTitle>
-      <ComplaintDetails data={complaints} places={places} />
+      {view === 'complaints' && (
+        <>
+          <ComplaintHeadline data={complaints} wide />
+          <ComplaintDetails data={complaints} places={places} />
+        </>
+      )}
     </div>
   );
 }
 
-function SectionTitle({ children }: { children: ReactNode }) {
+type OverviewView = 'summary' | 'staff' | 'complaints';
+const VIEWS: OverviewView[] = ['summary', 'staff', 'complaints'];
+const VIEW_KEY = 'kato.overview.view';
+
+/** Which of the three views was open last in this tab; storage may be blocked, so it is only a convenience. */
+function savedView(): OverviewView {
+  try {
+    const v = sessionStorage.getItem(VIEW_KEY) as OverviewView | null;
+    return v && VIEWS.includes(v) ? v : 'summary';
+  } catch {
+    return 'summary';
+  }
+}
+
+/** The three-way switch under the dates: Summary, Staff Reports, Complaints. */
+function ViewSwitch({ value, onChange }: { value: OverviewView; onChange: (v: OverviewView) => void }) {
+  const { t } = useLanguage();
+  const label = { summary: t('ov.view_summary'), staff: t('ov.section_staff'), complaints: t('sub.complaints') };
   return (
-    <h2 className="!mt-10 !mb-6 flex items-center gap-4 font-display text-xl font-semibold text-ink-900 sm:text-2xl">
-      <span aria-hidden className="h-px flex-1 bg-mist-200" />
-      {children}
-      <span aria-hidden className="h-px flex-1 bg-mist-200" />
-    </h2>
+    <div role="tablist" aria-label={t('ov.view_label')} className="grid grid-cols-3 gap-1 rounded-full bg-mist-200 p-1 sm:inline-grid">
+      {VIEWS.map((v) => (
+        <button
+          key={v}
+          type="button"
+          role="tab"
+          aria-selected={value === v}
+          onClick={() => onChange(v)}
+          className={`rounded-full px-3 py-2 text-nav font-semibold transition sm:px-5 sm:py-1.5 sm:text-body-sm ${
+            value === v ? 'bg-glass text-ink-900 shadow-subtle' : 'text-ink-700 hover:text-ink-900'
+          }`}
+        >
+          {label[v]}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -607,7 +658,18 @@ function SummaryCard({
 }
 
 /** A section's answer at a glance: one dial, four tiles for the numbers behind it. */
-function Headline({ title, dial, children }: { title: string; dial: ReactNode; children: ReactNode }) {
+function Headline({
+  title,
+  dial,
+  children,
+  wide = false,
+}: {
+  title: string;
+  dial: ReactNode;
+  children: ReactNode;
+  /** The full page width to itself: the four tiles stand in one row instead of two. */
+  wide?: boolean;
+}) {
   return (
     <Reveal className="h-full">
       <InView className="flex h-full flex-col">
@@ -617,7 +679,7 @@ function Headline({ title, dial, children }: { title: string; dial: ReactNode; c
             {/* A phone has the full width to give, and the dial would fill the whole first screen. */}
             <div className="w-40 sm:w-full">{dial}</div>
           </section>
-          <div className="grid grid-cols-2 gap-3">{children}</div>
+          <div className={`grid grid-cols-2 gap-3 ${wide ? 'lg:grid-cols-4' : ''}`}>{children}</div>
         </div>
       </InView>
     </Reveal>
@@ -630,7 +692,7 @@ function shortDates(dates: string[], language: string): string[] {
   return dates.map((d) => f.format(new Date(`${d}T00:00:00Z`)));
 }
 
-function ComplaintHeadline({ data }: { data: ChartData }) {
+function ComplaintHeadline({ data, wide = false }: { data: ChartData; wide?: boolean }) {
   const { t, language } = useLanguage();
   const days = shortDates(data.daily.map((d) => d.date), language);
   const { trend } = data;
@@ -638,7 +700,8 @@ function ComplaintHeadline({ data }: { data: ChartData }) {
   const open = data.statuses.filter((s) => s.status !== 'resolved').reduce((n, s) => n + Number(s.count), 0);
 
   return (
-    <Headline title={t('sub.complaints')} dial={<RadialGauge value={rate} label={t('ov.rate')} />}>
+    <Headline
+      wide={wide} title={t('sub.complaints')} dial={<RadialGauge value={rate} label={t('ov.rate')} />}>
       <KpiCard
         label={t('ov.total_reports')}
         value={trend.reports}
@@ -673,7 +736,7 @@ function ComplaintHeadline({ data }: { data: ChartData }) {
   );
 }
 
-function CleaningHeadline({ data }: { data: CleaningCharts }) {
+function CleaningHeadline({ data, wide = false }: { data: CleaningCharts; wide?: boolean }) {
   const { t, language } = useLanguage();
   const days = shortDates(data.daily.map((d) => d.date), language);
   const { trend, areas } = data;
@@ -681,6 +744,7 @@ function CleaningHeadline({ data }: { data: CleaningCharts }) {
 
   return (
     <Headline
+      wide={wide}
       title={t('ov.section_staff')}
       dial={<RadialGauge value={coverage} label={t('ov.clean_reported')} from="#5E5CE6" to="#30B0C7" />}
     >
