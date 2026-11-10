@@ -11,3 +11,6 @@ qr-codes/
 test-results/
 playwright-report/
 e2e/.auth/
+
+# Production database exports: real user data, never committed
+backups/

@@ -1,14 +1,16 @@
 /**
- * Fills the LOCAL database with made-up complaints and cleaning reports for the
- * last 30 days, so the supervisor dashboard has something to draw while
- * developing. Never touches the remote database: `--local` is fixed below.
+ * Fills the database with made-up complaints and cleaning reports for the last
+ * 30 days, so the supervisor dashboard has something to draw.
  *
- *   npm run db:seed:mock            replace the mock data with a fresh set
- *   npm run db:seed:mock -- --clear only remove the mock data
+ *   npm run db:seed:mock                       local: replace the mock data with a fresh set
+ *   npm run db:seed:mock -- --clear            local: only remove the mock data
+ *   npm run db:seed:mock -- --remote           PRODUCTION: same, on the live database
+ *   npm run db:seed:mock -- --remote --clear   PRODUCTION: the rollback, removes only the mock data
  *
  * Every row it writes has an id starting with "mock-", which is how a rerun
- * (or --clear) finds and removes them; real local rows are left alone. The
- * numbers come from a fixed seed, so every run draws the same dashboard.
+ * (or --clear) finds and removes them; real rows are left alone. The work is
+ * spread over the active staff already in the database, as the supervisor
+ * chose. The numbers come from a fixed seed.
  * Photos are keys only: nothing is uploaded, so the photo previews stay empty.
  */
 import { execFileSync } from 'node:child_process';
@@ -18,6 +20,7 @@ import { join } from 'node:path';
 
 const DAYS = 30;
 const clearOnly = process.argv.includes('--clear');
+const where = process.argv.includes('--remote') ? '--remote' : '--local';
 
 // --- a small seeded random, so the mock data is the same on every run ---
 let state = 20261109;
@@ -34,7 +37,7 @@ const weighted = (pairs) => {
 };
 
 const wrangler = (args) =>
-  execFileSync('npx', ['wrangler', 'd1', 'execute', 'kato', '--local', ...args], {
+  execFileSync('npx', ['wrangler', 'd1', 'execute', 'kato', where, ...args], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'inherit'],
   });
@@ -48,17 +51,20 @@ const CLEAR = [
   "DELETE FROM cleaning_reports WHERE id LIKE 'mock-%';",
   "DELETE FROM activity_log WHERE report_id LIKE 'mock-%';",
   "DELETE FROM reports WHERE id LIKE 'mock-%';",
+  // Accounts an earlier version made up for the mock work; none are made now.
+  "DELETE FROM users WHERE id LIKE 'mock-%';",
 ];
 
 let sql = [...CLEAR];
 
 if (!clearOnly) {
   const areas = query('SELECT id, building_code, floor FROM cleaning_areas WHERE active = 1 ORDER BY sort_order');
-  const staff = query("SELECT id, name FROM users WHERE role = 'staff' AND active = 1");
+  const staff = query("SELECT id, name FROM users WHERE role = 'staff' AND active = 1 AND id NOT LIKE 'mock-%' ORDER BY name");
   if (!areas.length || !staff.length) {
-    console.error('No areas or staff in the local database. Run `npm run db:local` and `npm run db:seed:cleaning` first.');
+    console.error('No cleaning areas or active staff in the database. Run the migrations and `npm run db:seed:cleaning` first.');
     process.exit(1);
   }
+  console.log(`Staff: ${staff.map((s) => s.name).join(', ')}`);
 
   // A moment on a given day back, at a WIB hour (WIB is UTC+7).
   const now = new Date();
@@ -172,4 +178,4 @@ try {
 } finally {
   rmSync(dir, { recursive: true, force: true });
 }
-console.log('Done. Reload the dashboard (the charts cache for up to a minute).');
+console.log(`Done (${where === '--remote' ? 'PRODUCTION' : 'local'}). Reload the dashboard (the charts cache for up to a minute).`);
