@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EASE, useMounted } from './motion';
 import { INK, inkOn, sequentialStep } from './colors';
 import { NARROW, useWidth } from './useWidth';
+import { CountText } from './CountUp';
 
 export interface TreeItem {
   key: string;
@@ -159,15 +160,15 @@ export default function Treemap({ items }: { items: TreeItem[] }) {
                   <span className="line-clamp-2 break-words text-nav font-bold uppercase leading-tight tracking-wide opacity-80">
                     {it.label}
                   </span>
-                  <span className="font-display text-2xl font-light leading-none tabular-nums">{it.value}</span>
+                  <CountText value={it.value} className="font-display text-2xl font-light leading-none" />
                 </>
               ) : tiny ? (
-                <span className="m-auto text-[11px] font-bold tabular-nums">{it.value}</span>
+                <CountText value={it.value} className="m-auto text-[11px] font-bold" />
               ) : (
                 // Label over number, so a narrow tile never cuts either.
                 <>
                   <span className="line-clamp-2 break-all text-[10px] font-bold uppercase leading-tight opacity-80">{it.label}</span>
-                  <span className="text-sm font-semibold leading-none tabular-nums">{it.value}</span>
+                  <CountText value={it.value} className="text-sm font-semibold leading-none" />
                 </>
               )}
             </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EASE, useMounted } from './motion';
 import { INK } from './colors';
 import type { Segment } from './Donut';
+import CountUp from './CountUp';
 
 const STEP = 14;
 const SW = 10;
@@ -56,7 +57,7 @@ export default function RadialBars({ items }: { items: Segment[] }) {
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: it.color }} />
             <span className="truncate capitalize">{it.label}</span>
             <b className="ml-auto tabular-nums" style={{ color: INK.primary }}>
-              {it.value}
+              <CountUp value={it.value} />
             </b>
           </li>
         ))}

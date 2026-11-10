@@ -1,6 +1,7 @@
 import { useMounted } from './motion';
 import { INK, SINGLE } from './colors';
 import { NARROW, useWidth } from './useWidth';
+import { CountText } from './CountUp';
 
 const MIN = 58;
 const MAX = 118;
@@ -93,10 +94,10 @@ export default function StaffBubbles({
                   }`}
                   style={{ width: size, height: size, background: SINGLE, boxShadow: `0 6px 18px ${SINGLE}44` }}
                 >
-                  <span className="leading-none">{s.value}</span>
+                  <CountText value={s.value} className="leading-none" />
                   {/* Out of everyone's tasks: small, so the person's own number stays the loud one. */}
                   <span className={`mt-0.5 font-semibold leading-none text-white/75 ${scale < 1 ? 'text-[9px]' : 'text-[11px]'}`}>
-                    /{s.target || '—'}
+                    /{s.target ? <CountText value={s.target} /> : '—'}
                   </span>
                 </span>
                 {s.alerts > 0 && (
@@ -118,7 +119,7 @@ export default function StaffBubbles({
                 }`}
                 style={s.target && s.value >= s.target ? undefined : { color: INK.muted }}
               >
-                {s.target ? `${Math.round((s.value / s.target) * 100)}%` : '—'}
+                {s.target ? <CountText value={`${Math.round((s.value / s.target) * 100)}%`} /> : '—'}
               </span>
             </button>
           </li>

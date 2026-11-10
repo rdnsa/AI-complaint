@@ -52,4 +52,36 @@ export function useCountUp(target: number, ms = 900): number {
   return value;
 }
 
+/**
+ * 0 → 1 over `ms`, eased, for counting several numbers in step (see CountText).
+ * Starts again whenever `key` changes (a new value) or the chart comes back into view.
+ */
+export function useCountProgress(key: string, ms = 900): number {
+  const open = useContext(ChartGate);
+  const [p, setP] = useState(0);
+
+  useEffect(() => {
+    if (reduced()) {
+      setP(1);
+      return;
+    }
+    if (!open) {
+      setP(0);
+      return;
+    }
+    const start = performance.now();
+    let frame = 0;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / ms);
+      setP(1 - Math.pow(1 - t, 4));
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    setP(0);
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [key, ms, open]);
+
+  return p;
+}
+
 export const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';

@@ -88,7 +88,9 @@ export default function Donut({
           >
             <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
             {s.label}
-            <b style={{ color: INK.primary }}>{s.value}</b>
+            <b style={{ color: INK.primary }}>
+              <CountUp value={s.value} />
+            </b>
           </li>
         ))}
       </ul>

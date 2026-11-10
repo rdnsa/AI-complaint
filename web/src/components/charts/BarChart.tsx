@@ -1,5 +1,6 @@
 import { EASE, useMounted } from './motion';
 import { INK, SINGLE } from './colors';
+import { CountText } from './CountUp';
 
 export interface BarItem {
   label: string;
@@ -30,7 +31,7 @@ export default function BarChart({ data }: { data: BarItem[] }) {
               {d.label}
             </span>
             <span className="shrink-0 font-bold" style={{ color: INK.primary }}>
-              {d.display ?? d.value}
+              <CountText value={d.display ?? d.value} />
             </span>
           </div>
           <div className="mt-1.5 h-3 w-full overflow-hidden rounded-full bg-mist-100">

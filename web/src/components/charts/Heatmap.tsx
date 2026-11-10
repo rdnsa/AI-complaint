@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { EASE, useMounted } from './motion';
 import { INK, inkOn, SEQUENTIAL, sequentialStep } from './colors';
+import { CountText } from './CountUp';
 
 export interface HeatmapCell {
   row: string;
@@ -105,7 +106,7 @@ export default function Heatmap({
                         transition: `opacity .4s ease ${(ri + ci) * 45}ms, transform .6s ${EASE} ${(ri + ci) * 45}ms`,
                       }}
                     >
-                      {n || ''}
+                      {n ? <CountText value={n} /> : ''}
                     </td>
                   );
                 })}

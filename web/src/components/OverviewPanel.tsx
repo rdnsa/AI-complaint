@@ -34,6 +34,7 @@ import { buildPlaces, type Place } from '../lib/places';
 import type { ExportFormat } from '../lib/export-dashboard';
 import { Reveal } from '../lib/motion';
 import { usePolling } from '../lib/polling';
+import { CountText } from './charts/CountUp';
 
 export interface DateRange {
   from: string;
@@ -557,7 +558,7 @@ function SummaryChip({
   tone = 'plain',
   onClick,
 }: {
-  value: ReactNode;
+  value: string | number;
   label: string;
   tone?: 'plain' | 'alert';
   onClick: () => void;
@@ -571,7 +572,9 @@ function SummaryChip({
         alert ? 'text-red-700 ring-red-300' : 'text-ink-700 ring-mist-300'
       }`}
     >
-      <b className={`tabular-nums text-sm ${alert ? '' : 'text-ink-900'}`}>{value}</b>
+      <b className={`text-sm ${alert ? '' : 'text-ink-900'}`}>
+        <CountText value={value} />
+      </b>
       {label}
       <span aria-hidden className="text-ink-600 transition group-hover:translate-x-0.5">›</span>
     </button>
