@@ -11,6 +11,8 @@ const AskPanel = lazy(() => import('./AskPanel'));
 const SIZE = window.innerWidth < 640 ? 48 : 56;
 /** Pages with a send button pinned to the bottom of the screen; the launcher stays above it. */
 const PINNED_BAR = /^\/(report|student)(\/|$)/;
+/** Pages with a tab bar along the bottom on a phone (below the md breakpoint). */
+const TAB_BAR = /^\/supervisor(\/|$)/;
 const PINNED_BAR_HEIGHT = 84;
 const MARGIN = 12; // never closer than this to the screen edge
 const GAP = 12; // between the launcher and the window
@@ -89,7 +91,8 @@ export default function FloatingChat() {
   }, [open]);
 
   const W = window.innerWidth;
-  const H = window.innerHeight - (PINNED_BAR.test(pathname) ? PINNED_BAR_HEIGHT : 0);
+  const pinnedBar = PINNED_BAR.test(pathname) || (TAB_BAR.test(pathname) && W < 768);
+  const H = window.innerHeight - (pinnedBar ? PINNED_BAR_HEIGHT : 0);
   const rest: Point = {
     x:
       anchor.side === 'r'

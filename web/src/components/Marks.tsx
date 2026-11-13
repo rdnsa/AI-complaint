@@ -283,6 +283,30 @@ export function InboxGlyph({ className = 'h-4 w-4' }: GlyphProps) {
   );
 }
 
+/** The dashboard: four tiles. */
+export function GridGlyph({ className = 'h-4 w-4' }: GlyphProps) {
+  return (
+    <Glyph className={className}>
+      <rect x="3.5" y="3.5" width="5.5" height="5.5" rx="1.3" />
+      <rect x="11" y="3.5" width="5.5" height="5.5" rx="1.3" />
+      <rect x="3.5" y="11" width="5.5" height="5.5" rx="1.3" />
+      <rect x="11" y="11" width="5.5" height="5.5" rx="1.3" />
+    </Glyph>
+  );
+}
+
+/** Management: three sliders. */
+export function SlidersGlyph({ className = 'h-4 w-4' }: GlyphProps) {
+  return (
+    <Glyph className={className}>
+      <path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h13" />
+      <circle cx="7" cy="5.5" r="1.6" fill="currentColor" />
+      <circle cx="13" cy="10" r="1.6" fill="currentColor" />
+      <circle cx="8.5" cy="14.5" r="1.6" fill="currentColor" />
+    </Glyph>
+  );
+}
+
 /** Cleaned: the drop of the staff mark, as a line drawing. */
 export function DropGlyph({ className = 'h-4 w-4' }: GlyphProps) {
   return (

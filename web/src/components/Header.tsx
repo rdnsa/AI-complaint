@@ -122,7 +122,8 @@ function BackButton({ round = false }: { round?: boolean }) {
  *
  * A thin white navigation bar stays pinned to the top (campus on the left,
  * language and theme on the right); once the page scrolls past the title, the
- * campus line gives way to the app's short name, Kato. Below it the
+ * campus line gives way to the app's short name, Kato. A page with sections
+ * (`nav`) gets a floating pill instead on a wide screen. Below it the
  * page opens on a white stage with the title set large, and the content that
  * follows sits on the Studio Mist ground.
  */
@@ -151,8 +152,9 @@ export default function Header({
   /** Actions under the description (pills, links). */
   children?: React.ReactNode;
   /**
-   * A page's own sections, pinned with the bar so they stay in reach while
-   * scrolling: in the bar's one row on a wide screen, on a row of their own on a phone.
+   * A page's own sections, kept in reach while scrolling: on a wide screen the bar
+   * becomes a floating pill with them in its middle. A phone does not show them
+   * here; the page gives them a bottom tab bar of its own.
    */
   nav?: React.ReactNode;
   /** The wider content column (dashboard pages), so the bar lines up with what is under it. */
@@ -175,56 +177,82 @@ export default function Header({
 
   const column = wide ? 'max-w-6xl' : 'max-w-5xl';
 
+  // The emblem, and beside it the campus line at the top of the page; scrolled, the app's short name takes its place.
+  const home = (
+    <Link to="/" aria-label={t('nav.home')} className="flex min-w-0 items-center gap-2">
+      {/* The emblem's lower half is black, so it keeps its own white disc in dark mode too. */}
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white p-0.5 ring-1 ring-black/5">
+        <img src="/logo-upi.svg" alt="" className="h-full w-full" />
+      </span>
+      {scrolled ? (
+        <span key="brand" className="anim-fade-up truncate font-display text-nav-title font-semibold text-ink-900">
+          {t('app.brand')}
+        </span>
+      ) : (
+        /* With an extra button on the right (e.g. sign out), a narrow phone
+           has no room for the name as well; the emblem alone carries it. */
+        <span key="campus" className={`anim-fade-in truncate text-nav text-ink-600 ${right ? 'hidden min-[440px]:inline' : ''}`}>
+          {t('header.university')} · {t('header.campus')}
+        </span>
+      )}
+    </Link>
+  );
+
+  const controls = (
+    <div className="flex shrink-0 items-center gap-2">
+      {right}
+      <LanguageButton small />
+      <ThemeButton small />
+    </div>
+  );
+
+  // Reading progress along the bar's bottom edge.
+  const progress = (
+    <span
+      aria-hidden
+      className="absolute inset-x-0 -bottom-px h-[2px] origin-left bg-accent-500"
+      style={{ transform: 'scaleX(var(--p, 0))' }}
+    />
+  );
+
   return (
     <>
-      <nav ref={bar} className="sticky top-0 z-50 border-b border-black/5 bg-surface/90 backdrop-blur-2xl backdrop-saturate-[1.8] dark:border-white/10 print:hidden">
-        <div className={`mx-auto flex h-12 items-center justify-between gap-3 px-4 ${column}`}>
-          <div className="flex min-w-0 items-center gap-2">
-            {!onHome && scrolled && <BackButton round />}
-            <Link to="/" aria-label={t('nav.home')} className="flex min-w-0 items-center gap-2">
-              {/* The emblem's lower half is black, so it keeps its own white disc in dark mode too. */}
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white p-0.5 ring-1 ring-black/5">
-                <img src="/logo-upi.svg" alt="" className="h-full w-full" />
-              </span>
-              {/* The campus line at the top of the page; scrolled, the app's short name takes its place. */}
-              {scrolled ? (
-                <span key="brand" className="anim-fade-up truncate font-display text-nav-title font-semibold text-ink-900">
-                  {t('app.brand')}
-                </span>
-              ) : (
-                /* With an extra button on the right (e.g. sign out), a narrow phone
-                   has no room for the name as well; the emblem alone carries it. */
-                <span key="campus" className={`anim-fade-in truncate text-nav text-ink-600 ${right ? 'hidden min-[440px]:inline' : ''}`}>
-                  {t('header.university')} · {t('header.campus')}
-                </span>
-              )}
-            </Link>
-            {/* Scrolled on a wide screen, the sections move up beside the name: one slim pinned row. */}
-            {nav && scrolled && <div className="anim-fade-in ml-4 hidden md:block">{nav}</div>}
+      {nav ? (
+        // A page with sections of its own (the dashboard): on a wide screen the bar
+        // floats as a glass pill with the sections in its middle; on a phone it stays
+        // a plain top bar, and the page puts its sections in a tab bar at the bottom.
+        <nav ref={bar} className="sticky top-0 z-50 print:hidden md:pointer-events-none md:px-4 md:pt-3">
+          <div className="relative border-b border-black/5 bg-surface/90 backdrop-blur-2xl backdrop-saturate-[1.8] dark:border-white/10 md:pointer-events-auto md:mx-auto md:w-fit md:max-w-full md:overflow-hidden md:rounded-full md:border md:shadow-[0_10px_30px_-10px_rgb(0_0_0/0.18)]">
+            <div className="flex h-12 items-center justify-between gap-3 px-4 md:h-14 md:gap-5 md:px-3">
+              <div className="flex min-w-0 items-center gap-2">
+                {!onHome && scrolled && <BackButton round />}
+                <div className="min-w-0 md:hidden">{home}</div>
+                {/* In the pill, the app's short name: the campus line would stretch it too wide. */}
+                <Link to="/" aria-label={t('nav.home')} className="hidden items-center gap-2 md:flex">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white p-0.5 ring-1 ring-black/5">
+                    <img src="/logo-upi.svg" alt="" className="h-full w-full" />
+                  </span>
+                  <span className="font-display text-nav-title font-semibold text-ink-900">{t('app.brand')}</span>
+                </Link>
+              </div>
+              <div className="hidden md:block">{nav}</div>
+              {controls}
+            </div>
+            {progress}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {right}
-            <LanguageButton small />
-            <ThemeButton small />
+        </nav>
+      ) : (
+        <nav ref={bar} className="sticky top-0 z-50 border-b border-black/5 bg-surface/90 backdrop-blur-2xl backdrop-saturate-[1.8] dark:border-white/10 print:hidden">
+          <div className={`mx-auto flex h-12 items-center justify-between gap-3 px-4 ${column}`}>
+            <div className="flex min-w-0 items-center gap-2">
+              {!onHome && scrolled && <BackButton round />}
+              {home}
+            </div>
+            {controls}
           </div>
-        </div>
-        {nav && (
-          // Under the campus line at the top of the page; a phone keeps this row while scrolling, having no room beside the name.
-          <div
-            className={`mx-auto overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${column} ${
-              scrolled ? 'md:hidden' : ''
-            }`}
-          >
-            {nav}
-          </div>
-        )}
-        {/* Reading progress along the bar's bottom edge. */}
-        <span
-          aria-hidden
-          className="absolute inset-x-0 -bottom-px h-[2px] origin-left bg-accent-500"
-          style={{ transform: 'scaleX(var(--p, 0))' }}
-        />
-      </nav>
+          {progress}
+        </nav>
+      )}
 
       {/* No ground of its own: the title sits straight on the page. */}
       <header>

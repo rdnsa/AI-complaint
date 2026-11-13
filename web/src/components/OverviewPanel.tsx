@@ -373,7 +373,8 @@ export default function OverviewPanel({
       {/* Three views over the same dates: the day at a glance, then each side in full.
           Pinned under the header while scrolling, as a pane of frosted glass: no strip of its own. */}
       <div ref={switchSpot} aria-hidden className="!mt-0" />
-      <div className="sticky top-[85px] z-40 py-2 md:top-[48px]">
+      {/* The header is 49px on a phone; on a wide screen the floating pill ends 70px down. */}
+      <div className="sticky top-[49px] z-40 py-2 md:top-[74px]">
         <ViewSwitch value={view} onChange={pickView} />
       </div>
 

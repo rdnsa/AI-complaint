@@ -7,7 +7,7 @@ import { api, type Report, type Session } from '../lib/api';
 import TimeFilter, { EMPTY_TIME_RANGE, type TimeRange } from '../components/TimeFilter';
 import { useFormatTime, useLanguage, useRelativeTime } from '../lib/i18n';
 import { useSession } from '../lib/session';
-import { CheckGlyph, InboxGlyph, SupervisorMark } from '../components/Marks';
+import { CheckGlyph, GridGlyph, InboxGlyph, SlidersGlyph, SupervisorMark } from '../components/Marks';
 import ZoomableImage from '../components/ZoomableImage';
 import { Reveal } from '../lib/motion';
 import type { CleaningFocus } from '../components/CleaningPanel';
@@ -48,6 +48,11 @@ export default function SupervisorDashboard() {
 
 const TABS = ['overview', 'reports', 'manage'] as const;
 type Tab = (typeof TABS)[number];
+const TAB_ICONS: Record<Tab, (p: { className?: string }) => JSX.Element> = {
+  overview: GridGlyph,
+  reports: InboxGlyph,
+  manage: SlidersGlyph,
+};
 /** What the Management tab holds: the running of the app rather than its numbers. */
 type ManageView = 'logs' | 'accounts' | 'qr';
 
@@ -65,8 +70,8 @@ function SubTabs<K extends string>({
   items: Array<{ key: K; label: string; badge?: number }>;
 }) {
   return (
-    // The header is 85px on a phone and 49px on a wide screen once scrolled.
-    <div className="sticky top-[85px] z-40 mt-2 py-2 md:top-[48px]">
+    // The header is 49px on a phone; on a wide screen the floating pill ends 70px down.
+    <div className="sticky top-[49px] z-40 mt-2 py-2 md:top-[74px]">
     <div className="glass inline-flex max-w-full gap-1 overflow-x-auto rounded-full p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="group">
       {items.map((it) => (
         <button
@@ -132,7 +137,13 @@ function Board({ session }: { session: Session }) {
     load();
   }
 
-  // The app's five sections, in the pinned header: always in reach, whatever the page has scrolled to.
+  const pick = (k: Tab) => {
+    setTab(k);
+    setCleaningFocus(null);
+    window.scrollTo(0, 0);
+  };
+
+  // The dashboard's sections, in the floating pill on a wide screen: always in reach, whatever the page has scrolled to.
   const sections = (
     <div className="flex w-max min-w-full gap-1" role="tablist" aria-label={t('dashboard.title')}>
       {TABS.map((k) => (
@@ -140,11 +151,7 @@ function Board({ session }: { session: Session }) {
           key={k}
           role="tab"
           aria-selected={tab === k}
-          onClick={() => {
-            setTab(k);
-            setCleaningFocus(null);
-            window.scrollTo(0, 0);
-          }}
+          onClick={() => pick(k)}
           className={`relative shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-nav font-semibold transition sm:text-body-sm ${
             tab === k ? 'bg-ink-900 text-surface' : 'text-ink-700 hover:bg-mist-100 hover:text-ink-900'
           }`}
@@ -161,8 +168,44 @@ function Board({ session }: { session: Session }) {
     </div>
   );
 
+  // On a phone the same sections sit in a tab bar along the bottom, in reach of the thumb.
+  const tabBar = (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl backdrop-saturate-[1.8] dark:border-white/10 md:hidden print:hidden"
+      aria-label={t('dashboard.title')}
+    >
+      <div className="grid grid-cols-3" role="tablist">
+        {TABS.map((k) => {
+          const Icon = TAB_ICONS[k];
+          const on = tab === k;
+          return (
+            <button
+              key={k}
+              role="tab"
+              aria-selected={on}
+              onClick={() => pick(k)}
+              className={`flex flex-col items-center gap-1 pb-2 pt-2.5 text-[11px] font-semibold transition ${
+                on ? 'text-accent-600' : 'text-ink-600 active:text-ink-900'
+              }`}
+            >
+              <span className={`relative grid h-7 w-14 place-items-center rounded-full transition ${on ? 'bg-accent-500/15' : ''}`}>
+                <Icon className="h-5 w-5" />
+                {k === 'reports' && cleaningAlerts > 0 && (
+                  <span className="absolute -top-1 right-1.5 grid min-w-[18px] place-content-center rounded-full bg-red-600 px-1 py-0.5 text-[10px] leading-none text-white ring-2 ring-surface">
+                    {cleaningAlerts}
+                  </span>
+                )}
+              </span>
+              {t(`tab.${k}`)}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+
   return (
-    <div className="min-h-screen pb-16">
+    <div className="min-h-screen pb-28 md:pb-16">
       <Header
         title={t('dashboard.title')}
         description={t('dashboard.signed_in_as', { name: `${session.name} · ${t('account.role_supervisor')}` })}
@@ -293,6 +336,8 @@ function Board({ session }: { session: Session }) {
           </>
         )}
       </main>
+
+      {tabBar}
     </div>
   );
 }
