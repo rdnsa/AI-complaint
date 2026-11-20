@@ -67,7 +67,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               the same page. */}
           <Route path="/report/:locationId" element={<ReportForm />} />
           <Route path="/student" element={<ReportForm />} />
-          {/* Staff without sign-in: one page for complaints and daily tasks.
+          {/* Staff, signed in (the page sends them to /login first): complaints and daily tasks.
               The location QR (/staff/C-2) and the staff sticker (/clean/<area>)
               open it with the location already picked. */}
           <Route path="/staff" element={<StaffHome />} />

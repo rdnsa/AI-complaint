@@ -1,4 +1,4 @@
-import { expect, knownIssue, test, unique } from '../fixtures';
+import { asStaff, expect, knownIssue, test, unique } from '../fixtures';
 
 test.describe('Mengirim laporan', () => {
   test('TC-LAP-001 laporan anonim tersimpan dan dianalisis', async ({ api }) => {
@@ -221,8 +221,8 @@ test.describe('Status oleh petugas', () => {
   test('TC-KLH-047 foto bukti diterima tanpa penilaian model yang menentukan', async ({ api, request, newStaff }) => {
     const { id } = await api.report();
     const proof = await api.upload('proof');
-    const res = await request.patch(`/api/reports/${id}`, {
-      data: { status: 'resolved', staff_id: (await newStaff()).id, proof_photo_key: proof },
+    const res = await asStaff((await newStaff()).id, request).patch(`/api/reports/${id}`, {
+      data: { status: 'resolved', proof_photo_key: proof },
     });
     expect(res.status()).toBe(200);
     const stored = await api.getReport(id);
@@ -231,36 +231,44 @@ test.describe('Status oleh petugas', () => {
     expect((await request.get(`/api/uploads/${proof}`)).status()).toBe(200);
   });
 
-  test('TC-KLH-034 tanpa nama petugas ditolak', async ({ api, request }) => {
+  test('TC-KLH-034 tanpa login petugas ditolak', async ({ api, request }) => {
     const { id } = await api.report();
     const res = await request.patch(`/api/reports/${id}`, { data: { status: 'in_progress' } });
-    expect(res.status()).toBe(400);
-    expect((await res.json()).error).toBe('Pilih namamu dulu');
+    expect(res.status()).toBe(401);
+    expect((await res.json()).error).toBe('Masuk dengan akun petugas dulu.');
   });
 
   test('TC-KLH-035 sesi pelapor tidak bisa mengubah status', async ({ api, reporter }) => {
     const { id } = await api.report();
     const res = await reporter.api.request.patch(`/api/reports/${id}`, { data: { status: 'in_progress' } });
-    expect(res.status()).toBe(400);
+    expect(res.status()).toBe(403);
   });
 
-  test('TC-KLH-036 petugas palsu ditolak', async ({ api }) => {
+  test('TC-KLH-036 tanpa login petugas ditolak', async ({ api }) => {
     const { id } = await api.report();
     const res = await api.claim(id, 'bukan-petugas');
-    expect(res.status()).toBe(400);
-    expect((await res.json()).error).toBe('Nama petugas tidak dikenal. Pilih ulang namamu.');
+    expect(res.status()).toBe(401);
+    expect((await res.json()).error).toBe('Masuk dengan akun petugas dulu.');
+  });
+
+  test('staff_id di badan permintaan diabaikan: pelaku selalu akun yang login', async ({ api, newStaff }) => {
+    const { id } = await api.report();
+    const [actor, other] = [await newStaff('Pelaku'), await newStaff('Lain')];
+    const res = await actor.request.patch(`/api/reports/${id}`, { data: { status: 'in_progress', staff_id: other.id } });
+    expect(res.status()).toBe(200);
+    expect((await api.getReport(id)).staff_name).toBe(actor.name);
   });
 
   test('TC-KLH-032 petugas nonaktif ditolak', async ({ api, admin, newStaff }) => {
     const { id } = await api.report();
     const staff = await newStaff();
     await admin.patch(`/api/users/${staff.id}`, { data: { active: false } });
-    expect((await api.claim(id, staff.id)).status()).toBe(400);
+    expect((await api.claim(id, staff.id)).status()).toBe(403);
   });
 
   test('TC-KLH-038 status tidak valid ditolak', async ({ api, request, newStaff }) => {
     const { id } = await api.report();
-    const res = await request.patch(`/api/reports/${id}`, { data: { status: 'dibatalkan', staff_id: (await newStaff()).id } });
+    const res = await asStaff((await newStaff()).id, request).patch(`/api/reports/${id}`, { data: { status: 'dibatalkan' } });
     expect(res.status()).toBe(400);
   });
 
@@ -270,15 +278,15 @@ test.describe('Status oleh petugas', () => {
 
   test('TC-KLH-040 selesai tanpa foto bukti ditolak', async ({ api, request, newStaff }) => {
     const { id } = await api.report();
-    const res = await request.patch(`/api/reports/${id}`, { data: { status: 'resolved', staff_id: (await newStaff()).id } });
+    const res = await asStaff((await newStaff()).id, request).patch(`/api/reports/${id}`, { data: { status: 'resolved' } });
     expect(res.status()).toBe(400);
     expect((await api.getReport(id)).status).toBe('new');
   });
 
   test('TC-KLH-041 foto pelapor tidak bisa jadi bukti', async ({ api, request, newStaff }) => {
     const { id, photoKey } = await api.report();
-    const res = await request.patch(`/api/reports/${id}`, {
-      data: { status: 'resolved', staff_id: (await newStaff()).id, proof_photo_key: photoKey },
+    const res = await asStaff((await newStaff()).id, request).patch(`/api/reports/${id}`, {
+      data: { status: 'resolved', proof_photo_key: photoKey },
     });
     expect(res.status()).toBe(400);
     expect((await request.get(`/api/uploads/${photoKey}`)).status()).toBe(200);
@@ -286,8 +294,8 @@ test.describe('Status oleh petugas', () => {
 
   test('TC-KLH-042 foto bukti yang tidak ada ditolak', async ({ api, request, newStaff }) => {
     const { id } = await api.report();
-    const res = await request.patch(`/api/reports/${id}`, {
-      data: { status: 'resolved', staff_id: (await newStaff()).id, proof_photo_key: 'proof/2026-01-01/tidak-ada.jpg' },
+    const res = await asStaff((await newStaff()).id, request).patch(`/api/reports/${id}`, {
+      data: { status: 'resolved', proof_photo_key: 'proof/2026-01-01/tidak-ada.jpg' },
     });
     expect(res.status()).toBe(400);
   });
@@ -307,7 +315,7 @@ test.describe('Status oleh petugas', () => {
     await api.resolve(id, first.id);
     const before = await api.getReport(id);
 
-    const bare = await request.patch(`/api/reports/${id}`, { data: { status: 'resolved', staff_id: second.id } });
+    const bare = await asStaff(second.id, request).patch(`/api/reports/${id}`, { data: { status: 'resolved' } });
     expect(bare.status()).toBe(409);
     expect((await bare.json()).error).toBe('Laporan ini sudah selesai.');
     expect((await api.resolve(id, second.id)).status()).toBe(409);
@@ -323,7 +331,7 @@ test.describe('Status oleh petugas', () => {
     const { id } = await api.report();
     const staff = await newStaff();
     await api.claim(id, staff.id);
-    const res = await request.patch(`/api/reports/${id}`, { data: { status: 'new', staff_id: staff.id } });
+    const res = await asStaff(staff.id, request).patch(`/api/reports/${id}`, { data: { status: 'new' } });
     knownIssue('T-08', 'status bisa mundur lewat API');
     expect(res.status()).not.toBe(200);
   });
@@ -333,8 +341,8 @@ test.describe('Status oleh petugas', () => {
     const [first, second] = [await api.report(), await api.report()];
     await api.resolve(first.id, staff.id);
     const proof = (await api.getReport(first.id)).proof_photo_url.replace('/api/uploads/', '');
-    const res = await request.patch(`/api/reports/${second.id}`, {
-      data: { status: 'resolved', staff_id: staff.id, proof_photo_key: proof },
+    const res = await asStaff(staff.id, request).patch(`/api/reports/${second.id}`, {
+      data: { status: 'resolved', proof_photo_key: proof },
     });
     knownIssue('T-02', 'satu foto bukti bisa menutup dua laporan');
     expect(res.status()).toBe(400);
@@ -369,7 +377,7 @@ test.describe('Deskripsi foto bukti', () => {
     const staff = await newStaff();
     const proof = await api.upload('proof');
     await request.post(`/api/reports/${id}/proof-preview`, { data: { proof_photo_key: proof } });
-    await request.patch(`/api/reports/${id}`, { data: { status: 'resolved', staff_id: staff.id, proof_photo_key: proof } });
+    await asStaff(staff.id, request).patch(`/api/reports/${id}`, { data: { status: 'resolved', proof_photo_key: proof } });
     await expect
       .poll(async () => (await api.getReport(id)).proof_reason)
       .toBe('Deskripsi foto tiruan dari model.');

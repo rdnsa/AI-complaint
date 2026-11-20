@@ -2,11 +2,19 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import { StatusBadge } from '../components/Badges';
-import { ArrowGlyph, StaffMark, StudentMark } from '../components/Marks';
+import BottomNav from '../components/BottomNav';
+import { ArrowGlyph, CameraGlyph, DropGlyph, HomeGlyph, StaffMark, StudentMark } from '../components/Marks';
 import { api, type Report } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { Reveal } from '../lib/motion';
 import { useSession } from '../lib/session';
+
+/** The app's main sections: in the header pill on a wide screen, in the bottom bar on a phone. Home sits in the middle. */
+const HOME_TABS = [
+  { key: 'staff', to: '/staff', label: 'nav.tab_staff', icon: DropGlyph, primary: false },
+  { key: 'home', to: '/', label: 'nav.tab_home', icon: HomeGlyph, primary: true },
+  { key: 'report', to: '/student', label: 'nav.tab_report', icon: CameraGlyph, primary: false },
+] as const;
 
 function MyReportRow({ report }: { report: Report }) {
   const { t } = useLanguage();
@@ -98,9 +106,33 @@ export default function Home() {
       .catch(() => setMyReports([]));
   }, [session]);
 
+  const sections = (
+    <div className="flex w-max gap-1">
+      {HOME_TABS.map((tab) => (
+        <Link
+          key={tab.key}
+          to={tab.to}
+          aria-current={tab.key === 'home' ? 'page' : undefined}
+          className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-body-sm font-semibold transition ${
+            tab.primary ? 'bg-accent-500 text-white shadow-subtle hover:bg-accent-600' : 'text-ink-700 hover:bg-mist-100 hover:text-ink-900'
+          }`}
+        >
+          {tab.primary && <tab.icon className="h-4 w-4" />}
+          {t(tab.label)}
+        </Link>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen pb-24">
-      <Header hero kicker={`UPI ${t('header.campus')}`} title={t('app.title')} description={t('app.subtitle')}>
+    <div className="min-h-screen pb-28 md:pb-24">
+      <Header
+        hero
+        kicker={`UPI ${t('header.campus')}`}
+        title={t('app.title')}
+        description={t('app.subtitle')}
+        nav={sections}
+      >
         {/* The roles are the cards just below; the hero carries the other ways in, as pills. */}
         {/* The account; the public boards sit under the role cards below. */}
         <div className="mx-auto flex max-w-xl flex-col items-center gap-3">
@@ -163,6 +195,18 @@ export default function Home() {
           </Link>
         </Reveal>
       </Band>
+
+      <BottomNav
+        label={t('nav.sections')}
+        items={HOME_TABS.map((tab) => ({
+          key: tab.key,
+          label: t(tab.label),
+          icon: tab.icon,
+          active: tab.key === 'home',
+          to: tab.to,
+          primary: tab.primary,
+        }))}
+      />
     </div>
   );
 }

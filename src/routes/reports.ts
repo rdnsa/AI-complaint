@@ -80,7 +80,8 @@ app.get('/public', async (c) => {
 
 /**
  * Public: the reports staff still have to handle, optionally for one floor
- * (`?building=A&floor=1`). Staff do not sign in, so this cannot require a session.
+ * (`?building=A&floor=1`). Public, like the board: it carries no reporter details,
+ * and acting on a report (PATCH below) is what needs a staff sign-in.
  */
 app.get('/open', async (c) => {
   const { building, floor } = c.req.query();
@@ -150,7 +151,6 @@ app.post('/:id/proof-preview', async (c) => {
 const StatusChangeSchema = z.object({
   status: z.enum(STATUSES),
   proof_photo_key: z.string().max(200).nullish(),
-  staff_id: z.string().max(64).nullish(),
 });
 
 /**
@@ -160,9 +160,8 @@ const StatusChangeSchema = z.object({
  * staff member may claim it in turn, and the handover is logged. A resolved report
  * cannot be changed from here at all; only a supervisor can reopen it (POST /:id/reopen).
  *
- * Staff do not sign in; they send the `staff_id` picked on the dropdown,
- * which must belong to an active staff member. A signed-in supervisor may act
- * under their own name instead. Closing needs a proof photo; the photo is shown
+ * Staff act under their own signed-in account, which must still be active.
+ * A signed-in supervisor may act under their own name instead. Closing needs a proof photo; the photo is shown
  * on the public board and logged. A vision model describes it (see /proof-preview)
  * without any say over the close.
  */
@@ -172,14 +171,16 @@ app.patch('/:id', async (c) => {
 
   const session = await currentSession(c);
   let actor: string;
-  if (parsed.data.staff_id) {
-    const staff = await accounts.findActiveStaff(c.env, parsed.data.staff_id);
-    if (!staff) return c.json({ error: 'Nama petugas tidak dikenal. Pilih ulang namamu.' }, 400);
+  if (session?.role === 'staff') {
+    const staff = await accounts.findActiveStaff(c.env, session.id);
+    if (!staff) return c.json({ error: 'Akun petugas ini sudah tidak aktif.' }, 403);
     actor = staff.name;
   } else if (session?.role === 'supervisor') {
     actor = session.name;
+  } else if (session) {
+    return c.json({ error: 'Hanya akun petugas yang bisa mengubah status laporan.' }, 403);
   } else {
-    return c.json({ error: 'Pilih namamu dulu' }, 400);
+    return c.json({ error: 'Masuk dengan akun petugas dulu.' }, 401);
   }
 
   const result = await reports.changeStatus(

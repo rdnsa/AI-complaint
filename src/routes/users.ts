@@ -13,7 +13,7 @@ app.get('/', async (c) => c.json({ data: await accounts.listManaged(c.env) }));
 
 const Name = z.string().trim().min(2, 'Nama minimal 2 karakter').max(60);
 
-/** A staff member is just a name; a supervisor needs credentials to sign in with. */
+/** A staff account takes only a name (username and starting password follow from it); a supervisor picks credentials. */
 const CreateSchema = z.discriminatedUnion('role', [
   z.object({ role: z.literal('staff'), name: Name }),
   z.object({
@@ -38,7 +38,7 @@ app.post('/', async (c) => {
 
   if (parsed.data.role === 'staff') {
     const created = await accounts.addStaff(c.env, parsed.data.name, supervisor);
-    return c.json({ ...created, username: null, active: 1 }, 201);
+    return c.json({ ...created, active: 1, default_password: accounts.DEFAULT_STAFF_PASSWORD }, 201);
   }
 
   const result = await accounts.addSupervisor(c.env, parsed.data, supervisor);
@@ -49,7 +49,8 @@ app.post('/', async (c) => {
 const UpdateSchema = z
   .object({
     name: z.string().trim().min(2, 'Nama minimal 2 karakter').max(60).optional(),
-    password: z.string().min(8, 'Password minimal 8 karakter').max(200).optional(),
+    // Six for a staff account (the default 123456 is six); the service holds supervisors to eight.
+    password: z.string().min(6, 'Password minimal 6 karakter').max(200).optional(),
     active: z.boolean().optional(),
   })
   .refine((v) => v.name !== undefined || v.password !== undefined || v.active !== undefined, {
@@ -67,8 +68,8 @@ app.patch('/:id', async (c) => {
   if (result.kind === 'self-lockout') {
     return c.json({ error: 'Akun yang sedang dipakai tidak bisa dinonaktifkan.' }, 400);
   }
-  if (result.kind === 'staff-without-password') {
-    return c.json({ error: 'Petugas tidak memakai password.' }, 400);
+  if (result.kind === 'password-too-short') {
+    return c.json({ error: 'Password minimal 8 karakter' }, 400);
   }
   return c.json({ ok: true });
 });

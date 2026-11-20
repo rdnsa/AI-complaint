@@ -1,4 +1,4 @@
-/** Only 'supervisor' and 'reporter' ever sign in; 'staff' is a name on the dropdown. */
+/** Everyone signs in: reporters, cleaning staff (first name at upi.edu) and supervisors. */
 export type Role = 'supervisor' | 'staff' | 'reporter';
 
 export interface Session {
@@ -9,7 +9,7 @@ export interface Session {
 
 export interface ManagedAccount {
   id: string;
-  /** Null for cleaning staff, who never sign in. */
+  /** A staff account's is their first name at upi.edu; null only on old rows. */
   username: string | null;
   name: string;
   role: Role;
@@ -75,7 +75,7 @@ export interface Report {
   created_at: string;
 }
 
-/** One name on the staff dropdown. */
+/** A cleaning staff member: who a round or a complaint belongs to. */
 export interface StaffOption {
   id: string;
   name: string;
@@ -400,20 +400,23 @@ export const api = {
   // --- supervisor only ---
   users: () => req<{ data: ManagedAccount[] }>('/api/users'),
   staffDuties: (id: string) => req<StaffDuties>(`/api/users/${encodeURIComponent(id)}/duties`),
-  /** The same letter, readable without a session: shown to the staff member on their round. */
-  myDuties: (id: string) => req<StaffDuties>(`/api/staff/${encodeURIComponent(id)}/duties`),
+  /** The signed-in staff member's own letter, shown on their round. */
+  myDuties: () => req<StaffDuties>('/api/staff/me/duties'),
   saveStaffDuties: (id: string, body: StaffDuties) =>
     req<{ ok: true; count: number }>(`/api/users/${encodeURIComponent(id)}/duties`, {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
-  /** A staff member is a name only; another supervisor needs credentials. */
+  /** A staff account takes a name only (username and starting password follow); another supervisor needs credentials. */
   createUser: (
     body:
       | { role: 'staff'; name: string }
       | { role: 'supervisor'; username: string; name: string; password: string },
   ) =>
-    req<ManagedAccount>('/api/users', { method: 'POST', body: JSON.stringify(body) }).finally(forgetStaff),
+    req<ManagedAccount & { default_password?: string }>('/api/users', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }).finally(forgetStaff),
   updateUser: (id: string, body: { name?: string; password?: string; active?: boolean }) =>
     req<{ ok: boolean }>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).finally(forgetStaff),
   deleteUser: (id: string) => req<{ ok: boolean }>(`/api/users/${id}`, { method: 'DELETE' }).finally(forgetStaff),
@@ -425,7 +428,7 @@ export const api = {
     const q = new URLSearchParams(Object.entries(filter).filter(([, v]) => v));
     return req<{ data: Report[] }>(`/api/reports?${q}`);
   },
-  // --- cleaning staff (no sign-in: they send the id picked on the dropdown) ---
+  // --- cleaning staff (signed in: the session says who acts) ---
   staffList: () => cachedReq<{ data: StaffOption[] }>('/api/staff', 60_000),
   /** Reports still waiting for staff; `building` + `floor` narrow it to one floor. */
   openReports: (filter: { building?: string; floor?: number } = {}) => {
@@ -437,7 +440,7 @@ export const api = {
   updateStatus: (
     id: string,
     status: ReportStatus,
-    extra: { staff_id?: string; proof_photo_key?: string } = {},
+    extra: { proof_photo_key?: string } = {},
   ) =>
     req<{ ok: boolean; status: ReportStatus }>(`/api/reports/${id}`, {
       method: 'PATCH',
@@ -450,7 +453,6 @@ export const api = {
   cleaningArea: (id: string) =>
     req<CleaningArea & { campus: Campus }>(`/api/cleaning/areas/${encodeURIComponent(id)}`),
   submitCleaning: (body: {
-    staff_id: string;
     area_id: string;
     tasks: Array<{ task: CleaningTask; photo_key: string }>;
     note: string | null;

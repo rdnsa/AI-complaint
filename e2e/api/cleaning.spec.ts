@@ -1,4 +1,4 @@
-import { expect, knownIssue, OFF_CAMPUS, ON_CAMPUS, test, unique } from '../fixtures';
+import { asStaff, expect, knownIssue, OFF_CAMPUS, ON_CAMPUS, test, unique } from '../fixtures';
 
 const wibToday = () => new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
 
@@ -41,30 +41,40 @@ test('TC-THR-021 keenam tugas bisa dikirim', async ({ api, newStaff }) => {
   }
 });
 
-test('TC-THR-037 tanpa petugas ditolak', async ({ api, request }) => {
+test('TC-THR-037 tanpa login petugas ditolak', async ({ api, request }) => {
   const photo = await api.upload('cleaning');
   const res = await request.post('/api/cleaning/reports', {
     data: { area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
   });
-  expect(res.status()).toBe(400);
-  expect((await res.json()).error).toBe('Pilih namamu dulu');
+  expect(res.status()).toBe(401);
 });
 
-test('TC-THR-038 petugas palsu ditolak', async ({ api }) => {
-  const res = await api.cleaning('bukan-petugas');
-  expect(res.status()).toBe(400);
-  expect((await res.json()).error).toBe('Nama petugas tidak dikenal. Pilih ulang namamu.');
+test('TC-THR-038 staff_id tanpa login tidak berlaku', async ({ api, newStaff }) => {
+  const staff = await newStaff();
+  const photo = await api.upload('cleaning');
+  const res = await api.request.post('/api/cleaning/reports', {
+    data: { staff_id: staff.id, area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
+  });
+  expect(res.status()).toBe(401);
+});
+
+test('sesi pelapor tidak bisa mengirim tugas harian', async ({ reporter }) => {
+  const photo = await reporter.api.upload('cleaning');
+  const res = await reporter.api.request.post('/api/cleaning/reports', {
+    data: { area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
+  });
+  expect(res.status()).toBe(403);
 });
 
 test('TC-THR-039 petugas nonaktif ditolak', async ({ api, admin, newStaff }) => {
   const staff = await newStaff();
   await admin.patch(`/api/users/${staff.id}`, { data: { active: false } });
-  expect((await api.cleaning(staff.id)).status()).toBe(400);
+  expect((await api.cleaning(staff.id)).status()).toBe(403);
 });
 
 test('TC-THR-040 tanpa tugas ditolak', async ({ request, newStaff }) => {
-  const res = await request.post('/api/cleaning/reports', {
-    data: { staff_id: (await newStaff()).id, area_id: 'C-2', tasks: [] },
+  const res = await asStaff((await newStaff()).id, request).post('/api/cleaning/reports', {
+    data: { area_id: 'C-2', tasks: [] },
   });
   expect(res.status()).toBe(400);
   expect((await res.json()).error).toBe('Centang minimal satu pekerjaan');
@@ -72,9 +82,8 @@ test('TC-THR-040 tanpa tugas ditolak', async ({ request, newStaff }) => {
 
 test('TC-THR-042 satu foto untuk dua tugas ditolak', async ({ api, request, newStaff }) => {
   const photo = await api.upload('cleaning');
-  const res = await request.post('/api/cleaning/reports', {
+  const res = await asStaff((await newStaff()).id, request).post('/api/cleaning/reports', {
     data: {
-      staff_id: (await newStaff()).id,
       area_id: 'C-2',
       tasks: [{ task: 'trash', photo_key: photo }, { task: 'tidy', photo_key: photo }],
     },
@@ -86,8 +95,8 @@ test('TC-THR-042 satu foto untuk dua tugas ditolak', async ({ api, request, newS
 test('TC-THR-046 area tidak dikenal tidak menyentuh foto', async ({ api, request, newStaff }) => {
   // A photo of someone else's report, passed along with an area that does not exist.
   const { photoKey } = await api.report();
-  const res = await request.post('/api/cleaning/reports', {
-    data: { staff_id: (await newStaff()).id, area_id: 'TIDAK-ADA', tasks: [{ task: 'trash', photo_key: photoKey }] },
+  const res = await asStaff((await newStaff()).id, request).post('/api/cleaning/reports', {
+    data: { area_id: 'TIDAK-ADA', tasks: [{ task: 'trash', photo_key: photoKey }] },
   });
   expect(res.status()).toBe(404);
   const photo = await request.get(`/api/uploads/${photoKey}`);
@@ -97,16 +106,15 @@ test('TC-THR-046 area tidak dikenal tidak menyentuh foto', async ({ api, request
 
 test('TC-THR-047 foto dari folder lain ditolak', async ({ api, request, newStaff }) => {
   const photo = await api.upload('report');
-  const res = await request.post('/api/cleaning/reports', {
-    data: { staff_id: (await newStaff()).id, area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
+  const res = await asStaff((await newStaff()).id, request).post('/api/cleaning/reports', {
+    data: { area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
   });
   expect(res.status()).toBe(400);
 });
 
 test('TC-THR-048 foto yang tidak ada ditolak', async ({ request, newStaff }) => {
-  const res = await request.post('/api/cleaning/reports', {
+  const res = await asStaff((await newStaff()).id, request).post('/api/cleaning/reports', {
     data: {
-      staff_id: (await newStaff()).id,
       area_id: 'C-2',
       tasks: [{ task: 'trash', photo_key: 'cleaning/2026-01-01/tidak-ada.jpg' }],
     },
@@ -118,8 +126,8 @@ test('TC-THR-049 foto yang dipakai petugas lain ditolak', async ({ api, request,
   const [first, second] = [await newStaff('Pertama'), await newStaff('Kedua')];
   const photo = await api.upload('cleaning');
   const send = (staffId: string) =>
-    request.post('/api/cleaning/reports', {
-      data: { staff_id: staffId, area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
+    asStaff(staffId, request).post('/api/cleaning/reports', {
+      data: { area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
     });
   expect((await send(first.id)).status()).toBe(201);
   const res = await send(second.id);
@@ -131,8 +139,8 @@ test('TC-THR-051 foto terpakai untuk tugas lain ditolak', async ({ api, request,
   const staff = await newStaff();
   const photo = await api.upload('cleaning');
   const send = (task: string) =>
-    request.post('/api/cleaning/reports', {
-      data: { staff_id: staff.id, area_id: 'C-2', tasks: [{ task, photo_key: photo }] },
+    asStaff(staff.id, request).post('/api/cleaning/reports', {
+      data: { area_id: 'C-2', tasks: [{ task, photo_key: photo }] },
     });
   expect((await send('trash')).status()).toBe(201);
   const res = await send('tidy');
@@ -144,8 +152,8 @@ test('TC-THR-052 kirim ulang persis tidak membuat data baru', async ({ api, requ
   const staff = await newStaff();
   const photo = await api.upload('cleaning');
   const send = () =>
-    request.post('/api/cleaning/reports', {
-      data: { staff_id: staff.id, area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
+    asStaff(staff.id, request).post('/api/cleaning/reports', {
+      data: { area_id: 'C-2', tasks: [{ task: 'trash', photo_key: photo }] },
     });
   const first = await send();
   const second = await send();

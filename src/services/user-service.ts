@@ -19,14 +19,10 @@ export type LoginResult = { kind: 'ok'; identity: Identity } | { kind: 'failed' 
  * An unknown account and a wrong password return the same result on purpose, so
  * the caller cannot phrase two different messages and turn the sign-in page
  * into a way of discovering which usernames exist.
- *
- * Cleaning staff are refused even when an old account still carries a
- * password: they work without signing in, and a staff session would otherwise
- * be a way into nothing but confusion.
  */
 export async function login(env: Env, username: string, password: string): Promise<LoginResult> {
   const account = await users.findByUsername(env, username);
-  if (!account || !account.active || account.role === 'staff') return { kind: 'failed' };
+  if (!account || !account.active) return { kind: 'failed' };
   if (!account.password_hash || !account.password_salt) return { kind: 'failed' };
   if (!(await verifyPassword(password, account.password_salt, account.password_hash))) {
     return { kind: 'failed' };
@@ -47,7 +43,7 @@ export type CreateResult = { kind: 'ok'; identity: Identity } | { kind: 'usernam
 
 async function createAccount(
   env: Env,
-  data: { username: string; name: string; password: string; role: Exclude<Role, 'staff'> },
+  data: { username: string; name: string; password: string; role: Role },
 ): Promise<CreateResult> {
   if (await users.usernameTaken(env, data.username)) return { kind: 'username-taken' };
 
@@ -73,20 +69,48 @@ export function registerReporter(
   return createAccount(env, { ...data, role: 'reporter' });
 }
 
-/** A staff member is only a name on the dropdown: no username, no password. */
-export async function addStaff(env: Env, name: string, supervisor: string): Promise<Identity> {
-  const id = crypto.randomUUID();
-  await users.insert(env, {
-    id,
-    username: null,
-    name,
-    role: 'staff',
-    password_hash: null,
-    password_salt: null,
-  });
+/** Every new staff account starts with this password; the supervisor can change it per person. */
+export const DEFAULT_STAFF_PASSWORD = '123456';
+
+/**
+ * A staff member's sign-in: their first name at upi.edu (gilang@upi.edu), with a
+ * number after it when that name is already taken (muhammad2@upi.edu). Migration
+ * 0016 gave the existing staff theirs the same way.
+ */
+async function staffUsername(env: Env, name: string): Promise<string> {
+  const first = name.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'petugas';
+  const taken = await users.usernamesLike(env, first, '@upi.edu');
+  for (let n = 1; ; n++) {
+    const username = `${first}${n > 1 ? n : ''}@upi.edu`;
+    if (!taken.has(username)) return username;
+  }
+}
+
+/** A staff account: the username comes from the name, the password starts as the default. */
+export async function addStaff(
+  env: Env,
+  name: string,
+  supervisor: string,
+): Promise<Identity & { username: string }> {
+  // Two staff with the same first name added at the same moment can both be offered the
+  // same free username; the loser of that race (the UNIQUE index) simply takes the next one.
+  let attempt = 0;
+  let username: string;
+  let result: CreateResult;
+  for (;;) {
+    username = await staffUsername(env, name);
+    try {
+      result = await createAccount(env, { username, name, password: DEFAULT_STAFF_PASSWORD, role: 'staff' });
+    } catch (err) {
+      if (++attempt < 5 && String(err).includes('UNIQUE')) continue;
+      throw err;
+    }
+    if (result.kind === 'ok') break;
+    if (++attempt >= 5) throw new Error(`no free username for ${name}`);
+  }
   forgetStaff();
-  await log(env, { action: 'user_changed', actor: supervisor, summary: `Menambah petugas ${name}` });
-  return { id, name, role: 'staff' };
+  await log(env, { action: 'user_changed', actor: supervisor, summary: `Menambah petugas ${name} (${username})` });
+  return { ...result.identity, username };
 }
 
 /** Another supervisor, who signs in like the first. */
@@ -115,7 +139,7 @@ function forgetStaff() {
   forget('staff');
 }
 
-/** The staff dropdown, read on every staff page; dropped whenever an account changes. */
+/** The active staff list; dropped whenever an account changes. */
 export function activeStaff(env: Env) {
   return memo('staff', 60_000, () => users.activeStaff(env));
 }
@@ -128,7 +152,7 @@ export type UpdateResult =
   | { kind: 'ok' }
   | { kind: 'not-found' }
   | { kind: 'self-lockout' }
-  | { kind: 'staff-without-password' };
+  | { kind: 'password-too-short' };
 
 export async function updateAccount(
   env: Env,
@@ -141,8 +165,9 @@ export async function updateAccount(
 
   // Deactivating your own account would lock the supervisor out of their own system.
   if (changes.active === false && id === supervisor.id) return { kind: 'self-lockout' };
-  if (changes.password !== undefined && target.role === 'staff') {
-    return { kind: 'staff-without-password' };
+  // Staff may keep a short password like the default; supervisor accounts guard the whole dashboard.
+  if (changes.password !== undefined && target.role !== 'staff' && changes.password.length < 8) {
+    return { kind: 'password-too-short' };
   }
 
   const set: string[] = [];

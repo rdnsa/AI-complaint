@@ -1,7 +1,7 @@
 import type { Env } from '../env';
 import type { Role } from '../domain/types';
 
-/** Cleaning staff have no username or password: they never sign in. */
+/** Reporters, staff and supervisors all sign in; the columns stay nullable for old rows. */
 export interface UserRow {
   id: string;
   username: string | null;
@@ -47,6 +47,14 @@ export async function usernameTaken(env: Env, username: string): Promise<boolean
   return Boolean(row);
 }
 
+/** Usernames that start with `prefix` and end with `suffix`, for picking the next free staff sign-in. */
+export async function usernamesLike(env: Env, prefix: string, suffix: string): Promise<Set<string>> {
+  const rows = await env.DB.prepare(`SELECT username FROM users WHERE username LIKE ? ESCAPE '\\'`)
+    .bind(`${prefix.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%${suffix}`)
+    .all<{ username: string }>();
+  return new Set(rows.results.map((r) => r.username.toLowerCase()));
+}
+
 export async function findBrief(
   env: Env,
   id: string,
@@ -72,7 +80,7 @@ export async function listManaged(env: Env): Promise<ManagedAccount[]> {
   return rows.results;
 }
 
-/** The names on the staff dropdown. */
+/** The active staff, by name. */
 export async function activeStaff(env: Env): Promise<Array<{ id: string; name: string }>> {
   const rows = await env.DB.prepare(
     `SELECT id, name FROM users WHERE role = 'staff' AND active = 1 ORDER BY name`,

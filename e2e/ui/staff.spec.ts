@@ -1,34 +1,53 @@
-import type { Locator, Page } from '@playwright/test';
-import { expect, knownIssue, OFF_CAMPUS, ON_CAMPUS, pick, takePhoto, test, unique } from '../fixtures';
+import type { Page } from '@playwright/test';
+import { expect, knownIssue, OFF_CAMPUS, ON_CAMPUS, pick, signIn, STAFF_PASSWORD, takePhoto, test, unique } from '../fixtures';
 
 /** The card of one complaint on the staff page, found by its original text. */
 const cardOf = (page: Page, description: string) => page.locator('article').filter({ hasText: description });
 
-/** Answers "who is doing this?" inside a card. */
-async function answerWho(page: Page, card: Locator, name: string) {
-  await card.getByRole('combobox').click();
-  await page.getByRole('option', { name, exact: true }).click();
-}
+test.describe('Masuk', () => {
+  test('tanpa login halaman petugas meminta masuk, lalu kembali ke lokasi QR @mobile', async ({ newStaff, page }) => {
+    const staff = await newStaff();
+    await page.goto('/staff/C-2');
+    await expect(page).toHaveURL(`/login?next=${encodeURIComponent('/staff/C-2')}`);
+    await expect(page.getByText(/gilang@upi\.edu/)).toBeVisible();
+
+    await page.getByLabel('Username atau email petugas').fill(staff.username);
+    await page.getByLabel('Password', { exact: true }).fill(STAFF_PASSWORD);
+    await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+
+    await expect(page).toHaveURL('/staff/C-2');
+    await expect(page.getByText(staff.name)).toBeVisible();
+  });
+
+  test('keluar dari akun petugas kembali ke halaman masuk', async ({ newStaff, page }) => {
+    const staff = await newStaff();
+    await signIn(page, staff);
+    await page.goto('/staff');
+    await page.getByRole('button', { name: 'Keluar' }).click();
+    await expect(page).toHaveURL('/login?next=/staff');
+    await page.goto('/staff');
+    await expect(page).toHaveURL(/\/login\?next=/);
+  });
+});
 
 test.describe('Keluhan', () => {
   test('TC-KLH-008 klaim lalu TC-KLH-016 selesai dengan foto bukti @mobile', async ({ api, newStaff, page }) => {
     const report = await api.report();
     await api.settled(report.id);
     const staff = await newStaff();
+    await signIn(page, staff);
 
     await page.goto('/staff');
     const card = cardOf(page, report.description);
     await expect(card.getByText('Prioritas sedang')).toBeVisible();
     await expect(card.getByText('Rekomendasi tiruan dari LLM.')).toBeVisible();
 
+    // Signed in, so the claim is theirs at once: no name to pick.
     await card.getByRole('button', { name: 'Saya kerjakan sekarang' }).click();
-    await answerWho(page, card, staff.name);
-    await card.getByRole('button', { name: 'Ya, saya yang kerjakan' }).click();
     await expect(card.getByText('Kamu yang mengerjakan ini')).toBeVisible();
     expect((await api.getReport(report.id)).staff_name).toBe(staff.name);
 
     await card.getByRole('button', { name: /Sudah selesai/ }).click();
-    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
 
     // Nothing is closed until the photo is sent.
@@ -42,56 +61,46 @@ test.describe('Keluhan', () => {
     await expect(cardOf(page, report.description)).toHaveCount(0);
   });
 
-  test('setelah tombol selesai ditekan hanya ada nama, lanjut, dan batal @mobile', async ({ api, newStaff, page }) => {
+  test('klaim sendiri ditandai, tanpa tombol ambil alih @mobile', async ({ api, newStaff, page }) => {
     const report = await api.report();
     const staff = await newStaff('Pemegang');
     await api.claim(report.id, staff.id);
+    await signIn(page, staff);
     await page.goto('/staff');
     const card = cardOf(page, report.description);
 
-    await card.getByRole('button', { name: /Sudah selesai/ }).click();
-    await expect(card.getByRole('button', { name: 'Lanjut foto bukti' })).toBeVisible();
-    await expect(card.getByRole('button', { name: 'Batal' })).toBeVisible();
-    await expect(card.getByRole('combobox')).toHaveText(staff.name);
-    await expect(card.getByRole('button', { name: /Sudah selesai|Ambil alih|Saya kerjakan/ })).toHaveCount(0);
-    await expect(card.getByText(/Sedang dikerjakan|Kamu yang mengerjakan/)).toBeHidden();
-
-    await card.getByRole('button', { name: 'Batal' }).click();
+    await expect(card.getByText('Kamu yang mengerjakan ini')).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Ambil alih' })).toHaveCount(0);
     await expect(card.getByRole('button', { name: /Sudah selesai/ })).toBeVisible();
   });
 
-  test('TC-KLH-009 tanpa nama tombol lanjut nonaktif', async ({ api, page }) => {
+  test('TC-KLH-010 batal ambil alih tidak mengubah apa pun', async ({ api, newStaff, page }) => {
     const report = await api.report();
+    const [holder, next] = [await newStaff('Pemegang'), await newStaff('Pengganti')];
+    await api.claim(report.id, holder.id);
+    await signIn(page, next);
     await page.goto('/staff');
     const card = cardOf(page, report.description);
-    await card.getByRole('button', { name: 'Saya kerjakan sekarang' }).click();
-    await expect(card.getByRole('button', { name: 'Ya, saya yang kerjakan' })).toBeDisabled();
-  });
 
-  test('TC-KLH-010 batal klaim tidak mengubah apa pun', async ({ api, newStaff, page }) => {
-    const report = await api.report();
-    const staff = await newStaff();
-    await page.goto('/staff');
-    const card = cardOf(page, report.description);
-    await card.getByRole('button', { name: 'Saya kerjakan sekarang' }).click();
-    await answerWho(page, card, staff.name);
+    await card.getByRole('button', { name: 'Ambil alih' }).click();
+    await expect(card.getByRole('button', { name: /Sudah selesai|Saya kerjakan/ })).toHaveCount(0);
     await card.getByRole('button', { name: 'Batal' }).click();
 
-    await expect(card.getByRole('button', { name: 'Saya kerjakan sekarang' })).toBeVisible();
-    expect((await api.getReport(report.id)).status).toBe('new');
+    await expect(card.getByRole('button', { name: 'Ambil alih' })).toBeVisible();
+    expect((await api.getReport(report.id)).staff_name).toBe(holder.name);
   });
 
   test('TC-KLH-011 mengambil alih klaim petugas lain', async ({ api, newStaff, page }) => {
     const report = await api.report();
     const [holder, next] = [await newStaff('Pemegang'), await newStaff('Pengganti')];
     await api.claim(report.id, holder.id);
+    await signIn(page, next);
 
     await page.goto('/staff');
     const card = cardOf(page, report.description);
     await expect(card.getByText(`Sedang dikerjakan ${holder.name}`)).toBeVisible();
 
     await card.getByRole('button', { name: 'Ambil alih' }).click();
-    await answerWho(page, card, next.name);
     await card.getByRole('button', { name: 'Ya, saya ambil alih' }).click();
 
     await expect(card.getByText('Kamu yang mengerjakan ini')).toBeVisible();
@@ -100,14 +109,12 @@ test.describe('Keluhan', () => {
 
   test('TC-KLH-028 koneksi putus saat unggah: pesan tampil dan bisa diulang', async ({ api, newStaff, page }) => {
     const report = await api.report();
-    const staff = await newStaff();
+    await signIn(page, await newStaff());
     await page.goto('/staff');
     const card = cardOf(page, report.description);
     await page.route('**/api/uploads**', (route) => route.abort());
 
     await card.getByRole('button', { name: /Sudah selesai/ }).click();
-    await answerWho(page, card, staff.name);
-    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
 
     await expect(card.getByRole('alert')).toBeVisible();
@@ -122,12 +129,10 @@ test.describe('Keluhan', () => {
 
   test('foto ulang mengganti foto, dan deskripsinya ikut terbaru', async ({ api, newStaff, page }) => {
     const report = await api.report();
-    const staff = await newStaff();
+    await signIn(page, await newStaff());
     await page.goto('/staff');
     const card = cardOf(page, report.description);
     await card.getByRole('button', { name: /Sudah selesai/ }).click();
-    await answerWho(page, card, staff.name);
-    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
     await expect(card.getByText(/^Deskripsi AI:/)).toBeVisible();
     await expect(card.getByRole('button', { name: /Sudah selesai|Saya kerjakan/ })).toHaveCount(0);
@@ -148,12 +153,10 @@ test.describe('Keluhan', () => {
 
   test('AI gagal: pesan tampil dan foto tetap bisa dikirim', async ({ api, newStaff, page }) => {
     const report = await api.report({ description: unique('[vision:error] lantai kotor') });
-    const staff = await newStaff();
+    await signIn(page, await newStaff());
     await page.goto('/staff');
     const card = cardOf(page, report.description);
     await card.getByRole('button', { name: /Sudah selesai/ }).click();
-    await answerWho(page, card, staff.name);
-    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
 
     await expect(card.getByText('Deskripsi AI belum tersedia. Foto tetap bisa dikirim.')).toBeVisible();
@@ -163,12 +166,10 @@ test.describe('Keluhan', () => {
 
   test('AI lambat: foto bisa dikirim tanpa menunggu deskripsi', async ({ api, newStaff, page }) => {
     const report = await api.report({ description: unique('[vision:slow] lantai kotor') });
-    const staff = await newStaff();
+    await signIn(page, await newStaff());
     await page.goto('/staff');
     const card = cardOf(page, report.description);
     await card.getByRole('button', { name: /Sudah selesai/ }).click();
-    await answerWho(page, card, staff.name);
-    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(page);
 
     await expect(card.getByText('AI sedang membaca foto…')).toBeVisible();
@@ -179,6 +180,7 @@ test.describe('Keluhan', () => {
   test('TC-KLH-029 kartu basi yang sudah selesai dibalas 409 dan pesannya tampil', async ({ api, newStaff, page }) => {
     const report = await api.report();
     const [first, second] = [await newStaff('Pertama'), await newStaff('Kedua')];
+    await signIn(page, second);
     await page.goto('/staff');
     const card = cardOf(page, report.description);
     await expect(card).toBeVisible();
@@ -187,14 +189,13 @@ test.describe('Keluhan', () => {
     await api.resolve(report.id, first.id);
 
     await card.getByRole('button', { name: 'Saya kerjakan sekarang' }).click();
-    await answerWho(page, card, second.name);
-    await card.getByRole('button', { name: 'Ya, saya yang kerjakan' }).click();
     await expect(card.getByRole('alert')).toHaveText('Laporan ini sudah selesai.');
   });
 
-  test('TC-KLH-005 filter lokasi menyaring keluhan', async ({ api, page }) => {
+  test('TC-KLH-005 filter lokasi menyaring keluhan', async ({ api, newStaff, page }) => {
     const here = await api.report({ area: 'E-1' });
     const elsewhere = await api.report({ area: 'F-1' });
+    await signIn(page, await newStaff());
     await page.goto('/staff');
     await expect(cardOf(page, here.description)).toBeVisible();
     await expect(cardOf(page, elsewhere.description)).toBeVisible();
@@ -204,7 +205,8 @@ test.describe('Keluhan', () => {
     await expect(cardOf(page, elsewhere.description)).toHaveCount(0);
   });
 
-  test('TC-LOK-023 tab awal mengikuti keluhan di lokasi QR', async ({ api, page }) => {
+  test('TC-LOK-023 tab awal mengikuti keluhan di lokasi QR', async ({ api, newStaff, page }) => {
+    await signIn(page, await newStaff());
     // No other test files a complaint at this location.
     await page.goto('/staff/F-HALAMAN');
     await expect(page.getByRole('button', { name: 'Tugas harian' })).toHaveAttribute('aria-pressed', 'true');
@@ -214,8 +216,9 @@ test.describe('Keluhan', () => {
     await expect(page.getByRole('button', { name: /^Keluhan/ })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('TC-UIX-009 kata panjang tanpa spasi tidak melebarkan halaman @mobile', async ({ api, page }) => {
+  test('TC-UIX-009 kata panjang tanpa spasi tidak melebarkan halaman @mobile', async ({ api, newStaff, page }) => {
     const report = await api.report();
+    await signIn(page, await newStaff());
     // The API accepts 1,000 characters of any kind (TC-LAP-010). Only this page sees the long
     // word: a real one would widen the page for every parallel test on the staff page too.
     await page.route('**/api/reports/open**', async (route) => {
@@ -231,8 +234,9 @@ test.describe('Keluhan', () => {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 
-  test('TC-LOK-019 sakelar peran di halaman QR', async ({ page }) => {
-    await page.goto('/report/C-2');
+  test('TC-LOK-019 sakelar peran di halaman QR', async ({ newStaff, page }) => {
+    await signIn(page, await newStaff());
+    await page.goto('/report/C-2?as=student');
     await page.getByRole('link', { name: 'Saya petugas' }).click();
     await expect(page).toHaveURL('/staff/C-2');
     await page.getByRole('link', { name: 'Saya pelapor' }).click();
@@ -244,13 +248,9 @@ test.describe('Tugas harian', () => {
   test.use({ geolocation: ON_CAMPUS, permissions: ['geolocation'] });
 
   test('TC-THR-006 enam tugas, TC-THR-019 kirim dari kampus @mobile', async ({ newStaff, page }) => {
-    const staff = await newStaff();
+    await signIn(page, await newStaff());
     await page.goto('/clean/C-2');
     await expect(page).toHaveURL('/clean/C-2');
-
-    // Nothing to do until a name is picked.
-    await expect(page.getByRole('button', { name: 'Membuang sampah' })).toHaveCount(0);
-    await pick(page, 'staff-picker', staff.name);
 
     await expect(page.getByText('Kamu berada di area kampus')).toBeVisible();
     for (const task of ['Menyapu & mengepel', 'Mengelap kaca jendela', 'Membersihkan toilet', 'Membuang sampah', 'Mengisi ulang galon', 'Merapikan ruangan']) {
@@ -270,13 +270,14 @@ test.describe('Tugas harian', () => {
     await expect(task.getByText(/^Terkirim /)).toBeVisible();
   });
 
-  test('TC-THR-002 nama diingat, TC-LOK-021 QR membuka halaman petugas', async ({ newStaff, page }) => {
+  test('TC-THR-002 login diingat, TC-LOK-021 QR membuka halaman petugas', async ({ newStaff, page }) => {
     const staff = await newStaff();
+    await signIn(page, staff);
     await page.goto('/clean/C-2');
-    await pick(page, 'staff-picker', staff.name);
+    await expect(page.getByText(staff.name)).toBeVisible();
 
     await page.reload();
-    await expect(page.locator('#staff-picker')).toHaveText(staff.name);
+    await expect(page.getByText(staff.name)).toBeVisible();
 
     await page.goto('/report/C-2');
     await expect(page).toHaveURL('/staff/C-2');
@@ -287,10 +288,9 @@ test.describe('Tugas harian', () => {
   });
 
   test('TC-THR-005 lokasi belum dipilih', async ({ newStaff, page }) => {
-    const staff = await newStaff();
+    await signIn(page, await newStaff());
     await page.goto('/staff');
     await page.getByRole('button', { name: 'Tugas harian' }).click();
-    await pick(page, 'staff-picker', staff.name);
     await expect(page.getByText('Pilih lokasi dulu.')).toBeVisible();
   });
 
@@ -298,9 +298,8 @@ test.describe('Tugas harian', () => {
     test.use({ geolocation: OFF_CAMPUS, permissions: ['geolocation'] });
 
     test('TC-THR-009, TC-THR-025 dan TC-THR-026 peringatan, batal, lalu tetap kirim', async ({ newStaff, page }) => {
-      const staff = await newStaff();
+      await signIn(page, await newStaff());
       await page.goto('/clean/C-2');
-      await pick(page, 'staff-picker', staff.name);
       await expect(page.getByText(/dari kampus$/).first()).toBeVisible();
 
       await page.getByRole('button', { name: 'Merapikan ruangan' }).click();
@@ -331,9 +330,8 @@ test.describe('Tugas harian', () => {
         navigator.geolocation.getCurrentPosition = (_ok, fail) =>
           fail?.({ code: 1, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3, message: 'ditolak' } as GeolocationPositionError);
       });
-      const staff = await newStaff();
+      await signIn(page, await newStaff());
       await page.goto('/clean/C-2');
-      await pick(page, 'staff-picker', staff.name);
       await expect(page.getByText('Lokasi tidak terbaca')).toBeVisible();
 
       await page.getByRole('button', { name: 'Mengisi ulang galon' }).click();

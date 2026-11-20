@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { isValidDate } from '../adapters/clock';
-import { requireSupervisor } from '../adapters/session';
+import { requireStaff, requireSupervisor } from '../adapters/session';
 import { HTTP_CACHE } from '../adapters/memo';
 import { CLEANING_TASKS, type CleaningTask } from '../domain/types';
 import type { AppEnv } from '../env';
@@ -12,8 +12,8 @@ import * as accounts from '../services/user-service';
 /**
  * HTTP layer for cleaning reports per area.
  *
- * Staff do not sign in: they pick their name, and the id is
- * checked against the active staff. The proof is the photos and the position.
+ * Staff sign in with their own account; the session says who did the work,
+ * and the account must still be active. The proof is the photos and the position.
  */
 
 const app = new Hono<AppEnv>();
@@ -35,7 +35,6 @@ app.get('/areas/:id', async (c) => {
 });
 
 const SubmitSchema = z.object({
-  staff_id: z.string({ required_error: 'Pilih namamu dulu' }).min(1, 'Pilih namamu dulu').max(64),
   area_id: z.string().regex(AREA_ID),
   tasks: z
     .array(z.object({ task: z.enum(CLEANING_TASKS), photo_key: z.string().min(1).max(200) }))
@@ -65,16 +64,16 @@ const TASK_NAME: Record<CleaningTask, string> = {
   mop: 'Mengepel',
 };
 
-/** Public: a staff member files a cleaning report for an area. */
-app.post('/reports', async (c) => {
+/** A signed-in staff member files a cleaning report for an area. */
+app.post('/reports', requireStaff, async (c) => {
   const parsed = SubmitSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) {
     return c.json({ error: parsed.error.issues[0]?.message ?? 'Data tidak valid' }, 400);
   }
 
-  const { staff_id, note, position, ...data } = parsed.data;
-  const staff = await accounts.findActiveStaff(c.env, staff_id);
-  if (!staff) return c.json({ error: 'Nama petugas tidak dikenal. Pilih ulang namamu.' }, 400);
+  const { note, position, ...data } = parsed.data;
+  const staff = await accounts.findActiveStaff(c.env, c.get('session').id);
+  if (!staff) return c.json({ error: 'Akun petugas ini sudah tidak aktif.' }, 403);
 
   const result = await cleaning.submitReport(
     c.env,

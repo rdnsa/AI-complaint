@@ -63,9 +63,10 @@ function requireRole(...allowed: Role[]): MiddlewareHandler<AppEnv> {
   };
 }
 
-/**
- * Only the supervisor signs in to manage anything. Cleaning staff never hold a
- * session: they pick their name on the floor page instead (see `staff_id`
- * in the report and cleaning routes).
- */
+/** The supervisor manages everything on the dashboard. */
 export const requireSupervisor = requireRole('supervisor');
+/**
+ * Cleaning staff sign in with their own account (first name at upi.edu) to
+ * report their work: the session, not a name picked on a dropdown, says who did it.
+ */
+export const requireStaff = requireRole('staff');

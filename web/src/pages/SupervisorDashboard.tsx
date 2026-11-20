@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import Header from '../components/Header';
+import BottomNav from '../components/BottomNav';
 import { usePolling } from '../lib/polling';
 import { CategoryBadge, PriorityBadge, StatusBadge } from '../components/Badges';
 import { useNavigate } from 'react-router-dom';
@@ -168,40 +169,21 @@ function Board({ session }: { session: Session }) {
     </div>
   );
 
-  // On a phone the same sections sit in a tab bar along the bottom, in reach of the thumb.
+  // On a phone the same sections sit in a tab bar along the bottom, in reach of the thumb, the overview raised in the middle.
   const tabBar = (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-black/5 bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl backdrop-saturate-[1.8] dark:border-white/10 md:hidden print:hidden"
-      aria-label={t('dashboard.title')}
-    >
-      <div className="grid grid-cols-3" role="tablist">
-        {TABS.map((k) => {
-          const Icon = TAB_ICONS[k];
-          const on = tab === k;
-          return (
-            <button
-              key={k}
-              role="tab"
-              aria-selected={on}
-              onClick={() => pick(k)}
-              className={`flex flex-col items-center gap-1 pb-2 pt-2.5 text-[11px] font-semibold transition ${
-                on ? 'text-accent-600' : 'text-ink-600 active:text-ink-900'
-              }`}
-            >
-              <span className={`relative grid h-7 w-14 place-items-center rounded-full transition ${on ? 'bg-accent-500/15' : ''}`}>
-                <Icon className="h-5 w-5" />
-                {k === 'reports' && cleaningAlerts > 0 && (
-                  <span className="absolute -top-1 right-1.5 grid min-w-[18px] place-content-center rounded-full bg-red-600 px-1 py-0.5 text-[10px] leading-none text-white ring-2 ring-surface">
-                    {cleaningAlerts}
-                  </span>
-                )}
-              </span>
-              {t(`tab.${k}`)}
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+    <BottomNav
+      label={t('dashboard.title')}
+      items={(['reports', 'overview', 'manage'] as const).map((k) => ({
+        key: k,
+        label: t(`tab.${k}`),
+        icon: TAB_ICONS[k],
+        active: tab === k,
+        onSelect: () => pick(k),
+        // Off-campus cleaning reports today: the count rides on the tab that holds them.
+        badge: k === 'reports' ? cleaningAlerts : 0,
+        primary: k === 'overview',
+      }))}
+    />
   );
 
   return (

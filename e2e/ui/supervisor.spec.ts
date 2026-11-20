@@ -3,8 +3,21 @@ import { ADMIN, expect, test, unique } from '../fixtures';
 
 test.use({ storageState: 'e2e/.auth/supervisor.json' });
 
+/**
+ * One of the dashboard's three sections: a tab in the header on a wide screen, a
+ * button in the bottom bar on a phone. Only one of the two is visible at a time.
+ */
+const section = (page: Page, name: RegExp) =>
+  page.getByRole('tab', { name }).or(page.getByRole('button', { name })).first();
+
 /** The tab's name carries a red count once a cleaning report has been flagged today. */
-const reportsTab = (page: Page) => page.getByRole('button', { name: /^Laporan\s*\d*$/ });
+const reportsTab = (page: Page) => section(page, /^Laporan\s*\d*$/);
+
+/** Opens one of the pills under Pengelolaan: the activity log, the accounts, the QR sheets. */
+async function openManage(page: Page, pill: 'Log aktivitas' | 'Petugas & Supervisor' | 'QR lokasi') {
+  await section(page, /^Pengelolaan$/).click();
+  await page.getByRole('button', { name: pill, exact: true }).click();
+}
 
 async function openComplaints(page: Page) {
   await page.goto('/supervisor');
@@ -19,12 +32,19 @@ test.describe('Dashboard supervisor', () => {
 
     await page.goto('/supervisor');
     await expect(page.getByText(/Masuk sebagai .* Supervisor/)).toBeVisible();
-    for (const tab of ['Log aktivitas', 'Petugas & Supervisor', 'QR lokasi', 'Ringkasan']) {
-      await reportsTab(page).click();
-      await expect(reportsTab(page)).toHaveAttribute('aria-pressed', 'true');
-      const button = page.getByRole('button', { name: tab, exact: true });
-      await button.click();
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
+    // The three sections, then the pills inside Laporan and Pengelolaan.
+    for (const [top, pills] of [
+      [/^Dashboard$/, []],
+      [/^Laporan\s*\d*$/, ['Keluhan', /^Kebersihan/]],
+      [/^Pengelolaan$/, ['Log aktivitas', 'Petugas & Supervisor', 'QR lokasi']],
+    ] as const) {
+      await section(page, top).click();
+      await expect(section(page, top)).toHaveAttribute('aria-selected', 'true');
+      for (const pill of pills) {
+        const button = page.getByRole('button', { name: pill, exact: typeof pill === 'string' });
+        await button.click();
+        await expect(button).toHaveAttribute('aria-pressed', 'true');
+      }
     }
     expect(errors).toEqual([]);
   });
@@ -126,10 +146,15 @@ test.describe('Kelola akun', () => {
   test('TC-AKN-003 dan TC-AKN-021 tambah, nonaktifkan, aktifkan petugas', async ({ page }) => {
     const name = unique('Petugas Dashboard');
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'Petugas & Supervisor' }).click();
+    await openManage(page, 'Petugas & Supervisor');
 
     await page.getByPlaceholder('Nama').fill(name);
     await page.getByRole('button', { name: 'Tambah petugas' }).click();
+
+    // The sign-in to hand over: first name at upi.edu, starting password 123456.
+    await expect(page.getByRole('status').filter({ hasText: '@upi.edu' })).toContainText(
+      /petugas\d*@upi\.edu, password 123456/,
+    );
 
     const row = page.locator('li').filter({ hasText: name });
     await expect(row).toBeVisible();
@@ -145,7 +170,7 @@ test.describe('Kelola akun', () => {
     const staff = await newStaff();
     const renamed = unique('Nama Baru');
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'Petugas & Supervisor' }).click();
+    await openManage(page, 'Petugas & Supervisor');
 
     const row = page.locator('li').filter({ hasText: staff.name });
     await row.getByRole('button', { name: 'Ubah' }).click();
@@ -158,7 +183,7 @@ test.describe('Kelola akun', () => {
   test('TC-AKN-026 hapus petugas tanpa riwayat', async ({ newStaff, page, acceptDialogs }) => {
     const staff = await newStaff();
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'Petugas & Supervisor' }).click();
+    await openManage(page, 'Petugas & Supervisor');
 
     const row = page.locator('li').filter({ hasText: staff.name });
     await row.getByRole('button', { name: 'Hapus' }).click();
@@ -169,7 +194,7 @@ test.describe('Kelola akun', () => {
     const staff = await newStaff();
     await api.cleaning(staff.id);
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'Petugas & Supervisor' }).click();
+    await openManage(page, 'Petugas & Supervisor');
 
     const row = page.locator('li').filter({ hasText: staff.name });
     await row.getByRole('button', { name: 'Hapus' }).click();
@@ -179,7 +204,7 @@ test.describe('Kelola akun', () => {
 
   test('TC-AKN-002 akun sendiri tanpa tombol nonaktifkan dan hapus', async ({ page }) => {
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'Petugas & Supervisor' }).click();
+    await openManage(page, 'Petugas & Supervisor');
     const row = page.locator('li').filter({ has: page.locator('code', { hasText: /^admin$/ }) });
     await expect(row.getByRole('button', { name: 'Ubah' })).toBeVisible();
     await expect(row.getByRole('button', { name: 'Nonaktifkan' })).toHaveCount(0);
@@ -191,7 +216,7 @@ test.describe('Log, rekap, ringkasan, QR', () => {
   test('TC-LOG-001 aktivitas baru tampil di log', async ({ api, page }) => {
     await api.report({ area: 'H-2' });
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'Log aktivitas' }).click();
+    await openManage(page, 'Log aktivitas');
     await expect(page.getByText('Laporan baru di Gedung Mohamad Yamin - Lantai 2').first()).toBeVisible();
   });
 
@@ -219,7 +244,7 @@ test.describe('Log, rekap, ringkasan, QR', () => {
 
   test('TC-QRS-001 dan TC-QRS-002 stiker per lokasi mengarah ke halaman lapor', async ({ page, baseURL }) => {
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'QR lokasi' }).click();
+    await openManage(page, 'QR lokasi');
 
     await expect(page.getByText(/^\d+ kode QR$/)).toBeVisible();
     const count = Number((await page.getByText(/^\d+ kode QR$/).innerText()).split(' ')[0]);
@@ -231,7 +256,7 @@ test.describe('Log, rekap, ringkasan, QR', () => {
 
   test('TC-QRS-003 filter lokasi mengurangi stiker', async ({ page }) => {
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'QR lokasi' }).click();
+    await openManage(page, 'QR lokasi');
     await expect(page.locator('.print-sheet article').first()).toBeVisible();
 
     await page.getByRole('combobox').filter({ hasText: 'Semua' }).first().click();
@@ -242,7 +267,7 @@ test.describe('Log, rekap, ringkasan, QR', () => {
 
   test('TC-QRS-006 unduh PNG', async ({ page }) => {
     await page.goto('/supervisor');
-    await page.getByRole('button', { name: 'QR lokasi' }).click();
+    await openManage(page, 'QR lokasi');
     const sticker = page.locator('.print-sheet article').filter({ hasText: '/report/C-2' });
 
     const download = page.waitForEvent('download');

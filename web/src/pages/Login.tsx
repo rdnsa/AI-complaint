@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import PasswordInput from '../components/PasswordInput';
 import Header from '../components/Header';
 import { api } from '../lib/api';
@@ -10,6 +10,11 @@ export default function Login() {
   const { t } = useLanguage();
   const { setSession } = useSession();
   const navigate = useNavigate();
+  const [search] = useSearchParams();
+  // Where a page that needs a sign-in sent the visitor from (a staff QR, say). Same-site paths only.
+  const raw = search.get('next') ?? '';
+  const next = raw.startsWith('/') && !raw.startsWith('//') ? raw : '';
+  const forStaff = /^\/(staff|clean)(\/|$)/.test(next);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,8 +28,11 @@ export default function Login() {
     try {
       const session = await api.login(username, password);
       setSession(session);
-      // The supervisor goes straight to the dashboard; reporters return to the landing page.
-      navigate(session.role === 'supervisor' ? '/supervisor' : '/', { replace: true });
+      // Each role has its own home: the dashboard, the staff page, the landing page. A page
+      // that sent the visitor here gets them back, as long as it is one their role can open.
+      const home = session.role === 'supervisor' ? '/supervisor' : session.role === 'staff' ? '/staff' : '/';
+      const nextFits = session.role === 'staff' ? forStaff : next && !forStaff;
+      navigate(nextFits ? next : home, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.error'));
       setBusy(false);
@@ -35,10 +43,17 @@ export default function Login() {
     <div className="min-h-screen">
       <Header title={t('login.title')} description={t('login.description')} compact />
       <main className="mx-auto max-w-sm px-4">
-        <form onSubmit={submit} className="card mt-8 space-y-4 p-5">
+        <p
+          className={`mt-8 rounded-nav px-4 py-3 text-body-sm ${
+            forStaff ? 'bg-accent-500/10 font-semibold text-ink-900' : 'bg-mist-100 text-ink-700'
+          }`}
+        >
+          {t('login.staff_hint')}
+        </p>
+        <form onSubmit={submit} className="card mt-4 space-y-4 p-5">
           <div>
             <label htmlFor="u" className="label">
-              {t('login.username')}
+              {t('login.username_or_email')}
             </label>
             <input
               id="u"

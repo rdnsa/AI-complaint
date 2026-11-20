@@ -108,3 +108,26 @@ SELECT lower(hex(randomblob(16))), n.name, 'staff'
  WHERE NOT EXISTS (
    SELECT 1 FROM users u WHERE u.role = 'staff' AND u.active = 1 AND lower(u.name) = lower(n.name)
  );
+
+-- Every staff member signs in (migration 0016): first name at upi.edu, starting password 123456.
+WITH base AS (
+  SELECT id,
+         lower(replace(replace(replace(
+           CASE WHEN instr(trim(name), ' ') > 0
+                THEN substr(trim(name), 1, instr(trim(name), ' ') - 1)
+                ELSE trim(name) END,
+           '.', ''), ',', ''), '''', '')) AS first
+    FROM users
+   WHERE role = 'staff' AND username IS NULL
+),
+ranked AS (
+  SELECT id, first, ROW_NUMBER() OVER (PARTITION BY first ORDER BY id) AS n FROM base
+)
+UPDATE users
+   SET username = (
+         SELECT first || CASE WHEN n > 1 THEN n ELSE '' END || '@upi.edu'
+           FROM ranked WHERE ranked.id = users.id
+       ),
+       password_salt = '73757171d0329380533ea06ec94a23b6',
+       password_hash = 'aad8c05927e15908569b26ca5456dae06b230bdf1c67b0593fc5c583d0eb2c3e'
+ WHERE role = 'staff' AND username IS NULL;

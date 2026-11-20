@@ -8,7 +8,6 @@ import RoleSwitch from '../components/RoleSwitch';
 import { api, type CleaningArea } from '../lib/api';
 import { useLanguage } from '../lib/i18n';
 import { areaAt, buildPlaces, locate } from '../lib/places';
-import { readStoredStaff } from '../lib/staff';
 import { useSession } from '../lib/session';
 import { CameraGlyph, StudentMark } from '../components/Marks';
 
@@ -20,9 +19,10 @@ import { CameraGlyph, StudentMark } from '../components/Marks';
 export default function ReportForm() {
   const { locationId = '' } = useParams();
   const [search] = useSearchParams();
-  // A phone that has picked a staff name belongs to a cleaner: the location
+  const { session } = useSession();
+  // A phone signed in to a staff account belongs to a cleaner: the location
   // QR opens their page directly. `?as=student` (the switch) opts out.
-  if (locationId && search.get('as') !== 'student' && readStoredStaff()) {
+  if (locationId && search.get('as') !== 'student' && session?.role === 'staff') {
     return <Navigate to={`/staff/${locationId}`} replace />;
   }
   return <ReporterForm locationId={locationId} />;

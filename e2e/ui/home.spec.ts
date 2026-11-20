@@ -12,7 +12,8 @@ test.describe('Beranda dan navigasi', () => {
 
   for (const [name, path, heading] of [
     [/Saya pelapor/, '/student', 'Saya pelapor'],
-    [/Saya petugas/, '/staff', 'Halaman Petugas'],
+    // The staff page asks for a staff sign-in first.
+    [/Saya petugas/, '/login?next=%2Fstaff', 'Masuk'],
     [/Lihat semua laporan/, '/reports', 'Laporan Masuk'],
     [/peringkat/i, '/leaderboard', 'Papan Peringkat Pelapor'],
   ] as const) {

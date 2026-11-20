@@ -191,7 +191,6 @@ function TaskItem({
     try {
       const position = current.state === 'ok' || current.state === 'far' ? current.position : null;
       const result = await api.submitCleaning({
-        staff_id: staff.id,
         area_id: area.id,
         tasks: [{ task, photo_key: shot.key }],
         note: note.trim() || null,

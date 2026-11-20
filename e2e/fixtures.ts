@@ -3,6 +3,21 @@ import { test as base, expect, type APIRequestContext, type Page } from '@playwr
 /** The default supervisor from migrations/0004_pengguna.sql (finding T-04). Local databases only. */
 export const ADMIN = { username: 'admin', password: 'Admin123!' };
 
+/** Every new staff account starts with this password (migration 0016, user-service.ts). */
+export const STAFF_PASSWORD = '123456';
+
+/**
+ * The signed-in session of each staff member a test created, by id. Staff act
+ * through their own session, so the helpers below look it up from the id; an id
+ * with no session (a made-up one) falls back to an anonymous client.
+ */
+const staffSessions = new Map<string, APIRequestContext>();
+
+/** The client a staff member acts through: their own session, or anonymous for an unknown id. */
+export function asStaff(staffId: string, fallback: APIRequestContext): APIRequestContext {
+  return staffSessions.get(staffId) ?? fallback;
+}
+
 /** The campus centre in wrangler.jsonc, and a place far outside its 500 m radius. */
 export const ON_CAMPUS = { latitude: -7.3351, longitude: 108.2217, accuracy: 10 };
 export const OFF_CAMPUS = { latitude: -6.2, longitude: 106.8, accuracy: 10 };
@@ -85,22 +100,22 @@ export class Api {
     return this.getReport(id);
   }
 
+  /** As the staff member with this id, through their own session. */
   claim(id: string, staffId: string) {
-    return this.request.patch(`/api/reports/${id}`, { data: { status: 'in_progress', staff_id: staffId } });
+    return asStaff(staffId, this.request).patch(`/api/reports/${id}`, { data: { status: 'in_progress' } });
   }
 
   async resolve(id: string, staffId: string) {
     const proof = await this.upload('proof');
-    return this.request.patch(`/api/reports/${id}`, {
-      data: { status: 'resolved', staff_id: staffId, proof_photo_key: proof },
+    return asStaff(staffId, this.request).patch(`/api/reports/${id}`, {
+      data: { status: 'resolved', proof_photo_key: proof },
     });
   }
 
   async cleaning(staffId: string, options: { area?: string; task?: string; position?: unknown; note?: string } = {}) {
     const photo = await this.upload('cleaning');
-    return this.request.post('/api/cleaning/reports', {
+    return asStaff(staffId, this.request).post('/api/cleaning/reports', {
       data: {
-        staff_id: staffId,
         area_id: options.area ?? 'C-2',
         tasks: [{ task: options.task ?? 'trash', photo_key: photo }],
         note: options.note ?? null,
@@ -110,10 +125,14 @@ export class Api {
   }
 }
 
-/** Cleaning staff created for one test, so no test sees another's claims or name. */
+/** Cleaning staff created for one test, so no test sees another's claims or name. Already signed in. */
 export interface Staff {
   id: string;
   name: string;
+  /** Their sign-in: first name at upi.edu; the password is STAFF_PASSWORD. */
+  username: string;
+  /** Their own signed-in session, as an API client. */
+  request: APIRequestContext;
 }
 
 interface Fixtures {
@@ -150,13 +169,25 @@ export const test = base.extend<Fixtures>({
     await context.dispose();
   },
 
-  newStaff: async ({ admin }, use) => {
+  newStaff: async ({ admin, playwright, baseURL }, use) => {
+    const made: Staff[] = [];
     await use(async (prefix = 'Petugas') => {
       const name = unique(prefix);
       const res = await admin.post('/api/users', { data: { role: 'staff', name } });
       expect(res.status(), 'buat petugas').toBe(201);
-      return { id: (await res.json()).id, name };
+      const { id, username } = await res.json();
+      const request = await playwright.request.newContext({ baseURL });
+      const login = await request.post('/api/auth/login', { data: { username, password: STAFF_PASSWORD } });
+      expect(login.ok(), 'login petugas').toBe(true);
+      staffSessions.set(id, request);
+      const staff = { id, name, username, request };
+      made.push(staff);
+      return staff;
     });
+    for (const staff of made) {
+      staffSessions.delete(staff.id);
+      await staff.request.dispose();
+    }
   },
 
   reporter: async ({ playwright, baseURL, admin }, use) => {
@@ -179,6 +210,12 @@ export const test = base.extend<Fixtures>({
 });
 
 export { expect };
+
+/** Signs a browser page in as this staff member; the cookie stays, as after the sign-in form. */
+export async function signIn(page: Page, staff: Staff) {
+  const res = await page.request.post('/api/auth/login', { data: { username: staff.username, password: STAFF_PASSWORD } });
+  expect(res.ok(), 'login petugas di peramban').toBe(true);
+}
 
 /** Chooses in the app's own dropdown (Select.tsx), which is a button and a list on <body>. */
 export async function pick(page: Page, field: string, option: string) {

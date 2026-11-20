@@ -131,13 +131,15 @@ Three parties, and only the supervisor ever signs in.
 | Role | How it is created | Signs in? | Can do |
 |---|---|---|---|
 | **Reporter** | nobody — or self-registers at `/register` to appear on the leaderboard | no (optional) | report a dirty spot or broken facility at any location, with a live-camera photo |
-| **Cleaning staff** | the supervisor adds a **name** in the dashboard | **no** — picks their name from a dropdown at the moment they act | claim and resolve complaints with a proof photo, take over a colleague's claim, and send the daily tasks |
-| **Supervisor** (SPV) | ships with the database (`admin` / `Admin123!`); can add more | yes | monitor reports, cleaning recap, charts and the activity log; manage staff names and supervisor accounts (add, rename, change password, deactivate, delete) |
+| **Cleaning staff** | the supervisor adds a **name** in the dashboard; the account follows from it: first name at upi.edu (`gilang@upi.edu`, a second one `muhammad2@upi.edu`), starting password `123456` | **yes** — `/staff` sends them to sign in first | claim and resolve complaints with a proof photo, take over a colleague's claim, and send the daily tasks |
+| **Supervisor** (SPV) | ships with the database (`admin` / `Admin123!`); can add more | yes | monitor reports, cleaning recap, charts and the activity log; manage staff and supervisor accounts (add, rename, change password, deactivate, delete) |
 
 Kato Bot is open to everyone; QR stickers are made in the supervisor dashboard.
 
 > **Change the default supervisor password after the first sign-in.** It is
 > committed in `migrations/0004_pengguna.sql` and therefore public.
+> The staff starting password `123456` is public the same way (migration
+> `0016_staff_accounts.sql`); the supervisor can give each staff member their own under **Ubah**.
 
 Staff have no password on purpose: many of them are not comfortable with
 sign-ins. The phone remembers the last chosen name as the default in the "who
@@ -311,7 +313,7 @@ Reports filed before migration 0011 point at a legacy toilet
 
 ## API surface
 
-**Public** (reporters and staff use these without signing in)
+**Public** (reporters use these without signing in; staff actions need a staff sign-in)
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -319,15 +321,16 @@ Reports filed before migration 0011 point at a legacy toilet
 | `GET` | `/api/auth/me` | current session |
 | `GET` | `/api/cleaning/areas` | every location, and the campus boundary |
 | `GET` | `/api/cleaning/areas/:id` | one location (what a QR points at) plus the campus boundary |
-| `POST` | `/api/cleaning/reports` | staff: daily-task report `{staff_id, area_id, tasks[{task, photo_key}], note?, position?}`; `422` for a photo that is too old or reused |
+| `POST` | `/api/cleaning/reports` | signed-in staff: daily-task report `{area_id, tasks[{task, photo_key}], note?, position?}`; `401` without a staff session; `422` for a photo that is too old or reused |
 | `GET` | `/api/cleaning/reports/public` | latest daily-task reports for the public board |
 | `POST` | `/api/reports` | file a report `{area_id, description, photo_key}` |
 | `GET` | `/api/reports/public` | public report board |
 | `GET` | `/api/reports/mine` | the signed-in reporter's own reports |
 | `GET` | `/api/reports/open?building=&floor=` | reports still waiting for staff (filters optional) |
 | `GET` | `/api/reports/:id` | one report |
-| `PATCH` | `/api/reports/:id` | staff: `{status, staff_id, proof_photo_key?}`; claiming (`in_progress`) is not a lock and may be taken over; closing needs a proof photo (`400` when it is missing or not an uploaded proof photo), and a resolved report answers `409`; a vision model describes the photo afterwards, without any say over the close |
-| `GET` | `/api/staff` | the names on the staff dropdown |
+| `PATCH` | `/api/reports/:id` | signed-in staff (or a supervisor): `{status, proof_photo_key?}`, acting as the session's account (`401` without one); claiming (`in_progress`) is not a lock and may be taken over; closing needs a proof photo (`400` when it is missing or not an uploaded proof photo), and a resolved report answers `409`; a vision model describes the photo afterwards, without any say over the close |
+| `GET` | `/api/staff` | the active staff names |
+| `GET` | `/api/staff/me/duties` | signed-in staff: their own placement letter (title, areas, duties) |
 | `POST` | `/api/uploads?kind=report\|proof\|cleaning` | upload a photo |
 | `GET` | `/api/uploads/:key` | serve a photo from R2 |
 | `GET` | `/api/leaderboard` | leaderboard |

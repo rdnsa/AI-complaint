@@ -283,6 +283,16 @@ export function InboxGlyph({ className = 'h-4 w-4' }: GlyphProps) {
   );
 }
 
+/** Home: a house with a door. */
+export function HomeGlyph({ className = 'h-4 w-4' }: GlyphProps) {
+  return (
+    <Glyph className={className}>
+      <path d="M3.5 9 10 3.5 16.5 9" />
+      <path d="M5 8v7.5a1 1 0 0 0 1 1h2.5v-4.5h3v4.5H14a1 1 0 0 0 1-1V8" />
+    </Glyph>
+  );
+}
+
 /** The dashboard: four tiles. */
 export function GridGlyph({ className = 'h-4 w-4' }: GlyphProps) {
   return (

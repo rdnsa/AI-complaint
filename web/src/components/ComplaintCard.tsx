@@ -5,9 +5,6 @@ import { api, type Report, type StaffOption } from '../lib/api';
 import { useLanguage, useRelativeTime } from '../lib/i18n';
 import { CameraGlyph, CheckGlyph } from './Marks';
 import ZoomableImage from './ZoomableImage';
-import Select from './Select';
-
-type Step = 'claim' | 'resolve';
 
 /** Long enough for a normal answer; after this staff just see that there is none yet. */
 const DESCRIPTION_WAIT_MS = 15_000;
@@ -23,24 +20,19 @@ interface Shot {
 /**
  * One complaint the staff member can take on and close with a proof photo.
  *
- * There is no name to pick on the page: every action (claiming, taking over,
- * closing) asks who is doing it, with the phone's last name pre-filled, because
- * a phone is shared. And a claim is not a lock. Until a proof photo closes the
- * report, another staff member can take it over, so a complaint nobody finished
- * does not sit claimed forever.
+ * Every action (claiming, taking over, closing) is done as the signed-in staff
+ * member. A claim is not a lock: until a proof photo closes the report, another
+ * staff member can take it over, so a complaint nobody finished does not sit
+ * claimed forever. Taking over asks once more, so nobody does it by accident.
  */
 export default function ComplaintCard({
   report: r,
   staff,
-  staffList,
-  onSelectStaff,
   onChanged,
 }: {
   report: Report;
-  /** The name remembered on this phone, offered as the default answer. */
-  staff: StaffOption | null;
-  staffList: StaffOption[];
-  onSelectStaff: (id: string) => void;
+  /** The signed-in staff member, who every action here is done as. */
+  staff: StaffOption;
   onChanged: () => void;
 }) {
   const { t } = useLanguage();
@@ -49,9 +41,8 @@ export default function ComplaintCard({
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  // The "who is doing this?" step in front of an action.
-  const [step, setStep] = useState<Step | null>(null);
-  const [who, setWho] = useState('');
+  // The "take it over?" question in front of claiming someone else's report.
+  const [confirming, setConfirming] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [shot, setShot] = useState<Shot | null>(null);
@@ -59,37 +50,21 @@ export default function ComplaintCard({
   // The preview's object URL is released when it is replaced or the card goes away.
   useEffect(() => (shot ? () => URL.revokeObjectURL(shot.preview) : undefined), [shot?.preview]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const mine = r.status === 'in_progress' && !!staff && r.staff_name === staff.name;
+  const mine = r.status === 'in_progress' && r.staff_name === staff.name;
   const heldByOther = r.status === 'in_progress' && !!r.staff_name && !mine;
-
-  function openChooser(next: Step) {
-    // Closing a claimed report is most often done by whoever claimed it.
-    const holder = staffList.find((p) => p.name === r.staff_name)?.id;
-    setWho((next === 'resolve' ? holder : undefined) ?? staff?.id ?? '');
-    setClaimError(null);
-    setStep(next);
-  }
 
   async function claim() {
     setClaiming(true);
     setClaimError(null);
     try {
-      await api.updateStatus(r.id, 'in_progress', { staff_id: who });
-      // The name picked here is who is using this phone now.
-      onSelectStaff(who);
-      setStep(null);
+      await api.updateStatus(r.id, 'in_progress');
+      setConfirming(false);
       onChanged();
     } catch (err) {
-      setClaimError(err instanceof Error ? err.message : null);
+      setClaimError(err instanceof Error ? err.message : t('staff.resolve_failed'));
     } finally {
       setClaiming(false);
     }
-  }
-
-  function continueToPhoto() {
-    onSelectStaff(who);
-    setStep(null);
-    setCamera(true);
   }
 
   async function capture(photo: File) {
@@ -117,7 +92,7 @@ export default function ComplaintCard({
     setFailure(null);
     setBusy(true);
     try {
-      await api.updateStatus(r.id, 'resolved', { staff_id: who, proof_photo_key: shot.key });
+      await api.updateStatus(r.id, 'resolved', { proof_photo_key: shot.key });
       setDone(true);
       // Leave the success visible for a moment before the card drops off the list.
       setTimeout(onChanged, 2500);
@@ -179,43 +154,30 @@ export default function ComplaintCard({
         </p>
       )}
 
-      {step && (
+      {claimError && !confirming && (
+        <p role="alert" className="mt-3 rounded-nav bg-red-50 px-4 py-3 text-body-sm font-medium text-red-800">
+          {claimError}
+        </p>
+      )}
+
+      {confirming && (
         <div className="mt-3 rounded-nav bg-mist-100 p-4">
-          <label htmlFor={`who-${r.id}`} className="sr-only">
-            {step === 'resolve' ? t('staff.resolve_who') : t('staff.claim_who')}
-          </label>
-          <Select
-            id={`who-${r.id}`}
-            className="input !py-2.5 font-semibold"
-            value={who}
-            onChange={setWho}
-          >
-            <option value="">{t('staff.pick_name')}</option>
-            {staffList.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
+          <p className="text-body-sm text-ink-800">{t('staff.held_by', { name: r.staff_name ?? '' })}</p>
           {claimError && (
             <p role="alert" className="mt-2 text-xs font-medium text-red-800">
               {claimError}
             </p>
           )}
           <div className="mt-3 grid grid-cols-2 gap-2">
+            <button type="button" onClick={claim} disabled={claiming} className="btn-primary !px-3 py-2.5">
+              {t('staff.confirm_take_over')}
+            </button>
             <button
               type="button"
-              onClick={step === 'resolve' ? continueToPhoto : claim}
-              disabled={claiming || !who}
-              className="btn-primary !px-3 py-2.5"
+              onClick={() => setConfirming(false)}
+              disabled={claiming}
+              className="btn-neutral !px-3 py-2.5"
             >
-              {step === 'resolve'
-                ? t('staff.confirm_resolve')
-                : heldByOther
-                  ? t('staff.confirm_take_over')
-                  : t('staff.confirm_claim')}
-            </button>
-            <button type="button" onClick={() => setStep(null)} disabled={claiming} className="btn-neutral !px-3 py-2.5">
               {t('account.cancel')}
             </button>
           </div>
@@ -249,44 +211,51 @@ export default function ComplaintCard({
       )}
 
       <Camera open={camera} onClose={() => setCamera(false)} onCapture={capture} />
-      {/* While asking who, or showing the photo just taken, the card offers only those choices. */}
-      {!step && !shot && (
-      <div className="mt-3 flex flex-col gap-2">
-        <button
-          type="button"
-          onClick={() => openChooser('resolve')}
-          disabled={busy}
-          className="btn-primary w-full py-3 text-base"
-        >
-          {busy ? (
-            t('dashboard.uploading')
-          ) : (
-            <>
-              <CameraGlyph className="h-5 w-5" />
-              {t('staff.resolve')}
-            </>
-          )}
-        </button>
-        {r.status === 'new' && (
-          <button type="button" onClick={() => openChooser('claim')} disabled={busy} className="btn-neutral w-full py-2.5">
-            {t('staff.start_work')}
+      {/* While asking to take over, or showing the photo just taken, the card offers only those choices. */}
+      {!confirming && !shot && (
+        <div className="mt-3 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => setCamera(true)}
+            disabled={busy || claiming}
+            className="btn-primary w-full py-3 text-base"
+          >
+            {busy ? (
+              t('dashboard.uploading')
+            ) : (
+              <>
+                <CameraGlyph className="h-5 w-5" />
+                {t('staff.resolve')}
+              </>
+            )}
           </button>
-        )}
-        {mine && <p className="text-center text-xs font-semibold text-ink-700">{t('staff.working_on_it')}</p>}
-        {heldByOther && (
-          <>
-            <p className="text-center text-xs text-ink-600">
-              <span className="font-semibold text-ink-800">{t('staff.held_by', { name: r.staff_name ?? '' })}</span>
-              <br />
-              {t('staff.held_hint')}
-            </p>
-                          <button type="button" onClick={() => openChooser('claim')} disabled={busy} className="btn-neutral w-full py-2.5">
+          {r.status === 'new' && (
+            <button type="button" onClick={claim} disabled={busy || claiming} className="btn-neutral w-full py-2.5">
+              {t('staff.start_work')}
+            </button>
+          )}
+          {mine && <p className="text-center text-xs font-semibold text-ink-700">{t('staff.working_on_it')}</p>}
+          {heldByOther && (
+            <>
+              <p className="text-center text-xs text-ink-600">
+                <span className="font-semibold text-ink-800">{t('staff.held_by', { name: r.staff_name ?? '' })}</span>
+                <br />
+                {t('staff.held_hint')}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setClaimError(null);
+                  setConfirming(true);
+                }}
+                disabled={busy || claiming}
+                className="btn-neutral w-full py-2.5"
+              >
                 {t('staff.take_over')}
               </button>
-          </>
-        )}
-
-      </div>
+            </>
+          )}
+        </div>
       )}
     </article>
   );

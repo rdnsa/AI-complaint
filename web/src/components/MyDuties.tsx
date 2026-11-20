@@ -3,7 +3,7 @@ import { api, CLEANING_TASKS, type CleaningArea, type StaffDuties, type StaffOpt
 import { useLanguage } from '../lib/i18n';
 
 /**
- * Once a staff member has said who they are: the areas that are theirs, as
+ * For the signed-in staff member: the areas that are theirs, as
  * buttons that open that area's round, and the tasks those areas take: the same
  * tasks the round below reports and the dashboard counts, so what they read here
  * is what they are measured on. A hint, never a gate: the location picker below
@@ -28,7 +28,7 @@ export default function MyDuties({
   useEffect(() => {
     setLetter(null);
     api
-      .myDuties(staff.id)
+      .myDuties()
       .then(setLetter)
       .catch(() => setLetter(null));
   }, [staff.id]);

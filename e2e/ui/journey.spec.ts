@@ -1,4 +1,4 @@
-import { ADMIN, expect, ON_CAMPUS, takePhoto, test, unique } from '../fixtures';
+import { ADMIN, expect, ON_CAMPUS, signIn, takePhoto, test, unique } from '../fixtures';
 
 /**
  * The whole product in one story: a complaint from a phone, closed with a proof
@@ -24,19 +24,16 @@ test.describe('Perjalanan penuh @smoke', () => {
     await expect(reporter.getByText('Ringkasan tiruan dari LLM.')).toBeVisible();
     await expect(reporter.getByText('Prioritas tinggi')).toBeVisible();
 
-    // 2. A cleaner claims it and closes it with a proof photo.
+    // 2. A cleaner, signed in to their own account, claims it and closes it with a proof photo.
     const staffContext = await browser.newContext(phone);
     const cleaner = await staffContext.newPage();
+    await signIn(cleaner, staff);
     await cleaner.goto('/staff/C-2');
     const card = cleaner.locator('article').filter({ hasText: description });
     await card.getByRole('button', { name: 'Saya kerjakan sekarang' }).click();
-    await card.getByRole('combobox').click();
-    await cleaner.getByRole('option', { name: staff.name, exact: true }).click();
-    await card.getByRole('button', { name: 'Ya, saya yang kerjakan' }).click();
     await expect(card.getByText('Kamu yang mengerjakan ini')).toBeVisible();
 
     await card.getByRole('button', { name: /Sudah selesai/ }).click();
-    await card.getByRole('button', { name: 'Lanjut foto bukti' }).click();
     await takePhoto(cleaner);
     await card.getByRole('button', { name: 'Kirim', exact: true }).click();
     await expect(cleaner.getByText('Laporan selesai. Terima kasih!')).toBeVisible();
@@ -51,13 +48,17 @@ test.describe('Perjalanan penuh @smoke', () => {
     expect(login.ok()).toBe(true);
     const supervisor = await supervisorContext.newPage();
     await supervisor.goto('/supervisor');
-    await supervisor.getByRole('button', { name: /^Laporan\s*\d*$/ }).click();
+    // A tab in the header pill on a wide screen, a button in the bottom bar on a phone; only one is visible.
+    const section = (name: string | RegExp) =>
+      supervisor.getByRole('tab', { name }).or(supervisor.getByRole('button', { name })).first();
+    await section(/^Laporan\s*\d*$/).click();
     await supervisor.getByRole('button', { name: 'Keluhan', exact: true }).click();
     const row = supervisor.locator('article').filter({ hasText: description });
     await expect(row.getByText(`Ditangani: ${staff.name}`)).toBeVisible();
     await expect(row.getByText('Bukti penyelesaian')).toBeVisible();
     await expect(row.getByText(/Diverifikasi AI/)).toHaveCount(0);
 
+    await section(/^Pengelolaan$/).click();
     await supervisor.getByRole('button', { name: 'Log aktivitas' }).click();
     await expect(supervisor.getByText(/Status in_progress → resolved/).first()).toBeVisible();
 

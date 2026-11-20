@@ -6,7 +6,7 @@ import { StaffMark, StudentMark } from './Marks';
  * The first choice on a location page: reporter or cleaning staff.
  *
  * Both open from the same QR code on the door, so the switch sits at the very
- * top, in large type, and never needs a sign-in.
+ * top, in large type. The staff side asks for a staff sign-in first, then comes back here.
  */
 export default function RoleSwitch({
   locationId,

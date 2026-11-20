@@ -6,9 +6,9 @@ import { useSession } from '../lib/session';
 import Select from './Select';
 
 /**
- * The supervisor maintains two lists here: the staff names that appear on the
- * floor-page dropdown (a name is all a cleaner needs), and the supervisor
- * accounts that sign in to this dashboard.
+ * The supervisor maintains two kinds of account here: cleaning staff, who sign
+ * in on the staff page with their first name at upi.edu (starting password
+ * 123456, changeable here), and the supervisor accounts that sign in to this dashboard.
  */
 export default function AccountsPanel() {
   const { t } = useLanguage();
@@ -306,15 +306,21 @@ function AddForm({
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  // The sign-in a new staff account was given, to pass on to them.
+  const [created, setCreated] = useState<{ name: string; username: string; password: string } | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     onError(null);
+    setCreated(null);
     try {
-      await api.createUser(
+      const account = await api.createUser(
         role === 'staff' ? { role, name } : { role, username, name, password },
       );
+      if (account.role === 'staff' && account.username && account.default_password) {
+        setCreated({ name: account.name, username: account.username, password: account.default_password });
+      }
       setUsername('');
       setName('');
       setPassword('');
@@ -339,7 +345,12 @@ function AddForm({
           <option value="supervisor">{t('account.role_supervisor')}</option>
         </Select>
       </div>
-      {role === 'staff' && <p className="mb-3 text-xs text-ink-600">{t('account.staff_no_login')}</p>}
+      {role === 'staff' && <p className="mb-3 text-xs text-ink-600">{t('account.staff_login_info')}</p>}
+      {created && (
+        <p role="status" className="mb-3 rounded-nav bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          {t('account.staff_created', created)}
+        </p>
+      )}
       <div className={`grid gap-3 ${role === 'supervisor' ? 'sm:grid-cols-3' : ''}`}>
         {role === 'supervisor' && (
           <input
@@ -409,13 +420,12 @@ function EditForm({
 
   return (
     <form onSubmit={submit} className="mt-3 border-t border-mist-200 pt-3">
-      <div className={`grid gap-3 ${account.role === 'supervisor' ? 'sm:grid-cols-2' : ''}`}>
+      <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="label">{t('account.name')}</label>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
-        {/* Cleaning staff have no password to change. */}
-        {account.role === 'supervisor' && (
+        {/* A staff member who forgot theirs gets a new one here (123456 again, say). */}
         <div>
           <label className="label">{t('account.new_password')}</label>
           <PasswordInput
@@ -425,7 +435,6 @@ function EditForm({
           />
           <p className="mt-1 text-xs text-ink-600">{t('account.password_blank_hint')}</p>
         </div>
-        )}
       </div>
       <button type="submit" disabled={busy} className="btn-primary mt-3 !py-2 text-sm">
         {t('account.save')}
