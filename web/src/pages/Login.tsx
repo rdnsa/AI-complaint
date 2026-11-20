@@ -43,14 +43,7 @@ export default function Login() {
     <div className="min-h-screen">
       <Header title={t('login.title')} description={t('login.description')} compact />
       <main className="mx-auto max-w-sm px-4">
-        <p
-          className={`mt-8 rounded-nav px-4 py-3 text-body-sm ${
-            forStaff ? 'bg-accent-500/10 font-semibold text-ink-900' : 'bg-mist-100 text-ink-700'
-          }`}
-        >
-          {t('login.staff_hint')}
-        </p>
-        <form onSubmit={submit} className="card mt-4 space-y-4 p-5">
+        <form onSubmit={submit} className="card mt-8 space-y-4 p-5">
           <div>
             <label htmlFor="u" className="label">
               {t('login.username_or_email')}

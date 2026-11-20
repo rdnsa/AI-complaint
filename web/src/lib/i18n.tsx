@@ -94,7 +94,6 @@ const ID = {
 
   'login.title': 'Masuk',
   'login.description': 'Untuk supervisor, petugas, dan pelapor.',
-  'login.staff_hint': 'Petugas kebersihan: masuk dengan nama depanmu @upi.edu, contoh gilang@upi.edu.',
   'login.username': 'Username',
   'login.username_or_email': 'Username atau email petugas',
   'login.full_name': 'Nama lengkap',
@@ -595,7 +594,6 @@ const EN: Record<Key, string> = {
 
   'login.title': 'Sign In',
   'login.description': 'For supervisors, staff and reporters.',
-  'login.staff_hint': 'Cleaning staff: sign in with your first name @upi.edu, e.g. gilang@upi.edu.',
   'login.username': 'Username',
   'login.username_or_email': 'Username or staff email',
   'login.full_name': 'Full name',

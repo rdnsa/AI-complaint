@@ -9,7 +9,6 @@ test.describe('Masuk', () => {
     const staff = await newStaff();
     await page.goto('/staff/C-2');
     await expect(page).toHaveURL(`/login?next=${encodeURIComponent('/staff/C-2')}`);
-    await expect(page.getByText(/gilang@upi\.edu/)).toBeVisible();
 
     await page.getByLabel('Username atau email petugas').fill(staff.username);
     await page.getByLabel('Password', { exact: true }).fill(STAFF_PASSWORD);
